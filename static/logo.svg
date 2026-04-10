@@ -1,35 +1,41 @@
 <svg width="900" height="310" viewBox="0 0 900 310" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Pin: sky blue upper-left → vivid blue → deep navy at tip -->
-    <linearGradient id="pinGrad" x1="45" y1="10" x2="265" y2="295" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#87D4F8"/>
-      <stop offset="0.40" stop-color="#2A96F3"/>
-      <stop offset="1" stop-color="#1038C0"/>
-    </linearGradient>
-    <!-- "jo": lime green top → forest green bottom (covers cap-height to baseline) -->
+    <!-- Radial gradient: light source upper-left → vivid blue → deep navy at edges/tip -->
+    <radialGradient id="pinGrad" cx="78" cy="65" r="265" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#A8E2FC"/>
+      <stop offset="22%"  stop-color="#52B8F8"/>
+      <stop offset="52%"  stop-color="#2A90F0"/>
+      <stop offset="100%" stop-color="#1232C8"/>
+    </radialGradient>
+    <!-- Green gradient top-to-bottom for "jo" -->
     <linearGradient id="greenGrad" x1="0" y1="78" x2="0" y2="190" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#82C424"/>
-      <stop offset="1" stop-color="#4A9A10"/>
+      <stop offset="0"  stop-color="#82C424"/>
+      <stop offset="1"  stop-color="#4A9A10"/>
     </linearGradient>
-    <!-- "Go." in tagline: same green range, scaled to tagline text height -->
+    <!-- Green gradient for "Go." in tagline -->
     <linearGradient id="greenTagGrad" x1="0" y1="238" x2="0" y2="278" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#82C424"/>
-      <stop offset="1" stop-color="#4A9A10"/>
+      <stop offset="0"  stop-color="#82C424"/>
+      <stop offset="1"  stop-color="#4A9A10"/>
     </linearGradient>
   </defs>
 
-  <!-- Location pin: smooth teardrop, width 220px, height 285px -->
-  <path d="M155,10 C215,10 265,62 265,127 C265,192 197,265 155,295 C113,265 45,192 45,127 C45,62 95,10 155,10 Z" fill="url(#pinGrad)"/>
+  <!-- ── LOCATION PIN ────────────────────────────────────────── -->
+  <!-- Smooth teardrop: widest at y=150, tip at y=295 -->
+  <path d="M140,10 C208,10 258,65 258,150 C258,215 195,272 140,295 C85,272 22,215 22,150 C22,65 72,10 140,10 Z"
+        fill="url(#pinGrad)"/>
 
-  <!-- White L: vertical bar 58px wide, horizontal bar 55px tall, sharp corners -->
-  <path d="M85,48 L143,48 L143,165 L218,165 L218,220 L85,220 Z" fill="#FFFFFF"/>
+  <!-- ── WHITE L — two overlapping rounded rectangles ──────── -->
+  <!-- Vertical bar: 65px wide, tall -->
+  <rect x="78"  y="48"  width="65"  height="167" rx="16" fill="#FFFFFF"/>
+  <!-- Horizontal bar: overlaps bottom of vertical bar -->
+  <rect x="78"  y="150" width="117" height="65"  rx="16" fill="#FFFFFF"/>
 
-  <!-- Brand name: "Listo" dark navy, "jo" green gradient — tspan auto-positions -->
+  <!-- ── BRAND NAME ─────────────────────────────────────────── -->
   <text x="300" y="190" font-size="155" font-family="'Sora', Inter, Arial, sans-serif" font-weight="800" letter-spacing="-3">
     <tspan fill="#1C2430">Listo</tspan><tspan fill="url(#greenGrad)">jo</tspan>
   </text>
 
-  <!-- Tagline: "List It. Find It. " navy + "Go." green, well separated below -->
+  <!-- ── TAGLINE ────────────────────────────────────────────── -->
   <text x="302" y="278" font-size="55" font-family="'Sora', Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.2">
     <tspan fill="#1C2430">List It. Find It. </tspan><tspan fill="url(#greenTagGrad)">Go.</tspan>
   </text>
