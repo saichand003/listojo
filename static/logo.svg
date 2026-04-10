@@ -1,22 +1,22 @@
-<svg width="900" height="280" viewBox="0 0 900 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="920" height="300" viewBox="0 0 920 300" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="pinGrad" x1="92" y1="30" x2="260" y2="238" gradientUnits="userSpaceOnUse">
+    <linearGradient id="pinGrad" x1="84" y1="28" x2="280" y2="258" gradientUnits="userSpaceOnUse">
       <stop stop-color="#6FC6F2"/>
-      <stop offset="0.48" stop-color="#2894F3"/>
+      <stop offset="0.5" stop-color="#2A96F3"/>
       <stop offset="1" stop-color="#1A45C7"/>
     </linearGradient>
-    <linearGradient id="greenGrad" x1="650" y1="86" x2="800" y2="162" gradientUnits="userSpaceOnUse">
+    <linearGradient id="greenGrad" x1="654" y1="96" x2="815" y2="165" gradientUnits="userSpaceOnUse">
       <stop stop-color="#9CD43C"/>
       <stop offset="1" stop-color="#72BC3A"/>
     </linearGradient>
   </defs>
 
-  <path d="M176 246C199 227 258 174 258 122C258 73.4 218.6 34 170 34C121.4 34 82 73.4 82 122C82 174 142 227 176 246Z" fill="url(#pinGrad)"/>
-  <path d="M168 68C143 68 122.5 88.5 122.5 113.5V170H181C210 170 233.5 146.5 233.5 117.5H168V68Z" fill="#F4F6FA"/>
+  <path d="M185 262C212 240 276 184 276 126C276 72 232 28 178 28C124 28 80 72 80 126C80 184 147 240 185 262Z" fill="url(#pinGrad)"/>
+  <path d="M172 60C140 60 114 86 114 118V185H188C221 185 248 158 248 125H172V60Z" fill="#F4F6FA"/>
 
-  <text x="302" y="166" fill="#1C2F5D" font-size="136" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">Listo</text>
-  <text x="628" y="166" fill="url(#greenGrad)" font-size="136" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">jo</text>
+  <text x="304" y="176" fill="#1C2F5D" font-size="138" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">Listo</text>
+  <text x="632" y="176" fill="url(#greenGrad)" font-size="138" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">jo</text>
 
-  <text x="304" y="244" fill="#243863" font-size="64" font-family="Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.3">List It. Find It.</text>
-  <text x="691" y="244" fill="#74BD3B" font-size="64" font-family="Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.3">Go.</text>
+  <text x="304" y="252" fill="#243863" font-size="66" font-family="Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.3">List It. Find It.</text>
+  <text x="706" y="252" fill="#74BD3B" font-size="66" font-family="Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.3">Go</text>
 </svg>
