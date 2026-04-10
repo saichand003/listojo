@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
+from listings.models import ListingInquiry
+
 from .forms import MessageForm
 from .models import ChatMessage
 
@@ -10,7 +12,14 @@ from .models import ChatMessage
 @login_required
 def inbox(request):
     users = User.objects.exclude(pk=request.user.pk)
-    return render(request, 'chatapp/inbox.html', {'users': users})
+    listing_inquiries = ListingInquiry.objects.filter(
+        listing__owner=request.user
+    ).select_related('listing')
+    return render(
+        request,
+        'chatapp/inbox.html',
+        {'users': users, 'listing_inquiries': listing_inquiries},
+    )
 
 
 @login_required
