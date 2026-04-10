@@ -13,10 +13,7 @@
         <div class="nav-left">
             <a class="brand" href="{% url 'listing_list' %}">
                 <img src="{% static 'mark.svg' %}?v={{ UI_ASSET_VERSION }}" alt="Listojo mark" class="logo-mark">
-                <span class="wordmark-wrap">
-                    <span class="wordmark"><span class="wordmark-dark">list</span><span class="wordmark-blue">ojo</span></span>
-                    <span class="tagline">FIND · LIST · DISCOVER</span>
-                </span>
+                <img src="{% static 'logo.svg' %}?v={{ UI_ASSET_VERSION }}" alt="Listojo" class="brand-logo">
             </a>
             <div class="primary-links">
                 <a href="{% url 'create_listing' %}">Post Ad</a>

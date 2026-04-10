@@ -1,7 +1,10 @@
-<svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M10 18L45 5L80 18" stroke="#A8C9EA" stroke-width="8" stroke-linecap="round"/>
-  <path d="M10 36L45 23L80 36" stroke="#3E8FDC" stroke-width="8" stroke-linecap="round"/>
-  <path d="M10 54L45 41L80 54" stroke="#1D5FA8" stroke-width="8" stroke-linecap="round"/>
-  <line x1="28" y1="66" x2="62" y2="66" stroke="#A8B9CC" stroke-width="8" stroke-linecap="round"/>
-  <line x1="30" y1="76" x2="60" y2="76" stroke="#CAD4E0" stroke-width="8" stroke-linecap="round"/>
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="listojoMarkGradient" x1="16" y1="10" x2="80" y2="86" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2EAFFF"/>
+      <stop offset="1" stop-color="#0B4FD3"/>
+    </linearGradient>
+  </defs>
+  <path d="M48 90C58 82.4 79 66.6 79 44C79 26.9 65.1 13 48 13C30.9 13 17 26.9 17 44C17 66.6 38 82.4 48 90Z" fill="url(#listojoMarkGradient)"/>
+  <path d="M48 24C36.4 24 27 33.4 27 45C27 56.6 36.4 66 48 66C58 66 66.4 59.1 68.7 49.8H48V24Z" fill="#F4F5F7"/>
 </svg>

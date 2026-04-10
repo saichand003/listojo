@@ -1,12 +1,11 @@
-<svg width="340" height="92" viewBox="0 0 340 92" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="340" height="92" rx="10" fill="transparent"/>
-  <g transform="translate(10,10)">
-    <path d="M10 18L45 5L80 18" stroke="#A8C9EA" stroke-width="8" stroke-linecap="round"/>
-    <path d="M10 36L45 23L80 36" stroke="#3E8FDC" stroke-width="8" stroke-linecap="round"/>
-    <path d="M10 54L45 41L80 54" stroke="#1D5FA8" stroke-width="8" stroke-linecap="round"/>
-    <line x1="28" y1="66" x2="62" y2="66" stroke="#A8B9CC" stroke-width="8" stroke-linecap="round"/>
-    <line x1="30" y1="76" x2="60" y2="76" stroke="#CAD4E0" stroke-width="8" stroke-linecap="round"/>
-  </g>
-  <text x="118" y="53" font-size="64" font-family="Georgia, 'Times New Roman', serif" font-weight="700" fill="#232323">list</text>
-  <text x="225" y="53" font-size="64" font-family="Georgia, 'Times New Roman', serif" font-weight="700" fill="#1D5FA8">ojo</text>
+<svg width="560" height="120" viewBox="0 0 560 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="listojoLogoGradient" x1="20" y1="10" x2="100" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2EAFFF"/>
+      <stop offset="1" stop-color="#0B4FD3"/>
+    </linearGradient>
+  </defs>
+  <path d="M60 112C72.5 102.5 99 82.6 99 54.5C99 33.2 81.8 16 60.5 16C39.2 16 22 33.2 22 54.5C22 82.6 48.5 102.5 60 112Z" fill="url(#listojoLogoGradient)"/>
+  <path d="M60 30C45.5 30 33.8 41.7 33.8 56.2C33.8 70.7 45.5 82.4 60 82.4C72.6 82.4 83.1 73.8 86 62.1H60V30Z" fill="#F4F5F7"/>
+  <text x="120" y="78" fill="#1C2430" font-size="74" font-family="Sora, Inter, Arial, sans-serif" font-weight="700" letter-spacing="-1.5">Listojo</text>
 </svg>
