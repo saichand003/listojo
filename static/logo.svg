@@ -1,11 +1,22 @@
-<svg width="560" height="120" viewBox="0 0 560 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="860" height="250" viewBox="0 0 860 250" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="listojoLogoGradient" x1="20" y1="10" x2="100" y2="104" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#2EAFFF"/>
-      <stop offset="1" stop-color="#0B4FD3"/>
+    <linearGradient id="pinGrad" x1="85" y1="25" x2="240" y2="214" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6FC6F2"/>
+      <stop offset="0.48" stop-color="#2894F3"/>
+      <stop offset="1" stop-color="#1A45C7"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="635" y1="78" x2="765" y2="150" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9CD43C"/>
+      <stop offset="1" stop-color="#72BC3A"/>
     </linearGradient>
   </defs>
-  <path d="M60 112C72.5 102.5 99 82.6 99 54.5C99 33.2 81.8 16 60.5 16C39.2 16 22 33.2 22 54.5C22 82.6 48.5 102.5 60 112Z" fill="url(#listojoLogoGradient)"/>
-  <path d="M60 30C45.5 30 33.8 41.7 33.8 56.2C33.8 70.7 45.5 82.4 60 82.4C72.6 82.4 83.1 73.8 86 62.1H60V30Z" fill="#F4F5F7"/>
-  <text x="120" y="78" fill="#1C2430" font-size="74" font-family="Sora, Inter, Arial, sans-serif" font-weight="700" letter-spacing="-1.5">Listojo</text>
+
+  <path d="M164 224C186 206 240 157 240 110C240 66.4 204.6 31 161 31C117.4 31 82 66.4 82 110C82 157 138 206 164 224Z" fill="url(#pinGrad)"/>
+  <path d="M161 54C132.8 54 110 76.8 110 105V164H175.5C204.5 164 228 140.5 228 111.5H161V54Z" fill="#F4F6FA"/>
+
+  <text x="290" y="162" fill="#1C2F5D" font-size="132" font-family="Sora, Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">Listo</text>
+  <text x="610" y="162" fill="url(#greenGrad)" font-size="132" font-family="Sora, Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">jo</text>
+
+  <text x="292" y="220" fill="#243863" font-size="66" font-family="Sora, Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.4">List It. Find It.</text>
+  <text x="640" y="220" fill="#74BD3B" font-size="66" font-family="Sora, Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.4">Go.</text>
 </svg>
