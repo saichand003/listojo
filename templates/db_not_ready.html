@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Database setup needed</h1>
+<p>It looks like migrations have not been applied yet.</p>
+<pre>python manage.py migrate</pre>
+<p>After this command finishes, refresh the page.</p>
+{% endblock %}

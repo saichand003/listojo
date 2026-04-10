@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Chat Inbox</h1>
+<p>Select a user to start chatting:</p>
+<ul>
+{% for person in users %}
+    <li><a href="{% url 'conversation' person.id %}">{{ person.username }}</a></li>
+{% empty %}
+    <li>No other users available.</li>
+{% endfor %}
+</ul>
+{% endblock %}

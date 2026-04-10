@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Post your listing</h1>
+<p class="muted">Add as much detail as possible so buyers can discover your listing.</p>
+<form method="post" enctype="multipart/form-data" class="card">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Publish listing</button>
+</form>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="card hero">
+    <h1>Discover trusted local services & classifieds</h1>
+    <p class="muted">Explore colorful categories, featured offers, and nearby opportunities.</p>
+
+    <div class="grid grid-3" style="margin-top:1rem;">
+        <div class="card"><div class="kpi">{{ total_listings }}</div><div class="muted">Total listings</div></div>
+        <div class="card"><div class="kpi">{{ featured_count }}</div><div class="muted">Featured listings</div></div>
+        <div class="card"><div class="kpi">{{ listings|length }}</div><div class="muted">Results shown</div></div>
+    </div>
+
+    <form method="get" class="filters">
+        <input type="text" name="q" placeholder="What are you looking for?" value="{{ filters.q }}">
+
+        <select name="category">
+            <option value="">All categories</option>
+            {% for key, label in category_choices %}
+                <option value="{{ key }}" {% if filters.category == key %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <input type="text" name="city" placeholder="City" value="{{ filters.city }}">
+
+        <select name="sort">
+            <option value="latest" {% if filters.sort == 'latest' %}selected{% endif %}>Latest</option>
+            <option value="price_low" {% if filters.sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+            <option value="price_high" {% if filters.sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+        </select>
+
+        <button type="submit">Search</button>
+    </form>
+</section>
+
+<div class="chips" style="margin-bottom:1rem;">
+    {% for key, label in category_choices %}
+        <a class="chip" href="?category={{ key }}">{{ label }}</a>
+    {% endfor %}
+</div>
+
+<section class="grid grid-listings">
+{% for listing in listings %}
+    <article class="card">
+        {% if listing.image %}
+            <img class="listing-thumb" src="{{ listing.image.url }}" alt="{{ listing.title }}">
+        {% else %}
+            <div class="listing-thumb"></div>
+        {% endif %}
+        <div class="row" style="margin-top:.7rem;">
+            <span class="chip">{{ listing.get_category_display }}</span>
+            {% if listing.featured %}<span class="chip">Featured</span>{% endif %}
+        </div>
+        <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
+        <p class="price">{% if listing.price %}${{ listing.price }}{% else %}Contact for price{% endif %}</p>
+        <p class="muted">{{ listing.city }}, {{ listing.state }} {{ listing.country }}</p>
+        <p>{{ listing.description|truncatewords:22 }}</p>
+    </article>
+{% empty %}
+    <p>No listings found. Try different filters.</p>
+{% endfor %}
+</section>
+{% endblock %}

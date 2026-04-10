@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listojo Classifieds</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}?v={{ UI_ASSET_VERSION }}">
+</head>
+<body>
+<div class="container">
+    <nav class="navbar">
+        <div class="nav-left">
+            <a class="brand" href="{% url 'listing_list' %}">
+                <img src="{% static 'mark.svg' %}?v={{ UI_ASSET_VERSION }}" alt="Listojo mark" class="logo-mark">
+                <span class="wordmark-wrap">
+                    <span class="wordmark"><span class="wordmark-dark">list</span><span class="wordmark-blue">ojo</span></span>
+                    <span class="tagline">FIND · LIST · DISCOVER</span>
+                </span>
+            </a>
+            <div class="primary-links">
+                <a href="{% url 'create_listing' %}">Post Ad</a>
+                <a href="{% url 'inbox' %}">Messages</a>
+            </div>
+        </div>
+        <div class="nav-links">
+            <button type="button" class="button secondary" data-theme-toggle>🌓 Theme</button>
+            {% if user.is_authenticated %}
+                <a href="{% url 'profile' %}">Profile</a>
+                <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="button secondary">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}">Login</a>
+                <a href="{% url 'register' %}" class="button">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    {% if messages %}
+        <ul class="messages">
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</div>
+<footer class="muted" style="margin-top:1rem;font-size:.85rem;">UI version: {{ UI_ASSET_VERSION }}</footer>
+<script src="{% static 'app.js' %}?v={{ UI_ASSET_VERSION }}"></script>
+</body>
+</html>

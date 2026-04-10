@@ -1,0 +1,12 @@
+<svg width="340" height="92" viewBox="0 0 340 92" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="340" height="92" rx="10" fill="transparent"/>
+  <g transform="translate(10,10)">
+    <path d="M10 18L45 5L80 18" stroke="#A8C9EA" stroke-width="8" stroke-linecap="round"/>
+    <path d="M10 36L45 23L80 36" stroke="#3E8FDC" stroke-width="8" stroke-linecap="round"/>
+    <path d="M10 54L45 41L80 54" stroke="#1D5FA8" stroke-width="8" stroke-linecap="round"/>
+    <line x1="28" y1="66" x2="62" y2="66" stroke="#A8B9CC" stroke-width="8" stroke-linecap="round"/>
+    <line x1="30" y1="76" x2="60" y2="76" stroke="#CAD4E0" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <text x="118" y="53" font-size="64" font-family="Georgia, 'Times New Roman', serif" font-weight="700" fill="#232323">list</text>
+  <text x="225" y="53" font-size="64" font-family="Georgia, 'Times New Roman', serif" font-weight="700" fill="#1D5FA8">ojo</text>
+</svg>
