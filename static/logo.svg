@@ -1,11 +1,11 @@
-<svg width="980" height="280" viewBox="0 0 980 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="900" height="280" viewBox="0 0 900 280" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="pinGrad" x1="92" y1="30" x2="260" y2="238" gradientUnits="userSpaceOnUse">
       <stop stop-color="#6FC6F2"/>
       <stop offset="0.48" stop-color="#2894F3"/>
       <stop offset="1" stop-color="#1A45C7"/>
     </linearGradient>
-    <linearGradient id="greenGrad" x1="705" y1="86" x2="870" y2="162" gradientUnits="userSpaceOnUse">
+    <linearGradient id="greenGrad" x1="650" y1="86" x2="800" y2="162" gradientUnits="userSpaceOnUse">
       <stop stop-color="#9CD43C"/>
       <stop offset="1" stop-color="#72BC3A"/>
     </linearGradient>
@@ -15,8 +15,8 @@
   <path d="M170 58C138.5 58 113 83.5 113 115V179H186.5C218.9 179 245 152.9 245 120.5H170V58Z" fill="#F4F6FA"/>
 
   <text x="302" y="166" fill="#1C2F5D" font-size="136" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">Listo</text>
-  <text x="694" y="166" fill="url(#greenGrad)" font-size="136" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">jo</text>
+  <text x="642" y="166" fill="url(#greenGrad)" font-size="136" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">jo</text>
 
   <text x="304" y="236" fill="#243863" font-size="64" font-family="Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.3">List It. Find It.</text>
-  <text x="815" y="236" fill="#74BD3B" font-size="64" font-family="Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.3">Go.</text>
+  <text x="703" y="236" fill="#74BD3B" font-size="64" font-family="Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.3">Go.</text>
 </svg>
