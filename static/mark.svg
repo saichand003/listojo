@@ -1,11 +1,11 @@
 <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="markGrad" x1="18" y1="12" x2="91" y2="98" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6FC6F2"/>
-      <stop offset="0.5" stop-color="#2894F3"/>
-      <stop offset="1" stop-color="#1A45C7"/>
-    </linearGradient>
+    <radialGradient id="markGloss" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(35 22) rotate(43) scale(84)">
+      <stop offset="0" stop-color="#8CD7F8"/>
+      <stop offset="0.5" stop-color="#2E9CF4"/>
+      <stop offset="1" stop-color="#1742C4"/>
+    </radialGradient>
   </defs>
-  <path d="M55 104C67 94.3 93 71.7 93 48C93 26.5 75.5 9 54 9C32.5 9 15 26.5 15 48C15 71.7 41 94.3 55 104Z" fill="url(#markGrad)"/>
-  <path d="M54 21C41 21 30.5 31.5 30.5 44.5V71.5H60.5C73.8 71.5 84.5 60.8 84.5 47.5H54V21Z" fill="#F4F6FA"/>
+  <path d="M55 104C68 93.3 93 70.4 93 46.8C93 25.4 75.6 8 54.2 8C32.8 8 15.4 25.4 15.4 46.8C15.4 70.4 41 93.3 55 104Z" fill="url(#markGloss)"/>
+  <path d="M55 22.5H45.2C34.8 22.5 26.3 31 26.3 41.4V72.8H58.5C69.7 72.8 78.8 63.7 78.8 52.5V51.5H58.8C56.7 51.5 55 49.8 55 47.7V22.5Z" fill="#F4F6FA"/>
 </svg>

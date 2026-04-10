@@ -1,18 +1,18 @@
 <svg width="920" height="300" viewBox="0 0 920 300" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="pinGrad" x1="84" y1="28" x2="280" y2="258" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6FC6F2"/>
-      <stop offset="0.5" stop-color="#2A96F3"/>
-      <stop offset="1" stop-color="#1A45C7"/>
-    </linearGradient>
+    <radialGradient id="pinGloss" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(135 72) rotate(43) scale(232)">
+      <stop offset="0" stop-color="#8CD7F8"/>
+      <stop offset="0.52" stop-color="#2E9CF4"/>
+      <stop offset="1" stop-color="#1742C4"/>
+    </radialGradient>
     <linearGradient id="greenGrad" x1="654" y1="96" x2="815" y2="165" gradientUnits="userSpaceOnUse">
       <stop stop-color="#9CD43C"/>
       <stop offset="1" stop-color="#72BC3A"/>
     </linearGradient>
   </defs>
 
-  <path d="M185 262C212 240 276 184 276 126C276 72 232 28 178 28C124 28 80 72 80 126C80 184 147 240 185 262Z" fill="url(#pinGrad)"/>
-  <path d="M172 60C140 60 114 86 114 118V185H188C221 185 248 158 248 125H172V60Z" fill="#F4F6FA"/>
+  <path d="M185 262C212 240 276 184 276 126C276 72 232 28 178 28C124 28 80 72 80 126C80 184 147 240 185 262Z" fill="url(#pinGloss)"/>
+  <path d="M177 60H150C129 60 112 77 112 98V185H188C221 185 248 158 248 125V124H184C180.1 124 177 120.9 177 117V60Z" fill="#F4F6FA"/>
 
   <text x="304" y="176" fill="#1C2F5D" font-size="138" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">Listo</text>
   <text x="632" y="176" fill="url(#greenGrad)" font-size="138" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">jo</text>
