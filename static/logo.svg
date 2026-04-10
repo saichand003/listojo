@@ -1,37 +1,36 @@
-<svg width="900" height="275" viewBox="0 0 900 275" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="900" height="310" viewBox="0 0 900 310" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Pin: sky blue upper-left → vivid blue → deep navy at tip -->
+    <linearGradient id="pinGrad" x1="45" y1="10" x2="265" y2="295" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#87D4F8"/>
+      <stop offset="0.40" stop-color="#2A96F3"/>
+      <stop offset="1" stop-color="#1038C0"/>
+    </linearGradient>
+    <!-- "jo": lime green top → forest green bottom (covers cap-height to baseline) -->
+    <linearGradient id="greenGrad" x1="0" y1="78" x2="0" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#82C424"/>
+      <stop offset="1" stop-color="#4A9A10"/>
+    </linearGradient>
+    <!-- "Go." in tagline: same green range, scaled to tagline text height -->
+    <linearGradient id="greenTagGrad" x1="0" y1="238" x2="0" y2="278" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#82C424"/>
+      <stop offset="1" stop-color="#4A9A10"/>
+    </linearGradient>
+  </defs>
 
-  <!-- ── ICON ─────────────────────────────────────── -->
+  <!-- Location pin: smooth teardrop, width 220px, height 285px -->
+  <path d="M155,10 C215,10 265,62 265,127 C265,192 197,265 155,295 C113,265 45,192 45,127 C45,62 95,10 155,10 Z" fill="url(#pinGrad)"/>
 
-  <!-- Pale mint location pin -->
-  <path d="M130,12 C161,12 187,38 187,70 C187,102 160,137 130,156 C100,137 73,102 73,70 C73,38 99,12 130,12 Z"
-        fill="#C8E8D8"/>
+  <!-- White L: vertical bar 58px wide, horizontal bar 55px tall, sharp corners -->
+  <path d="M85,48 L143,48 L143,165 L218,165 L218,220 L85,220 Z" fill="#FFFFFF"/>
 
-  <!-- Dark green dot inside pin -->
-  <circle cx="130" cy="69" r="21" fill="#2B7A54"/>
-
-  <!-- Thin connector from pin tip to L-bracket -->
-  <rect x="128" y="156" width="5" height="20" rx="2" fill="#3D8C65"/>
-
-  <!-- L-bracket: thick corner (vertical-left + horizontal-bottom) -->
-  <path d="M102,175 L102,213 L150,213"
-        stroke="#2B7A54" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
-
-  <!-- Three list lines: short→long, dark→light -->
-  <line x1="102" y1="228" x2="145" y2="228" stroke="#2B7A54" stroke-width="7" stroke-linecap="round"/>
-  <line x1="102" y1="243" x2="163" y2="243" stroke="#5CAE80" stroke-width="7" stroke-linecap="round"/>
-  <line x1="102" y1="258" x2="184" y2="258" stroke="#90C8A8" stroke-width="7" stroke-linecap="round"/>
-
-  <!-- ── DIVIDER ─────────────────────────────────── -->
-  <line x1="212" y1="8" x2="212" y2="267" stroke="#C8C8C8" stroke-width="1.5"/>
-
-  <!-- ── TEXT ──────────────────────────────────────── -->
-
-  <!-- Brand name: "listo" dark charcoal + "jo" dark green (tspan = auto-positioned) -->
-  <text x="238" y="172" font-size="122" font-family="'Sora', sans-serif" font-weight="800" letter-spacing="-1">
-    <tspan fill="#1E1E1E">listo</tspan><tspan fill="#2B7A54">jo</tspan>
+  <!-- Brand name: "Listo" dark navy, "jo" green gradient — tspan auto-positions -->
+  <text x="300" y="190" font-size="155" font-family="'Sora', Inter, Arial, sans-serif" font-weight="800" letter-spacing="-3">
+    <tspan fill="#1C2430">Listo</tspan><tspan fill="url(#greenGrad)">jo</tspan>
   </text>
 
-  <!-- Tagline -->
-  <text x="241" y="228" fill="#888888" font-size="32" font-family="'Sora', sans-serif" font-weight="500" letter-spacing="3">FIND · LIST · DISCOVER</text>
-
+  <!-- Tagline: "List It. Find It. " navy + "Go." green, well separated below -->
+  <text x="302" y="278" font-size="55" font-family="'Sora', Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.2">
+    <tspan fill="#1C2430">List It. Find It. </tspan><tspan fill="url(#greenTagGrad)">Go.</tspan>
+  </text>
 </svg>
