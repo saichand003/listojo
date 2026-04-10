@@ -31,7 +31,7 @@ body { font-family: 'Sora', Inter, Arial, sans-serif; background: var(--bg); col
 }
 .nav-left { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
 .brand { display:flex; align-items:center; text-decoration:none; padding-right:.2rem; }
-.brand-logo { height: 78px; width: auto; display:block; }
+.brand-logo { height: 86px; width: auto; display:block; }
 
 .primary-links, .nav-links { display:flex; gap:.8rem; flex-wrap:wrap; align-items:center; }
 .primary-links a, .nav-links a { text-decoration:none; color:var(--text); font-weight:700; }
@@ -61,7 +61,7 @@ footer { text-align:center; padding-bottom:.8rem; }
 
 @media (max-width: 860px) {
   .filters { grid-template-columns: 1fr; }
-  .brand-logo { height: 52px; }
+  .brand-logo { height: 58px; }
 }
 
 
