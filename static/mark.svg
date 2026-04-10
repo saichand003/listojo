@@ -1,7 +1,11 @@
-<svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M10 18L45 5L80 18" stroke="#A8C9EA" stroke-width="8" stroke-linecap="round"/>
-  <path d="M10 36L45 23L80 36" stroke="#3E8FDC" stroke-width="8" stroke-linecap="round"/>
-  <path d="M10 54L45 41L80 54" stroke="#1D5FA8" stroke-width="8" stroke-linecap="round"/>
-  <line x1="28" y1="66" x2="62" y2="66" stroke="#A8B9CC" stroke-width="8" stroke-linecap="round"/>
-  <line x1="30" y1="76" x2="60" y2="76" stroke="#CAD4E0" stroke-width="8" stroke-linecap="round"/>
+<svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="markGrad" x1="18" y1="12" x2="91" y2="98" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6FC6F2"/>
+      <stop offset="0.5" stop-color="#2894F3"/>
+      <stop offset="1" stop-color="#1A45C7"/>
+    </linearGradient>
+  </defs>
+  <path d="M55 104C67 94.3 93 71.7 93 48C93 26.5 75.5 9 54 9C32.5 9 15 26.5 15 48C15 71.7 41 94.3 55 104Z" fill="url(#markGrad)"/>
+  <path d="M54 21C41 21 30.5 31.5 30.5 44.5V71.5H60.5C73.8 71.5 84.5 60.8 84.5 47.5H54V21Z" fill="#F4F6FA"/>
 </svg>
