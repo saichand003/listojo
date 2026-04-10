@@ -1,32 +1,33 @@
-<svg width="920" height="315" viewBox="0 0 920 315" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="900" height="310" viewBox="0 0 900 310" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="pinGrad" x1="12" y1="12" x2="206" y2="294" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#8DDCF8"/>
-      <stop offset="0.42" stop-color="#2A96F3"/>
-      <stop offset="1" stop-color="#1230B8"/>
+    <linearGradient id="pinGrad" x1="10" y1="10" x2="220" y2="300" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6FC8F5"/>
+      <stop offset="0.40" stop-color="#2B96F3"/>
+      <stop offset="1" stop-color="#1538C2"/>
     </linearGradient>
-    <linearGradient id="greenGrad" x1="605" y1="52" x2="810" y2="198" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#A4DC3C"/>
-      <stop offset="1" stop-color="#56AB15"/>
+    <linearGradient id="greenGrad" x1="606" y1="48" x2="810" y2="196" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9CD43C"/>
+      <stop offset="1" stop-color="#5AAE18"/>
     </linearGradient>
-    <linearGradient id="greenTagGrad" x1="241" y1="248" x2="820" y2="308" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#A4DC3C"/>
-      <stop offset="1" stop-color="#56AB15"/>
+    <linearGradient id="greenTagGrad" x1="255" y1="246" x2="820" y2="305" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9CD43C"/>
+      <stop offset="1" stop-color="#5AAE18"/>
     </linearGradient>
   </defs>
 
-  <!-- Pin: smooth elongated teardrop, aspect ~1.37:1 -->
-  <path d="M109,12 C163,12 206,55 206,115 C206,175 148,242 109,294 C70,242 12,175 12,115 C12,55 55,12 109,12 Z" fill="url(#pinGrad)"/>
+  <!-- Location pin: smooth rounded teardrop -->
+  <path d="M120,10 C176,10 220,52 220,112 C220,172 162,238 120,300 C78,238 20,172 20,112 C20,52 64,10 120,10 Z" fill="url(#pinGrad)"/>
 
-  <!-- L: thin (23px bar), tall vertical (146px), sharp right-angle corners, no curves -->
-  <path d="M60,44 L83,44 L83,190 L165,190 L165,212 L60,212 Z" fill="#FFFFFF"/>
+  <!-- White L inside pin: bold proportions matching brand reference -->
+  <!-- Vertical bar: 48px wide, 174px tall; horizontal foot: 115px wide, 48px tall -->
+  <path d="M60,38 L108,38 L108,164 L175,164 L175,212 L60,212 Z" fill="#FFFFFF"/>
 
-  <!-- Brand name: large and prominent -->
-  <text x="238" y="193" fill="#1C2430" font-size="156" font-family="'Sora', Inter, Arial, sans-serif" font-weight="800" letter-spacing="-4">Listo</text>
-  <text x="605" y="193" fill="url(#greenGrad)" font-size="156" font-family="'Sora', Inter, Arial, sans-serif" font-weight="800" letter-spacing="-4">jo</text>
+  <!-- Brand name: "Listo" dark navy, "jo" green -->
+  <text x="255" y="192" fill="#1C2430" font-size="148" font-family="'Sora', Inter, Arial, sans-serif" font-weight="800" letter-spacing="-3">Listo</text>
+  <text x="606" y="192" fill="url(#greenGrad)" font-size="148" font-family="'Sora', Inter, Arial, sans-serif" font-weight="800" letter-spacing="-3">jo</text>
 
-  <!-- Tagline: well below brand name, clear breathing room -->
-  <text x="241" y="288" font-size="52" font-family="'Sora', Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.2">
+  <!-- Tagline: clearly spaced below brand name, "Go." in green -->
+  <text x="258" y="287" font-size="54" font-family="'Sora', Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.2">
     <tspan fill="#1C2430">List It. Find It. </tspan><tspan fill="url(#greenTagGrad)">Go.</tspan>
   </text>
 </svg>
