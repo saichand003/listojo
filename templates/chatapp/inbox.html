@@ -20,6 +20,22 @@
     </ul>
 </section>
 
+<section class="card" style="margin-bottom:1rem;">
+    <h2>Guest direct messages</h2>
+    <ul>
+    {% for msg in guest_messages %}
+        <li style="margin-bottom:.6rem;">
+            <strong>{{ msg.guest_name }}</strong>
+            <span class="muted">({{ msg.guest_email }})</span>
+            <span class="muted"> · {{ msg.sent_at|date:"M d, Y P" }}</span><br>
+            {{ msg.message }}
+        </li>
+    {% empty %}
+        <li>No guest messages yet.</li>
+    {% endfor %}
+    </ul>
+</section>
+
 <section class="card">
     <h2>Direct chat conversations</h2>
     <p class="muted">Select a user to start chatting:</p>

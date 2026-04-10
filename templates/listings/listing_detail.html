@@ -17,8 +17,12 @@
         <p class="muted">Location: {{ listing.city }}, {{ listing.state }} {{ listing.country }}</p>
         {% if listing.contact_phone %}<p>Phone: {{ listing.contact_phone }}</p>{% endif %}
         <p class="muted">Posted by {{ listing.owner.username }}</p>
-        {% if user.is_authenticated and user != listing.owner %}
-            <a class="button" href="{% url 'conversation' listing.owner.id %}">Chat with poster</a>
+        {% if user != listing.owner %}
+            {% if user.is_authenticated %}
+                <a class="button" href="{% url 'conversation' listing.owner.id %}">Chat with poster</a>
+            {% else %}
+                <a class="button" href="{% url 'guest_conversation' listing.owner.id %}">Message poster as guest</a>
+            {% endif %}
         {% endif %}
     </article>
 
