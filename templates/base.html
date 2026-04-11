@@ -5,9 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Listojo — List It. Find It. Go.</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@400;600;700;800&display=swap">
     <link rel="stylesheet" href="{% static 'styles.css' %}?v={{ UI_ASSET_VERSION }}">
 </head>
 <body>
@@ -15,8 +12,7 @@
     <nav class="navbar">
         <div class="nav-left">
             <a class="brand" href="{% url 'listing_list' %}">
-                <img src="{% static 'mark.svg' %}?v={{ UI_ASSET_VERSION }}" alt="" class="brand-mark">
-                <span class="brand-name">Listo<span class="brand-green">jo</span></span>
+                <img src="{% static 'logo.svg' %}?v={{ UI_ASSET_VERSION }}" alt="Listojo" class="brand-logo">
             </a>
             <div class="primary-links">
                 <a href="{% url 'create_listing' %}">Post Ad</a>
