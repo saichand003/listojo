@@ -18,11 +18,7 @@
         {% if listing.contact_phone %}<p>Phone: {{ listing.contact_phone }}</p>{% endif %}
         <p class="muted">Posted by {{ listing.owner.username }}</p>
         {% if user != listing.owner %}
-            {% if user.is_authenticated %}
-                <a class="button" href="{% url 'conversation' listing.owner.id %}">Chat with poster</a>
-            {% else %}
-                <a class="button" href="{% url 'guest_conversation' listing.owner.id %}">Message poster as guest</a>
-            {% endif %}
+            <button type="button" class="button" data-open-live-chat>Direct Message</button>
         {% endif %}
     </article>
 
@@ -36,3 +32,69 @@
     </aside>
 </div>
 {% endblock %}
+
+
+{% if user != listing.owner %}
+<div class="live-chat-panel" data-live-chat hidden>
+    <div class="live-chat-header">
+        <strong>Chat with {{ listing.owner.username }}</strong>
+        <button type="button" class="button secondary" data-close-live-chat>Close</button>
+    </div>
+    <div class="live-chat-messages" data-live-messages></div>
+    <form class="live-chat-form" data-live-form>
+        {% csrf_token %}
+        {% if not user.is_authenticated %}
+            <input type="text" name="guest_name" placeholder="Your name" required>
+            <input type="email" name="guest_email" placeholder="Your email" required>
+        {% endif %}
+        <textarea name="message" rows="3" placeholder="Type your message..." required></textarea>
+        <button type="submit">Send</button>
+    </form>
+</div>
+<script>
+(function(){
+  const panel=document.querySelector('[data-live-chat]');
+  if(!panel) return;
+  const openBtn=document.querySelector('[data-open-live-chat]');
+  const closeBtn=document.querySelector('[data-close-live-chat]');
+  const list=panel.querySelector('[data-live-messages]');
+  const form=panel.querySelector('[data-live-form]');
+  const threadUrl="{% url 'live_thread' listing.owner.id %}";
+  const sendUrl="{% url 'live_send' listing.owner.id %}";
+  const csrftoken=document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+  function render(messages){
+    list.innerHTML='';
+    messages.forEach((m)=>{
+      const item=document.createElement('div');
+      item.className='live-chat-bubble '+(m.mine?'mine':'other');
+      item.innerHTML=`<strong>${m.sender}</strong><div>${m.message}</div><small>${m.sent_at}</small>`;
+      list.appendChild(item);
+    });
+    list.scrollTop=list.scrollHeight;
+  }
+
+  async function load(){
+    const res=await fetch(threadUrl,{headers:{'X-Requested-With':'XMLHttpRequest'}});
+    if(!res.ok) return;
+    const data=await res.json();
+    render(data.messages||[]);
+  }
+
+  openBtn.addEventListener('click',()=>{ panel.hidden=false; load(); });
+  closeBtn.addEventListener('click',()=>{ panel.hidden=true; });
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fd=new FormData(form);
+    const res=await fetch(sendUrl,{method:'POST',body:fd,headers:{'X-CSRFToken':csrftoken}});
+    if(res.ok){
+      form.querySelector('textarea[name="message"]').value='';
+      load();
+    }
+  });
+
+  setInterval(()=>{ if(!panel.hidden) load(); }, 3000);
+})();
+</script>
+{% endif %}

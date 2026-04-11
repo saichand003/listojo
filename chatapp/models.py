@@ -26,6 +26,7 @@ class GuestChatMessage(models.Model):
     )
     guest_name = models.CharField(max_length=120)
     guest_email = models.EmailField()
+    guest_session_key = models.CharField(max_length=40, blank=True, db_index=True)
     message = models.TextField()
     sent_at = models.DateTimeField(auto_now_add=True)
 
