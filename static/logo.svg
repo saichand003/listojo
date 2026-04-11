@@ -1,22 +1,14 @@
-<svg width="920" height="300" viewBox="0 0 920 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="980" height="300" viewBox="0 0 980 300" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="pinGloss" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(135 72) rotate(43) scale(232)">
-      <stop offset="0" stop-color="#8CD7F8"/>
-      <stop offset="0.52" stop-color="#2E9CF4"/>
-      <stop offset="1" stop-color="#1742C4"/>
-    </radialGradient>
-    <linearGradient id="greenGrad" x1="654" y1="96" x2="815" y2="165" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#9CD43C"/>
-      <stop offset="1" stop-color="#72BC3A"/>
+    <linearGradient id="listojoBlue" x1="260" y1="28" x2="88" y2="252" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#62CCFF"/>
+      <stop offset="1" stop-color="#1548CE"/>
     </linearGradient>
   </defs>
 
-  <path d="M185 262C212 240 276 184 276 126C276 72 232 28 178 28C124 28 80 72 80 126C80 184 147 240 185 262Z" fill="url(#pinGloss)"/>
-  <path d="M177 60H150C129 60 112 77 112 98V185H188C221 185 248 158 248 125V124H184C180.1 124 177 120.9 177 117V60Z" fill="#F4F6FA"/>
+  <path d="M182 262C210 239 276 181 276 122C276 70.1 233.9 28 182 28C130.1 28 88 70.1 88 122C88 181 154 239 182 262Z" fill="url(#listojoBlue)"/>
+  <path d="M178 62C146.5 62 121 87.5 121 119V190H188.5C222.2 190 249.5 162.7 249.5 129H191.5C184 129 178 123 178 115.5V62Z" fill="url(#listojoBlue)" stroke="#EAF3FF" stroke-width="6" stroke-linejoin="round"/>
 
-  <text x="304" y="176" fill="#1C2F5D" font-size="138" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">Listo</text>
-  <text x="632" y="176" fill="url(#greenGrad)" font-size="138" font-family="Inter, Arial, sans-serif" font-weight="800" letter-spacing="-2">jo</text>
-
-  <text x="304" y="252" fill="#243863" font-size="66" font-family="Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.3">List It. Find It.</text>
-  <text x="706" y="252" fill="#74BD3B" font-size="66" font-family="Inter, Arial, sans-serif" font-weight="700" letter-spacing="-0.3">Go</text>
+  <text x="322" y="175" fill="#1B2F5F" font-size="140" font-family="Montserrat, 'Sora', 'Inter', Arial, sans-serif" font-weight="700" letter-spacing="-1.8">Listojo</text>
+  <text x="324" y="248" fill="#2A4B86" font-size="64" font-family="Montserrat, 'Sora', 'Inter', Arial, sans-serif" font-weight="600" letter-spacing="-0.3">List It. Find It. Go.</text>
 </svg>
