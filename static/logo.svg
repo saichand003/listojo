@@ -25,7 +25,7 @@
     </style>
   </defs>
 
-  <g transform="translate(-2,-2) scale(1.03)">
+  <g transform="translate(-2,-2) scale(1.18)">
     <path
       d="M210 55
          C130 55 85 115 85 175
@@ -48,11 +48,11 @@
       fill="white"/>
   </g>
 
-  <text x="400" y="210" class="mainText" font-size="150">
+  <text x="400" y="210" class="mainText" font-size="173">
     <tspan fill="#1F315F">Listo</tspan><tspan fill="url(#greenGradient)">jo</tspan>
   </text>
 
-  <text x="400" y="285" class="tagText" font-size="47">
+  <text x="400" y="285" class="tagText" font-size="54">
     <tspan fill="#28437A">List It. Find It. </tspan>
     <tspan fill="url(#greenGradient)">Go.</tspan>
   </text>
