@@ -46,11 +46,11 @@
        C175 120 182 105 190 100Z"
     fill="white"/>
 
-  <text x="400" y="210" class="mainText" font-size="145">
+  <text x="400" y="228" class="mainText" font-size="162">
     <tspan fill="#1F315F">Listo</tspan><tspan fill="url(#greenGradient)">jo</tspan>
   </text>
 
-  <text x="400" y="285" class="tagText" font-size="44">
+  <text x="400" y="308" class="tagText" font-size="52">
     <tspan fill="#28437A">List It. Find It. </tspan>
     <tspan fill="url(#greenGradient)">Go.</tspan>
   </text>
