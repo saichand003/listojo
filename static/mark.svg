@@ -1,18 +1,32 @@
 <svg width="110" height="133" viewBox="0 0 110 133" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="markGrad" cx="31" cy="28" r="130" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#A8E2FC"/>
-      <stop offset="22%"  stop-color="#52B8F8"/>
-      <stop offset="52%"  stop-color="#2A90F0"/>
-      <stop offset="100%" stop-color="#1232C8"/>
-    </radialGradient>
+    <linearGradient id="markGradient" x1="110" y1="0" x2="0" y2="133" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#62C2FF"/>
+      <stop offset="52%" stop-color="#2A7EF2"/>
+      <stop offset="100%" stop-color="#123FC5"/>
+    </linearGradient>
   </defs>
 
-  <!-- Pin: same shape as logo, scaled to fit 110×133 -->
-  <path d="M55,0 C87,0 110,26 110,65 C110,96 81,122 55,133 C29,122 0,96 0,65 C0,26 23,0 55,0 Z"
-        fill="url(#markGrad)"/>
+  <!-- Pin: scaled to fit 110×133 -->
+  <path
+    d="M55 0
+       C20 0 0 28 0 58
+       C0 93 32 118 48 130
+       C50 132 52 133 55 133
+       C58 133 60 132 62 130
+       C78 118 110 93 110 58
+       C110 28 90 0 55 0Z"
+    fill="url(#markGradient)"/>
 
-  <!-- White L: two overlapping rounded rects (scaled from logo) -->
-  <rect x="26" y="18" width="30" height="78" rx="8" fill="#FFFFFF"/>
-  <rect x="26" y="65" width="55" height="30" rx="8" fill="#FFFFFF"/>
+  <!-- White L: path-based, scaled from logo -->
+  <path
+    d="M49 32
+       C49 25 53 21 58 21
+       L58 75
+       L79 75
+       C78 82 71 89 58 94
+       L42 94
+       L42 38
+       C42 31 45 24 49 24Z"
+    fill="white"/>
 </svg>
