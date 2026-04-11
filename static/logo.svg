@@ -1,59 +1,14 @@
-<svg width="1600" height="420" viewBox="0 0 1600 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="980" height="300" viewBox="0 0 980 300" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="pinGradient" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#62C2FF"/>
-      <stop offset="52%" stop-color="#2A7EF2"/>
-      <stop offset="100%" stop-color="#123FC5"/>
+    <linearGradient id="listojoBlue" x1="260" y1="28" x2="88" y2="252" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#62CCFF"/>
+      <stop offset="1" stop-color="#1548CE"/>
     </linearGradient>
-
-    <linearGradient id="greenGradient" x1="980" y1="90" x2="1260" y2="260" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#7ED342"/>
-      <stop offset="100%" stop-color="#A8CF39"/>
-    </linearGradient>
-
-    <style>
-      .mainText {
-        font-family: "Montserrat", "Avenir Next", "Poppins", "Segoe UI", Arial, sans-serif;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-      }
-      .tagText {
-        font-family: "Montserrat", "Avenir Next", "Poppins", "Segoe UI", Arial, sans-serif;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-      }
-    </style>
   </defs>
 
-  <g transform="translate(-2,-2) scale(1.18)">
-    <path
-      d="M210 55
-         C130 55 85 115 85 175
-         C85 270 165 335 200 370
-         C205 375 210 378 215 378
-         C220 378 225 375 230 370
-         C265 335 345 270 345 175
-         C345 115 290 55 210 55Z"
-      fill="url(#pinGradient)"/>
+  <path d="M182 262C210 239 276 181 276 122C276 70.1 233.9 28 182 28C130.1 28 88 70.1 88 122C88 181 154 239 182 262Z" fill="url(#listojoBlue)"/>
+  <path d="M178 62C146.5 62 121 87.5 121 119V190H188.5C222.2 190 249.5 162.7 249.5 129H191.5C184 129 178 123 178 115.5V62Z" fill="url(#listojoBlue)" stroke="#EAF3FF" stroke-width="6" stroke-linejoin="round"/>
 
-    <path
-      d="M190 135
-         C190 110 205 95 225 95
-         L225 225
-         L280 225
-         C278 245 258 265 220 280
-         L175 280
-         L175 145
-         C175 120 182 105 190 100Z"
-      fill="white"/>
-  </g>
-
-  <text x="470" y="220" class="mainText" font-size="216">
-    <tspan fill="#1F315F">Listo</tspan><tspan fill="url(#greenGradient)">jo</tspan>
-  </text>
-
-  <text x="470" y="355" class="tagText" font-size="68">
-    <tspan fill="#28437A">List It. Find It. </tspan>
-    <tspan fill="url(#greenGradient)">Go.</tspan>
-  </text>
+  <text x="322" y="175" fill="#1B2F5F" font-size="140" font-family="Montserrat, 'Sora', 'Inter', Arial, sans-serif" font-weight="700" letter-spacing="-1.8">Listojo</text>
+  <text x="324" y="248" fill="#2A4B86" font-size="64" font-family="Montserrat, 'Sora', 'Inter', Arial, sans-serif" font-weight="600" letter-spacing="-0.3">List It. Find It. Go.</text>
 </svg>

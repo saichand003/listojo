@@ -1,32 +1,11 @@
-<svg width="110" height="110" viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="pinGradientMark" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#62C2FF"/>
-      <stop offset="52%" stop-color="#2A7EF2"/>
-      <stop offset="100%" stop-color="#123FC5"/>
+    <linearGradient id="listojoBlueMark" x1="94" y1="10" x2="20" y2="102" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#62CCFF"/>
+      <stop offset="1" stop-color="#1548CE"/>
     </linearGradient>
   </defs>
 
-  <g transform="translate(-2,-2) scale(1.18)">
-    <path
-      d="M210 55
-         C130 55 85 115 85 175
-         C85 270 165 335 200 370
-         C205 375 210 378 215 378
-         C220 378 225 375 230 370
-         C265 335 345 270 345 175
-         C345 115 290 55 210 55Z"
-      fill="url(#pinGradientMark)"/>
-
-    <path
-      d="M190 135
-         C190 110 205 95 225 95
-         L225 225
-         L280 225
-         C278 245 258 265 220 280
-         L175 280
-         L175 145
-         C175 120 182 105 190 100Z"
-      fill="white"/>
-  </g>
+  <path d="M55 104C68.2 93.2 95 69.6 95 45.8C95 23.9 77.2 6 55.3 6C33.4 6 15.6 23.9 15.6 45.8C15.6 69.6 42.4 93.2 55 104Z" fill="url(#listojoBlueMark)"/>
+  <path d="M53.8 19C40.7 19 30 29.7 30 42.8V73.5H57.8C72.7 73.5 84.8 61.4 84.8 46.5H58.7C56 46.5 53.8 44.3 53.8 41.6V19Z" fill="url(#listojoBlueMark)" stroke="#EAF3FF" stroke-width="3" stroke-linejoin="round"/>
 </svg>
