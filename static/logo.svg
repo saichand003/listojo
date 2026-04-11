@@ -48,11 +48,11 @@
       fill="white"/>
   </g>
 
-  <text x="400" y="210" class="mainText" font-size="173">
+  <text x="400" y="210" class="mainText" font-size="216">
     <tspan fill="#1F315F">Listo</tspan><tspan fill="url(#greenGradient)">jo</tspan>
   </text>
 
-  <text x="400" y="285" class="tagText" font-size="54">
+  <text x="400" y="285" class="tagText" font-size="68">
     <tspan fill="#28437A">List It. Find It. </tspan>
     <tspan fill="url(#greenGradient)">Go.</tspan>
   </text>
