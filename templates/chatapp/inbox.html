@@ -2,48 +2,77 @@
 {% block content %}
 <h1>Messages</h1>
 
+{# ── LIVE CHAT CONVERSATIONS ── #}
+<section class="card" style="margin-bottom:1rem;">
+    <h2>Live chat conversations</h2>
+    {% if listing_conversations %}
+    <p class="muted" style="margin-top:0;">Click a conversation to open the chat and reply.</p>
+    <ul style="list-style:none;padding:0;margin:0;">
+        {% for conv in listing_conversations %}
+        <li style="border-bottom:1px solid var(--border);padding:.75rem 0;display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;">{{ conv.user.username }}</div>
+                <div class="muted" style="font-size:.82rem;">
+                    Re: <a href="{% url 'listing_detail' conv.listing.pk %}">{{ conv.listing.title }}</a>
+                </div>
+                <div style="font-size:.88rem;margin-top:.2rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px;">
+                    {{ conv.last_message.message }}
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.35rem;flex-shrink:0;">
+                <span class="muted" style="font-size:.75rem;">{{ conv.last_message.sent_at|date:"M d, H:i" }}</span>
+                {% if conv.is_owner %}
+                    <a href="{% url 'owner_chat' listing_id=conv.listing.pk other_user_id=conv.user.pk %}" class="button" style="padding:.35rem .75rem;font-size:.82rem;">Reply</a>
+                {% else %}
+                    <a href="{% url 'listing_detail' conv.listing.pk %}" class="button" style="padding:.35rem .75rem;font-size:.82rem;">Open Chat</a>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">No live chat conversations yet.</p>
+    {% endif %}
+</section>
+
+{# ── LISTING INQUIRIES ── #}
 <section class="card" style="margin-bottom:1rem;">
     <h2>Inquiries on your listings</h2>
-    <p class="muted">These include inquiries sent by guests and logged-in users.</p>
-    <ul>
+    <p class="muted" style="margin-top:0;">Submitted via the inquiry form on your listings.</p>
+    <ul style="list-style:none;padding:0;margin:0;">
     {% for inquiry in listing_inquiries %}
-        <li style="margin-bottom:.6rem;">
-            <strong>{{ inquiry.name }}</strong> on
-            <a href="{% url 'listing_detail' inquiry.listing.pk %}">{{ inquiry.listing.title }}</a>
-            <span class="muted">({{ inquiry.created_at|date:"M d, Y P" }})</span><br>
-            <span class="muted">{{ inquiry.email }}{% if inquiry.phone %} · {{ inquiry.phone }}{% endif %}</span><br>
-            {{ inquiry.message }}
+        <li style="border-bottom:1px solid var(--border);padding:.75rem 0;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;">
+                <strong>{{ inquiry.name }}</strong>
+                <span class="muted" style="font-size:.78rem;">{{ inquiry.created_at|date:"M d, Y P" }}</span>
+            </div>
+            <div class="muted" style="font-size:.82rem;">
+                <a href="{% url 'listing_detail' inquiry.listing.pk %}">{{ inquiry.listing.title }}</a>
+                · {{ inquiry.email }}{% if inquiry.phone %} · {{ inquiry.phone }}{% endif %}
+            </div>
+            <p style="margin:.4rem 0 0;">{{ inquiry.message }}</p>
         </li>
     {% empty %}
-        <li>No listing inquiries yet.</li>
+        <li class="muted">No listing inquiries yet.</li>
     {% endfor %}
     </ul>
 </section>
 
-<section class="card" style="margin-bottom:1rem;">
-    <h2>Guest direct messages</h2>
-    <ul>
-    {% for msg in guest_messages %}
-        <li style="margin-bottom:.6rem;">
-            <strong>{{ msg.guest_name }}</strong>
-            <span class="muted">({{ msg.guest_email }})</span>
-            <span class="muted"> · {{ msg.sent_at|date:"M d, Y P" }}</span><br>
-            {{ msg.message }}
-        </li>
-    {% empty %}
-        <li>No guest messages yet.</li>
-    {% endfor %}
-    </ul>
-</section>
-
+{# ── GUEST DIRECT MESSAGES ── #}
 <section class="card">
-    <h2>Direct chat conversations</h2>
-    <p class="muted">Select a user to start chatting:</p>
-    <ul>
-    {% for person in users %}
-        <li><a href="{% url 'conversation' person.id %}">{{ person.username }}</a></li>
+    <h2>Guest direct messages</h2>
+    <ul style="list-style:none;padding:0;margin:0;">
+    {% for msg in guest_messages %}
+        <li style="border-bottom:1px solid var(--border);padding:.75rem 0;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;">
+                <strong>{{ msg.guest_name }}</strong>
+                <span class="muted" style="font-size:.78rem;">{{ msg.sent_at|date:"M d, Y P" }}</span>
+            </div>
+            <div class="muted" style="font-size:.82rem;">{{ msg.guest_email }}</div>
+            <p style="margin:.4rem 0 0;">{{ msg.message }}</p>
+        </li>
     {% empty %}
-        <li>No other users available.</li>
+        <li class="muted">No guest messages yet.</li>
     {% endfor %}
     </ul>
 </section>

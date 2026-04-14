@@ -3,6 +3,13 @@ from django.db import models
 
 
 class ChatMessage(models.Model):
+    listing = models.ForeignKey(
+        'listings.Listing',
+        on_delete=models.CASCADE,
+        related_name='chat_messages',
+        null=True,
+        blank=True,
+    )
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
     message = models.TextField()

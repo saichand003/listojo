@@ -3,12 +3,12 @@
     <linearGradient id="pinGradient" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#62C2FF"/>
       <stop offset="52%" stop-color="#2A7EF2"/>
-      <stop offset="100%" stop-color="#123FC5"/>
+      <stop offset="100%" stop-color="#1A5DD4"/>
     </linearGradient>
 
-    <linearGradient id="greenGradient" x1="850" y1="90" x2="1100" y2="260" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#7ED342"/>
-      <stop offset="100%" stop-color="#A8CF39"/>
+    <linearGradient id="greenGradient" x1="0" y1="90" x2="0" y2="310" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3DB549"/>
+      <stop offset="100%" stop-color="#5DC228"/>
     </linearGradient>
 
     <style>
@@ -22,6 +22,7 @@
         font-weight: 600;
         letter-spacing: -0.01em;
       }
+      .dark-text { fill: #182B52; }
     </style>
   </defs>
 
@@ -46,12 +47,12 @@
        C175 120 182 105 190 100Z"
     fill="white"/>
 
-  <text x="400" y="228" class="mainText" font-size="162">
-    <tspan fill="#1F315F">Listo</tspan><tspan fill="url(#greenGradient)">jo</tspan>
+  <text x="400" y="243" class="mainText" font-size="162">
+    <tspan class="dark-text">Listo</tspan><tspan fill="url(#greenGradient)">jo</tspan>
   </text>
 
-  <text x="400" y="308" class="tagText" font-size="52">
-    <tspan fill="#28437A">List It. Find It. </tspan>
+  <text x="660" y="323" class="tagText" font-size="52" text-anchor="middle">
+    <tspan class="dark-text">List It. Find It. </tspan>
     <tspan fill="url(#greenGradient)">Go.</tspan>
   </text>
 </svg>

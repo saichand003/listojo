@@ -1,0 +1,181 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listojo Admin Portal{% block title %}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #2A7EF2; --primary-dk: #1A5DD4; --green: #3DB549;
+      --bg: #F0F4FB; --surface: #fff; --border: #e2e8f0;
+      --text: #0f1c35; --muted: #64748b;
+      --r: 14px; --r-sm: 8px;
+      --shadow: 0 2px 12px rgba(24,43,82,.09);
+      --shadow-lg: 0 8px 32px rgba(24,43,82,.13);
+    }
+    body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 230px; min-height: 100vh; background: #0f1c35;
+      display: flex; flex-direction: column; flex-shrink: 0;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    }
+    .sidebar-brand {
+      padding: 1.25rem 1.25rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex; align-items: center; gap: .4rem;
+    }
+    .sidebar-brand .brand-logo-wrap { flex-shrink: 0; width: 64px; height: 64px; }
+    .sidebar-brand .brand-logo-wrap svg { width: 64px; height: 64px; }
+    .sidebar-brand .brand-text { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.55rem; color: #fff; line-height: 1.1; }
+    .sidebar-brand .brand-text em { color: var(--green); font-style: normal; }
+    .sidebar-brand .brand-sub { font-size: .68rem; font-weight: 600; color: rgba(255,255,255,.4); letter-spacing: .04em; text-transform: uppercase; margin-top: .15rem; }
+    .sidebar-label { font-size: .68rem; font-weight: 700; letter-spacing: .1em; color: rgba(255,255,255,.35); padding: 1.25rem 1.25rem .4rem; text-transform: uppercase; }
+    .sidebar nav a {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .6rem 1.25rem; color: rgba(255,255,255,.65);
+      text-decoration: none; font-size: .88rem; font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+    }
+    .sidebar nav a:hover { color: #fff; background: rgba(255,255,255,.06); }
+    .sidebar nav a.active { color: #fff; border-left-color: var(--primary); background: rgba(42,126,242,.15); }
+    .sidebar nav a .icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-footer { margin-top: auto; padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,.08); }
+    .sidebar-footer a { color: rgba(255,255,255,.5); font-size: .82rem; text-decoration: none; }
+    .sidebar-footer a:hover { color: #fff; }
+
+    /* Main */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: .85rem 1.75rem; display: flex; align-items: center;
+      justify-content: space-between; gap: 1rem;
+    }
+    .topbar-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--text); }
+    .topbar-user { font-size: .82rem; color: var(--muted); }
+    .content { padding: 1.75rem; flex: 1; }
+
+    /* Cards */
+    .card { background: var(--surface); border-radius: var(--r); border: 1px solid var(--border); padding: 1.25rem; box-shadow: var(--shadow); }
+    .grid { display: grid; gap: 1rem; }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+    /* KPI card */
+    .kpi-card { display: flex; flex-direction: column; gap: .25rem; }
+    .kpi-card .kpi-label { font-size: .78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .kpi-card .kpi-value { font-family: 'Montserrat', sans-serif; font-size: 2rem; font-weight: 800; color: var(--text); }
+    .kpi-card .kpi-sub { font-size: .78rem; color: var(--green); font-weight: 600; }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    thead th { text-align: left; padding: .6rem .75rem; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); border-bottom: 2px solid var(--border); }
+    tbody td { padding: .65rem .75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #f8faff; }
+
+    /* Badges */
+    .badge { display: inline-block; padding: .18rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; }
+    .badge-green  { background: #dcfce7; color: #166534; }
+    .badge-red    { background: #fee2e2; color: #991b1b; }
+    .badge-blue   { background: #dbeafe; color: #1e40af; }
+    .badge-orange { background: #ffedd5; color: #9a3412; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .85rem; border-radius: var(--r-sm); font-size: .8rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: opacity .15s; }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-danger  { background: #ef4444; color: #fff; }
+    .btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-sm { padding: .2rem .55rem; font-size: .75rem; }
+
+    /* Search */
+    .search-row { display: flex; gap: .75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .search-row input, .search-row select { padding: .45rem .75rem; border: 1px solid var(--border); border-radius: var(--r-sm); font-size: .875rem; background: var(--surface); color: var(--text); }
+    .search-row input:focus, .search-row select:focus { outline: 2px solid var(--primary); }
+
+    /* Bar chart */
+    .bar-row { display: flex; align-items: center; gap: .75rem; margin-bottom: .5rem; font-size: .82rem; }
+    .bar-label { width: 130px; flex-shrink: 0; color: var(--muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { flex: 1; background: var(--bg); border-radius: 99px; height: 10px; }
+    .bar-fill { height: 10px; border-radius: 99px; background: linear-gradient(90deg, var(--primary-dk), var(--primary)); }
+    .bar-count { width: 32px; text-align: right; font-weight: 700; color: var(--text); }
+
+    /* Section heading */
+    .section-head { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: .85rem; color: var(--text); }
+
+    /* Login page */
+    .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #0f1c35; }
+    .login-card { background: #fff; border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    .login-card h1 { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.5rem; margin-bottom: .25rem; }
+    .login-card p { color: var(--muted); font-size: .875rem; margin-bottom: 1.5rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: .35rem; }
+    .form-group input { width: 100%; padding: .6rem .85rem; border: 1.5px solid var(--border); border-radius: var(--r-sm); font-size: .95rem; }
+    .form-group input:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    .error-msg { background: #fee2e2; color: #991b1b; padding: .6rem .85rem; border-radius: var(--r-sm); font-size: .82rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+{% block body %}
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo-wrap">
+      <svg viewBox="0 0 345 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pp" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#62C2FF"/>
+            <stop offset="52%" stop-color="#2A7EF2"/>
+            <stop offset="100%" stop-color="#1A5DD4"/>
+          </linearGradient>
+        </defs>
+        <path d="M210 55 C130 55 85 115 85 175 C85 270 165 335 200 370 C205 375 210 378 215 378 C220 378 225 375 230 370 C265 335 345 270 345 175 C345 115 290 55 210 55Z" fill="url(#pp)"/>
+        <path d="M190 135 C190 110 205 95 225 95 L225 225 L280 225 C278 245 258 265 220 280 L175 280 L175 145 C175 120 182 105 190 100Z" fill="white"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-text">Listo<em>jo</em></div>
+      <div class="brand-sub">Admin Portal</div>
+    </div>
+  </div>
+  <div class="sidebar-label">Overview</div>
+  <nav>
+    <a href="{% url 'portal_dashboard' %}" class="{% if request.resolver_match.url_name == 'portal_dashboard' %}active{% endif %}">
+      <span class="icon">📊</span> Dashboard
+    </a>
+  </nav>
+  <div class="sidebar-label">Manage</div>
+  <nav>
+    <a href="{% url 'portal_users' %}" class="{% if 'portal_user' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="icon">👥</span> Users
+    </a>
+    <a href="{% url 'portal_listings' %}" class="{% if 'portal_listing' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="icon">📋</span> Listings
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="{% url 'listing_list' %}">↗ View Site</a> &nbsp;·&nbsp;
+    <a href="{% url 'portal_logout' %}">Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+    <div class="topbar-user">👤 {{ request.user.username }}</div>
+  </div>
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+{% endblock %}
+</body>
+</html>

@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
-from listings.models import ListingInquiry
+from listings.models import Listing, ListingInquiry
 
 from .forms import GuestMessageForm, MessageForm
 from .models import ChatMessage, GuestChatMessage
@@ -16,20 +16,40 @@ from .models import ChatMessage, GuestChatMessage
 
 @login_required
 def inbox(request):
-    users = User.objects.exclude(pk=request.user.pk)
     listing_inquiries = ListingInquiry.objects.filter(
         listing__owner=request.user
-    ).select_related('listing')
-    guest_messages = GuestChatMessage.objects.filter(recipient=request.user)
-    return render(
-        request,
-        'chatapp/inbox.html',
-        {
-            'users': users,
-            'listing_inquiries': listing_inquiries,
-            'guest_messages': guest_messages,
-        },
-    )
+    ).select_related('listing').order_by('-created_at')
+
+    # All chat messages tied to listings where the user is a participant
+    # (either as owner or as the visitor who messaged). Deduplicate into
+    # one entry per (listing, other_user) pair.
+    seen = set()
+    listing_conversations = []
+    for msg in ChatMessage.objects.filter(
+        listing__isnull=False,
+    ).filter(
+        Q(sender=request.user) | Q(recipient=request.user)
+    ).select_related('listing', 'sender', 'recipient').order_by('-sent_at'):
+        other = msg.recipient if msg.sender == request.user else msg.sender
+        key = (msg.listing_id, other.pk)
+        if key not in seen:
+            seen.add(key)
+            listing_conversations.append({
+                'listing': msg.listing,
+                'user': other,
+                'last_message': msg,
+                'is_owner': msg.listing.owner == request.user,
+            })
+
+    guest_messages = GuestChatMessage.objects.filter(
+        recipient=request.user
+    ).order_by('-sent_at')
+
+    return render(request, 'chatapp/inbox.html', {
+        'listing_inquiries': listing_inquiries,
+        'listing_conversations': listing_conversations,
+        'guest_messages': guest_messages,
+    })
 
 
 @login_required
@@ -185,3 +205,103 @@ def live_send(request, user_id):
         },
         status=201,
     )
+
+
+# ── LISTING-SCOPED LIVE CHAT ──────────────────────────────────────────────
+
+
+@require_GET
+def listing_chat_thread(request, listing_id, other_user_id=None):
+    """JSON: message thread for a listing.
+
+    - Visitor (other_user_id=None): fetches their thread with the listing owner.
+    - Owner  (other_user_id set):   fetches the thread with a specific visitor.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Login required.'}, status=401)
+
+    listing = get_object_or_404(Listing, pk=listing_id)
+
+    if other_user_id is not None:
+        if request.user != listing.owner:
+            return JsonResponse({'error': 'Forbidden.'}, status=403)
+        other_user = get_object_or_404(User, pk=other_user_id)
+    else:
+        if request.user == listing.owner:
+            return JsonResponse({'error': 'You own this listing.'}, status=400)
+        other_user = listing.owner
+
+    thread = ChatMessage.objects.filter(
+        listing=listing,
+    ).filter(
+        Q(sender=request.user, recipient=other_user)
+        | Q(sender=other_user, recipient=request.user)
+    ).order_by('sent_at')
+
+    payload = [
+        {
+            'sender': msg.sender.username,
+            'message': msg.message,
+            'sent_at': msg.sent_at.strftime('%H:%M'),
+            'mine': msg.sender_id == request.user.id,
+        }
+        for msg in thread
+    ]
+    return JsonResponse({'messages': payload})
+
+
+@require_POST
+def listing_chat_send(request, listing_id, other_user_id=None):
+    """Send a message tied to a listing."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Login required.'}, status=401)
+
+    listing = get_object_or_404(Listing, pk=listing_id)
+
+    if other_user_id is not None:
+        if request.user != listing.owner:
+            return JsonResponse({'error': 'Forbidden.'}, status=403)
+        other_user = get_object_or_404(User, pk=other_user_id)
+    else:
+        if request.user == listing.owner:
+            return JsonResponse({'error': 'You own this listing.'}, status=400)
+        other_user = listing.owner
+
+    message_text = (request.POST.get('message') or '').strip()
+    if not message_text:
+        return JsonResponse({'error': 'Message cannot be empty.'}, status=400)
+
+    msg = ChatMessage.objects.create(
+        listing=listing,
+        sender=request.user,
+        recipient=other_user,
+        message=message_text,
+    )
+    return JsonResponse({
+        'message': {
+            'sender': msg.sender.username,
+            'message': msg.message,
+            'sent_at': msg.sent_at.strftime('%H:%M'),
+            'mine': True,
+        }
+    }, status=201)
+
+
+@login_required
+def owner_chat(request, listing_id, other_user_id):
+    """Full-page chat view: owner replies to a visitor's messages about a listing."""
+    listing = get_object_or_404(Listing, pk=listing_id, owner=request.user)
+    other_user = get_object_or_404(User, pk=other_user_id)
+
+    thread = ChatMessage.objects.filter(
+        listing=listing,
+    ).filter(
+        Q(sender=request.user, recipient=other_user)
+        | Q(sender=other_user, recipient=request.user)
+    ).order_by('sent_at')
+
+    return render(request, 'chatapp/owner_chat.html', {
+        'listing': listing,
+        'other_user': other_user,
+        'thread': thread,
+    })

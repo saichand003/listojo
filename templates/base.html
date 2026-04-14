@@ -5,27 +5,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Listojo Classifieds</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'styles.css' %}?v={{ UI_ASSET_VERSION }}">
 </head>
-<body>
+<body id="page-top">
 <div class="container">
     <nav class="navbar">
         <div class="nav-left">
             <a class="brand" href="{% url 'listing_list' %}">
-                <img src="{% static 'logo.svg' %}?v={{ UI_ASSET_VERSION }}" alt="Listojo" class="brand-logo">
+                <svg class="brand-logo" width="1000" height="350" viewBox="0 30 1000 350" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Listojo">
+                  <defs>
+                    <linearGradient id="pinGradient" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stop-color="#62C2FF"/>
+                      <stop offset="52%" stop-color="#2A7EF2"/>
+                      <stop offset="100%" stop-color="#1A5DD4"/>
+                    </linearGradient>
+                    <linearGradient id="greenGradient" x1="0" y1="90" x2="0" y2="310" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stop-color="#3DB549"/>
+                      <stop offset="100%" stop-color="#5DC228"/>
+                    </linearGradient>
+                    <style>
+                      .mainText { font-family: "Montserrat","Avenir Next","Poppins","Segoe UI",Arial,sans-serif; font-weight:700; letter-spacing:-0.02em; }
+                      .tagText  { font-family: "Montserrat","Avenir Next","Poppins","Segoe UI",Arial,sans-serif; font-weight:600; letter-spacing:-0.01em; }
+                      .dark-text { fill: #182B52; }
+                    </style>
+                  </defs>
+                  <path d="M210 55 C130 55 85 115 85 175 C85 270 165 335 200 370 C205 375 210 378 215 378 C220 378 225 375 230 370 C265 335 345 270 345 175 C345 115 290 55 210 55Z" fill="url(#pinGradient)"/>
+                  <path d="M190 135 C190 110 205 95 225 95 L225 225 L280 225 C278 245 258 265 220 280 L175 280 L175 145 C175 120 182 105 190 100Z" fill="white"/>
+                  <text x="400" y="243" class="mainText" font-size="162">
+                    <tspan class="dark-text">Listo</tspan><tspan fill="url(#greenGradient)">jo</tspan>
+                  </text>
+                  <text x="660" y="323" class="tagText" font-size="52" text-anchor="middle">
+                    <tspan class="dark-text">List It. Find It. </tspan>
+                    <tspan fill="url(#greenGradient)">Go.</tspan>
+                  </text>
+                </svg>
             </a>
             <div class="primary-links">
-                <a href="{% url 'create_listing' %}">Post Ad</a>
+                <a href="{% url 'create_listing' %}">Create Listing</a>
                 <a href="{% url 'inbox' %}">Messages</a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'saved_listings' %}">Saved</a>
+                {% endif %}
             </div>
         </div>
         <div class="nav-links">
-            <button type="button" class="button secondary" data-theme-toggle>🌓 Theme</button>
+            <button type="button" class="nav-text-btn" data-theme-toggle>🌓 Theme</button>
             {% if user.is_authenticated %}
                 <a href="{% url 'profile' %}">Profile</a>
                 <form method="post" action="{% url 'logout' %}" style="display:inline;">
                     {% csrf_token %}
-                    <button type="submit" class="button secondary">Logout</button>
+                    <button type="submit" class="nav-text-btn">Logout</button>
                 </form>
             {% else %}
                 <a href="{% url 'login' %}">Login</a>
@@ -44,7 +76,312 @@
 
     {% block content %}{% endblock %}
 </div>
-<footer class="muted" style="margin-top:1rem;font-size:.85rem;">UI version: {{ UI_ASSET_VERSION }}</footer>
+<a href="#page-top" id="back-to-top" aria-label="Back to top">↑</a>
+<footer class="site-footer">
+    <div class="site-footer-inner">
+        <div class="site-footer-brand">
+            <svg width="22" height="28" viewBox="0 0 345 420" fill="none">
+                <path d="M210 55 C130 55 85 115 85 175 C85 270 165 335 200 370 C205 375 210 378 215 378 C220 378 225 375 230 370 C265 335 345 270 345 175 C345 115 290 55 210 55Z" fill="url(#fp)"/>
+                <path d="M190 135 C190 110 205 95 225 95 L225 225 L280 225 C278 245 258 265 220 280 L175 280 L175 145 C175 120 182 105 190 100Z" fill="white"/>
+                <defs><linearGradient id="fp" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#62C2FF"/><stop offset="52%" stop-color="#2A7EF2"/><stop offset="100%" stop-color="#1A5DD4"/></linearGradient></defs>
+            </svg>
+            <span class="site-footer-logo">Listo<em>jo</em></span>
+        </div>
+        <nav class="site-footer-links">
+            <a href="#">About</a>
+            <a href="#">Terms</a>
+            <a href="#">Privacy</a>
+            <a href="#">Help</a>
+            <a href="#">Contact</a>
+        </nav>
+        <span class="site-footer-copy">© 2026 Listojo. All rights reserved.</span>
+    </div>
+</footer>
+{% if user.is_authenticated %}
+<div id="listing-chat-panel" class="live-chat-panel" hidden>
+    <div class="live-chat-header">
+        <div>
+            <strong id="chat-panel-owner" style="font-size:.95rem;"></strong>
+            <div id="chat-panel-title" class="muted" style="font-size:.75rem;margin-top:.1rem;"></div>
+        </div>
+        <button type="button" class="button secondary" id="close-listing-chat" style="padding:.3rem .65rem;font-size:.8rem;">✕</button>
+    </div>
+    <div class="live-chat-messages" id="listing-chat-messages">
+        <p class="muted" style="text-align:center;font-size:.82rem;padding:.5rem 0;margin:auto;">Loading…</p>
+    </div>
+    <form class="live-chat-form" id="listing-chat-form">
+        {% csrf_token %}
+        <textarea name="message" rows="2" placeholder="Type a message…" required style="resize:none;"></textarea>
+        <button type="submit">Send</button>
+    </form>
+</div>
+
+<script>
+(function () {
+  var panel    = document.getElementById('listing-chat-panel');
+  var msgBox   = document.getElementById('listing-chat-messages');
+  var form     = document.getElementById('listing-chat-form');
+  var ownerEl  = document.getElementById('chat-panel-owner');
+  var titleEl  = document.getElementById('chat-panel-title');
+  var closeBtn = document.getElementById('close-listing-chat');
+  var csrf     = form.querySelector('[name="csrfmiddlewaretoken"]').value;
+  var currentListingId = null;
+  var pollTimer = null;
+  var STORAGE_KEY = 'listojo_active_chat';
+
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function threadUrl(id) { return '/chat/listing/' + id + '/thread/'; }
+  function sendUrl(id)   { return '/chat/listing/' + id + '/send/'; }
+
+  function renderMessages(msgs) {
+    if (!msgs.length) {
+      msgBox.innerHTML = '<p class="muted" style="text-align:center;font-size:.82rem;padding:.5rem 0;margin:auto;">No messages yet. Say hello!</p>';
+      return;
+    }
+    msgBox.innerHTML = msgs.map(function(m) {
+      return '<div class="live-chat-bubble ' + (m.mine ? 'mine' : 'other') + '">' +
+        '<div class="bubble-text">' + esc(m.message) + '</div>' +
+        '<div class="bubble-time">' + m.sent_at + '</div></div>';
+    }).join('');
+    msgBox.scrollTop = msgBox.scrollHeight;
+  }
+
+  function load() {
+    if (!currentListingId) return;
+    fetch(threadUrl(currentListingId), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) { if (d) renderMessages(d.messages || []); })
+      .catch(function() {});
+  }
+
+  function openChat(listingId, listingTitle, ownerName) {
+    currentListingId = listingId;
+    ownerEl.textContent = ownerName;
+    titleEl.textContent = 'Re: ' + listingTitle;
+    msgBox.innerHTML = '<p class="muted" style="text-align:center;font-size:.82rem;padding:.5rem 0;margin:auto;">Loading…</p>';
+    panel.hidden = false;
+    form.querySelector('textarea').value = '';
+    load();
+    clearInterval(pollTimer);
+    pollTimer = setInterval(function() { if (!panel.hidden) load(); }, 3000);
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ listingId: listingId, listingTitle: listingTitle, ownerName: ownerName })); } catch(e) {}
+  }
+
+  closeBtn.addEventListener('click', function() {
+    panel.hidden = true;
+    clearInterval(pollTimer);
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  });
+
+  /* Restore on every page load */
+  try {
+    var saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      var s = JSON.parse(saved);
+      if (s.listingId && s.ownerName) openChat(s.listingId, s.listingTitle || '', s.ownerName);
+    }
+  } catch(e) {}
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!currentListingId) return;
+    var fd = new FormData(form);
+    fetch(sendUrl(currentListingId), { method: 'POST', body: fd, headers: { 'X-CSRFToken': csrf } })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) { if (d) { form.querySelector('textarea').value = ''; load(); } })
+      .catch(function() {});
+  });
+
+  /* Event delegation — works on any page that renders .open-chat-btn */
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.open-chat-btn');
+    if (btn) openChat(btn.dataset.listingId, btn.dataset.listingTitle || '', btn.dataset.owner || '');
+  });
+
+  window._openListingChat = openChat;
+})();
+</script>
+{% endif %}
+
 <script src="{% static 'app.js' %}?v={{ UI_ASSET_VERSION }}"></script>
+<script>
+(function () {
+  /* ── IMAGE SIZE VALIDATION — fires on file select, not on submit ── */
+  document.querySelectorAll('input[type="file"][data-max-size]').forEach(function(input) {
+    var maxBytes = parseInt(input.dataset.maxSize, 10);
+    var maxMB    = (maxBytes / 1024 / 1024).toFixed(0);
+
+    /* Create error element */
+    var err = document.createElement('p');
+    err.style.cssText = 'color:#ef4444;font-size:.82rem;font-weight:600;margin-top:.35rem;display:none;';
+    input.parentNode.insertBefore(err, input.nextSibling);
+
+    /* Find the submit button to disable/enable it */
+    function getSubmitBtn() {
+      var form = input.closest('form');
+      return form ? form.querySelector('button[type="submit"], input[type="submit"]') : null;
+    }
+
+    input.addEventListener('change', function() {
+      var file = input.files && input.files[0];
+      if (!file) { err.style.display = 'none'; return; }
+
+      if (file.size > maxBytes) {
+        var fileMB = (file.size / 1024 / 1024).toFixed(1);
+        err.textContent = '⚠ File is too large (' + fileMB + ' MB). Maximum allowed size is ' + maxMB + ' MB. Please choose a smaller image.';
+        err.style.display = 'block';
+        input.value = '';               /* clear the selection */
+        var btn = getSubmitBtn();
+        if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+        setTimeout(function() {         /* auto-enable after message shown */
+          var btn2 = getSubmitBtn();
+          if (btn2) { btn2.disabled = false; btn2.style.opacity = ''; }
+        }, 4000);
+      } else {
+        err.style.display = 'none';
+        var btn = getSubmitBtn();
+        if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+      }
+    });
+  });
+})();
+
+(function () {
+  /* ── PRICE UNIT show/hide based on category ── */
+  var catSel   = document.getElementById('id_category');
+  var unitRow  = document.getElementById('id_price_unit');
+  if (catSel && unitRow) {
+    var unitWrap = unitRow.closest('p') || unitRow.parentElement;
+
+    var UNIT_MAP = {
+      'rentals':        ['', 'mo', 'wk'],
+      'roommates':      ['', 'mo', 'wk'],
+      'local_services': ['', 'day', 'hr'],
+    };
+
+    var ALL_LABELS = { '': '— select —', 'mo': '/Month', 'wk': '/Week', 'day': '/Day', 'hr': '/Hour' };
+
+    function updateUnitField() {
+      var cat = catSel.value;
+      var allowed = UNIT_MAP[cat];
+      if (!allowed) {
+        unitWrap.style.display = 'none';
+        unitRow.value = '';
+        return;
+      }
+      unitWrap.style.display = '';
+      var current = unitRow.value;
+      unitRow.innerHTML = '';
+      allowed.forEach(function(val) {
+        var opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = ALL_LABELS[val];
+        if (val === current) opt.selected = true;
+        unitRow.appendChild(opt);
+      });
+      if (!allowed.includes(current)) unitRow.value = '';
+    }
+
+    catSel.addEventListener('change', updateUnitField);
+    updateUnitField();
+  }
+})();
+
+(function () {
+  var MAX_TAGS = 5;
+  document.querySelectorAll('[data-tag-input]').forEach(function (hidden) {
+    /* Build wrapper */
+    var wrap = document.createElement('div');
+    wrap.className = 'tag-input-wrap';
+
+    var textInput = document.createElement('input');
+    textInput.type = 'text';
+    textInput.className = 'tag-input-field';
+    textInput.placeholder = 'Type a tag and press Enter…';
+    textInput.autocomplete = 'off';
+
+    /* Hide original input & place wrapper after it */
+    hidden.style.display = 'none';
+    hidden.parentNode.insertBefore(wrap, hidden.nextSibling);
+
+    /* Replace help text paragraph if it exists */
+    var helpEl = wrap.parentNode.querySelector('span.helptext, small');
+    if (helpEl) { helpEl.style.display = 'none'; }
+
+    var hint = document.createElement('p');
+    hint.className = 'tag-input-hint';
+    hint.textContent = 'Up to 5 tags — press Enter or comma to add each one.';
+    wrap.parentNode.insertBefore(hint, wrap.nextSibling);
+
+    function getTags() {
+      return hidden.value.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+    }
+    function setTags(tags) { hidden.value = tags.join(','); }
+
+    function renderChips() {
+      wrap.innerHTML = '';
+      var tags = getTags();
+      tags.forEach(function (tag) {
+        var chip = document.createElement('span');
+        chip.className = 'tag-input-chip';
+        var label = document.createTextNode(tag + '\u00a0');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tag-input-chip-remove';
+        btn.textContent = '×';
+        btn.addEventListener('click', function () {
+          setTags(getTags().filter(function (t) { return t !== tag; }));
+          renderChips();
+        });
+        chip.appendChild(label);
+        chip.appendChild(btn);
+        wrap.appendChild(chip);
+      });
+      wrap.appendChild(textInput);
+      textInput.focus();
+
+      /* Update hint */
+      var remaining = MAX_TAGS - tags.length;
+      hint.textContent = remaining > 0
+        ? 'Up to 5 tags — press Enter or comma to add each one. (' + remaining + ' remaining)'
+        : 'Maximum of 5 tags reached.';
+      textInput.disabled = remaining <= 0;
+      textInput.placeholder = remaining > 0 ? 'Type a tag and press Enter…' : '';
+    }
+
+    function addTag(val) {
+      val = val.trim().toLowerCase();
+      if (!val) return;
+      var tags = getTags();
+      if (tags.length >= MAX_TAGS) return;
+      if (tags.indexOf(val) === -1) tags.push(val);
+      setTags(tags);
+      textInput.value = '';
+      renderChips();
+    }
+
+    textInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addTag(textInput.value);
+      } else if (e.key === ',') {
+        e.preventDefault();
+        addTag(textInput.value);
+      } else if (e.key === 'Backspace' && textInput.value === '') {
+        var tags = getTags();
+        if (tags.length) {
+          setTags(tags.slice(0, -1));
+          renderChips();
+        }
+      }
+    });
+
+    wrap.addEventListener('click', function () { textInput.focus(); });
+
+    /* Initial render (pre-populate chips when editing an existing listing) */
+    renderChips();
+  });
+})();
+</script>
 </body>
 </html>

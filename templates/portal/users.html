@@ -1,0 +1,49 @@
+{% extends 'portal/base.html' %}
+{% block page_title %}Users{% endblock %}
+{% block content %}
+<form method="get" class="search-row">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search username or email…" style="flex:1;max-width:320px;">
+  <button type="submit" class="btn btn-primary">Search</button>
+  {% if q %}<a href="{% url 'portal_users' %}" class="btn btn-ghost">Clear</a>{% endif %}
+</form>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Username</th><th>Email</th><th>Joined</th>
+          <th>Listings</th><th>Staff</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for u in users %}
+      <tr>
+        <td style="color:var(--muted);">{{ u.pk }}</td>
+        <td><a href="{% url 'portal_user_detail' u.pk %}" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ u.username }}</a></td>
+        <td style="color:var(--muted);">{{ u.email|default:"—" }}</td>
+        <td style="color:var(--muted);">{{ u.date_joined|date:"M d, Y" }}</td>
+        <td>{{ u.listing_count }}</td>
+        <td>{% if u.is_staff %}<span class="badge badge-blue">Staff</span>{% else %}—{% endif %}</td>
+        <td>{% if u.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Inactive</span>{% endif %}</td>
+        <td>
+          {% if not u.is_superuser %}
+          <form method="post" action="{% url 'portal_toggle_user_active' u.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost btn-sm">
+              {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+            </button>
+          </form>
+          {% else %}
+          <span style="color:var(--muted);font-size:.75rem;">Superuser</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;">No users found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

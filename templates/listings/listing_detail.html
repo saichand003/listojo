@@ -1,100 +1,243 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="grid" style="grid-template-columns:2fr 1fr;align-items:start;">
-    <article class="card">
-        <h1>{{ listing.title }}</h1>
-        <div class="chips">
-            <span class="chip">{{ listing.get_category_display }}</span>
-            {% if listing.featured %}<span class="chip">Featured</span>{% endif %}
+<div class="grid" style="grid-template-columns:2fr 1fr;align-items:start;gap:1.25rem;">
+
+    <article class="card" style="padding:0;overflow:hidden;">
+        {% with listing.images.all as imgs %}
+        {% if imgs %}
+            {% if imgs|length == 1 %}
+            {# ── Single image ── #}
+            <div class="detail-gallery solo" style="padding:.75rem .75rem 0;">
+                <div class="detail-main-wrap" id="detail-main-wrap">
+                    <img class="detail-main-img" id="detail-main-img" src="{{ imgs.0.image.url }}" alt="{{ listing.title }}" data-idx="0">
+                </div>
+            </div>
+            {% else %}
+            {# ── Multiple images: vertical thumbs + main ── #}
+            <div class="detail-gallery" style="padding:.75rem .75rem 0;">
+                <div class="detail-thumbs" id="detail-thumbs">
+                    {% for img in imgs %}
+                    <img class="detail-thumb {% if forloop.first %}active{% endif %}"
+                         src="{{ img.image.url }}"
+                         alt="Photo {{ forloop.counter }}"
+                         data-src="{{ img.image.url }}"
+                         data-idx="{{ forloop.counter0 }}">
+                    {% endfor %}
+                </div>
+                <div class="detail-main-wrap" id="detail-main-wrap">
+                    <img class="detail-main-img" id="detail-main-img" src="{{ imgs.0.image.url }}" alt="{{ listing.title }}" data-idx="0">
+                </div>
+            </div>
+            {% endif %}
+            {# Hidden data for lightbox #}
+            <div id="gallery-data" style="display:none;">
+                {% for img in imgs %}<span data-src="{{ img.image.url }}"></span>{% endfor %}
+            </div>
+        {% elif listing.image %}
+            <div class="detail-gallery solo" style="padding:.75rem .75rem 0;">
+                <div class="detail-main-wrap" id="detail-main-wrap">
+                    <img class="detail-main-img" id="detail-main-img" src="{{ listing.image.url }}" alt="{{ listing.title }}" data-idx="0">
+                </div>
+            </div>
+            <div id="gallery-data" style="display:none;"><span data-src="{{ listing.image.url }}"></span></div>
+        {% else %}
+            <div style="width:100%;height:200px;background:linear-gradient(145deg,rgba(42,126,242,.1),rgba(98,194,255,.07),rgba(61,181,73,.07));display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:12px;margin:.75rem .75rem 0;">🏷️</div>
+        {% endif %}
+        {% endwith %}
+
+        <div style="padding:1.5rem;">
+            <div class="chips" style="margin-bottom:.75rem;">
+                <span class="chip">{{ listing.get_category_display }}</span>
+                {% if listing.featured %}<span class="inline-featured-badge">★ Featured</span>{% endif %}
+            </div>
+
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.5rem;">
+                <h1 style="font-size:1.6rem;margin:0;">{{ listing.title }}</h1>
+                {% if user == listing.owner %}
+                    <a href="{% url 'edit_listing' listing.pk %}" class="nav-text-btn" style="flex-shrink:0;white-space:nowrap;">✏️ Edit Listing</a>
+                {% endif %}
+            </div>
+
+            <p class="price" style="font-size:1.4rem;margin-bottom:1rem;">
+                {% if listing.price %}${{ listing.price }}{% if listing.price_unit %}<span class="price-unit">{{ listing.get_price_unit_display }}</span>{% endif %}{% else %}Contact for price{% endif %}
+            </p>
+
+            <p style="color:var(--text-2);line-height:1.7;">{{ listing.description }}</p>
+
+            {% with listing.get_tags_list as tags %}
+                {% if tags %}
+                <div class="listing-tags" style="margin-top:1rem;">
+                    {% for tag in tags %}
+                        <a href="{% url 'listing_list' %}?tag={{ tag }}" class="tag-chip">{{ tag }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:.4rem;">
+                <p class="muted">📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %} &mdash; {{ listing.country }}</p>
+                {% if listing.contact_phone %}<p class="muted">📞 {{ listing.contact_phone }}</p>{% endif %}
+                <p class="muted">👤 Listed by <strong style="color:var(--text-2);">{{ listing.owner.username }}</strong></p>
+            </div>
+
+            {% if user != listing.owner %}
+                <div style="margin-top:1.5rem;">
+                    {% if user.is_authenticated %}
+                        <button type="button" class="button" id="open-chat-btn">💬 Open Live Chat</button>
+                    {% else %}
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="button">💬 Login to Chat</a>
+                    {% endif %}
+                </div>
+            {% endif %}
         </div>
-        <p class="price">{% if listing.price %}${{ listing.price }}{% else %}Contact for price{% endif %}</p>
-
-        {% if listing.image %}
-            <img class="listing-thumb" style="height:320px;" src="{{ listing.image.url }}" alt="{{ listing.title }}">
-        {% endif %}
-
-        <p style="margin-top:1rem;">{{ listing.description }}</p>
-        <p class="muted">Location: {{ listing.city }}, {{ listing.state }} {{ listing.country }}</p>
-        {% if listing.contact_phone %}<p>Phone: {{ listing.contact_phone }}</p>{% endif %}
-        <p class="muted">Posted by {{ listing.owner.username }}</p>
-        {% if user != listing.owner %}
-            <button type="button" class="button" data-open-live-chat>Direct Message</button>
-        {% endif %}
     </article>
 
-    <aside class="card">
-        <h2>Send inquiry</h2>
+    {% if user != listing.owner %}
+    <aside class="card" style="position:sticky;top:1.5rem;">
+        <h2 style="margin-bottom:.25rem;">Send an Inquiry</h2>
+        <p class="muted" style="margin-bottom:1rem;font-size:.82rem;">The lister will be notified by email.</p>
         <form method="post">
             {% csrf_token %}
             {{ inquiry_form.as_p }}
-            <button type="submit">Send inquiry</button>
+            <button type="submit" style="width:100%;margin-top:.25rem;">Send inquiry</button>
         </form>
     </aside>
+    {% endif %}
 </div>
-{% endblock %}
 
-
-{% if user != listing.owner %}
-<div class="live-chat-panel" data-live-chat hidden>
+{# ── LIVE CHAT PANEL ── #}
+{% if user.is_authenticated and user != listing.owner %}
+<div id="live-chat-panel" class="live-chat-panel" hidden>
     <div class="live-chat-header">
-        <strong>Chat with {{ listing.owner.username }}</strong>
-        <button type="button" class="button secondary" data-close-live-chat>Close</button>
+        <div>
+            <strong style="font-size:.95rem;">{{ listing.owner.username }}</strong>
+            <div class="muted" style="font-size:.75rem;margin-top:.1rem;">Re: {{ listing.title }}</div>
+        </div>
+        <button type="button" class="button secondary" id="close-chat-btn" onclick="document.getElementById('live-chat-panel').hidden=true;" style="padding:.3rem .65rem;font-size:.8rem;">✕</button>
     </div>
-    <div class="live-chat-messages" data-live-messages></div>
-    <form class="live-chat-form" data-live-form>
+
+    <div class="live-chat-messages" id="chat-messages">
+        <p class="muted" style="text-align:center;font-size:.82rem;padding:.5rem 0;margin:auto;">Loading…</p>
+    </div>
+
+    <form class="live-chat-form" id="chat-form">
         {% csrf_token %}
-        {% if not user.is_authenticated %}
-            <input type="text" name="guest_name" placeholder="Your name" required>
-            <input type="email" name="guest_email" placeholder="Your email" required>
-        {% endif %}
-        <textarea name="message" rows="3" placeholder="Type your message..." required></textarea>
+        <textarea name="message" rows="2" placeholder="Type a message…" required style="resize:none;"></textarea>
         <button type="submit">Send</button>
     </form>
 </div>
+
 <script>
-(function(){
-  const panel=document.querySelector('[data-live-chat]');
-  if(!panel) return;
-  const openBtn=document.querySelector('[data-open-live-chat]');
-  const closeBtn=document.querySelector('[data-close-live-chat]');
-  const list=panel.querySelector('[data-live-messages]');
-  const form=panel.querySelector('[data-live-form]');
-  const threadUrl="{% url 'live_thread' listing.owner.id %}";
-  const sendUrl="{% url 'live_send' listing.owner.id %}";
-  const csrftoken=document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+(function () {
+  const panel    = document.getElementById('live-chat-panel');
+  const openBtn  = document.getElementById('open-chat-btn');
+  const closeBtn = document.getElementById('close-chat-btn');
+  const msgBox   = document.getElementById('chat-messages');
+  const form     = document.getElementById('chat-form');
+  const threadUrl = "{% url 'listing_chat_thread' listing.pk %}";
+  const sendUrl   = "{% url 'listing_chat_send'   listing.pk %}";
+  const csrf      = document.querySelector('#chat-form [name="csrfmiddlewaretoken"]').value;
 
-  function render(messages){
-    list.innerHTML='';
-    messages.forEach((m)=>{
-      const item=document.createElement('div');
-      item.className='live-chat-bubble '+(m.mine?'mine':'other');
-      item.innerHTML=`<strong>${m.sender}</strong><div>${m.message}</div><small>${m.sent_at}</small>`;
-      list.appendChild(item);
-    });
-    list.scrollTop=list.scrollHeight;
-  }
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  async function load(){
-    const res=await fetch(threadUrl,{headers:{'X-Requested-With':'XMLHttpRequest'}});
-    if(!res.ok) return;
-    const data=await res.json();
-    render(data.messages||[]);
-  }
-
-  openBtn.addEventListener('click',()=>{ panel.hidden=false; load(); });
-  closeBtn.addEventListener('click',()=>{ panel.hidden=true; });
-
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const fd=new FormData(form);
-    const res=await fetch(sendUrl,{method:'POST',body:fd,headers:{'X-CSRFToken':csrftoken}});
-    if(res.ok){
-      form.querySelector('textarea[name="message"]').value='';
-      load();
+  function render(msgs) {
+    if (!msgs.length) {
+      msgBox.innerHTML = '<p class="muted" style="text-align:center;font-size:.82rem;padding:.5rem 0;margin:auto;">No messages yet. Say hello!</p>';
+      return;
     }
+    msgBox.innerHTML = msgs.map(m => `
+      <div class="live-chat-bubble ${m.mine?'mine':'other'}">
+        <div class="bubble-text">${esc(m.message)}</div>
+        <div class="bubble-time">${m.sent_at}</div>
+      </div>`).join('');
+    msgBox.scrollTop = msgBox.scrollHeight;
+  }
+
+  async function load() {
+    try {
+      const r = await fetch(threadUrl, {headers:{'X-Requested-With':'XMLHttpRequest'}});
+      if (r.ok) { const d = await r.json(); render(d.messages || []); }
+    } catch (_) {}
+  }
+
+  openBtn.addEventListener('click', () => { panel.hidden = false; load(); });
+  closeBtn.addEventListener('click', () => { panel.hidden = true; });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    try {
+      const r = await fetch(sendUrl, {method:'POST', body:fd, headers:{'X-CSRFToken':csrf}});
+      if (r.ok) { form.querySelector('textarea').value = ''; load(); }
+    } catch (_) {}
   });
 
-  setInterval(()=>{ if(!panel.hidden) load(); }, 3000);
+  setInterval(() => { if (!panel.hidden) load(); }, 3000);
 })();
 </script>
 {% endif %}
+
+{# ── LIGHTBOX ── #}
+<div id="lightbox" class="lightbox">
+    <button class="lightbox-close" id="lb-close">✕</button>
+    <button class="lightbox-prev" id="lb-prev">‹</button>
+    <img id="lb-img" src="" alt="">
+    <button class="lightbox-next" id="lb-next">›</button>
+</div>
+
+<script>
+(function () {
+  /* ── Thumbnail switcher ── */
+  var mainImg  = document.getElementById('detail-main-img');
+  var thumbs   = document.querySelectorAll('.detail-thumb');
+
+  thumbs.forEach(function(th) {
+    th.addEventListener('click', function() {
+      if (!mainImg) return;
+      mainImg.classList.add('fading');
+      setTimeout(function() {
+        mainImg.src = th.dataset.src;
+        mainImg.dataset.idx = th.dataset.idx;
+        mainImg.classList.remove('fading');
+      }, 150);
+      thumbs.forEach(function(t) { t.classList.remove('active'); });
+      th.classList.add('active');
+    });
+  });
+
+  /* ── Lightbox ── */
+  var data = document.getElementById('gallery-data');
+  if (!data) return;
+  var srcs = Array.from(data.querySelectorAll('[data-src]')).map(function(el){ return el.dataset.src; });
+  if (!srcs.length) return;
+
+  var lb    = document.getElementById('lightbox');
+  var lbImg = document.getElementById('lb-img');
+  var idx   = 0;
+
+  function open(i) { idx = i; lbImg.src = srcs[idx]; lb.classList.add('open'); }
+  function close()  { lb.classList.remove('open'); lbImg.src = ''; }
+  function prev()   { idx = (idx - 1 + srcs.length) % srcs.length; lbImg.src = srcs[idx]; }
+  function next()   { idx = (idx + 1) % srcs.length; lbImg.src = srcs[idx]; }
+
+  /* Click main image to open lightbox at current slide */
+  var mainWrap = document.getElementById('detail-main-wrap');
+  if (mainWrap) {
+    mainWrap.addEventListener('click', function() {
+      open(mainImg ? parseInt(mainImg.dataset.idx || '0', 10) : 0);
+    });
+  }
+
+  document.getElementById('lb-close').addEventListener('click', close);
+  document.getElementById('lb-prev').addEventListener('click', prev);
+  document.getElementById('lb-next').addEventListener('click', next);
+  lb.addEventListener('click', function(e){ if (e.target === lb) close(); });
+  document.addEventListener('keydown', function(e){
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') prev();
+    if (e.key === 'ArrowRight') next();
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width:680px;margin:0 auto;">
+    <div style="margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+        <div>
+            <h1 style="font-size:1.7rem;margin-bottom:.35rem;">Edit Listing</h1>
+            <p class="muted">Update the details for <strong>{{ listing.title }}</strong>.</p>
+        </div>
+        <a href="{% url 'listing_detail' listing.pk %}" class="button secondary" style="flex-shrink:0;">← Back</a>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="card" style="padding:2rem;" id="edit-listing-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        {# ── Existing images ── #}
+        {% if existing_images %}
+        <p style="font-weight:600;margin-bottom:.5rem;">
+            Current Photos <span class="muted" style="font-weight:400;font-size:.82rem;">— hover to remove</span>
+        </p>
+        <div class="existing-images-grid" id="existing-grid">
+            {% for img in existing_images %}
+            <div class="existing-img-item" id="eimg-{{ img.pk }}">
+                <img src="{{ img.image.url }}" alt="Photo {{ forloop.counter }}">
+                <input type="checkbox" name="delete_images" value="{{ img.pk }}" id="del-{{ img.pk }}">
+                <label class="existing-img-delete" for="del-{{ img.pk }}"></label>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {# ── Add new images ── #}
+        <p style="font-weight:600;margin-bottom:.35rem;">
+            Add Photos <span class="muted" style="font-weight:400;font-size:.82rem;">({{ existing_images.count }} existing · up to {{ max_images }} total · max 5 MB each)</span>
+        </p>
+
+        {% if image_errors %}
+        <div class="img-upload-errors">
+            {% for err in image_errors %}<p>⚠ {{ err }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        <div id="img-preview-grid" class="img-preview-grid"></div>
+
+        <div class="img-upload-zone" id="img-upload-zone">
+            <input type="file" name="images" id="img-file-input" multiple accept="image/*">
+            <div class="img-upload-icon">📷</div>
+            <div class="img-upload-label">Click to add photos or drag & drop</div>
+            <div class="img-upload-hint">JPEG, PNG, WEBP · Max 5 MB each</div>
+            <div class="img-upload-count" id="img-count-label">0 new photos selected</div>
+        </div>
+
+        <div style="display:flex;gap:.75rem;margin-top:1.25rem;">
+            <button type="submit" class="button accent" style="flex:1;padding:.7rem;font-size:.95rem;" id="save-btn">
+                ✦ Save Changes
+            </button>
+            <a href="{% url 'listing_detail' listing.pk %}" class="button secondary" style="padding:.7rem 1.25rem;">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+  var MAX       = {{ max_images }};
+  var MAX_BYTES = 5 * 1024 * 1024;
+  var files     = [];
+  var zone      = document.getElementById('img-upload-zone');
+  var input     = document.getElementById('img-file-input');
+  var grid      = document.getElementById('img-preview-grid');
+  var countLbl  = document.getElementById('img-count-label');
+  var form      = document.getElementById('edit-listing-form');
+
+  /* Track deleted existing images */
+  document.querySelectorAll('.existing-img-item input[type="checkbox"]').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      var item = document.getElementById('eimg-' + cb.value);
+      if (item) item.classList.toggle('marked-delete', cb.checked);
+    });
+  });
+
+  function countKept() {
+    var deleted = document.querySelectorAll('.existing-img-item input[type="checkbox"]:checked').length;
+    var existing = document.querySelectorAll('.existing-img-item').length;
+    return existing - deleted;
+  }
+
+  function updateCount() {
+    var ok = files.filter(function(f){ return !f.error; }).length;
+    countLbl.textContent = ok + ' new photo' + (ok !== 1 ? 's' : '') + ' selected';
+    countLbl.classList.toggle('at-limit', countKept() + ok >= MAX);
+  }
+
+  function render() {
+    grid.innerHTML = '';
+    files.forEach(function(item, idx) {
+      var wrap = document.createElement('div');
+      wrap.className = 'img-preview-item' + (item.error ? ' img-preview-error' : '');
+      var img = document.createElement('img');
+      img.src = item.url;
+      wrap.appendChild(img);
+      if (item.error) {
+        var lbl = document.createElement('div');
+        lbl.className = 'img-preview-error-label';
+        lbl.textContent = item.error;
+        wrap.appendChild(lbl);
+      }
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'img-preview-remove'; btn.innerHTML = '✕';
+      btn.addEventListener('click', function() {
+        URL.revokeObjectURL(item.url); files.splice(idx, 1); render(); updateCount(); syncInput();
+      });
+      wrap.appendChild(btn);
+      grid.appendChild(wrap);
+    });
+  }
+
+  function syncInput() {
+    var dt = new DataTransfer();
+    files.forEach(function(f){ if (!f.error) dt.items.add(f.file); });
+    input.files = dt.files;
+  }
+
+  function addFiles(newFiles) {
+    Array.from(newFiles).forEach(function(file) {
+      var currentOk = files.filter(function(f){ return !f.error; }).length;
+      var error = null;
+      if (file.size > MAX_BYTES) {
+        error = (file.size / 1024 / 1024).toFixed(1) + ' MB — too large';
+      } else if (countKept() + currentOk >= MAX) {
+        error = 'Limit reached';
+      }
+      files.push({ file: file, url: URL.createObjectURL(file), error: error });
+    });
+    render(); updateCount(); syncInput();
+  }
+
+  input.addEventListener('change', function() {
+    var selected = Array.from(input.files);
+    input.value = '';          /* clear first, then add — so syncInput wins */
+    addFiles(selected);
+  });
+  zone.addEventListener('dragover',  function(e){ e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', function()  { zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault(); zone.classList.remove('drag-over'); addFiles(e.dataTransfer.files);
+  });
+
+  form.addEventListener('submit', function(e) {
+    var hasErrors = files.some(function(f){ return f.error; });
+    if (hasErrors) { e.preventDefault(); alert('Please remove invalid images before saving.'); }
+  });
+})();
+</script>
+{% endblock %}

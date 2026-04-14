@@ -1,10 +1,126 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Post your listing</h1>
-<p class="muted">Add as much detail as possible so buyers can discover your listing.</p>
-<form method="post" enctype="multipart/form-data" class="card">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Publish listing</button>
-</form>
+<div style="max-width:680px;margin:0 auto;">
+    <div style="margin-bottom:1.5rem;">
+        <h1 style="font-size:1.7rem;margin-bottom:.35rem;">Create a Listing</h1>
+        <p class="muted">Add as much detail as possible so buyers can discover your listing.</p>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="card" style="padding:2rem;" id="create-listing-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        {# ── Multi-image upload ── #}
+        <p style="margin-bottom:.35rem;"><label style="font-weight:600;">Photos <span class="muted" style="font-weight:400;">(up to {{ max_images }}, max 5 MB each)</span></label></p>
+
+        {% if image_errors %}
+        <div class="img-upload-errors">
+            {% for err in image_errors %}<p>⚠ {{ err }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        <div id="img-preview-grid" class="img-preview-grid"></div>
+
+        <div class="img-upload-zone" id="img-upload-zone">
+            <input type="file" name="images" id="img-file-input" multiple accept="image/*">
+            <div class="img-upload-icon">📷</div>
+            <div class="img-upload-label">Click to add photos or drag & drop</div>
+            <div class="img-upload-hint">JPEG, PNG, WEBP · Max 5 MB each</div>
+            <div class="img-upload-count" id="img-count-label">0 / {{ max_images }} photos added</div>
+        </div>
+
+        <button type="submit" class="button accent" style="width:100%;padding:.7rem;font-size:.95rem;margin-top:1.25rem;" id="publish-btn">
+            ✦ Publish Listing
+        </button>
+    </form>
+</div>
+
+<script>
+(function () {
+  var MAX       = {{ max_images }};
+  var MAX_BYTES = 5 * 1024 * 1024;
+  var files     = [];   /* {file, error} */
+  var zone      = document.getElementById('img-upload-zone');
+  var input     = document.getElementById('img-file-input');
+  var grid      = document.getElementById('img-preview-grid');
+  var countLbl  = document.getElementById('img-count-label');
+  var form      = document.getElementById('create-listing-form');
+
+  function updateCount() {
+    var ok = files.filter(function(f){ return !f.error; }).length;
+    countLbl.textContent = ok + ' / ' + MAX + ' photos added';
+    countLbl.classList.toggle('at-limit', ok >= MAX);
+  }
+
+  function render() {
+    grid.innerHTML = '';
+    files.forEach(function(item, idx) {
+      var wrap = document.createElement('div');
+      wrap.className = 'img-preview-item' + (item.error ? ' img-preview-error' : '');
+
+      var img = document.createElement('img');
+      img.src = item.url;
+      wrap.appendChild(img);
+
+      if (item.error) {
+        var lbl = document.createElement('div');
+        lbl.className = 'img-preview-error-label';
+        lbl.textContent = item.error;
+        wrap.appendChild(lbl);
+      }
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'img-preview-remove';
+      btn.innerHTML = '✕';
+      btn.addEventListener('click', function() {
+        URL.revokeObjectURL(item.url);
+        files.splice(idx, 1);
+        render(); updateCount(); syncInput();
+      });
+      wrap.appendChild(btn);
+      grid.appendChild(wrap);
+    });
+  }
+
+  function syncInput() {
+    /* Rebuild a DataTransfer with only valid files */
+    var dt = new DataTransfer();
+    files.forEach(function(f){ if (!f.error) dt.items.add(f.file); });
+    input.files = dt.files;
+  }
+
+  function addFiles(newFiles) {
+    Array.from(newFiles).forEach(function(file) {
+      var ok = files.filter(function(f){ return !f.error; }).length;
+      var error = null;
+      if (file.size > MAX_BYTES) {
+        error = (file.size / 1024 / 1024).toFixed(1) + ' MB — too large';
+      } else if (ok >= MAX) {
+        error = 'Limit reached';
+      }
+      files.push({ file: file, url: URL.createObjectURL(file), error: error });
+    });
+    render(); updateCount(); syncInput();
+  }
+
+  input.addEventListener('change', function() {
+    var selected = Array.from(input.files);
+    input.value = '';          /* clear first, then add — so syncInput wins */
+    addFiles(selected);
+  });
+
+  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', function()  { zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    addFiles(e.dataTransfer.files);
+  });
+
+  /* Block submit if any error images remain */
+  form.addEventListener('submit', function(e) {
+    var hasErrors = files.some(function(f){ return f.error; });
+    if (hasErrors) { e.preventDefault(); alert('Please remove invalid images before publishing.'); }
+  });
+})();
+</script>
 {% endblock %}

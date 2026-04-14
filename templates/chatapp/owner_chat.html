@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width:680px;margin:0 auto;">
+
+    <div style="margin-bottom:.75rem;display:flex;align-items:center;gap:.75rem;">
+        <a href="{% url 'inbox' %}" class="button secondary" style="padding:.35rem .75rem;font-size:.85rem;">← Messages</a>
+        <span class="muted" style="font-size:.85rem;">
+            Chat with <strong>{{ other_user.username }}</strong> about
+            <a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a>
+        </span>
+    </div>
+
+    {# Message thread #}
+    <div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;">
+        <div id="chat-messages" style="padding:1rem;min-height:320px;max-height:520px;overflow-y:auto;display:flex;flex-direction:column;gap:.55rem;">
+            {% for msg in thread %}
+            <div class="owner-bubble {% if msg.sender == request.user %}mine{% else %}other{% endif %}">
+                <div class="bubble-body">{{ msg.message }}</div>
+                <div class="bubble-meta">{{ msg.sent_at|date:"H:i" }}</div>
+            </div>
+            {% empty %}
+            <p class="muted" id="empty-notice" style="text-align:center;margin:auto;">No messages yet.</p>
+            {% endfor %}
+        </div>
+
+        <div style="border-top:1px solid var(--border);padding:.75rem;display:flex;gap:.5rem;background:var(--surface);">
+            <form id="chat-form" style="display:flex;gap:.5rem;width:100%;">
+                {% csrf_token %}
+                <input type="text" id="msg-input" placeholder="Type a message…" style="flex:1;" autocomplete="off" required>
+                <button type="submit" style="flex-shrink:0;">Send</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.owner-bubble { display:flex; flex-direction:column; max-width:72%; }
+.owner-bubble.mine  { align-self:flex-end;  align-items:flex-end; }
+.owner-bubble.other { align-self:flex-start; align-items:flex-start; }
+.bubble-body {
+  padding:.5rem .8rem; border-radius:14px; font-size:.92rem;
+  line-height:1.45; word-break:break-word;
+}
+.owner-bubble.mine  .bubble-body {
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  color:#fff; border-radius:14px 14px 4px 14px;
+}
+.owner-bubble.other .bubble-body {
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:14px 14px 14px 4px;
+}
+.bubble-meta { font-size:.72rem; color:var(--muted); margin-top:.18rem; padding:0 .2rem; }
+</style>
+
+<script>
+(function () {
+  const box      = document.getElementById('chat-messages');
+  const form     = document.getElementById('chat-form');
+  const input    = document.getElementById('msg-input');
+  const threadUrl = "{% url 'owner_listing_chat_thread' listing_id=listing.pk other_user_id=other_user.pk %}";
+  const sendUrl   = "{% url 'owner_listing_chat_send'   listing_id=listing.pk other_user_id=other_user.pk %}";
+  const csrf      = document.querySelector('[name="csrfmiddlewaretoken"]').value;
+  let knownCount  = {{ thread.count }};
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderMessages(msgs) {
+    if (msgs.length === knownCount) return;
+    knownCount = msgs.length;
+    const empty = document.getElementById('empty-notice');
+    if (empty) empty.remove();
+    box.innerHTML = msgs.map(m => `
+      <div class="owner-bubble ${m.mine ? 'mine' : 'other'}">
+        <div class="bubble-body">${esc(m.message)}</div>
+        <div class="bubble-meta">${m.sent_at}</div>
+      </div>`).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch(threadUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (r.ok) { const d = await r.json(); renderMessages(d.messages || []); }
+    } catch (_) {}
+  }
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    const fd = new FormData();
+    fd.append('message', text);
+    try {
+      const r = await fetch(sendUrl, { method: 'POST', body: fd, headers: { 'X-CSRFToken': csrf } });
+      if (r.ok) poll();
+    } catch (_) {}
+  });
+
+  // Scroll to bottom on load
+  box.scrollTop = box.scrollHeight;
+
+  // Poll every 3 s for new messages from the visitor
+  setInterval(poll, 3000);
+})();
+</script>
+{% endblock %}

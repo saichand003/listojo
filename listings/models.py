@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -6,30 +7,75 @@ class Listing(models.Model):
     CATEGORY_CHOICES = [
         ('roommates', 'Roommates'),
         ('rentals', 'Rentals'),
+        ('properties', 'Properties'),
         ('local_services', 'Local Services'),
         ('jobs', 'Jobs'),
         ('buy_sell', 'Buy & Sell'),
         ('events', 'Events'),
     ]
 
+    PRICE_UNIT_CHOICES = [
+        ('',    '— select —'),
+        ('mo',  '/Month'),
+        ('wk',  '/Week'),
+        ('day', '/Day'),
+        ('hr',  '/Hour'),
+    ]
+
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listings')
     title = models.CharField(max_length=120)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    category = models.CharField(max_length=32, choices=CATEGORY_CHOICES, default='local_services')
+    price_unit = models.CharField(max_length=8, choices=PRICE_UNIT_CHOICES, blank=True, default='')
+    category = models.CharField(max_length=32, choices=CATEGORY_CHOICES, default='')
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100, blank=True)
     country = models.CharField(max_length=100, default='USA')
     contact_phone = models.CharField(max_length=30, blank=True)
     featured = models.BooleanField(default=False)
     image = models.ImageField(upload_to='listing_images/', blank=True, null=True)
+    tags = models.CharField(max_length=200, blank=True, default='',
+                            help_text='Comma-separated tags, e.g. pet-friendly, parking, furnished')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_tags_list(self):
+        return [t.strip() for t in self.tags.split(',') if t.strip()]
+
+    def clean(self):
+        if self.tags:
+            tag_list = [t.strip() for t in self.tags.split(',') if t.strip()]
+            if len(tag_list) > 5:
+                raise ValidationError({'tags': 'You can add a maximum of 5 tags.'})
 
     class Meta:
         ordering = ['-featured', '-created_at']
 
     def __str__(self):
         return self.title
+
+
+class ListingImage(models.Model):
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='images')
+    image   = models.ImageField(upload_to='listing_images/')
+    order   = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f'Image {self.order} for {self.listing.title}'
+
+
+class Favourite(models.Model):
+    user    = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favourites')
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='favourited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'listing')
+
+    def __str__(self):
+        return f'{self.user.username} ♥ {self.listing.title}'
 
 
 class ListingInquiry(models.Model):
