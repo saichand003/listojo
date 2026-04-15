@@ -74,7 +74,7 @@
         <input type="hidden" name="category" value="{{ filters.category }}">
         <input type="hidden" name="city" value="{{ filters.city }}">
         <input type="hidden" name="tag" value="{{ filters.tag }}">
-        <select name="sort" class="sort-select" onchange="this.form.submit()">
+        <select name="sort" class="sort-select" id="sort-select">
             <option value="latest"     {% if filters.sort == 'latest'     %}selected{% endif %}>Latest first</option>
             <option value="price_low"  {% if filters.sort == 'price_low'  %}selected{% endif %}>Price: Low → High</option>
             <option value="price_high" {% if filters.sort == 'price_high' %}selected{% endif %}>Price: High → Low</option>
@@ -82,82 +82,7 @@
     </form>
 </div>
 
-<section class="grid grid-listings">
-{% for listing in listings %}
-    <article class="card listing-card {% if listing.featured %}listing-featured{% endif %}">
-        <div class="listing-thumb-wrap">
-            {% with listing.images.all as imgs %}
-            {% if imgs %}
-                <div class="listing-thumb-track">
-                    {% for img in imgs %}
-                        <img class="listing-thumb" src="{{ img.image.url }}" alt="{{ listing.title }} photo {{ forloop.counter }}">
-                    {% endfor %}
-                </div>
-                {% if imgs|length > 1 %}
-                <button type="button" class="thumb-nav thumb-nav-prev" aria-label="Previous photo">&#8249;</button>
-                <button type="button" class="thumb-nav thumb-nav-next" aria-label="Next photo">&#8250;</button>
-                <div class="thumb-dots">
-                    {% for img in imgs %}
-                    <span class="thumb-dot {% if forloop.first %}active{% endif %}"></span>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            {% elif listing.image %}
-                <div class="listing-thumb-track">
-                    <img class="listing-thumb" src="{{ listing.image.url }}" alt="{{ listing.title }}">
-                </div>
-            {% else %}
-                <div class="listing-thumb listing-thumb-placeholder">🏷️</div>
-            {% endif %}
-            {% endwith %}
-            {% if listing.featured %}
-                <span class="featured-badge">★ Featured</span>
-            {% endif %}
-            {% if listing.created_at > new_threshold %}
-                <span class="new-badge">New</span>
-            {% else %}
-                <span class="category-badge">{{ listing.get_category_display }}</span>
-            {% endif %}
-        </div>
-        <div class="listing-body">
-            <div class="card-title-row">
-                <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
-                {% if user.is_authenticated %}
-                <button type="button"
-                    class="save-pill {% if listing.pk in fav_ids %}save-pill-active{% endif %}"
-                    data-fav-url="{% url 'toggle_favourite' listing.pk %}"
-                    data-csrf="{{ csrf_token }}">
-                    {% if listing.pk in fav_ids %}♥ Saved{% else %}♡ Save{% endif %}
-                </button>
-                {% endif %}
-            </div>
-            <p class="card-location-time">
-                📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %} &nbsp;·&nbsp; {{ listing.created_at|timesince }} ago
-            </p>
-            <p class="price">
-                {% if listing.price %}
-                    ${{ listing.price }}{% if listing.price_unit %}<span class="price-unit">{{ listing.get_price_unit_display }}</span>{% endif %}
-                {% else %}
-                    <span style="font-size:1rem;font-weight:600;-webkit-text-fill-color:var(--muted);background:none;">Contact for price</span>
-                {% endif %}
-            </p>
-            <div class="card-actions">
-                <a href="{% url 'listing_detail' listing.pk %}" class="card-btn-primary">View details</a>
-                {% if user.is_authenticated and user != listing.owner %}
-                <button type="button" class="card-btn-secondary open-chat-btn"
-                    data-listing-id="{{ listing.pk }}"
-                    data-listing-title="{{ listing.title|truncatechars:40 }}"
-                    data-owner="{{ listing.owner.username }}">Message</button>
-                {% elif not user.is_authenticated %}
-                <a href="{% url 'login' %}?next={{ request.path }}" class="card-btn-secondary">Message</a>
-                {% endif %}
-            </div>
-        </div>
-    </article>
-{% empty %}
-    <p class="muted" style="grid-column:1/-1;text-align:center;padding:2rem 0;">No listings found. Try different filters.</p>
-{% endfor %}
-</section>
+{% include 'listings/_listings_grid.html' %}
 
 {# ── TRUST STRIP ── #}
 <div class="trust-strip">
@@ -250,31 +175,80 @@
 </script>
 
 <script>
-document.querySelectorAll('.save-pill[data-fav-url]').forEach(function(btn) {
-  btn.addEventListener('click', function(e) {
-    e.preventDefault();
-    var url  = btn.dataset.favUrl;
-    var csrf = btn.dataset.csrf;
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': csrf,
-        'X-Requested-With': 'XMLHttpRequest',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: 'csrfmiddlewaretoken=' + encodeURIComponent(csrf),
+/* ── AJAX sort — swap only the grid, no full reload ── */
+(function () {
+  var sortSelect = document.getElementById('sort-select');
+  if (!sortSelect) return;
+
+  sortSelect.addEventListener('change', function () {
+    var form   = document.getElementById('sort-form');
+    var params = new URLSearchParams(new FormData(form));
+    params.set('sort', sortSelect.value);
+
+    var grid = document.getElementById('listings-grid');
+    if (grid) { grid.style.opacity = '.5'; grid.style.pointerEvents = 'none'; }
+
+    fetch('?' + params.toString(), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.is_favourite) {
-        btn.classList.add('save-pill-active');
-        btn.innerHTML = '♥ Saved';
-      } else {
-        btn.classList.remove('save-pill-active');
-        btn.innerHTML = '♡ Save';
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+      var tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      var newGrid = tmp.querySelector('#listings-grid');
+      if (newGrid && grid) {
+        grid.replaceWith(newGrid);
+        /* Re-run reveal animation on new cards */
+        newGrid.querySelectorAll('.listing-card').forEach(function(el) {
+          el.classList.add('js-reveal');
+          setTimeout(function() { el.classList.add('visible'); }, 10);
+        });
+        /* Re-bind save pills */
+        bindSavePills(newGrid);
       }
+      /* Update URL bar without reload */
+      history.replaceState(null, '', '?' + params.toString());
+    })
+    .catch(function () {
+      if (grid) { grid.style.opacity = ''; grid.style.pointerEvents = ''; }
     });
   });
-});
+})();
+
+/* ── Save pill binding (shared by initial load + AJAX refresh) ── */
+function bindSavePills(root) {
+  (root || document).querySelectorAll('.save-pill[data-fav-url]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var url  = btn.dataset.favUrl;
+      var csrf = btn.dataset.csrf;
+      var card  = btn.closest('.listing-card');
+      var pills = card ? card.querySelectorAll('.save-pill[data-fav-url]') : [btn];
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrf,
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'csrfmiddlewaretoken=' + encodeURIComponent(csrf),
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        pills.forEach(function(p) {
+          if (data.is_favourite) {
+            p.classList.add('save-pill-active');
+            p.innerHTML = '♥ Saved';
+          } else {
+            p.classList.remove('save-pill-active');
+            p.innerHTML = '♡ Save';
+          }
+        });
+      });
+    });
+  });
+}
+bindSavePills();
 </script>
 {% endblock %}

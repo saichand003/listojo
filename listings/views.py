@@ -52,6 +52,8 @@ def listing_list(request):
         listings = listings.order_by('price', '-featured', '-created_at')
     elif sort == 'price_high':
         listings = listings.order_by('-price', '-featured', '-created_at')
+    else:
+        listings = listings.order_by('-featured', '-created_at')
 
     category_counts = dict(
         Listing.objects.values_list('category').annotate(total=Count('id'))
@@ -72,6 +74,10 @@ def listing_list(request):
         'filters': {'q': q, 'category': category, 'city': city, 'sort': sort, 'tag': tag},
         'new_threshold': timezone.now() - timedelta(hours=48),
     }
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render(request, 'listings/_listings_grid.html', context)
+
     return render(request, 'listings/listing_list.html', context)
 
 

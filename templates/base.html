@@ -77,6 +77,37 @@
     {% block content %}{% endblock %}
 </div>
 <a href="#page-top" id="back-to-top" aria-label="Back to top">↑</a>
+
+{# ── MOBILE BOTTOM TAB BAR ── #}
+<nav class="mob-nav" aria-label="Mobile navigation">
+    <a href="{% url 'listing_list' %}" class="mob-nav-item {% if request.resolver_match.url_name == 'listing_list' %}mob-active{% endif %}">
+        <span class="mob-nav-icon">🏠</span>
+        <span>Home</span>
+    </a>
+    <a href="{% url 'listing_list' %}#search-form" class="mob-nav-item">
+        <span class="mob-nav-icon">🔍</span>
+        <span>Search</span>
+    </a>
+    <a href="{% url 'create_listing' %}" class="mob-nav-item mob-nav-post">
+        <span class="mob-nav-icon-wrap">✦</span>
+        <span>Post</span>
+    </a>
+    <a href="{% url 'inbox' %}" class="mob-nav-item {% if request.resolver_match.url_name == 'inbox' %}mob-active{% endif %}">
+        <span class="mob-nav-icon">💬</span>
+        <span>Messages</span>
+    </a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'profile' %}" class="mob-nav-item {% if request.resolver_match.url_name == 'profile' %}mob-active{% endif %}">
+        <span class="mob-nav-icon">👤</span>
+        <span>Profile</span>
+    </a>
+    {% else %}
+    <a href="{% url 'login' %}" class="mob-nav-item {% if request.resolver_match.url_name == 'login' %}mob-active{% endif %}">
+        <span class="mob-nav-icon">👤</span>
+        <span>Login</span>
+    </a>
+    {% endif %}
+</nav>
 <footer class="site-footer">
     <div class="site-footer-inner">
         <div class="site-footer-brand">
