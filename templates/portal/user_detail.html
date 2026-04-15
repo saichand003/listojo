@@ -1,0 +1,62 @@
+{% extends 'portal/base.html' %}
+{% block page_title %}User — {{ u.username }}{% endblock %}
+{% block content %}
+<div style="margin-bottom:1.25rem;">
+  <a href="{% url 'portal_users' %}" class="btn btn-ghost btn-sm">← Back to Users</a>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:1.25rem;">
+  <div class="card">
+    <div class="section-head">Profile</div>
+    <table>
+      <tbody>
+        <tr><td style="color:var(--muted);">Username</td><td><strong>{{ u.username }}</strong></td></tr>
+        <tr><td style="color:var(--muted);">Email</td><td>{{ u.email|default:"—" }}</td></tr>
+        <tr><td style="color:var(--muted);">Full name</td><td>{{ u.get_full_name|default:"—" }}</td></tr>
+        <tr><td style="color:var(--muted);">Joined</td><td>{{ u.date_joined|date:"M d, Y P" }}</td></tr>
+        <tr><td style="color:var(--muted);">Last login</td><td>{{ u.last_login|date:"M d, Y P"|default:"Never" }}</td></tr>
+        <tr><td style="color:var(--muted);">Status</td><td>{% if u.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Inactive</span>{% endif %}</td></tr>
+        <tr><td style="color:var(--muted);">Staff</td><td>{% if u.is_staff %}Yes{% else %}No{% endif %}</td></tr>
+      </tbody>
+    </table>
+    {% if not u.is_superuser %}
+    <div style="margin-top:1rem;">
+      <form method="post" action="{% url 'portal_toggle_user_active' u.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn {% if u.is_active %}btn-danger{% else %}btn-primary{% endif %}">
+          {% if u.is_active %}Deactivate Account{% else %}Activate Account{% endif %}
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card kpi-card">
+    <div class="kpi-label">Listings Posted</div>
+    <div class="kpi-value">{{ listings|length }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-head">Listings by {{ u.username }}</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Title</th><th>Category</th><th>Price</th><th>Featured</th><th>Posted</th><th></th></tr></thead>
+      <tbody>
+      {% for l in listings %}
+      <tr>
+        <td><strong>{{ l.title }}</strong></td>
+        <td><span class="badge badge-blue">{{ l.get_category_display }}</span></td>
+        <td>{% if l.price %}${{ l.price }}{% else %}—{% endif %}</td>
+        <td>{% if l.featured %}<span class="badge badge-orange">★ Featured</span>{% else %}—{% endif %}</td>
+        <td style="color:var(--muted);">{{ l.created_at|date:"M d, Y" }}</td>
+        <td><a href="{% url 'listing_detail' l.pk %}" target="_blank" class="btn btn-ghost btn-sm">View</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1.5rem;">No listings yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

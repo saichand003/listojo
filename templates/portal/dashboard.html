@@ -1,0 +1,110 @@
+{% extends 'portal/base.html' %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+
+<!-- KPI Row -->
+<div class="grid grid-4" style="margin-bottom:1.25rem;">
+  <div class="card kpi-card">
+    <div class="kpi-label">Total Users</div>
+    <div class="kpi-value">{{ total_users }}</div>
+    <div class="kpi-sub">+{{ new_users_7 }} this week</div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-label">Total Listings</div>
+    <div class="kpi-value">{{ total_listings }}</div>
+    <div class="kpi-sub">+{{ new_listings_7 }} this week</div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-label">Chat Messages</div>
+    <div class="kpi-value">{{ total_messages }}</div>
+    <div class="kpi-sub" style="color:var(--primary);">Live chats</div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-label">Inquiries</div>
+    <div class="kpi-value">{{ total_inquiries }}</div>
+    <div class="kpi-sub" style="color:var(--primary);">Via inquiry form</div>
+  </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:1.25rem;">
+
+  <!-- Category breakdown -->
+  <div class="card">
+    <div class="section-head">Listings by Category</div>
+    {% with max_count=category_data.0.count %}
+    {% for row in category_data %}
+    <div class="bar-row">
+      <div class="bar-label">{{ row.label }}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:{% if max_count %}{% widthratio row.count max_count 100 %}%{% else %}0%{% endif %}"></div>
+      </div>
+      <div class="bar-count">{{ row.count }}</div>
+    </div>
+    {% empty %}
+    <p style="color:var(--muted);font-size:.85rem;">No listings yet.</p>
+    {% endfor %}
+    {% endwith %}
+  </div>
+
+  <!-- Quick stats -->
+  <div class="card">
+    <div class="section-head">Highlights</div>
+    <table>
+      <tbody>
+        <tr><td style="color:var(--muted);">Featured listings</td><td><strong>{{ featured }}</strong></td></tr>
+        <tr><td style="color:var(--muted);">New users (30 days)</td><td><strong>{{ new_users_30 }}</strong></td></tr>
+        <tr><td style="color:var(--muted);">New users (7 days)</td><td><strong>{{ new_users_7 }}</strong></td></tr>
+        <tr><td style="color:var(--muted);">New listings (7 days)</td><td><strong>{{ new_listings_7 }}</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="grid grid-2">
+
+  <!-- Recent users -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;">
+      <div class="section-head" style="margin:0;">Recent Users</div>
+      <a href="{% url 'portal_users' %}" class="btn btn-ghost btn-sm">View all</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Username</th><th>Joined</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for u in recent_users %}
+        <tr>
+          <td><a href="{% url 'portal_user_detail' u.pk %}" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ u.username }}</a></td>
+          <td style="color:var(--muted);">{{ u.date_joined|date:"M d, Y" }}</td>
+          <td>{% if u.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Inactive</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent listings -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;">
+      <div class="section-head" style="margin:0;">Recent Listings</div>
+      <a href="{% url 'portal_listings' %}" class="btn btn-ghost btn-sm">View all</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Title</th><th>Owner</th><th>Category</th></tr></thead>
+        <tbody>
+        {% for l in recent_listings %}
+        <tr>
+          <td><a href="{% url 'listing_detail' l.pk %}" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ l.title|truncatechars:28 }}</a></td>
+          <td style="color:var(--muted);">{{ l.owner.username }}</td>
+          <td><span class="badge badge-blue">{{ l.get_category_display }}</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

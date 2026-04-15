@@ -1,12 +1,58 @@
-<svg width="340" height="92" viewBox="0 0 340 92" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="340" height="92" rx="10" fill="transparent"/>
-  <g transform="translate(10,10)">
-    <path d="M10 18L45 5L80 18" stroke="#A8C9EA" stroke-width="8" stroke-linecap="round"/>
-    <path d="M10 36L45 23L80 36" stroke="#3E8FDC" stroke-width="8" stroke-linecap="round"/>
-    <path d="M10 54L45 41L80 54" stroke="#1D5FA8" stroke-width="8" stroke-linecap="round"/>
-    <line x1="28" y1="66" x2="62" y2="66" stroke="#A8B9CC" stroke-width="8" stroke-linecap="round"/>
-    <line x1="30" y1="76" x2="60" y2="76" stroke="#CAD4E0" stroke-width="8" stroke-linecap="round"/>
-  </g>
-  <text x="118" y="53" font-size="64" font-family="Georgia, 'Times New Roman', serif" font-weight="700" fill="#232323">list</text>
-  <text x="225" y="53" font-size="64" font-family="Georgia, 'Times New Roman', serif" font-weight="700" fill="#1D5FA8">ojo</text>
+<svg width="1000" height="350" viewBox="0 30 1000 350" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pinGradient" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#62C2FF"/>
+      <stop offset="52%" stop-color="#2A7EF2"/>
+      <stop offset="100%" stop-color="#1A5DD4"/>
+    </linearGradient>
+
+    <linearGradient id="greenGradient" x1="0" y1="90" x2="0" y2="310" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3DB549"/>
+      <stop offset="100%" stop-color="#5DC228"/>
+    </linearGradient>
+
+    <style>
+      .mainText {
+        font-family: "Montserrat", "Avenir Next", "Poppins", "Segoe UI", Arial, sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .tagText {
+        font-family: "Montserrat", "Avenir Next", "Poppins", "Segoe UI", Arial, sans-serif;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .dark-text { fill: #182B52; }
+    </style>
+  </defs>
+
+  <path
+    d="M210 55
+       C130 55 85 115 85 175
+       C85 270 165 335 200 370
+       C205 375 210 378 215 378
+       C220 378 225 375 230 370
+       C265 335 345 270 345 175
+       C345 115 290 55 210 55Z"
+    fill="url(#pinGradient)"/>
+
+  <path
+    d="M190 135
+       C190 110 205 95 225 95
+       L225 225
+       L280 225
+       C278 245 258 265 220 280
+       L175 280
+       L175 145
+       C175 120 182 105 190 100Z"
+    fill="white"/>
+
+  <text x="400" y="243" class="mainText" font-size="162">
+    <tspan class="dark-text">Listo</tspan><tspan fill="url(#greenGradient)">jo</tspan>
+  </text>
+
+  <text x="660" y="323" class="tagText" font-size="52" text-anchor="middle">
+    <tspan class="dark-text">List It. Find It. </tspan>
+    <tspan fill="url(#greenGradient)">Go.</tspan>
+  </text>
 </svg>

@@ -1,0 +1,55 @@
+{% extends 'portal/base.html' %}
+{% block page_title %}Listings{% endblock %}
+{% block content %}
+<form method="get" class="search-row">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search title or owner…" style="flex:1;max-width:280px;">
+  <select name="category">
+    <option value="">All categories</option>
+    {% for key, label in category_choices %}
+    <option value="{{ key }}" {% if category == key %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">Filter</button>
+  {% if q or category %}<a href="{% url 'portal_listings' %}" class="btn btn-ghost">Clear</a>{% endif %}
+</form>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Title</th><th>Owner</th><th>Category</th><th>Price</th><th>Tags</th><th>Featured</th><th>Posted</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+      {% for l in listings %}
+      <tr>
+        <td style="color:var(--muted);">{{ l.pk }}</td>
+        <td>
+          <a href="{% url 'listing_detail' l.pk %}" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;">
+            {{ l.title|truncatechars:32 }}
+          </a>
+        </td>
+        <td style="color:var(--muted);">{{ l.owner.username }}</td>
+        <td><span class="badge badge-blue">{{ l.get_category_display }}</span></td>
+        <td>{% if l.price %}${{ l.price }}{% else %}—{% endif %}</td>
+        <td style="color:var(--muted);font-size:.78rem;">{{ l.tags|truncatechars:30|default:"—" }}</td>
+        <td>{% if l.featured %}<span class="badge badge-orange">★ Yes</span>{% else %}—{% endif %}</td>
+        <td style="color:var(--muted);">{{ l.created_at|date:"M d, Y" }}</td>
+        <td style="display:flex;gap:.4rem;flex-wrap:wrap;">
+          <form method="post" action="{% url 'portal_toggle_featured' l.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost btn-sm">{% if l.featured %}Unfeature{% else %}Feature{% endif %}</button>
+          </form>
+          <form method="post" action="{% url 'portal_delete_listing' l.pk %}" onsubmit="return confirm('Delete this listing?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem;">No listings found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

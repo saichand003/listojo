@@ -1,7 +1,30 @@
-<svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M10 18L45 5L80 18" stroke="#A8C9EA" stroke-width="8" stroke-linecap="round"/>
-  <path d="M10 36L45 23L80 36" stroke="#3E8FDC" stroke-width="8" stroke-linecap="round"/>
-  <path d="M10 54L45 41L80 54" stroke="#1D5FA8" stroke-width="8" stroke-linecap="round"/>
-  <line x1="28" y1="66" x2="62" y2="66" stroke="#A8B9CC" stroke-width="8" stroke-linecap="round"/>
-  <line x1="30" y1="76" x2="60" y2="76" stroke="#CAD4E0" stroke-width="8" stroke-linecap="round"/>
+<svg width="110" height="110" viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pinGradientMark" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#62C2FF"/>
+      <stop offset="52%" stop-color="#2A7EF2"/>
+      <stop offset="100%" stop-color="#123FC5"/>
+    </linearGradient>
+  </defs>
+
+  <path
+    d="M210 55
+       C130 55 85 115 85 175
+       C85 270 165 335 200 370
+       C205 375 210 378 215 378
+       C220 378 225 375 230 370
+       C265 335 345 270 345 175
+       C345 115 290 55 210 55Z"
+    fill="url(#pinGradientMark)"/>
+
+  <path
+    d="M190 135
+       C190 110 205 95 225 95
+       L225 225
+       L280 225
+       C278 245 258 265 220 280
+       L175 280
+       L175 145
+       C175 120 182 105 190 100Z"
+    fill="white"/>
 </svg>

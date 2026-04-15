@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+    <h1 style="font-size:1.7rem;margin-bottom:.35rem;">Saved Listings</h1>
+    <p class="muted">Listings you've saved for later — all in one place.</p>
+</div>
+
+{% if listings %}
+<section class="grid grid-listings">
+{% for listing in listings %}
+    <article class="card listing-card {% if listing.featured %}listing-featured{% endif %}">
+        <div class="listing-thumb-wrap">
+            {% with listing.images.all as imgs %}
+            {% if imgs %}
+                <img class="listing-thumb" src="{{ imgs.0.image.url }}" alt="{{ listing.title }}">
+            {% elif listing.image %}
+                <img class="listing-thumb" src="{{ listing.image.url }}" alt="{{ listing.title }}">
+            {% else %}
+                <div class="listing-thumb listing-thumb-placeholder">🏷️</div>
+            {% endif %}
+            {% endwith %}
+            {% if listing.featured %}
+                <span class="featured-badge">★ Featured</span>
+            {% endif %}
+            <span class="category-badge">{{ listing.get_category_display }}</span>
+        </div>
+        <div class="listing-body">
+            <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
+            <p class="price" style="margin:.3rem 0;">
+                {% if listing.price %}${{ listing.price }}{% else %}Contact for price{% endif %}
+            </p>
+            <p class="muted" style="font-size:.78rem;">📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}</p>
+            <p class="listing-desc">{{ listing.description|truncatewords:18 }}</p>
+            <div class="card-footer-row">
+                <span class="card-time-row">🕐 {{ listing.created_at|timesince }} ago</span>
+                <button type="button"
+                    class="fav-btn fav-btn-active"
+                    data-fav-url="{% url 'toggle_favourite' listing.pk %}"
+                    data-csrf="{{ csrf_token }}"
+                    title="Remove from saved">♥</button>
+            </div>
+        </div>
+    </article>
+{% endfor %}
+</section>
+{% else %}
+<div class="card" style="text-align:center;padding:3rem 2rem;">
+    <div style="font-size:2.5rem;margin-bottom:1rem;">♡</div>
+    <h2 style="margin-bottom:.5rem;">No saved listings yet</h2>
+    <p class="muted" style="margin-bottom:1.5rem;">Tap the heart on any listing to save it here.</p>
+    <a href="{% url 'listing_list' %}" class="button">Browse Listings</a>
+</div>
+{% endif %}
+
+<script>
+document.querySelectorAll('.fav-btn[data-fav-url]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var url  = btn.dataset.favUrl;
+    var csrf = btn.dataset.csrf;
+    fetch(url, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'csrfmiddlewaretoken=' + encodeURIComponent(csrf),
+    }).then(function() {
+      var card = btn.closest('article');
+      if (card) { card.style.transition = 'opacity .3s'; card.style.opacity = '0'; setTimeout(function(){ card.remove(); }, 300); }
+    });
+  });
+});
+</script>
+{% endblock %}

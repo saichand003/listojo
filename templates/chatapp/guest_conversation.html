@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Message {{ other_user.username }}</h1>
+<p class="muted">Send a direct message without opening a chat account.</p>
+
+<form method="post" class="card">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Send message</button>
+</form>
+{% endblock %}

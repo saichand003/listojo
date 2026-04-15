@@ -2,6 +2,10 @@ from django import forms
 
 from .models import Listing, ListingInquiry
 
+MAX_IMAGE_SIZE_MB    = 5
+MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
+MAX_IMAGE_COUNT      = 8
+
 
 class ListingForm(forms.ModelForm):
     class Meta:
@@ -11,13 +15,40 @@ class ListingForm(forms.ModelForm):
             'category',
             'description',
             'price',
+            'price_unit',
             'city',
             'state',
             'country',
             'contact_phone',
             'featured',
-            'image',
+            'tags',
         ]
+        widgets = {
+            'tags': forms.TextInput(attrs={
+                'placeholder': 'e.g. pet-friendly, parking, furnished',
+                'data-tag-input': 'true',
+            }),
+            'category': forms.Select(attrs={'required': True}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['category'].choices = [('', '— Select a category —')] + [
+            c for c in self.fields['category'].choices if c[0]
+        ]
+        self.fields['category'].required = True
+
+
+def validate_uploaded_images(files, existing_count=0):
+    """Returns a list of error strings. Empty list means all OK."""
+    errors = []
+    total = existing_count + len(files)
+    if total > MAX_IMAGE_COUNT:
+        errors.append(f'Too many images. You can have at most {MAX_IMAGE_COUNT} per listing (currently have {existing_count}, trying to add {len(files)}).')
+    for f in files:
+        if f.size > MAX_IMAGE_SIZE_BYTES:
+            errors.append(f'"{f.name}" is {f.size / 1024 / 1024:.1f} MB — maximum per image is {MAX_IMAGE_SIZE_MB} MB.')
+    return errors
 
 
 class ListingInquiryForm(forms.ModelForm):

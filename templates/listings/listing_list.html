@@ -1,64 +1,254 @@
 {% extends 'base.html' %}
+{% load listing_extras %}
 {% block content %}
-<section class="card hero">
-    <h1>Discover trusted local services & classifieds</h1>
-    <p class="muted">Explore colorful categories, featured offers, and nearby opportunities.</p>
 
-    <div class="grid grid-3" style="margin-top:1rem;">
-        <div class="card"><div class="kpi">{{ total_listings }}</div><div class="muted">Total listings</div></div>
-        <div class="card"><div class="kpi">{{ featured_count }}</div><div class="muted">Featured listings</div></div>
-        <div class="card"><div class="kpi">{{ listings|length }}</div><div class="muted">Results shown</div></div>
+<section class="card hero">
+    <h1>List Anything. Find Everything.</h1>
+    <p class="muted" style="margin-top:.35rem;">Rentals, services, jobs &amp; local deals — all from real people near you.</p>
+
+    <div class="hero-stats-row">
+        <div class="hero-stat"><span class="hero-stat-num">{{ total_listings }}</span><span class="hero-stat-lbl">Active listings</span></div>
+        <div class="hero-stat"><span class="hero-stat-num">{{ featured_count }}</span><span class="hero-stat-lbl">Featured</span></div>
+        <div class="hero-stat"><span class="hero-stat-num">{{ listings|length }}</span><span class="hero-stat-lbl">Results shown</span></div>
     </div>
 
-    <form method="get" class="filters">
-        <input type="text" name="q" placeholder="What are you looking for?" value="{{ filters.q }}">
-
+    <form method="get" class="filters" id="search-form">
+        <input type="text" id="tag-search-input" placeholder="🔍  Search… press Enter to add tag" autocomplete="off">
+        <input type="hidden" name="q" id="tag-search-hidden" value="{{ filters.q }}">
         <select name="category">
             <option value="">All categories</option>
             {% for key, label in category_choices %}
-                <option value="{{ key }}" {% if filters.category == key %}selected{% endif %}>
-                    {{ label }}
-                </option>
+                <option value="{{ key }}" {% if filters.category == key %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
-
-        <input type="text" name="city" placeholder="City" value="{{ filters.city }}">
-
-        <select name="sort">
-            <option value="latest" {% if filters.sort == 'latest' %}selected{% endif %}>Latest</option>
-            <option value="price_low" {% if filters.sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
-            <option value="price_high" {% if filters.sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
-        </select>
-
+        <input type="text" name="city" placeholder="📍  City" value="{{ filters.city }}">
         <button type="submit">Search</button>
     </form>
+    {% if filters.q %}
+    <div id="search-tags-display" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem;">
+        {% for term in filters.q|split_csv %}
+        <span class="search-tag-chip">{{ term }}<button type="button" class="search-tag-remove" data-val="{{ term }}">×</button></span>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div id="search-tags-display" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem;"></div>
+    {% endif %}
+
+    <div class="trending-row">
+        <span class="trending-label">TRENDING</span>
+        <a class="trending-pill" href="?q=2BHK">2BHK</a>
+        <a class="trending-pill" href="?q=pet-friendly">Pet-friendly</a>
+        <a class="trending-pill" href="?category=roommates">Roommates</a>
+        <a class="trending-pill" href="?q=furnished">Furnished</a>
+        <a class="trending-pill" href="?q=parking">Parking</a>
+        <a class="trending-pill" href="?category=local_services">Local Services</a>
+    </div>
 </section>
 
-<div class="chips" style="margin-bottom:1rem;">
+<div class="chips" style="margin-bottom:1.25rem;">
+    <a class="chip {% if not filters.category %}chip-active{% endif %}" href="?">All</a>
     {% for key, label in category_choices %}
-        <a class="chip" href="?category={{ key }}">{{ label }}</a>
+        <a class="chip cat-chip-{{ key }} {% if filters.category == key %}chip-active{% endif %}" href="?category={{ key }}">
+            <span class="cat-dot cat-dot-{{ key }}"></span>{{ label }}
+            {% with cnt=category_counts|dict_get:key %}
+                {% if cnt %}<span class="chip-count">{{ cnt }}</span>{% endif %}
+            {% endwith %}
+        </a>
     {% endfor %}
 </div>
 
-<section class="grid grid-listings">
-{% for listing in listings %}
-    <article class="card">
-        {% if listing.image %}
-            <img class="listing-thumb" src="{{ listing.image.url }}" alt="{{ listing.title }}">
-        {% else %}
-            <div class="listing-thumb"></div>
-        {% endif %}
-        <div class="row" style="margin-top:.7rem;">
-            <span class="chip">{{ listing.get_category_display }}</span>
-            {% if listing.featured %}<span class="chip">Featured</span>{% endif %}
-        </div>
-        <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
-        <p class="price">{% if listing.price %}${{ listing.price }}{% else %}Contact for price{% endif %}</p>
-        <p class="muted">{{ listing.city }}, {{ listing.state }} {{ listing.country }}</p>
-        <p>{{ listing.description|truncatewords:22 }}</p>
-    </article>
-{% empty %}
-    <p>No listings found. Try different filters.</p>
-{% endfor %}
-</section>
+{% if filters.tag %}
+<div style="margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
+    <span class="muted" style="font-size:.85rem;">Filtering by tag:</span>
+    <span class="tag-chip tag-chip-active">{{ filters.tag }} <a href="?" style="color:inherit;margin-left:.3rem;text-decoration:none;">✕</a></span>
+</div>
+{% endif %}
+
+<div class="listings-header">
+    <div>
+        <h2 class="listings-header-title">{% if filters.category %}{{ filters.category|title }} listings{% else %}All listings{% endif %}</h2>
+        <p class="listings-header-sub">{% if filters.category %}Browsing {{ filters.category|title|lower }} — sorted by {{ filters.sort|default:"latest" }}.{% else %}Fresh, trusted listings from real people near you.{% endif %}</p>
+    </div>
+    <form method="get" id="sort-form" style="display:flex;align-items:center;gap:.5rem;">
+        <input type="hidden" name="q" value="{{ filters.q }}">
+        <input type="hidden" name="category" value="{{ filters.category }}">
+        <input type="hidden" name="city" value="{{ filters.city }}">
+        <input type="hidden" name="tag" value="{{ filters.tag }}">
+        <select name="sort" class="sort-select" id="sort-select">
+            <option value="latest"     {% if filters.sort == 'latest'     %}selected{% endif %}>Latest first</option>
+            <option value="price_low"  {% if filters.sort == 'price_low'  %}selected{% endif %}>Price: Low → High</option>
+            <option value="price_high" {% if filters.sort == 'price_high' %}selected{% endif %}>Price: High → Low</option>
+        </select>
+    </form>
+</div>
+
+{% include 'listings/_listings_grid.html' %}
+
+{# ── TRUST STRIP ── #}
+<div class="trust-strip">
+    <div class="trust-item">
+        <div class="trust-icon" style="background:rgba(42,126,242,.15);">⚡</div>
+        <div class="trust-title">Post in 60 seconds</div>
+        <div class="trust-desc">Create a listing fast with photo upload and smart fields.</div>
+    </div>
+    <div class="trust-item">
+        <div class="trust-icon" style="background:rgba(61,181,73,.15);">📍</div>
+        <div class="trust-title">Hyperlocal search</div>
+        <div class="trust-desc">Results filtered to your city, neighborhood, or area.</div>
+    </div>
+    <div class="trust-item">
+        <div class="trust-icon" style="background:rgba(98,194,255,.15);">💬</div>
+        <div class="trust-title">Safe messaging</div>
+        <div class="trust-desc">Chat with sellers via live chat without sharing your contact.</div>
+    </div>
+    <div class="trust-item">
+        <div class="trust-icon" style="background:rgba(245,158,11,.15);">★</div>
+        <div class="trust-title">Featured listings</div>
+        <div class="trust-desc">Boost visibility with featured placement across the platform.</div>
+    </div>
+</div>
+
+<script>
+(function () {
+  var display = document.getElementById('search-tags-display');
+  var input   = document.getElementById('tag-search-input');
+  var hidden  = document.getElementById('tag-search-hidden');
+  var form    = document.getElementById('search-form');
+  if (!input || !hidden || !display) return;
+
+  function getTags() {
+    return hidden.value.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+  }
+  function setTags(tags) { hidden.value = tags.join(','); }
+
+  function renderChips(tags) {
+    display.innerHTML = '';
+    tags.forEach(function(tag) {
+      var chip = document.createElement('span');
+      chip.className = 'search-tag-chip';
+      chip.innerHTML = tag + '<button type="button" class="search-tag-remove" data-val="' + tag + '">×</button>';
+      chip.querySelector('.search-tag-remove').addEventListener('click', function(){
+        removeTag(this.dataset.val);
+      });
+      display.appendChild(chip);
+    });
+  }
+
+  function addTag(val) {
+    val = val.trim();
+    if (!val) return;
+    var tags = getTags();
+    if (tags.indexOf(val) === -1) tags.push(val);
+    setTags(tags);
+    renderChips(tags);
+    input.value = '';
+  }
+
+  function removeTag(val) {
+    var tags = getTags().filter(function(t){ return t !== val; });
+    setTags(tags);
+    renderChips(tags);
+  }
+
+  display.querySelectorAll('.search-tag-remove').forEach(function(btn){
+    btn.addEventListener('click', function(){ removeTag(this.dataset.val); });
+  });
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (input.value.trim()) { addTag(input.value); }
+      else { form.submit(); }
+    } else if (e.key === ',') {
+      e.preventDefault();
+      addTag(input.value);
+    } else if (e.key === 'Backspace' && input.value === '') {
+      var tags = getTags();
+      if (tags.length) removeTag(tags[tags.length - 1]);
+    }
+  });
+
+  form.addEventListener('submit', function() {
+    if (input.value.trim()) addTag(input.value);
+  });
+})();
+</script>
+
+<script>
+/* ── AJAX sort — swap only the grid, no full reload ── */
+(function () {
+  var sortSelect = document.getElementById('sort-select');
+  if (!sortSelect) return;
+
+  sortSelect.addEventListener('change', function () {
+    var form   = document.getElementById('sort-form');
+    var params = new URLSearchParams(new FormData(form));
+    params.set('sort', sortSelect.value);
+
+    var grid = document.getElementById('listings-grid');
+    if (grid) { grid.style.opacity = '.5'; grid.style.pointerEvents = 'none'; }
+
+    fetch('?' + params.toString(), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+      var tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      var newGrid = tmp.querySelector('#listings-grid');
+      if (newGrid && grid) {
+        grid.replaceWith(newGrid);
+        /* Re-run reveal animation on new cards */
+        newGrid.querySelectorAll('.listing-card').forEach(function(el) {
+          el.classList.add('js-reveal');
+          setTimeout(function() { el.classList.add('visible'); }, 10);
+        });
+        /* Re-bind save pills */
+        bindSavePills(newGrid);
+      }
+      /* Update URL bar without reload */
+      history.replaceState(null, '', '?' + params.toString());
+    })
+    .catch(function () {
+      if (grid) { grid.style.opacity = ''; grid.style.pointerEvents = ''; }
+    });
+  });
+})();
+
+/* ── Save pill binding (shared by initial load + AJAX refresh) ── */
+function bindSavePills(root) {
+  (root || document).querySelectorAll('.save-pill[data-fav-url]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var url  = btn.dataset.favUrl;
+      var csrf = btn.dataset.csrf;
+      var card  = btn.closest('.listing-card');
+      var pills = card ? card.querySelectorAll('.save-pill[data-fav-url]') : [btn];
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrf,
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'csrfmiddlewaretoken=' + encodeURIComponent(csrf),
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        pills.forEach(function(p) {
+          if (data.is_favourite) {
+            p.classList.add('save-pill-active');
+            p.innerHTML = '♥ Saved';
+          } else {
+            p.classList.remove('save-pill-active');
+            p.innerHTML = '♡ Save';
+          }
+        });
+      });
+    });
+  });
+}
+bindSavePills();
+</script>
 {% endblock %}
