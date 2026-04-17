@@ -319,7 +319,6 @@
 })();
 
 (function () {
-  var MAX_TAGS = 5;
   document.querySelectorAll('[data-tag-input]').forEach(function (hidden) {
     /* Build wrapper */
     var wrap = document.createElement('div');
@@ -372,19 +371,15 @@
       textInput.focus();
 
       /* Update hint */
-      var remaining = MAX_TAGS - tags.length;
-      hint.textContent = remaining > 0
-        ? 'Up to 5 tags — press Enter or comma to add each one. (' + remaining + ' remaining)'
-        : 'Maximum of 5 tags reached.';
-      textInput.disabled = remaining <= 0;
-      textInput.placeholder = remaining > 0 ? 'Type a tag and press Enter…' : '';
+      hint.textContent = tags.length > 0
+        ? 'Press Enter or comma to add more tags. (' + tags.length + ' added)'
+        : 'Press Enter or comma to add each tag.';
     }
 
     function addTag(val) {
       val = val.trim().toLowerCase();
       if (!val) return;
       var tags = getTags();
-      if (tags.length >= MAX_TAGS) return;
       if (tags.indexOf(val) === -1) tags.push(val);
       setTags(tags);
       textInput.value = '';

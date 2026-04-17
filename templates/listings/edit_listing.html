@@ -10,7 +10,38 @@
     </div>
     <form method="post" enctype="multipart/form-data" class="card" style="padding:2rem;" id="edit-listing-form">
         {% csrf_token %}
+
         {{ form.as_p }}
+
+        {# ── Inject autocomplete wrapper around address_line after form renders ── #}
+        <script>
+        (function () {
+          var addrField = document.getElementById('id_address_line');
+          if (!addrField) return;
+          /* Wrap the input in cl-loc-wrap so the dropdown can anchor to it */
+          var wrapper = document.createElement('div');
+          wrapper.className = 'cl-loc-wrap';
+          wrapper.id = 'cl-loc-wrap';
+          addrField.parentNode.insertBefore(wrapper, addrField);
+          wrapper.appendChild(addrField);
+          addrField.setAttribute('autocomplete', 'off');
+          addrField.setAttribute('placeholder', 'e.g. 4521 Maple Ave — city & ZIP will auto-fill');
+          /* Spinner */
+          var spinner = document.createElement('div');
+          spinner.className = 'cl-loc-spinner'; spinner.id = 'cl-loc-spinner'; spinner.hidden = true;
+          spinner.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15" class="cl-spin"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>';
+          wrapper.appendChild(spinner);
+          /* Dropdown */
+          var dropdown = document.createElement('ul');
+          dropdown.className = 'cl-loc-dropdown'; dropdown.id = 'cl-loc-dropdown'; dropdown.hidden = true;
+          wrapper.appendChild(dropdown);
+          /* Hint */
+          var hint = document.createElement('p');
+          hint.style.cssText = 'font-size:.75rem;color:var(--muted);margin-top:.25rem;';
+          hint.textContent = 'Start typing — pick a suggestion to auto-fill city, state & ZIP';
+          wrapper.parentNode.insertBefore(hint, wrapper.nextSibling);
+        })();
+        </script>
 
         {# ── Existing images ── #}
         {% if existing_images %}
@@ -147,6 +178,142 @@
   form.addEventListener('submit', function(e) {
     var hasErrors = files.some(function(f){ return f.error; });
     if (hasErrors) { e.preventDefault(); alert('Please remove invalid images before saving.'); }
+  });
+})();
+
+/* ── Address autocomplete (Google Places API New — REST) ── */
+(function () {
+  var GKEY     = '{{ GOOGLE_MAPS_API_KEY }}';
+  var wrap     = document.getElementById('cl-loc-wrap');
+  var search   = document.getElementById('id_address_line');
+  var dropdown = document.getElementById('cl-loc-dropdown');
+  var spinner  = document.getElementById('cl-loc-spinner');
+  if (!search || !dropdown) return;
+  var timer, lastQ = '';
+
+  search.addEventListener('input', function () {
+    var q = search.value.trim();
+    clearTimeout(timer);
+    dropdown.hidden = true;
+    if (q.length < 2) { if (spinner) spinner.hidden = true; return; }
+    if (spinner) spinner.hidden = false;
+    timer = setTimeout(function () { fetchSuggestions(q); }, 300);
+  });
+
+  function fetchSuggestions(q) {
+    lastQ = q;
+    {% if GOOGLE_MAPS_API_KEY %}
+    fetch('https://places.googleapis.com/v1/places:autocomplete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': GKEY },
+      body: JSON.stringify({ input: q, includedRegionCodes: ['us'], languageCode: 'en-US' }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (q !== lastQ) return;
+        if (spinner) spinner.hidden = true;
+        showSuggestions(data.suggestions || []);
+      })
+      .catch(function () { if (spinner) spinner.hidden = true; });
+    {% else %}
+    fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8&countrycodes=us&q=' + encodeURIComponent(q),
+          { headers: { 'Accept-Language': 'en-US,en' } })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (q !== lastQ) return;
+        if (spinner) spinner.hidden = true;
+        showNominatim(res);
+      })
+      .catch(function () { if (spinner) spinner.hidden = true; });
+    {% endif %}
+  }
+
+  {% if GOOGLE_MAPS_API_KEY %}
+  function showSuggestions(suggestions) {
+    dropdown.innerHTML = '';
+    suggestions.forEach(function (s) {
+      var pred = s.placePrediction; if (!pred) return;
+      var mainText = pred.structuredFormat ? pred.structuredFormat.mainText.text : pred.text.text;
+      var secText  = pred.structuredFormat ? pred.structuredFormat.secondaryText.text : '';
+      var placeId  = pred.placeId;
+      var li = document.createElement('li');
+      li.className = 'cl-loc-option';
+      li.innerHTML = '<span class="cl-loc-main">' + mainText + '</span>'
+                   + (secText ? '<span class="cl-loc-sub">' + secText + '</span>' : '');
+      li.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        if (spinner) spinner.hidden = false;
+        fetch('https://places.googleapis.com/v1/places/' + placeId + '?fields=addressComponents&languageCode=en-US',
+              { headers: { 'X-Goog-Api-Key': GKEY } })
+          .then(function (r) { return r.json(); })
+          .then(function (place) {
+            if (spinner) spinner.hidden = true;
+            var comps = place.addressComponents || [];
+            function get(type) {
+              var c = comps.find(function (c) { return c.types.indexOf(type) !== -1; });
+              return c ? c.longText : '';
+            }
+            var streetNum = get('street_number'), route = get('route');
+            search.value = streetNum ? streetNum + ' ' + route : route || mainText;
+            var cityEl = document.getElementById('id_city'), stateEl = document.getElementById('id_state');
+            var zipEl  = document.getElementById('id_zip_code'), countryEl = document.getElementById('id_country');
+            if (cityEl)    cityEl.value    = get('locality') || get('sublocality') || get('administrative_area_level_3');
+            if (stateEl)   stateEl.value   = get('administrative_area_level_1');
+            if (zipEl)     zipEl.value     = get('postal_code');
+            if (countryEl) countryEl.value = get('country');
+            dropdown.hidden = true;
+          })
+          .catch(function () { if (spinner) spinner.hidden = true; dropdown.hidden = true; });
+      });
+      dropdown.appendChild(li);
+    });
+    dropdown.hidden = dropdown.children.length === 0;
+  }
+  {% else %}
+  function showNominatim(results) {
+    dropdown.innerHTML = '';
+    var seen = [];
+    results.forEach(function (item) {
+      var a = item.address || {};
+      var house = a.house_number || '', road = a.road || a.pedestrian || a.footway || a.path || '';
+      var city  = a.city || a.town || a.village || a.municipality || a.city_district || a.hamlet || a.suburb || a.county || '';
+      var street = house && road ? house + ' ' + road : road;
+      if (!street && !city) return;
+      var main = street ? street + (city ? ', '+city : '') + (a.state ? ', '+a.state : '') : city + (a.state ? ', '+a.state : '');
+      var sub = [a.postcode, a.country].filter(Boolean).join('  ');
+      if (seen.indexOf(main.toLowerCase()) !== -1) return;
+      seen.push(main.toLowerCase());
+      var li = document.createElement('li');
+      li.className = 'cl-loc-option';
+      li.innerHTML = '<span class="cl-loc-main">'+main+'</span>'+(sub?'<span class="cl-loc-sub">'+sub+'</span>':'');
+      li.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        search.value = street || city;
+        var cityEl = document.getElementById('id_city'), stateEl = document.getElementById('id_state');
+        var zipEl  = document.getElementById('id_zip_code'), countryEl = document.getElementById('id_country');
+        if (cityEl)    cityEl.value    = city;
+        if (stateEl)   stateEl.value   = a.state || '';
+        if (zipEl)     zipEl.value     = a.postcode || '';
+        if (countryEl) countryEl.value = a.country  || '';
+        dropdown.hidden = true;
+      });
+      dropdown.appendChild(li);
+    });
+    dropdown.hidden = dropdown.children.length === 0;
+  }
+  {% endif %}
+
+  document.addEventListener('click', function (e) {
+    if (wrap && !wrap.contains(e.target)) dropdown.hidden = true;
+  });
+  search.addEventListener('keydown', function (e) {
+    var items = dropdown.querySelectorAll('.cl-loc-option');
+    var active = dropdown.querySelector('.cl-loc-option.active');
+    var idx = active ? Array.from(items).indexOf(active) : -1;
+    if (e.key === 'ArrowDown') { e.preventDefault(); if (active) active.classList.remove('active'); (items[Math.min(idx+1,items.length-1)]||items[0]).classList.add('active'); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (active) active.classList.remove('active'); items[Math.max(idx-1,0)].classList.add('active'); }
+    else if (e.key === 'Enter' && active) { e.preventDefault(); active.dispatchEvent(new MouseEvent('mousedown')); }
+    else if (e.key === 'Escape') { dropdown.hidden = true; }
   });
 })();
 </script>

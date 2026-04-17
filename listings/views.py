@@ -1,15 +1,16 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import connection
 from django.db.utils import OperationalError
-from django.db.models import Count, Q
+from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from datetime import timedelta
 
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
-from .models import Favourite, Listing, ListingImage
+from .models import CityWaitlist, Favourite, Listing, ListingImage
 
 
 def _render_db_setup_page(request):
@@ -29,18 +30,24 @@ def listing_list(request):
 
     listings = Listing.objects.select_related('owner').prefetch_related('images').all()
 
-    q = request.GET.get('q', '').strip()
-    category = request.GET.get('category', '').strip()
-    city = request.GET.get('city', '').strip()
-    sort = request.GET.get('sort', 'latest').strip()
-    tag = request.GET.get('tag', '').strip()
+    q         = request.GET.get('q', '').strip()
+    category  = request.GET.get('category', '').strip()
+    city      = request.GET.get('city', '').strip()
+    sort      = request.GET.get('sort', 'latest').strip()
+    tag       = request.GET.get('tag', '').strip()
+    min_price      = request.GET.get('min_price', '').strip()
+    max_price      = request.GET.get('max_price', '').strip()
+    tags_raw       = request.GET.get('tags', '').strip()
+    available_by   = request.GET.get('available_by', '').strip()
 
-    if q:
-        terms = [t.strip() for t in q.split(',') if t.strip()]
-        for term in terms:
-            listings = listings.filter(
-                Q(title__icontains=term) | Q(tags__icontains=term) | Q(description__icontains=term)
-            )
+    # ── Text search ──
+    terms = [t.strip() for t in q.split(',') if t.strip()] if q else []
+    for term in terms:
+        listings = listings.filter(
+            Q(title__icontains=term) | Q(tags__icontains=term) | Q(description__icontains=term)
+        )
+
+    # ── Filters ──
     if category:
         listings = listings.filter(category=category)
     if city:
@@ -48,18 +55,62 @@ def listing_list(request):
     if tag:
         listings = listings.filter(tags__icontains=tag)
 
+    # Quality tags (multi-select from chips)
+    quality_tags = [t.strip() for t in tags_raw.split(',') if t.strip()]
+    for qt in quality_tags:
+        listings = listings.filter(tags__icontains=qt)
+
+    # Price range
+    try:
+        if min_price:
+            listings = listings.filter(price__gte=float(min_price))
+        if max_price:
+            listings = listings.filter(price__lte=float(max_price))
+    except ValueError:
+        pass
+
+    # Availability — show listings available on or before the requested date
+    # (listings with no available_from are treated as available now)
+    if available_by:
+        from datetime import date as _date
+        try:
+            _avail = _date.fromisoformat(available_by)
+            listings = listings.filter(
+                Q(available_from__isnull=True) | Q(available_from__lte=_avail)
+            )
+        except ValueError:
+            pass
+
+    # ── Relevance scoring (title match > tag match > description only) ──
+    if terms:
+        score_cases = []
+        for term in terms:
+            score_cases.append(When(title__icontains=term, then=Value(3)))
+            score_cases.append(When(tags__icontains=term, then=Value(2)))
+            score_cases.append(When(description__icontains=term, then=Value(1)))
+        listings = listings.annotate(
+            relevance=Case(*score_cases, default=Value(0), output_field=IntegerField())
+        )
+
+    # ── Ordering ──
     if sort == 'price_low':
         listings = listings.order_by('price', '-featured', '-created_at')
     elif sort == 'price_high':
         listings = listings.order_by('-price', '-featured', '-created_at')
+    elif sort == 'best_match' and terms:
+        listings = listings.order_by('-relevance', '-featured', '-created_at')
     else:
         listings = listings.order_by('-featured', '-created_at')
+
+    # Auto-switch to best_match when user is searching and hasn't chosen another sort
+    if terms and sort == 'latest':
+        listings = listings.order_by('-relevance', '-featured', '-created_at')
+        sort = 'best_match'
 
     category_counts = dict(
         Listing.objects.values_list('category').annotate(total=Count('id'))
     )
 
-    # Build set of favourited listing IDs for the current user
     fav_ids = set()
     if request.user.is_authenticated:
         fav_ids = set(Favourite.objects.filter(user=request.user).values_list('listing_id', flat=True))
@@ -71,7 +122,12 @@ def listing_list(request):
         'category_counts': category_counts,
         'total_listings': Listing.objects.count(),
         'featured_count': Listing.objects.filter(featured=True).count(),
-        'filters': {'q': q, 'category': category, 'city': city, 'sort': sort, 'tag': tag},
+        'filters': {
+            'q': q, 'category': category, 'city': city, 'sort': sort, 'tag': tag,
+            'min_price': min_price, 'max_price': max_price, 'tags': tags_raw,
+            'available_by': available_by,
+        },
+        'active_quality_tags': quality_tags,
         'new_threshold': timezone.now() - timedelta(hours=48),
     }
 
@@ -188,6 +244,14 @@ def create_listing(request):
         new_files = request.FILES.getlist('images')
         image_errors = validate_uploaded_images(new_files)
 
+        # ── City launch gate ──────────────────────────────────────────
+        if settings.LAUNCH_ACTIVE:
+            submitted_city = request.POST.get('city', '').strip().lower()
+            if submitted_city and submitted_city not in settings.LAUNCH_CITIES:
+                return render(request, 'listings/coming_soon.html', {
+                    'city': request.POST.get('city', '').strip().title(),
+                })
+
         if form.is_valid() and not image_errors:
             listing = form.save(commit=False)
             listing.owner = request.user
@@ -204,3 +268,23 @@ def create_listing(request):
         'image_errors': image_errors,
         'max_images': 8,
     })
+
+
+def waitlist_signup(request):
+    """Handle city waitlist form submission."""
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        city  = request.POST.get('city', '').strip()
+        state = request.POST.get('state', '').strip()
+        if email and city:
+            CityWaitlist.objects.get_or_create(
+                email=email,
+                city=city.lower(),
+                defaults={'state': state},
+            )
+        return render(request, 'listings/coming_soon.html', {
+            'city':    city.title(),
+            'joined':  True,
+            'email':   email,
+        })
+    return redirect('listing_list')

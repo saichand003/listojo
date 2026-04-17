@@ -6,6 +6,65 @@
     <h1>List Anything. Find Everything.</h1>
     <p class="muted" style="margin-top:.35rem;">Rentals, services, jobs &amp; local deals — all from real people near you.</p>
 
+    {# ── Find My Match widget ── #}
+    <div class="fmm-bar" id="fmm-bar">
+        <button type="button" class="fmm-trigger" id="fmm-trigger">
+            🎯 Find My Match
+        </button>
+        <div class="fmm-steps" id="fmm-steps" hidden>
+            <form method="get" id="fmm-form">
+                <div class="fmm-step" data-step="1">
+                    <p class="fmm-q">What are you looking for?</p>
+                    <div class="fmm-options">
+                        {% for key, label in category_choices %}
+                        <button type="button" class="fmm-opt" data-field="category" data-val="{{ key }}">{{ label }}</button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="category" id="fmm-category">
+                </div>
+                <div class="fmm-step" data-step="2" hidden>
+                    <p class="fmm-q">Which city?</p>
+                    <div class="city-ac-wrap" id="fmm-city-wrap">
+                        <input type="text" name="city" id="fmm-city" placeholder="e.g. Dallas, Irving, Austin" class="fmm-input" autocomplete="new-password">
+                        <ul class="city-ac-dropdown" id="fmm-city-dropdown" hidden></ul>
+                    </div>
+                    <button type="button" class="fmm-next" data-next="3">Next →</button>
+                </div>
+                <div class="fmm-step" data-step="3" hidden>
+                    <p class="fmm-q">What's your max monthly budget?</p>
+                    <div style="display:flex;align-items:center;gap:.5rem;">
+                        <span style="font-size:1.1rem;font-weight:700;">$</span>
+                        <input type="number" name="max_price" id="fmm-budget" placeholder="e.g. 1800" class="fmm-input" min="0">
+                    </div>
+                    <button type="button" class="fmm-next" data-next="4">Next →</button>
+                </div>
+                <div class="fmm-step" data-step="4" hidden>
+                    <p class="fmm-q">Must-have qualities? <span class="muted" style="font-size:.8rem;">(pick any)</span></p>
+                    <div class="fmm-tags-wrap">
+                        {% for qt in "pet-friendly,parking,furnished,washer/dryer,gym,pool,utilities included,no deposit,near transit"|split_csv %}
+                        <button type="button" class="fmm-tag" data-tag="{{ qt }}">{{ qt }}</button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="tags" id="fmm-tags">
+                    <button type="button" class="fmm-next" data-next="5">Next →</button>
+                </div>
+                <div class="fmm-step" data-step="5" hidden>
+                    <p class="fmm-q">When do you need it available by?</p>
+                    <input type="date" name="available_by" id="fmm-avail" class="fmm-input">
+                    <p class="muted" style="font-size:.75rem;margin-top:.25rem;">Leave blank to show all available listings</p>
+                    <button type="submit" class="fmm-submit">🔍 Show My Matches</button>
+                </div>
+            </form>
+            <div class="fmm-progress" id="fmm-progress">
+                <span class="fmm-dot active" data-step="1"></span>
+                <span class="fmm-dot" data-step="2"></span>
+                <span class="fmm-dot" data-step="3"></span>
+                <span class="fmm-dot" data-step="4"></span>
+                <span class="fmm-dot" data-step="5"></span>
+            </div>
+        </div>
+    </div>
+
     <div class="hero-stats-row">
         <div class="hero-stat"><span class="hero-stat-num">{{ total_listings }}</span><span class="hero-stat-lbl">Active listings</span></div>
         <div class="hero-stat"><span class="hero-stat-num">{{ featured_count }}</span><span class="hero-stat-lbl">Featured</span></div>
@@ -13,7 +72,7 @@
     </div>
 
     <form method="get" class="filters" id="search-form">
-        <input type="text" id="tag-search-input" placeholder="🔍  Search… press Enter to add tag" autocomplete="off">
+        <input type="text" id="tag-search-input" placeholder="🔍  Search… e.g. pet-friendly, 2BHK, parking" autocomplete="off">
         <input type="hidden" name="q" id="tag-search-hidden" value="{{ filters.q }}">
         <select name="category">
             <option value="">All categories</option>
@@ -21,7 +80,12 @@
                 <option value="{{ key }}" {% if filters.category == key %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
-        <input type="text" name="city" placeholder="📍  City" value="{{ filters.city }}">
+        <div class="city-ac-wrap" id="filter-city-wrap">
+            <input type="text" name="city" id="filter-city" placeholder="📍  City" value="{{ filters.city }}" autocomplete="new-password">
+            <ul class="city-ac-dropdown" id="filter-city-dropdown" hidden></ul>
+        </div>
+        <input type="number" name="min_price" placeholder="$ Min" value="{{ filters.min_price }}" min="0" style="width:90px;">
+        <input type="number" name="max_price" placeholder="$ Max" value="{{ filters.max_price }}" min="0" style="width:90px;">
         <button type="submit">Search</button>
     </form>
     {% if filters.q %}
@@ -34,15 +98,16 @@
     <div id="search-tags-display" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem;"></div>
     {% endif %}
 
-    <div class="trending-row">
-        <span class="trending-label">TRENDING</span>
-        <a class="trending-pill" href="?q=2BHK">2BHK</a>
-        <a class="trending-pill" href="?q=pet-friendly">Pet-friendly</a>
-        <a class="trending-pill" href="?category=roommates">Roommates</a>
-        <a class="trending-pill" href="?q=furnished">Furnished</a>
-        <a class="trending-pill" href="?q=parking">Parking</a>
-        <a class="trending-pill" href="?category=local_services">Local Services</a>
+    {# ── Amenity filter chips ── #}
+    <div class="quality-chips-row" id="quality-chips-row">
+        <span class="trending-label">POPULAR</span>
+        {% for qt in "pet-friendly,parking,furnished,washer/dryer,gym,pool,balcony,utilities included,no deposit,near transit"|split_csv %}
+        <button type="button"
+            class="quality-chip {% if qt in active_quality_tags %}quality-chip-active{% endif %}"
+            data-tag="{{ qt }}">{{ qt }}</button>
+        {% endfor %}
     </div>
+    <input type="hidden" name="tags" id="quality-tags-hidden" value="{{ filters.tags }}">
 </section>
 
 <div class="chips" style="margin-bottom:1.25rem;">
@@ -74,7 +139,12 @@
         <input type="hidden" name="category" value="{{ filters.category }}">
         <input type="hidden" name="city" value="{{ filters.city }}">
         <input type="hidden" name="tag" value="{{ filters.tag }}">
+        <input type="hidden" name="min_price" value="{{ filters.min_price }}">
+        <input type="hidden" name="max_price" value="{{ filters.max_price }}">
+        <input type="hidden" name="tags" value="{{ filters.tags }}">
+        <input type="hidden" name="available_by" value="{{ filters.available_by }}">
         <select name="sort" class="sort-select" id="sort-select">
+            {% if filters.q %}<option value="best_match" {% if filters.sort == 'best_match' %}selected{% endif %}>✦ Best match</option>{% endif %}
             <option value="latest"     {% if filters.sort == 'latest'     %}selected{% endif %}>Latest first</option>
             <option value="price_low"  {% if filters.sort == 'price_low'  %}selected{% endif %}>Price: Low → High</option>
             <option value="price_high" {% if filters.sort == 'price_high' %}selected{% endif %}>Price: High → Low</option>
@@ -175,6 +245,93 @@
 </script>
 
 <script>
+/* ── Find My Match widget ── */
+(function () {
+  var trigger  = document.getElementById('fmm-trigger');
+  var steps    = document.getElementById('fmm-steps');
+  if (!trigger || !steps) return;
+
+  var currentStep = 1;
+
+  trigger.addEventListener('click', function () {
+    steps.hidden = !steps.hidden;
+  });
+
+  function showStep(n) {
+    currentStep = n;
+    steps.querySelectorAll('.fmm-step').forEach(function (s) {
+      s.hidden = parseInt(s.dataset.step) !== n;
+    });
+    steps.querySelectorAll('.fmm-dot').forEach(function (d) {
+      d.classList.toggle('active', parseInt(d.dataset.step) === n);
+    });
+  }
+
+  /* Category options */
+  steps.querySelectorAll('.fmm-opt').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      steps.querySelectorAll('.fmm-opt').forEach(function (b) { b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      document.getElementById('fmm-category').value = btn.dataset.val;
+      setTimeout(function () { showStep(2); }, 220);
+    });
+  });
+
+  /* Next buttons */
+  steps.querySelectorAll('.fmm-next').forEach(function (btn) {
+    btn.addEventListener('click', function () { showStep(parseInt(btn.dataset.next)); });
+  });
+
+  /* Tag toggles */
+  var selectedTags = [];
+  steps.querySelectorAll('.fmm-tag').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var tag = btn.dataset.tag;
+      var idx = selectedTags.indexOf(tag);
+      if (idx === -1) { selectedTags.push(tag); btn.classList.add('selected'); }
+      else            { selectedTags.splice(idx, 1); btn.classList.remove('selected'); }
+      document.getElementById('fmm-tags').value = selectedTags.join(',');
+    });
+  });
+
+  /* Allow Enter in city/budget to advance */
+  ['fmm-city', 'fmm-budget'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var next = parseInt(el.closest('.fmm-step').querySelector('.fmm-next').dataset.next);
+        showStep(next);
+      }
+    });
+  });
+})();
+
+/* ── Quality chip toggle ── */
+(function () {
+  var hidden = document.getElementById('quality-tags-hidden');
+  if (!hidden) return;
+
+  function getTags() {
+    return hidden.value.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+  }
+
+  document.querySelectorAll('.quality-chip').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var tag  = btn.dataset.tag;
+      var tags = getTags();
+      var idx  = tags.indexOf(tag);
+      if (idx === -1) { tags.push(tag); }
+      else            { tags.splice(idx, 1); }
+      hidden.value = tags.join(',');
+      btn.classList.toggle('quality-chip-active', tags.indexOf(tag) !== -1);
+      /* Auto-submit the search form */
+      document.getElementById('search-form').submit();
+    });
+  });
+})();
+
 /* ── AJAX sort — swap only the grid, no full reload ── */
 (function () {
   var sortSelect = document.getElementById('sort-select');
@@ -250,5 +407,131 @@ function bindSavePills(root) {
   });
 }
 bindSavePills();
+
+/* ── City autocomplete (Google Places API New) ── */
+(function () {
+  var GKEY = '{{ GOOGLE_MAPS_API_KEY }}';
+
+  function initCityAC(inputId, dropdownId, wrapperId) {
+    var input    = document.getElementById(inputId);
+    var dropdown = document.getElementById(dropdownId);
+    var wrap     = document.getElementById(wrapperId);
+    if (!input || !dropdown) return;
+
+    var timer, lastQ = '';
+
+    input.addEventListener('input', function () {
+      var q = input.value.trim();
+      clearTimeout(timer);
+      dropdown.hidden = true;
+      if (q.length < 2) return;
+      timer = setTimeout(function () { fetchCities(q); }, 300);
+    });
+
+    function fetchCities(q) {
+      lastQ = q;
+      {% if GOOGLE_MAPS_API_KEY %}
+      fetch('https://places.googleapis.com/v1/places:autocomplete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': GKEY },
+        body: JSON.stringify({
+          input: q,
+          includedRegionCodes: ['us'],
+          languageCode: 'en-US',
+        }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (q !== lastQ) return;
+          renderDropdown(data.suggestions || []);
+        })
+        .catch(function () {});
+      {% else %}
+      fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=us&q='
+            + encodeURIComponent(q), { headers: { 'Accept-Language': 'en-US,en' } })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (q !== lastQ) return;
+          var suggestions = res.map(function (item) {
+            var a = item.address || {};
+            var city = a.city || a.town || a.village || a.municipality || a.county || '';
+            var state = a.state || '';
+            return { mainText: city, secText: state, fillValue: city };
+          }).filter(function (s) { return s.mainText; });
+          renderDropdown(suggestions);
+        })
+        .catch(function () {});
+      {% endif %}
+    }
+
+    function renderDropdown(suggestions) {
+      dropdown.innerHTML = '';
+      var seen = [];
+      suggestions.forEach(function (s) {
+        {% if GOOGLE_MAPS_API_KEY %}
+        var pred = s.placePrediction; if (!pred) return;
+        var sf   = pred.structuredFormat;
+        var mainText = sf ? sf.mainText.text  : pred.text.text;
+        var secText  = sf ? sf.secondaryText.text : '';
+        /* City name to actually fill — just the main part before first comma */
+        var fillValue = mainText.split(',')[0].trim();
+        {% else %}
+        var mainText  = s.mainText;
+        var secText   = s.secText;
+        var fillValue = s.fillValue;
+        {% endif %}
+
+        var label = mainText + (secText ? ', ' + secText : '');
+        if (seen.indexOf(label.toLowerCase()) !== -1) return;
+        seen.push(label.toLowerCase());
+
+        var li = document.createElement('li');
+        li.className = 'city-ac-option';
+        li.innerHTML = '<span class="city-ac-main">' + mainText + '</span>'
+                     + (secText ? '<span class="city-ac-sub">' + secText + '</span>' : '');
+
+        li.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          input.value = fillValue;
+          dropdown.hidden = true;
+          /* For fmm-city: advance to next step automatically */
+          if (inputId === 'fmm-city') {
+            var nextBtn = input.closest('.fmm-step').querySelector('.fmm-next');
+            if (nextBtn) setTimeout(function () { nextBtn.click(); }, 180);
+          }
+        });
+        dropdown.appendChild(li);
+      });
+      dropdown.hidden = dropdown.children.length === 0;
+    }
+
+    document.addEventListener('click', function (e) {
+      if (wrap && !wrap.contains(e.target)) dropdown.hidden = true;
+    });
+
+    input.addEventListener('keydown', function (e) {
+      var items  = dropdown.querySelectorAll('.city-ac-option');
+      var active = dropdown.querySelector('.city-ac-option.active');
+      var idx    = active ? Array.from(items).indexOf(active) : -1;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (active) active.classList.remove('active');
+        (items[Math.min(idx + 1, items.length - 1)] || items[0]).classList.add('active');
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (active) active.classList.remove('active');
+        items[Math.max(idx - 1, 0)].classList.add('active');
+      } else if (e.key === 'Enter') {
+        if (active) { e.preventDefault(); active.dispatchEvent(new MouseEvent('mousedown')); }
+        /* else let the form submit naturally */
+      } else if (e.key === 'Escape') {
+        dropdown.hidden = true;
+      }
+    });
+  }
+
+  initCityAC('fmm-city',    'fmm-city-dropdown',    'fmm-city-wrap');
+  initCityAC('filter-city', 'filter-city-dropdown', 'filter-city-wrap');
+})();
 </script>
 {% endblock %}

@@ -1,54 +1,452 @@
 {% extends 'base.html' %}
+{% load listing_extras %}
 {% block content %}
-<div style="max-width:680px;margin:0 auto;">
-    <div style="margin-bottom:1.5rem;">
-        <h1 style="font-size:1.7rem;margin-bottom:.35rem;">Create a Listing</h1>
-        <p class="muted">Add as much detail as possible so buyers can discover your listing.</p>
+<div style="max-width:700px;margin:0 auto;">
+
+  <div style="margin-bottom:1.25rem;">
+    <h1 style="font-size:1.7rem;margin-bottom:.25rem;">Create a Listing</h1>
+    <p class="muted">Fill in the details below — the more you share, the faster you'll connect.</p>
+  </div>
+
+  {# ── Completion bar ── #}
+  <div class="cl-completion-bar">
+    <span class="cl-comp-label">Profile completeness</span>
+    <div class="cl-comp-track"><div class="cl-comp-fill" id="comp-fill" style="width:0%"></div></div>
+    <span class="cl-comp-pct" id="comp-pct">0%</span>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" id="create-listing-form">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="img-upload-errors" style="margin-bottom:1rem;">
+      {% for e in form.non_field_errors %}<p>⚠ {{ e }}</p>{% endfor %}
     </div>
-    <form method="post" enctype="multipart/form-data" class="card" style="padding:2rem;" id="create-listing-form">
-        {% csrf_token %}
-        {{ form.as_p }}
+    {% endif %}
 
-        {# ── Multi-image upload ── #}
-        <p style="margin-bottom:.35rem;"><label style="font-weight:600;">Photos <span class="muted" style="font-weight:400;">(up to {{ max_images }}, max 5 MB each)</span></label></p>
-
-        {% if image_errors %}
-        <div class="img-upload-errors">
-            {% for err in image_errors %}<p>⚠ {{ err }}</p>{% endfor %}
+    {# ══ SECTION 1 — Category ══ #}
+    <div class="cl-section">
+      <div class="cl-section-head">
+        <div class="cl-section-num">1</div>
+        <div>
+          <div class="cl-section-title">What are you listing?</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Pick the category that best fits</div>
         </div>
-        {% endif %}
+      </div>
+      <input type="hidden" name="category" id="f-category" value="{{ form.category.value|default:'' }}">
+      {% if form.category.errors %}<p class="cl-field-error">{{ form.category.errors.0 }}</p>{% endif %}
+      <div class="cl-cat-grid">
 
-        <div id="img-preview-grid" class="img-preview-grid"></div>
-
-        <div class="img-upload-zone" id="img-upload-zone">
-            <input type="file" name="images" id="img-file-input" multiple accept="image/*">
-            <div class="img-upload-icon">📷</div>
-            <div class="img-upload-label">Click to add photos or drag & drop</div>
-            <div class="img-upload-hint">JPEG, PNG, WEBP · Max 5 MB each</div>
-            <div class="img-upload-count" id="img-count-label">0 / {{ max_images }} photos added</div>
+        <div class="cl-cat-card {% if form.category.value == 'roommates' %}selected{% endif %}" data-val="roommates">
+          <span class="cl-cat-icon">
+            {# Two people / roommates #}
+            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          </span>
+          <span class="cl-cat-label">Roommates</span>
         </div>
 
-        <button type="submit" class="button accent" style="width:100%;padding:.7rem;font-size:.95rem;margin-top:1.25rem;" id="publish-btn">
-            ✦ Publish Listing
-        </button>
-    </form>
+        <div class="cl-cat-card {% if form.category.value == 'rentals' %}selected{% endif %}" data-val="rentals">
+          <span class="cl-cat-icon">
+            {# House / rentals #}
+            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          </span>
+          <span class="cl-cat-label">Rentals</span>
+        </div>
+
+        <div class="cl-cat-card {% if form.category.value == 'properties' %}selected{% endif %}" data-val="properties">
+          <span class="cl-cat-icon">
+            {# Multi-story building / properties #}
+            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M17 11V3H7v4H3v14h8v-4h2v4h8V11h-4zm-8 4H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V5h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V5h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2z"/></svg>
+          </span>
+          <span class="cl-cat-label">Properties</span>
+        </div>
+
+        <div class="cl-cat-card {% if form.category.value == 'local_services' %}selected{% endif %}" data-val="local_services">
+          <span class="cl-cat-icon">
+            {# Wrench / local services #}
+            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M15.5 2.1 13 4.6l1.4 1.4 1.1-1.1 1.5 1.5-1.1 1.1 1.4 1.4 2.5-2.5C20.3 7.8 20.5 9.4 20 11l-3.7 3.7C15 15.6 13.5 16 12 16c-.6 0-1.2-.1-1.8-.2L4 22H2v-2l6.2-6.2C8.1 13.2 8 12.6 8 12c0-1.5.4-3 1.3-4.3L13 4.1c-1.6.5-3.2.3-4.4-.8L6 5.9l1.4 1.4L6.3 8.4 4.9 7 2.4 9.5l-1.4-1.4 5-5C7.9.2 12.3.5 15.5 2.1z"/></svg>
+          </span>
+          <span class="cl-cat-label">Local Services</span>
+        </div>
+
+        <div class="cl-cat-card {% if form.category.value == 'jobs' %}selected{% endif %}" data-val="jobs">
+          <span class="cl-cat-icon">
+            {# Briefcase / jobs #}
+            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M20 6h-2.18c.07-.44.18-.86.18-1 0-2.21-1.79-4-4-4s-4 1.79-4 4c0 .14.11.56.18 1H8c-1.11 0-1.99.89-1.99 2L6 19c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6-3c1.1 0 2 .9 2 2 0 .14-.11.56-.18 1h-3.64C12.11 5.56 12 5.14 12 5c0-1.1.9-2 2-2zm0 10c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+          </span>
+          <span class="cl-cat-label">Jobs</span>
+        </div>
+
+        <div class="cl-cat-card {% if form.category.value == 'buy_sell' %}selected{% endif %}" data-val="buy_sell">
+          <span class="cl-cat-icon">
+            {# Shopping cart / buy & sell #}
+            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-1.45-5c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 20 4H5.21L4.27 2H1v2h2l3.6 7.59L5.25 14c-.16.28-.25.61-.25.96C5 16.1 5.9 17 7 17h12v-2H7.42c-.13 0-.25-.11-.25-.25l.03-.12.9-1.63H15.55z"/></svg>
+          </span>
+          <span class="cl-cat-label">Buy &amp; Sell</span>
+        </div>
+
+        <div class="cl-cat-card {% if form.category.value == 'events' %}selected{% endif %}" data-val="events">
+          <span class="cl-cat-icon">
+            {# Star / event / celebration #}
+            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z"/></svg>
+          </span>
+          <span class="cl-cat-label">Events</span>
+        </div>
+
+      </div>
+    </div>
+
+    {# ══ DYNAMIC — Property / Room details (shown for rentals/roommates/properties) ══ #}
+    <div class="cl-section cl-detail-panel" id="cl-detail-panel" style="display:none;opacity:0;">
+      <div class="cl-section-head">
+        <div class="cl-section-num" style="background:var(--accent);" id="cl-detail-icon">🏠</div>
+        <div>
+          <div class="cl-section-title" id="cl-detail-title">Property details</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Tell us more about the space</div>
+        </div>
+      </div>
+
+      {# Accommodation type — rentals & roommates only #}
+      <div id="cl-accom-wrap" style="display:none;">
+        <p class="cl-subsection-label">Accommodation type</p>
+        <input type="hidden" name="accommodation_type" id="f-accommodation-type" value="{{ form.accommodation_type.value|default:'' }}">
+        <div class="cl-radio-grid cl-radio-grid-2">
+          <div class="cl-radio-card {% if form.accommodation_type.value == 'room' %}selected{% endif %}" data-group="accommodation_type" data-val="room">
+            <span class="cl-radio-icon">
+              {# Bed / room icon #}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30"><path d="M21 10.78V8c0-1.65-1.35-3-3-3h-4c-.77 0-1.47.3-2 .78C11.47 5.3 10.77 5 10 5H6C4.35 5 3 6.35 3 8v2.78c-.61.55-1 1.34-1 2.22v6h2v-1h16v1h2v-6c0-.88-.39-1.67-1-2.22zM14 8h4c.55 0 1 .45 1 1v2h-6V9c0-.55.45-1 1-1zM6 8h4c.55 0 1 .45 1 1v2H5V9c0-.55.45-1 1-1zm-2 8v-2h16v2H4z"/></svg>
+            </span>
+            <span class="cl-radio-label">Room</span>
+            <div class="cl-radio-dot"></div>
+          </div>
+          <div class="cl-radio-card {% if form.accommodation_type.value == 'whole' %}selected{% endif %}" data-group="accommodation_type" data-val="whole">
+            <span class="cl-radio-icon">
+              {# Whole property / house icon #}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            </span>
+            <span class="cl-radio-label">Whole property</span>
+            <div class="cl-radio-dot"></div>
+          </div>
+        </div>
+      </div>
+
+      {# Property type — rentals / roommates / properties #}
+      <div id="cl-proptype-wrap" style="display:none;margin-top:1.1rem;">
+        <p class="cl-subsection-label">Property type</p>
+        <input type="hidden" name="property_type" id="f-property-type" value="{{ form.property_type.value|default:'' }}">
+        <div class="cl-radio-grid cl-radio-grid-3">
+
+          <div class="cl-radio-card {% if form.property_type.value == 'apartment' %}selected{% endif %}" data-group="property_type" data-val="apartment">
+            <span class="cl-radio-icon">
+              {# Apartment: T-shaped multi-story building with window grid #}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30"><path d="M17 11V3H7v4H3v14h8v-4h2v4h8V11h-4zm-8 4H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V5h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V5h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2z"/></svg>
+            </span>
+            <span class="cl-radio-label">Apartment</span>
+            <div class="cl-radio-dot"></div>
+          </div>
+
+          <div class="cl-radio-card {% if form.property_type.value == 'condo' %}selected{% endif %}" data-group="property_type" data-val="condo">
+            <span class="cl-radio-icon">
+              {# Condo: L-shaped office/residential tower #}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+            </span>
+            <span class="cl-radio-label">Condo</span>
+            <div class="cl-radio-dot"></div>
+          </div>
+
+          <div class="cl-radio-card {% if form.property_type.value == 'house' %}selected{% endif %}" data-group="property_type" data-val="house">
+            <span class="cl-radio-icon">
+              {# House: pitched roof with garage wing #}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30"><path d="M19 9.3V4h-3v2.6L12 3 2 12h3v8h5v-5h4v5h5v-8h3L19 9.3z"/></svg>
+            </span>
+            <span class="cl-radio-label">House</span>
+            <div class="cl-radio-dot"></div>
+          </div>
+
+          <div class="cl-radio-card {% if form.property_type.value == 'townhouse' %}selected{% endif %}" data-group="property_type" data-val="townhouse">
+            <span class="cl-radio-icon">
+              {# Townhouse: two narrow houses side by side #}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30"><path d="M1 21v-8l5-5 5 5v8H1zm2-2h6v-5.17L7 11.63l-4 4.2V19H3zm3-3h2v-2H6v2zm7 5v-8l5-5 5 5v8H13zm2-2h6v-5.17L18 11.63l-4 4.2V19h-.01zm3-3h2v-2h-2v2z"/></svg>
+            </span>
+            <span class="cl-radio-label">Townhouse</span>
+            <div class="cl-radio-dot"></div>
+          </div>
+
+          <div class="cl-radio-card {% if form.property_type.value == 'basement' %}selected{% endif %}" data-group="property_type" data-val="basement">
+            <span class="cl-radio-icon">
+              {# Basement: descending staircase steps #}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30"><path d="M4 18v-3h4v-3h4v-3h4v-3h4v3h-3v3h-4v3H9v3H4z"/></svg>
+            </span>
+            <span class="cl-radio-label">Basement</span>
+            <div class="cl-radio-dot"></div>
+          </div>
+
+          <div class="cl-radio-card {% if form.property_type.value == 'loft' %}selected{% endif %}" data-group="property_type" data-val="loft">
+            <span class="cl-radio-icon">
+              {# Loft: wide low building (warehouse style) #}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30"><path d="M2 21V10l10-7 10 7v11H2zm2-2h7v-5h2v5h7v-8.12l-8-5.6-8 5.6V19zm3-5h2v-3H7v3zm8 0h2v-3h-2v3z"/></svg>
+            </span>
+            <span class="cl-radio-label">Loft</span>
+            <div class="cl-radio-dot"></div>
+          </div>
+
+          <div class="cl-radio-card {% if form.property_type.value == 'studio' %}selected{% endif %}" data-group="property_type" data-val="studio">
+            <span class="cl-radio-icon">
+              {# Studio: floor-plan grid layout #}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-4h5v4zm0-6H7V7h5v4zm5 6h-3v-4h3v4zm0-6h-3V7h3v4z"/></svg>
+            </span>
+            <span class="cl-radio-label">Studio</span>
+            <div class="cl-radio-dot"></div>
+          </div>
+
+          <div class="cl-radio-card {% if form.property_type.value == 'trailer' %}selected{% endif %}" data-group="property_type" data-val="trailer">
+            <span class="cl-radio-icon">
+              {# Trailer: RV / mobile home with wheels #}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30"><path d="M20 8H3c-1.1 0-2 .9-2 2v6h2c0 1.1.9 2 2 2s2-.9 2-2h8c0 1.1.9 2 2 2s2-.9 2-2h2v-3l-3-5zm-1 1.5 2 3.5h-5V9.5h3zM5 16c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm14 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zM3 13v-3h11v3H3z"/></svg>
+            </span>
+            <span class="cl-radio-label">Trailer</span>
+            <div class="cl-radio-dot"></div>
+          </div>
+
+        </div>
+      </div>
+
+      {# Bills included — rentals & roommates only #}
+      <div id="cl-bills-wrap" style="display:none;margin-top:1.1rem;">
+        <label class="cl-bills-label">
+          <input type="checkbox" name="bills_included" id="f-bills-included" {% if form.bills_included.value %}checked{% endif %}>
+          <div>
+            <span style="font-weight:600;font-size:.9rem;">Bills included</span>
+            <p class="muted" style="font-size:.78rem;margin-top:.1rem;">Whether all utility bills are included in the rent</p>
+          </div>
+        </label>
+      </div>
+
+      {# Security deposit — rentals only #}
+      <div id="cl-deposit-wrap" style="display:none;margin-top:1.1rem;">
+        <label class="cl-label" for="f-security-deposit">Security deposit</label>
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <span style="font-size:1.1rem;font-weight:700;color:var(--text-2);">$</span>
+          <input type="number" id="f-security-deposit" name="security_deposit"
+                 value="{{ form.security_deposit.value|default:'' }}"
+                 placeholder="0.00" min="0" step="0.01" style="width:150px;">
+        </div>
+      </div>
+    </div>
+
+    {# ══ SECTION 2 — Title & Description ══ #}
+    <div class="cl-section">
+      <div class="cl-section-head">
+        <div class="cl-section-num">2</div>
+        <div>
+          <div class="cl-section-title">Tell us about it</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">A clear title and description gets more views</div>
+        </div>
+      </div>
+
+      <div class="cl-field">
+        <label class="cl-label" for="f-title">Listing title <span class="cl-required">*</span></label>
+        {% if form.title.errors %}<p class="cl-field-error">{{ form.title.errors.0 }}</p>{% endif %}
+        <input type="text" id="f-title" name="title" value="{{ form.title.value|default:'' }}"
+               placeholder="e.g. Cozy 2BHK near downtown with parking" maxlength="120" required>
+        <div class="cl-field-footer"><span class="cl-char-counter" id="title-counter">0 / 120</span></div>
+      </div>
+
+      <div class="cl-field" style="margin-top:.85rem;">
+        <label class="cl-label" for="f-description">Description <span class="cl-required">*</span></label>
+        {% if form.description.errors %}<p class="cl-field-error">{{ form.description.errors.0 }}</p>{% endif %}
+        <textarea id="f-description" name="description" rows="5"
+                  placeholder="Describe your listing — features, condition, rules, what's included…"
+                  style="width:100%;resize:vertical;" required>{{ form.description.value|default:'' }}</textarea>
+        <div class="cl-field-footer"><span class="cl-char-counter" id="desc-counter">0 characters</span></div>
+      </div>
+    </div>
+
+    {# ══ SECTION 3 — Location ══ #}
+    <div class="cl-section">
+      <div class="cl-section-head">
+        <div class="cl-section-num">3</div>
+        <div>
+          <div class="cl-section-title">Location</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Where is this listing based?</div>
+        </div>
+      </div>
+
+      <div class="cl-row-2">
+        <div class="cl-field" style="grid-column:1/-1;">
+          <label class="cl-label" for="f-address-line">Street address</label>
+          <div class="cl-loc-wrap" id="cl-loc-wrap">
+            <input type="text" id="f-address-line" name="address_line"
+                   value="{{ form.address_line.value|default:'' }}"
+                   placeholder="e.g. 4521 Maple Ave — city &amp; ZIP will auto-fill" autocomplete="new-password">
+            <div class="cl-loc-spinner" id="cl-loc-spinner" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15" class="cl-spin"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            </div>
+            <ul class="cl-loc-dropdown" id="cl-loc-dropdown" hidden></ul>
+          </div>
+          <p class="cl-hint">Start typing — pick a suggestion to auto-fill city, state &amp; ZIP</p>
+        </div>
+        <div class="cl-field">
+          <label class="cl-label" for="f-city">City <span class="cl-required">*</span></label>
+          {% if form.city.errors %}<p class="cl-field-error">{{ form.city.errors.0 }}</p>{% endif %}
+          <input type="text" id="f-city" name="city" value="{{ form.city.value|default:'' }}" placeholder="e.g. Dallas" required>
+        </div>
+        <div class="cl-field">
+          <label class="cl-label" for="f-state">State</label>
+          <input type="text" id="f-state" name="state" value="{{ form.state.value|default:'' }}" placeholder="e.g. TX">
+        </div>
+        <div class="cl-field">
+          <label class="cl-label" for="f-zip">ZIP / Postal code</label>
+          <input type="text" id="f-zip" name="zip_code" value="{{ form.zip_code.value|default:'' }}" placeholder="e.g. 75201">
+        </div>
+        <div class="cl-field">
+          <label class="cl-label" for="f-country">Country</label>
+          <input type="text" id="f-country" name="country" value="{{ form.country.value|default:'USA' }}">
+        </div>
+      </div>
+    </div>
+
+    {# ══ SECTION 4 — Pricing ══ #}
+    <div class="cl-section">
+      <div class="cl-section-head">
+        <div class="cl-section-num">4</div>
+        <div>
+          <div class="cl-section-title">Pricing</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Leave blank to show "Contact for price"</div>
+        </div>
+      </div>
+      {% if form.price.errors %}<p class="cl-field-error">{{ form.price.errors.0 }}</p>{% endif %}
+      <div style="display:flex;align-items:center;gap:.85rem;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <span style="font-size:1.25rem;font-weight:700;color:var(--text-2);">$</span>
+          <input type="number" id="f-price" name="price" value="{{ form.price.value|default:'' }}"
+                 placeholder="0.00" min="0" step="0.01" style="width:150px;">
+        </div>
+        <input type="hidden" name="price_unit" id="f-price-unit" value="{{ form.price_unit.value|default:'' }}">
+        <div class="cl-unit-tabs" id="price-unit-tabs">
+          <button type="button" class="cl-unit-tab {% if form.price_unit.value == 'mo' %}selected{% endif %}" data-val="mo">/Month</button>
+          <button type="button" class="cl-unit-tab {% if form.price_unit.value == 'wk' %}selected{% endif %}" data-val="wk">/Week</button>
+          <button type="button" class="cl-unit-tab {% if form.price_unit.value == 'day' %}selected{% endif %}" data-val="day">/Day</button>
+          <button type="button" class="cl-unit-tab {% if form.price_unit.value == 'hr' %}selected{% endif %}" data-val="hr">/Hour</button>
+        </div>
+      </div>
+    </div>
+
+    {# ══ SECTION 5 — Availability & Contact ══ #}
+    <div class="cl-section">
+      <div class="cl-section-head">
+        <div class="cl-section-num">5</div>
+        <div>
+          <div class="cl-section-title">Availability & Contact</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">When is this available and how to reach you?</div>
+        </div>
+      </div>
+      <div class="cl-row-2">
+        <div class="cl-field">
+          <label class="cl-label" for="f-available-from">Available from</label>
+          <input type="date" id="f-available-from" name="available_from" value="{{ form.available_from.value|default:'' }}">
+          <p class="cl-hint">Leave blank if available now</p>
+        </div>
+        <div class="cl-field">
+          <label class="cl-label" for="f-phone">Phone number</label>
+          <input type="tel" id="f-phone" name="contact_phone" value="{{ form.contact_phone.value|default:'' }}" placeholder="e.g. (214) 555-0100">
+          <p class="cl-hint">Optional — visible to buyers</p>
+        </div>
+      </div>
+    </div>
+
+    {# ══ SECTION 6 — Amenities & Tags ══ #}
+    <div class="cl-section">
+      <div class="cl-section-head">
+        <div class="cl-section-num">6</div>
+        <div>
+          <div class="cl-section-title">Amenities & Features</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Tap to select — any number of tags</div>
+        </div>
+      </div>
+      <input type="hidden" name="tags" id="f-tags" value="{{ form.tags.value|default:'' }}">
+      {% if form.tags.errors %}<p class="cl-field-error">{{ form.tags.errors.0 }}</p>{% endif %}
+      <div class="cl-amenity-grid" id="amenity-grid">
+        {% for tag in "pet-friendly,parking,furnished,washer/dryer,gym,pool,balcony,utilities included,no deposit,near transit,AC,heating,wifi,dishwasher,hardwood floors,EV charging,storage,rooftop access"|split_csv %}
+        <button type="button" class="cl-amenity-btn" data-tag="{{ tag }}">{{ tag }}</button>
+        {% endfor %}
+      </div>
+      <p class="cl-hint" id="tags-count-hint" style="margin-top:.6rem;">0 / 5 selected</p>
+    </div>
+
+    {# ══ SECTION 7 — Featured ══ #}
+    <div class="cl-section">
+      <div class="cl-section-head" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">
+        <div class="cl-section-num">7</div>
+        <div style="flex:1;">
+          <div class="cl-section-title">Feature this listing</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Boost visibility — featured listings appear first in search results</div>
+        </div>
+        <input type="checkbox" name="featured" id="f-featured-cb" style="position:absolute;opacity:0;pointer-events:none;" {% if form.featured.value %}checked{% endif %}>
+        <div class="cl-toggle-wrap" id="featured-toggle" title="Toggle featured">
+          <div class="cl-toggle-track {% if form.featured.value %}on{% endif %}" id="featured-track">
+            <div class="cl-toggle-thumb"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ══ SECTION 8 — Photos ══ #}
+    <div class="cl-section">
+      <div class="cl-section-head">
+        <div class="cl-section-num">8</div>
+        <div>
+          <div class="cl-section-title">Photos</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Up to {{ max_images }} photos · max 5 MB each · listings with photos get 3× more views</div>
+        </div>
+      </div>
+      {% if image_errors %}
+      <div class="img-upload-errors" style="margin-bottom:.75rem;">
+        {% for err in image_errors %}<p>⚠ {{ err }}</p>{% endfor %}
+      </div>
+      {% endif %}
+      <div id="img-preview-grid" class="img-preview-grid"></div>
+      <div class="img-upload-zone" id="img-upload-zone">
+        <input type="file" name="images" id="img-file-input" multiple accept="image/*">
+        <div class="img-upload-icon">📷</div>
+        <div class="img-upload-label">Click to add photos or drag & drop</div>
+        <div class="img-upload-hint">JPEG, PNG, WEBP · Max 5 MB each</div>
+        <div class="img-upload-count" id="img-count-label">0 / {{ max_images }} photos added</div>
+      </div>
+    </div>
+
+    <button type="submit" class="button accent" style="width:100%;padding:.9rem;font-size:1rem;border-radius:14px;margin-top:.25rem;" id="publish-btn">
+      ✦ Publish Listing
+    </button>
+  </form>
 </div>
 
 <script>
 (function () {
+  /* ── All variables declared up-front to avoid hoisting bugs ── */
   var MAX       = {{ max_images }};
   var MAX_BYTES = 5 * 1024 * 1024;
-  var files     = [];   /* {file, error} */
+  var files     = [];
   var zone      = document.getElementById('img-upload-zone');
   var input     = document.getElementById('img-file-input');
   var grid      = document.getElementById('img-preview-grid');
   var countLbl  = document.getElementById('img-count-label');
   var form      = document.getElementById('create-listing-form');
+  var titleInput = document.getElementById('f-title');
+  var titleCount = document.getElementById('title-counter');
+  var descInput  = document.getElementById('f-description');
+  var descCount  = document.getElementById('desc-counter');
+  var cityInput  = document.getElementById('f-city');
+  var priceInput = document.getElementById('f-price');
+  var compFill   = document.getElementById('comp-fill');
+  var compPct    = document.getElementById('comp-pct');
+  var selectedTags = (document.getElementById('f-tags').value || '')
+    .split(',').map(function(t){ return t.trim(); }).filter(Boolean);
 
   function updateCount() {
     var ok = files.filter(function(f){ return !f.error; }).length;
     countLbl.textContent = ok + ' / ' + MAX + ' photos added';
     countLbl.classList.toggle('at-limit', ok >= MAX);
+    updateCompletion();
   }
 
   function render() {
@@ -56,26 +454,19 @@
     files.forEach(function(item, idx) {
       var wrap = document.createElement('div');
       wrap.className = 'img-preview-item' + (item.error ? ' img-preview-error' : '');
-
       var img = document.createElement('img');
       img.src = item.url;
       wrap.appendChild(img);
-
       if (item.error) {
         var lbl = document.createElement('div');
         lbl.className = 'img-preview-error-label';
         lbl.textContent = item.error;
         wrap.appendChild(lbl);
       }
-
       var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'img-preview-remove';
-      btn.innerHTML = '✕';
+      btn.type = 'button'; btn.className = 'img-preview-remove'; btn.innerHTML = '✕';
       btn.addEventListener('click', function() {
-        URL.revokeObjectURL(item.url);
-        files.splice(idx, 1);
-        render(); updateCount(); syncInput();
+        URL.revokeObjectURL(item.url); files.splice(idx, 1); render(); updateCount(); syncInput();
       });
       wrap.appendChild(btn);
       grid.appendChild(wrap);
@@ -83,7 +474,6 @@
   }
 
   function syncInput() {
-    /* Rebuild a DataTransfer with only valid files */
     var dt = new DataTransfer();
     files.forEach(function(f){ if (!f.error) dt.items.add(f.file); });
     input.files = dt.files;
@@ -93,11 +483,8 @@
     Array.from(newFiles).forEach(function(file) {
       var ok = files.filter(function(f){ return !f.error; }).length;
       var error = null;
-      if (file.size > MAX_BYTES) {
-        error = (file.size / 1024 / 1024).toFixed(1) + ' MB — too large';
-      } else if (ok >= MAX) {
-        error = 'Limit reached';
-      }
+      if (file.size > MAX_BYTES) error = (file.size / 1024 / 1024).toFixed(1) + ' MB — too large';
+      else if (ok >= MAX) error = 'Limit reached';
       files.push({ file: file, url: URL.createObjectURL(file), error: error });
     });
     render(); updateCount(); syncInput();
@@ -105,22 +492,338 @@
 
   input.addEventListener('change', function() {
     var selected = Array.from(input.files);
-    input.value = '';          /* clear first, then add — so syncInput wins */
+    input.value = '';
     addFiles(selected);
   });
-
-  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragover',  function(e){ e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', function()  { zone.classList.remove('drag-over'); });
   zone.addEventListener('drop', function(e) {
-    e.preventDefault(); zone.classList.remove('drag-over');
-    addFiles(e.dataTransfer.files);
+    e.preventDefault(); zone.classList.remove('drag-over'); addFiles(e.dataTransfer.files);
   });
-
-  /* Block submit if any error images remain */
   form.addEventListener('submit', function(e) {
     var hasErrors = files.some(function(f){ return f.error; });
     if (hasErrors) { e.preventDefault(); alert('Please remove invalid images before publishing.'); }
   });
+
+  /* ── Category picker ── */
+  document.querySelectorAll('.cl-cat-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+      document.querySelectorAll('.cl-cat-card').forEach(function(c){ c.classList.remove('selected'); });
+      card.classList.add('selected');
+      document.getElementById('f-category').value = card.dataset.val;
+      updateDetailPanel();
+      updateCompletion();
+    });
+  });
+
+  /* ── Dynamic detail panel (rental / roommate / property) ── */
+  function updateDetailPanel() {
+    var cat        = document.getElementById('f-category').value;
+    var panel      = document.getElementById('cl-detail-panel');
+    var accomWrap  = document.getElementById('cl-accom-wrap');
+    var proptWrap  = document.getElementById('cl-proptype-wrap');
+    var billsWrap  = document.getElementById('cl-bills-wrap');
+    var depositWrap= document.getElementById('cl-deposit-wrap');
+    var title      = document.getElementById('cl-detail-title');
+    var isRental   = cat === 'rentals';
+    var isRoommate = cat === 'roommates';
+    var isProp     = cat === 'properties';
+    var showPanel  = isRental || isRoommate || isProp;
+
+    if (showPanel) {
+      panel.style.display = '';
+      setTimeout(function(){ panel.style.opacity = '1'; }, 10);
+    } else {
+      panel.style.opacity = '0';
+      setTimeout(function(){ if (document.getElementById('f-category').value !== cat) return; panel.style.display = 'none'; }, 200);
+    }
+
+    accomWrap.style.display   = (isRental || isRoommate) ? '' : 'none';
+    proptWrap.style.display   = showPanel ? '' : 'none';
+    billsWrap.style.display   = (isRental || isRoommate) ? '' : 'none';
+    depositWrap.style.display = isRental ? '' : 'none';
+
+    if (isRental)   title.textContent = 'Rental details';
+    else if (isRoommate) title.textContent = 'Room details';
+    else if (isProp)title.textContent = 'Property details';
+  }
+
+  /* Run on page load in case of failed POST pre-fill */
+  updateDetailPanel();
+
+  /* ── Radio cards (accommodation type & property type) ── */
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.cl-radio-card[data-group]');
+    if (!card) return;
+    var group = card.dataset.group;
+    document.querySelectorAll('.cl-radio-card[data-group="' + group + '"]').forEach(function(c){
+      c.classList.remove('selected');
+    });
+    card.classList.add('selected');
+    var inputId = group === 'accommodation_type' ? 'f-accommodation-type' : 'f-property-type';
+    document.getElementById(inputId).value = card.dataset.val;
+  });
+
+  /* ── Price unit tabs ── */
+  document.querySelectorAll('.cl-unit-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.cl-unit-tab').forEach(function(t){ t.classList.remove('selected'); });
+      tab.classList.add('selected');
+      document.getElementById('f-price-unit').value = tab.dataset.val;
+    });
+  });
+
+  /* ── Amenity chips ── */
+
+  function syncAmenityUI() {
+    document.querySelectorAll('.cl-amenity-btn').forEach(function(btn) {
+      btn.classList.toggle('selected', selectedTags.indexOf(btn.dataset.tag) !== -1);
+    });
+    document.getElementById('f-tags').value = selectedTags.join(',');
+    var hint = document.getElementById('tags-count-hint');
+    hint.textContent = selectedTags.length + ' selected';
+    hint.style.color = selectedTags.length > 0 ? 'var(--primary)' : '';
+    updateCompletion();
+  }
+
+  syncAmenityUI(); /* pre-select on failed POST */
+
+  document.getElementById('amenity-grid').addEventListener('click', function(e) {
+    var btn = e.target.closest('.cl-amenity-btn');
+    if (!btn) return;
+    var tag = btn.dataset.tag;
+    var idx = selectedTags.indexOf(tag);
+    if (idx !== -1) {
+      selectedTags.splice(idx, 1);
+    } else {
+      selectedTags.push(tag);
+    }
+    syncAmenityUI();
+  });
+
+  /* ── Featured toggle ── */
+  var featuredTrack = document.getElementById('featured-track');
+  var featuredCb    = document.getElementById('f-featured-cb');
+  document.getElementById('featured-toggle').addEventListener('click', function() {
+    featuredCb.checked = !featuredCb.checked;
+    featuredTrack.classList.toggle('on', featuredCb.checked);
+  });
+
+  /* ── Character counters ── */
+
+  function updateTitleCount() {
+    var len = titleInput.value.length;
+    titleCount.textContent = len + ' / 120';
+    titleCount.classList.toggle('near-limit', len > 100);
+    updateCompletion();
+  }
+  function updateDescCount() {
+    var len = descInput.value.length;
+    descCount.textContent = len + ' characters';
+    descCount.classList.toggle('near-limit', len < 20 && len > 0);
+    updateCompletion();
+  }
+
+  titleInput.addEventListener('input', updateTitleCount);
+  descInput.addEventListener('input', updateDescCount);
+  updateTitleCount(); updateDescCount();
+
+  /* ── Completion bar ── */
+  cityInput.addEventListener('input', updateCompletion);
+  priceInput.addEventListener('input', updateCompletion);
+
+  function updateCompletion() {
+    var score = 0;
+    if (document.getElementById('f-category').value)       score += 15; /* category */
+    if (titleInput.value.trim().length >= 5)               score += 20; /* title */
+    if (descInput.value.trim().length >= 20)               score += 20; /* description */
+    if (cityInput.value.trim())                            score += 15; /* city */
+    if (priceInput.value)                                  score += 10; /* price */
+    if (selectedTags.length > 0)                           score += 10; /* tags */
+    var photoOk = files.filter(function(f){ return !f.error; }).length;
+    if (photoOk > 0)                                       score += 10; /* photos */
+    compFill.style.width = score + '%';
+    compPct.textContent  = score + '%';
+    compPct.style.color  = score >= 80 ? 'var(--accent)' : score >= 50 ? 'var(--primary)' : 'var(--muted)';
+  }
+
+  updateCompletion();
+
+  /* ── Address autocomplete (Google Places API New — REST, no SDK needed) ── */
+  (function () {
+    var GKEY     = '{{ GOOGLE_MAPS_API_KEY }}';
+    var wrap     = document.getElementById('cl-loc-wrap');
+    var search   = document.getElementById('f-address-line');
+    var dropdown = document.getElementById('cl-loc-dropdown');
+    var spinner  = document.getElementById('cl-loc-spinner');
+    if (!search || !dropdown) return;
+    var timer, lastQ = '';
+
+    search.addEventListener('input', function () {
+      var q = search.value.trim();
+      clearTimeout(timer);
+      dropdown.hidden = true;
+      if (q.length < 2) { spinner.hidden = true; return; }
+      spinner.hidden = false;
+      timer = setTimeout(function () { fetchSuggestions(q); }, 300);
+    });
+
+    function fetchSuggestions(q) {
+      lastQ = q;
+      {% if GOOGLE_MAPS_API_KEY %}
+      /* ── Google Places API (New) ── */
+      fetch('https://places.googleapis.com/v1/places:autocomplete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GKEY,
+        },
+        body: JSON.stringify({
+          input: q,
+          includedRegionCodes: ['us'],
+          languageCode: 'en-US',
+        }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (q !== lastQ) return; /* stale response — newer request in flight */
+          spinner.hidden = true;
+          showGoogleSuggestions(data.suggestions || []);
+        })
+        .catch(function () { spinner.hidden = true; });
+      {% else %}
+      /* ── Nominatim fallback ── */
+      fetch(
+        'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8&countrycodes=us&q='
+        + encodeURIComponent(q),
+        { headers: { 'Accept-Language': 'en-US,en' } }
+      )
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (q !== lastQ) return;
+          spinner.hidden = true;
+          showNominatimSuggestions(res);
+        })
+        .catch(function () { spinner.hidden = true; });
+      {% endif %}
+    }
+
+    {% if GOOGLE_MAPS_API_KEY %}
+    function showGoogleSuggestions(suggestions) {
+      dropdown.innerHTML = '';
+      suggestions.forEach(function (s) {
+        var pred = s.placePrediction;
+        if (!pred) return;
+        var mainText = pred.structuredFormat
+          ? pred.structuredFormat.mainText.text
+          : pred.text.text;
+        var secText  = pred.structuredFormat
+          ? pred.structuredFormat.secondaryText.text
+          : '';
+        var placeId  = pred.placeId;
+
+        var li = document.createElement('li');
+        li.className = 'cl-loc-option';
+        li.innerHTML = '<span class="cl-loc-main">' + mainText + '</span>'
+                     + (secText ? '<span class="cl-loc-sub">' + secText + '</span>' : '');
+
+        li.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          spinner.hidden = false;
+          /* Fetch place details to get address components */
+          fetch('https://places.googleapis.com/v1/places/' + placeId
+                + '?fields=addressComponents&languageCode=en-US', {
+            headers: { 'X-Goog-Api-Key': GKEY }
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (place) {
+              spinner.hidden = true;
+              var comps = place.addressComponents || [];
+              function get(type) {
+                var c = comps.find(function (c) { return c.types.indexOf(type) !== -1; });
+                return c ? c.longText : '';
+              }
+              var streetNum = get('street_number');
+              var route     = get('route');
+              var city      = get('locality') || get('sublocality') || get('administrative_area_level_3');
+              var state     = get('administrative_area_level_1');
+              var zip       = get('postal_code');
+              var country   = get('country');
+              search.value = streetNum ? streetNum + ' ' + route : route || mainText;
+              document.getElementById('f-city').value    = city;
+              document.getElementById('f-state').value   = state;
+              document.getElementById('f-zip').value     = zip;
+              document.getElementById('f-country').value = country;
+              dropdown.hidden = true;
+              document.getElementById('f-city').dispatchEvent(new Event('input'));
+            })
+            .catch(function () { spinner.hidden = true; dropdown.hidden = true; });
+        });
+        dropdown.appendChild(li);
+      });
+      dropdown.hidden = dropdown.children.length === 0;
+    }
+    {% else %}
+    function showNominatimSuggestions(results) {
+      dropdown.innerHTML = '';
+      var seen = [];
+      results.forEach(function (item) {
+        var a = item.address || {};
+        var house = a.house_number || '';
+        var road  = a.road || a.pedestrian || a.footway || a.path || '';
+        var city  = a.city || a.town || a.village || a.municipality
+                  || a.city_district || a.hamlet || a.suburb || a.county || '';
+        var state = a.state || '';
+        var street = house && road ? house + ' ' + road : road;
+        if (!street && !city) return;
+        var main = street
+          ? street + (city  ? ', ' + city  : '') + (state ? ', ' + state : '')
+          : city   + (state ? ', ' + state : '');
+        var sub = [a.postcode, a.country].filter(Boolean).join('  ');
+        if (seen.indexOf(main.toLowerCase()) !== -1) return;
+        seen.push(main.toLowerCase());
+        var li = document.createElement('li');
+        li.className = 'cl-loc-option';
+        li.innerHTML = '<span class="cl-loc-main">' + main + '</span>'
+                     + (sub ? '<span class="cl-loc-sub">' + sub + '</span>' : '');
+        li.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          search.value = street || city;
+          document.getElementById('f-city').value    = city;
+          document.getElementById('f-state').value   = state;
+          document.getElementById('f-zip').value     = a.postcode || '';
+          document.getElementById('f-country').value = a.country  || '';
+          dropdown.hidden = true;
+          document.getElementById('f-city').dispatchEvent(new Event('input'));
+        });
+        dropdown.appendChild(li);
+      });
+      dropdown.hidden = dropdown.children.length === 0;
+    }
+    {% endif %}
+
+    document.addEventListener('click', function (e) {
+      if (wrap && !wrap.contains(e.target)) dropdown.hidden = true;
+    });
+    search.addEventListener('keydown', function (e) {
+      var items  = dropdown.querySelectorAll('.cl-loc-option');
+      var active = dropdown.querySelector('.cl-loc-option.active');
+      var idx    = active ? Array.from(items).indexOf(active) : -1;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (active) active.classList.remove('active');
+        (items[Math.min(idx + 1, items.length - 1)] || items[0]).classList.add('active');
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (active) active.classList.remove('active');
+        items[Math.max(idx - 1, 0)].classList.add('active');
+      } else if (e.key === 'Enter' && active) {
+        e.preventDefault(); active.dispatchEvent(new MouseEvent('mousedown'));
+      } else if (e.key === 'Escape') {
+        dropdown.hidden = true;
+      }
+    });
+  })();
 })();
 </script>
 {% endblock %}

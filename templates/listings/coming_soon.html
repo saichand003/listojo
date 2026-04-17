@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width:520px;margin:3rem auto;">
+  <div class="card" style="text-align:center;padding:2.5rem 2rem;">
+
+    {% if joined %}
+      {# ── Success state ── #}
+      <div style="font-size:3rem;margin-bottom:1rem;">🎉</div>
+      <h2 style="margin-bottom:.5rem;">You're on the list!</h2>
+      <p class="muted" style="margin-bottom:1.5rem;">
+        We'll email <strong>{{ email }}</strong> the moment Listojo launches in
+        <strong>{{ city }}</strong>.
+      </p>
+      <a href="{% url 'listing_list' %}" class="button" style="width:100%;">
+        Browse Dallas–Fort Worth listings
+      </a>
+
+    {% else %}
+      {# ── Not launched yet ── #}
+      <div style="font-size:3rem;margin-bottom:1rem;">🌆</div>
+      <h2 style="margin-bottom:.5rem;">Coming soon to {{ city }}</h2>
+      <p class="muted" style="margin-bottom:.35rem;">
+        Listojo is currently live in the <strong>Dallas–Fort Worth Metroplex</strong>.
+      </p>
+      <p class="muted" style="margin-bottom:1.75rem;font-size:.88rem;">
+        Drop your email below and we'll notify you the moment we launch in your city.
+      </p>
+
+      <form method="post" action="{% url 'waitlist_signup' %}" style="text-align:left;">
+        {% csrf_token %}
+        <input type="hidden" name="city"  value="{{ city }}">
+        <input type="hidden" name="state" value="">
+
+        <label style="font-size:.83rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:.35rem;">
+          Your email
+        </label>
+        <input type="email" name="email" placeholder="you@email.com" required
+               style="width:100%;margin-bottom:.75rem;">
+
+        <button type="submit" style="width:100%;">
+          Notify me when {{ city }} launches
+        </button>
+      </form>
+
+      <p style="margin-top:1.25rem;font-size:.83rem;">
+        <a href="{% url 'listing_list' %}">← Browse Dallas–Fort Worth listings instead</a>
+      </p>
+    {% endif %}
+
+  </div>
+
+  {# Live cities strip #}
+  <div class="card" style="margin-top:1rem;padding:1.25rem 1.5rem;">
+    <p style="font-size:.78rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;">
+      Currently live
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+      {% for key, region in launch_regions.items %}
+      <span style="background:rgba(42,126,242,.1);color:var(--primary);border:1px solid rgba(42,126,242,.2);border-radius:8px;padding:.3rem .75rem;font-size:.82rem;font-weight:600;">
+        📍 {{ region.label }}
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

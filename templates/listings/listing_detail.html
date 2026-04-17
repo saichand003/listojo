@@ -76,6 +76,19 @@
 
             <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:.4rem;">
                 <p class="muted">📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %} &mdash; {{ listing.country }}</p>
+                {% if listing.available_from %}
+                <p class="muted">📅 Available from <strong style="color:var(--text-2);">{{ listing.available_from|date:"F j, Y" }}</strong></p>
+                {% else %}
+                <p class="muted">📅 <strong style="color:var(--accent);">Available now</strong></p>
+                {% endif %}
+                {% with listing.recommended_income as inc %}
+                {% if inc %}
+                <p class="muted" style="background:rgba(42,126,242,.07);border:1px solid rgba(42,126,242,.18);border-radius:8px;padding:.4rem .7rem;font-size:.82rem;">
+                    💼 Recommended monthly income: <strong style="color:var(--primary);">${{ inc|floatformat:0 }}+</strong>
+                    <span style="font-size:.72rem;margin-left:.3rem;">(3× monthly rent rule)</span>
+                </p>
+                {% endif %}
+                {% endwith %}
                 {% if listing.contact_phone %}<p class="muted">📞 {{ listing.contact_phone }}</p>{% endif %}
                 <p class="muted">👤 Listed by <strong style="color:var(--text-2);">{{ listing.owner.username }}</strong></p>
             </div>

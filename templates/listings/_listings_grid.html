@@ -57,6 +57,12 @@
             <p class="card-location-time">
                 📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %} &nbsp;·&nbsp; {{ listing.created_at|timesince }} ago
             </p>
+            {% if listing.available_from %}
+            <p class="card-avail">📅 Available {{ listing.available_from|date:"M j, Y" }}</p>
+            {% endif %}
+            {% with listing.recommended_income as inc %}
+            {% if inc %}<p class="card-income-hint">Income req. ~${{ inc|floatformat:0 }}/mo</p>{% endif %}
+            {% endwith %}
             <p class="price">
                 {% if listing.price %}
                     ${{ listing.price }}{% if listing.price_unit %}<span class="price-unit">{{ listing.get_price_unit_display }}</span>{% endif %}
