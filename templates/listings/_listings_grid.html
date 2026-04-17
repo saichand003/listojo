@@ -1,4 +1,5 @@
 {% load listing_extras %}
+{# listing_explanations is only present in FMM mode — dict_get returns '' otherwise #}
 <section class="grid grid-listings" id="listings-grid">
 {% for listing in listings %}
     <article class="card listing-card {% if listing.featured %}listing-featured{% endif %}">
@@ -74,6 +75,11 @@
                     <span style="font-size:1rem;font-weight:600;-webkit-text-fill-color:var(--muted);background:none;">Contact for price</span>
                 {% endif %}
             </p>
+            {% with listing_explanations|dict_get:listing.pk as explanation %}
+            {% if explanation %}
+            <p class="match-explanation">{{ explanation }}</p>
+            {% endif %}
+            {% endwith %}
             {% with listing_reasons|dict_get:listing.pk as reasons %}
             {% if reasons %}
             <div class="match-reason-pills">

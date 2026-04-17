@@ -15,3 +15,16 @@ def dict_get(d, key):
     if isinstance(d, dict):
         return d.get(key, '')
     return ''
+
+@register.filter
+def category_icon(cat):
+    icons = {
+        'roommates':      '👥',
+        'rentals':        '🔑',
+        'properties':     '🏠',
+        'local_services': '🔧',
+        'jobs':           '💼',
+        'buy_sell':       '🛒',
+        'events':         '🎉',
+    }
+    return icons.get(cat, '📋')

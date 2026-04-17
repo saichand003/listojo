@@ -4,69 +4,142 @@
 
 <section class="card hero">
 
-    <div class="hero-eyebrow">Guided rental discovery</div>
-    <h1 class="hero-headline">Find the right place faster — based on what actually matters to you.</h1>
-    <p class="hero-sub">Tell us your priorities. We rank listings and explain exactly why each one fits — not just filters, but reasons.</p>
+    <div class="hero-eyebrow">Rent smarter · Buy confidently</div>
+    <h1 class="hero-headline">Find a rental or property that actually fits your life.</h1>
+    <p class="hero-sub">Tell us what you need. We rank every listing by how well it matches you — and explain exactly why.</p>
 
-    {# ── Find My Match CTA + wizard ── #}
-    <div class="fmm-bar" id="fmm-bar">
-                <button type="button" class="fmm-trigger" id="fmm-trigger">
-                    🎯 Find My Match
-                </button>
-                <div class="fmm-steps" id="fmm-steps" hidden>
-                    <form method="get" id="fmm-form">
-                        <input type="hidden" name="fmm" value="1">
-                        <div class="fmm-step" data-step="1">
-                            <p class="fmm-q">What are you looking for?</p>
-                            <div class="fmm-options">
-                                {% for key, label in category_choices %}
-                                <button type="button" class="fmm-opt" data-field="category" data-val="{{ key }}">{{ label }}</button>
-                                {% endfor %}
-                            </div>
-                            <input type="hidden" name="category" id="fmm-category">
-                        </div>
-                        <div class="fmm-step" data-step="2" hidden>
-                            <p class="fmm-q">Which city?</p>
-                            <div class="city-ac-wrap" id="fmm-city-wrap">
-                                <input type="text" name="city" id="fmm-city" placeholder="e.g. Dallas, Irving, Austin" class="fmm-input" autocomplete="new-password">
-                                <ul class="city-ac-dropdown" id="fmm-city-dropdown" hidden></ul>
-                            </div>
-                            <button type="button" class="fmm-next" data-next="3">Next →</button>
-                        </div>
-                        <div class="fmm-step" data-step="3" hidden>
-                            <p class="fmm-q">What's your max monthly budget?</p>
-                            <div style="display:flex;align-items:center;gap:.5rem;">
-                                <span style="font-size:1.1rem;font-weight:700;">$</span>
-                                <input type="number" name="max_price" id="fmm-budget" placeholder="e.g. 1800" class="fmm-input" min="0">
-                            </div>
-                            <button type="button" class="fmm-next" data-next="4">Next →</button>
-                        </div>
-                        <div class="fmm-step" data-step="4" hidden>
-                            <p class="fmm-q">Must-have qualities? <span class="muted" style="font-size:.8rem;">(pick any)</span></p>
-                            <div class="fmm-tags-wrap">
-                                {% for qt in "pet-friendly,parking,furnished,washer/dryer,gym,pool,utilities included,no deposit,near transit"|split_csv %}
-                                <button type="button" class="fmm-tag" data-tag="{{ qt }}">{{ qt }}</button>
-                                {% endfor %}
-                            </div>
-                            <input type="hidden" name="tags" id="fmm-tags">
-                            <button type="button" class="fmm-next" data-next="5">Next →</button>
-                        </div>
-                        <div class="fmm-step" data-step="5" hidden>
-                            <p class="fmm-q">When do you need it available by?</p>
-                            <input type="date" name="available_by" id="fmm-avail" class="fmm-input">
-                            <p class="muted" style="font-size:.75rem;margin-top:.25rem;">Leave blank to show all available listings</p>
-                            <button type="submit" class="fmm-submit">🔍 Show My Matches</button>
-                        </div>
-                    </form>
-                    <div class="fmm-progress" id="fmm-progress">
-                        <span class="fmm-dot active" data-step="1"></span>
-                        <span class="fmm-dot" data-step="2"></span>
-                        <span class="fmm-dot" data-step="3"></span>
-                        <span class="fmm-dot" data-step="4"></span>
-                        <span class="fmm-dot" data-step="5"></span>
-                    </div>
+    {# ── Wizard — always visible, step 1 shown by default ── #}
+    <div class="fmm-wizard" id="fmm-wizard">
+        <form method="get" id="fmm-form">
+            <input type="hidden" name="fmm" value="1">
+
+            {# Step 1 — Rentals or Properties #}
+            <div class="fmm-step" data-step="1">
+                <p class="fmm-wizard-q">Are you looking to rent or buy?</p>
+                <div class="fmm-cat-grid fmm-cat-grid-2">
+                    <button type="button" class="fmm-cat-card" data-val="rentals">
+                        <span class="fmm-cat-icon">🔑</span>
+                        <span class="fmm-cat-label">Rent a Place</span>
+                        <span class="fmm-cat-sublabel">Rooms, apartments, houses &amp; more</span>
+                    </button>
+                    <button type="button" class="fmm-cat-card" data-val="properties">
+                        <span class="fmm-cat-icon">🏠</span>
+                        <span class="fmm-cat-label">Buy a Property</span>
+                        <span class="fmm-cat-sublabel">Houses, land, ranches &amp; more</span>
+                    </button>
                 </div>
+                <input type="hidden" name="category" id="fmm-category">
             </div>
+
+            {# Step 2 — Room vs whole place (rentals only; properties skips here) #}
+            <div class="fmm-step" data-step="2" hidden>
+                <p class="fmm-wizard-q">Are you looking for a private room or the whole place?</p>
+                <div class="fmm-choice-grid">
+                    <button type="button" class="fmm-choice-card" data-accom="room">
+                        <span class="fmm-choice-icon">🛏️</span>
+                        <span class="fmm-choice-title">Just a room</span>
+                        <span class="fmm-choice-desc">Private room in a shared house or apartment</span>
+                    </button>
+                    <button type="button" class="fmm-choice-card" data-accom="whole">
+                        <span class="fmm-choice-icon">🏠</span>
+                        <span class="fmm-choice-title">Whole place</span>
+                        <span class="fmm-choice-desc">The entire property — no sharing</span>
+                    </button>
+                </div>
+                <input type="hidden" name="accommodation_type" id="fmm-accom">
+                <button type="button" class="fmm-skip-link" data-next="3">Skip — show all →</button>
+            </div>
+
+            {# Step 3 — Property type (different options per category) #}
+            <div class="fmm-step" data-step="3" hidden>
+                <p class="fmm-wizard-q" id="fmm-proptype-q">What type of property?</p>
+
+                {# Rental property types #}
+                <div class="fmm-prop-grid" id="fmm-rental-types">
+                    <button type="button" class="fmm-prop-card" data-prop="apartment"><span>🏢</span> Apartment</button>
+                    <button type="button" class="fmm-prop-card" data-prop="house"><span>🏠</span> House</button>
+                    <button type="button" class="fmm-prop-card" data-prop="studio"><span>🚪</span> Studio</button>
+                    <button type="button" class="fmm-prop-card" data-prop="condo"><span>🏙️</span> Condo</button>
+                    <button type="button" class="fmm-prop-card" data-prop="townhouse"><span>🏘️</span> Townhouse</button>
+                    <button type="button" class="fmm-prop-card" data-prop="basement"><span>⬇️</span> Basement Suite</button>
+                    <button type="button" class="fmm-prop-card" data-prop="loft"><span>🪟</span> Loft</button>
+                    <button type="button" class="fmm-prop-card fmm-prop-any" data-prop="">Any type</button>
+                </div>
+
+                {# Buy / Properties types #}
+                <div class="fmm-prop-grid" id="fmm-buy-types" hidden>
+                    <button type="button" class="fmm-prop-card" data-prop="house"><span>🏠</span> House</button>
+                    <button type="button" class="fmm-prop-card" data-prop="apartment"><span>🏢</span> Apartment</button>
+                    <button type="button" class="fmm-prop-card" data-prop="townhouse"><span>🏘️</span> Townhouse</button>
+                    <button type="button" class="fmm-prop-card" data-prop="single_family"><span>🏡</span> Single-Family Home</button>
+                    <button type="button" class="fmm-prop-card" data-prop="ranch_house"><span>🏚️</span> Ranch House</button>
+                    <button type="button" class="fmm-prop-card" data-prop="condo"><span>🏙️</span> Condo</button>
+                    <button type="button" class="fmm-prop-card" data-prop="land"><span>🌿</span> Land</button>
+                    <button type="button" class="fmm-prop-card" data-prop="ranch"><span>🐄</span> Ranch</button>
+                    <button type="button" class="fmm-prop-card fmm-prop-any" data-prop="">Any type</button>
+                </div>
+
+                <input type="hidden" name="property_type" id="fmm-proptype">
+                <button type="button" class="fmm-skip-link" data-next="4">Skip — show all types →</button>
+            </div>
+
+            {# Step 4 — City #}
+            <div class="fmm-step" data-step="4" hidden>
+                <p class="fmm-wizard-q">Which city?</p>
+                <div class="city-ac-wrap" id="fmm-city-wrap">
+                    <input type="text" name="city" id="fmm-city" placeholder="e.g. Dallas, Irving, Plano…" class="fmm-input" autocomplete="new-password">
+                    <ul class="city-ac-dropdown" id="fmm-city-dropdown" hidden></ul>
+                </div>
+                <button type="button" class="fmm-next" data-next="5">Next →</button>
+            </div>
+
+            {# Step 5 — Budget #}
+            <div class="fmm-step" data-step="5" hidden>
+                <p class="fmm-wizard-q">What's your max monthly budget?</p>
+                <div class="fmm-budget-row">
+                    <span class="fmm-budget-symbol">$</span>
+                    <input type="number" name="max_price" id="fmm-budget" placeholder="e.g. 1800" class="fmm-input" min="0">
+                </div>
+                <button type="button" class="fmm-next" data-next="6">Next →</button>
+            </div>
+
+            {# Step 6 — Must-haves #}
+            <div class="fmm-step" data-step="6" hidden>
+                <p class="fmm-wizard-q">Any must-haves? <span style="font-size:.82rem;font-weight:400;color:var(--muted);">Pick any that apply</span></p>
+                <div class="fmm-tags-wrap">
+                    {% for qt in "pet-friendly,parking,furnished,washer/dryer,gym,pool,utilities included,no deposit,near transit"|split_csv %}
+                    <button type="button" class="fmm-tag" data-tag="{{ qt }}">{{ qt }}</button>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="tags" id="fmm-tags">
+                <button type="button" class="fmm-next" data-next="7">Next →</button>
+            </div>
+
+            {# Step 7 — Availability #}
+            <div class="fmm-step" data-step="7" hidden>
+                <p class="fmm-wizard-q">When do you need it by?</p>
+                <input type="date" name="available_by" id="fmm-avail" class="fmm-input">
+                <p class="muted" style="font-size:.78rem;margin-top:.3rem;">Leave blank to see all available listings</p>
+                <button type="submit" class="fmm-submit">✦ Show My Matches</button>
+            </div>
+        </form>
+
+        <div class="fmm-progress" id="fmm-progress">
+            <span class="fmm-prog-step active" data-step="1"><span class="fmm-prog-num">1</span><span class="fmm-prog-lbl">Rent/Buy</span></span>
+            <span class="fmm-prog-line"></span>
+            <span class="fmm-prog-step" data-step="2" data-optional="1"><span class="fmm-prog-num">2</span><span class="fmm-prog-lbl">Room?</span></span>
+            <span class="fmm-prog-line"></span>
+            <span class="fmm-prog-step" data-step="3" data-optional="1"><span class="fmm-prog-num">3</span><span class="fmm-prog-lbl">Type</span></span>
+            <span class="fmm-prog-line"></span>
+            <span class="fmm-prog-step" data-step="4"><span class="fmm-prog-num">4</span><span class="fmm-prog-lbl">City</span></span>
+            <span class="fmm-prog-line"></span>
+            <span class="fmm-prog-step" data-step="5"><span class="fmm-prog-num">5</span><span class="fmm-prog-lbl">Budget</span></span>
+            <span class="fmm-prog-line"></span>
+            <span class="fmm-prog-step" data-step="6"><span class="fmm-prog-num">6</span><span class="fmm-prog-lbl">Must-haves</span></span>
+            <span class="fmm-prog-line"></span>
+            <span class="fmm-prog-step" data-step="7"><span class="fmm-prog-num">7</span><span class="fmm-prog-lbl">When</span></span>
+        </div>
+    </div>
 
     <div class="hero-stats-row">
         <div class="hero-stat"><span class="hero-stat-num">{{ total_listings }}</span><span class="hero-stat-lbl">Active listings</span></div>
@@ -78,8 +151,8 @@
         <input type="text" id="tag-search-input" placeholder="🔍  Search… e.g. pet-friendly, 2BHK, parking" autocomplete="off">
         <input type="hidden" name="q" id="tag-search-hidden" value="{{ filters.q }}">
         <select name="category">
-            <option value="">All categories</option>
-            {% for key, label in category_choices %}
+            <option value="">Rentals &amp; Properties</option>
+            {% for key, label in wizard_categories %}
                 <option value="{{ key }}" {% if filters.category == key %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
@@ -115,7 +188,7 @@
 
 <div class="chips" style="margin-bottom:1.25rem;">
     <a class="chip {% if not filters.category %}chip-active{% endif %}" href="?">All</a>
-    {% for key, label in category_choices %}
+    {% for key, label in wizard_categories %}
         <a class="chip cat-chip-{{ key }} {% if filters.category == key %}chip-active{% endif %}" href="?category={{ key }}">
             <span class="cat-dot cat-dot-{{ key }}"></span>{{ label }}
             {% with cnt=category_counts|dict_get:key %}
@@ -325,46 +398,96 @@
 </script>
 
 <script>
-/* ── Find My Match widget ── */
+/* ── Find My Match wizard (7-step conditional flow) ── */
 (function () {
-  var trigger  = document.getElementById('fmm-trigger');
-  var steps    = document.getElementById('fmm-steps');
-  if (!trigger || !steps) return;
+  var wizard = document.getElementById('fmm-wizard');
+  if (!wizard) return;
 
+  var selectedCategory = '';
   var currentStep = 1;
-
-  trigger.addEventListener('click', function () {
-    steps.hidden = !steps.hidden;
-  });
 
   function showStep(n) {
     currentStep = n;
-    steps.querySelectorAll('.fmm-step').forEach(function (s) {
+    wizard.querySelectorAll('.fmm-step').forEach(function (s) {
       s.hidden = parseInt(s.dataset.step) !== n;
     });
-    steps.querySelectorAll('.fmm-dot').forEach(function (d) {
-      d.classList.toggle('active', parseInt(d.dataset.step) === n);
+    wizard.querySelectorAll('.fmm-prog-step').forEach(function (d) {
+      var sn = parseInt(d.dataset.step);
+      d.classList.toggle('active',    sn === n);
+      d.classList.toggle('completed', sn < n);
+      /* Dim step 2 (room/whole) for properties — it doesn't apply */
+      if (d.dataset.optional === '1' && parseInt(d.dataset.step) === 2) {
+        d.style.opacity = selectedCategory === 'rentals' ? '' : '.35';
+      }
     });
+    var step = wizard.querySelector('.fmm-step[data-step="' + n + '"]');
+    if (step) {
+      var first = step.querySelector('input:not([type=hidden]), button');
+      if (first) setTimeout(function () { first.focus(); }, 60);
+    }
   }
 
-  /* Category options */
-  steps.querySelectorAll('.fmm-opt').forEach(function (btn) {
+  /* ── Step 1: Rent or Buy ── */
+  wizard.querySelectorAll('.fmm-cat-card').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      steps.querySelectorAll('.fmm-opt').forEach(function (b) { b.classList.remove('selected'); });
+      wizard.querySelectorAll('.fmm-cat-card').forEach(function (b) { b.classList.remove('selected'); });
       btn.classList.add('selected');
-      document.getElementById('fmm-category').value = btn.dataset.val;
-      setTimeout(function () { showStep(2); }, 220);
+      selectedCategory = btn.dataset.val;
+      document.getElementById('fmm-category').value = selectedCategory;
+
+      /* Show the correct property-type grid in step 3 */
+      var rentalGrid = document.getElementById('fmm-rental-types');
+      var buyGrid    = document.getElementById('fmm-buy-types');
+      if (rentalGrid) rentalGrid.hidden = selectedCategory !== 'rentals';
+      if (buyGrid)    buyGrid.hidden    = selectedCategory !== 'properties';
+
+      /* Update step-3 question wording */
+      var q = document.getElementById('fmm-proptype-q');
+      if (q) q.textContent = selectedCategory === 'properties'
+        ? 'What type of property are you looking to buy?'
+        : 'What type of rental are you looking for?';
+
+      /* rentals → ask room/whole first; properties → go straight to property type */
+      var next = selectedCategory === 'rentals' ? 2 : 3;
+      setTimeout(function () { showStep(next); }, 200);
     });
   });
 
-  /* Next buttons */
-  steps.querySelectorAll('.fmm-next').forEach(function (btn) {
+  /* ── Step 2: Room vs whole place (rentals only) ── */
+  wizard.querySelectorAll('.fmm-choice-card').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      wizard.querySelectorAll('.fmm-choice-card').forEach(function (b) { b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      document.getElementById('fmm-accom').value = btn.dataset.accom;
+      setTimeout(function () { showStep(3); }, 200);
+    });
+  });
+
+  /* ── Step 3: Property type ── */
+  wizard.querySelectorAll('.fmm-prop-card').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      /* Only deselect within the visible grid */
+      var grid = btn.closest('.fmm-prop-grid');
+      if (grid) grid.querySelectorAll('.fmm-prop-card').forEach(function (b) { b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      document.getElementById('fmm-proptype').value = btn.dataset.prop;
+      setTimeout(function () { showStep(4); }, 200);
+    });
+  });
+
+  /* ── Skip links ── */
+  wizard.querySelectorAll('.fmm-skip-link').forEach(function (btn) {
     btn.addEventListener('click', function () { showStep(parseInt(btn.dataset.next)); });
   });
 
-  /* Tag toggles */
+  /* ── Next buttons (steps 4, 5, 6) ── */
+  wizard.querySelectorAll('.fmm-next').forEach(function (btn) {
+    btn.addEventListener('click', function () { showStep(parseInt(btn.dataset.next)); });
+  });
+
+  /* ── Must-have tag toggles ── */
   var selectedTags = [];
-  steps.querySelectorAll('.fmm-tag').forEach(function (btn) {
+  wizard.querySelectorAll('.fmm-tag').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var tag = btn.dataset.tag;
       var idx = selectedTags.indexOf(tag);
@@ -374,15 +497,15 @@
     });
   });
 
-  /* Allow Enter in city/budget to advance */
+  /* ── Enter key advances in text/number inputs ── */
   ['fmm-city', 'fmm-budget'].forEach(function (id) {
     var el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
         e.preventDefault();
-        var next = parseInt(el.closest('.fmm-step').querySelector('.fmm-next').dataset.next);
-        showStep(next);
+        var nextBtn = el.closest('.fmm-step').querySelector('.fmm-next');
+        if (nextBtn) showStep(parseInt(nextBtn.dataset.next));
       }
     });
   });

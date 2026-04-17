@@ -13,7 +13,8 @@ from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Favourite, Listing, ListingImage
 
 
-def _fmm_score(listing, max_price_val, requested_tags, avail_date):
+def _fmm_score(listing, max_price_val, requested_tags, avail_date,
+               accommodation_type='', property_type=''):
     """
     Return (pct: int 0-100, reasons: list[str], tag_hits: int) for a listing.
     pct is NOT floored — callers use raw score to separate exact vs near matches.
@@ -21,6 +22,21 @@ def _fmm_score(listing, max_price_val, requested_tags, avail_date):
     pts, max_pts = 0, 0
     reasons = []
     tag_hits = 0
+
+    # ── Accommodation type match (20 pts) ────────────────────────────────
+    if accommodation_type:
+        max_pts += 20
+        if listing.accommodation_type == accommodation_type:
+            pts += 20
+            label = 'Whole place' if accommodation_type == 'whole' else 'Single room'
+            reasons.append(label)
+
+    # ── Property type match (15 pts) ─────────────────────────────────────
+    if property_type:
+        max_pts += 15
+        if listing.property_type == property_type:
+            pts += 15
+            reasons.append(listing.get_property_type_display())
 
     # ── Budget (35 pts) ──────────────────────────────────────────────────
     if max_price_val and max_price_val > 0:
@@ -81,6 +97,64 @@ def _fmm_score(listing, max_price_val, requested_tags, avail_date):
     return min(100, max(0, pct)), reasons, tag_hits
 
 
+def _fmm_explanation(listing, reasons, max_price_val, quality_tags,
+                     accommodation_type='', property_type=''):
+    """Generate a one-sentence natural-language explanation of why a listing fits."""
+    from django.utils import timezone as _tz
+    parts = []
+
+    # Accommodation + property type
+    accom = listing.get_accommodation_type_display() if listing.accommodation_type else ''
+    prop  = listing.get_property_type_display() if listing.property_type else ''
+    if accommodation_type and listing.accommodation_type == accommodation_type:
+        if prop:
+            parts.append(f"it's a {prop.lower()} ({accom.lower()})")
+        else:
+            parts.append(f"it's a {accom.lower()}")
+    elif property_type and listing.property_type == property_type and prop:
+        parts.append(f"it's a {prop.lower()}")
+
+    # Budget insight
+    if listing.bills_included and listing.price:
+        effective = int(float(listing.price) - 150)
+        parts.append(f"bills are included (effective cost ~${effective:,}/mo)")
+    elif listing.price and max_price_val:
+        headroom = int(float(max_price_val) - float(listing.price))
+        if headroom >= 200:
+            parts.append(f"it's ${headroom:,} under your budget")
+        elif headroom >= 0:
+            parts.append("it fits your budget")
+
+    # Tag matches
+    matched = [t for t in quality_tags if t.lower() in listing.tags.lower()]
+    total   = len(quality_tags)
+    if total and len(matched) == total:
+        parts.append(f"it matches all {total} of your must-haves")
+    elif len(matched) == 2:
+        parts.append(f"it has {matched[0]} and {matched[1]}")
+    elif len(matched) == 1:
+        parts.append(f"it has {matched[0]}")
+
+    # Freshness
+    age_days = (_tz.now() - listing.created_at).days
+    if age_days == 0:
+        parts.append("it was just listed today")
+    elif age_days <= 2:
+        parts.append(f"listed {age_days} day{'s' if age_days > 1 else ''} ago — still fresh")
+
+    if not parts:
+        return None
+
+    if len(parts) == 1:
+        sentence = f"This fits you because {parts[0]}."
+    elif len(parts) == 2:
+        sentence = f"This fits you because {parts[0]} and {parts[1]}."
+    else:
+        sentence = f"This fits you because {', '.join(parts[:-1])}, and {parts[-1]}."
+
+    return sentence[0].upper() + sentence[1:]
+
+
 def _render_db_setup_page(request):
     return render(request, 'db_not_ready.html', status=503)
 
@@ -103,11 +177,13 @@ def listing_list(request):
     city      = request.GET.get('city', '').strip()
     sort      = request.GET.get('sort', 'latest').strip()
     tag       = request.GET.get('tag', '').strip()
-    min_price      = request.GET.get('min_price', '').strip()
-    max_price      = request.GET.get('max_price', '').strip()
-    tags_raw       = request.GET.get('tags', '').strip()
-    available_by   = request.GET.get('available_by', '').strip()
-    fmm            = request.GET.get('fmm', '').strip() == '1'
+    min_price         = request.GET.get('min_price', '').strip()
+    max_price         = request.GET.get('max_price', '').strip()
+    tags_raw          = request.GET.get('tags', '').strip()
+    available_by      = request.GET.get('available_by', '').strip()
+    accommodation_type = request.GET.get('accommodation_type', '').strip()
+    property_type      = request.GET.get('property_type', '').strip()
+    fmm               = request.GET.get('fmm', '').strip() == '1'
 
     # ── Text search ──
     terms = [t.strip() for t in q.split(',') if t.strip()] if q else []
@@ -123,6 +199,10 @@ def listing_list(request):
         listings = listings.filter(city__icontains=city)
     if tag:
         listings = listings.filter(tags__icontains=tag)
+    if accommodation_type:
+        listings = listings.filter(accommodation_type=accommodation_type)
+    if property_type:
+        listings = listings.filter(property_type=property_type)
 
     # Quality tags (multi-select from chips)
     quality_tags = [t.strip() for t in tags_raw.split(',') if t.strip()]
@@ -193,6 +273,7 @@ def listing_list(request):
     listing_scores = {}
     listing_score_classes = {}
     listing_reasons = {}
+    listing_explanations = {}
     fmm_inputs = None
     fmm_market = None
     near_match_listings = []
@@ -216,7 +297,11 @@ def listing_list(request):
         # ── Score ALL listings in the filtered set ──
         scored = []
         for l in list(listings):
-            pct, reasons, tag_hits = _fmm_score(l, max_price_val, quality_tags, avail_date)
+            pct, reasons, tag_hits = _fmm_score(
+                l, max_price_val, quality_tags, avail_date,
+                accommodation_type=accommodation_type,
+                property_type=property_type,
+            )
             scored.append((l, pct, reasons, tag_hits))
         scored.sort(key=lambda x: (-x[1], -x[0].featured, x[0].created_at))
 
@@ -230,6 +315,14 @@ def listing_list(request):
         listing_scores        = {x[0].pk: x[1] for x in scored}
         listing_score_classes = {x[0].pk: 'high' if x[1] >= 85 else 'mid' for x in scored}
         listing_reasons       = {x[0].pk: x[2] for x in scored}
+        listing_explanations  = {
+            x[0].pk: _fmm_explanation(
+                x[0], x[2], max_price_val, quality_tags,
+                accommodation_type=accommodation_type,
+                property_type=property_type,
+            )
+            for x in scored
+        }
 
         # ── Market context ──
         total_in_city = Listing.objects.filter(city__icontains=city).count() if city else 0
@@ -262,11 +355,18 @@ def listing_list(request):
             except ValueError:
                 avail_display = available_by
 
+        accom_label = dict(Listing.ACCOMMODATION_TYPE_CHOICES).get(accommodation_type, '')
+        prop_label  = dict(Listing.PROPERTY_TYPE_CHOICES).get(property_type, '')
+
         fmm_inputs = {
             'city': city,
             'max_price': max_price,
             'category': category,
             'category_label': category_label,
+            'accommodation_type': accommodation_type,
+            'accommodation_label': accom_label,
+            'property_type': property_type,
+            'property_label': prop_label,
             'tags': quality_tags,
             'available_by': avail_display,
         }
@@ -290,6 +390,7 @@ def listing_list(request):
         'listings': list(listings),
         'fav_ids': fav_ids,
         'category_choices': Listing.CATEGORY_CHOICES,
+        'wizard_categories': [c for c in Listing.CATEGORY_CHOICES if c[0] in ('rentals', 'properties')],
         'category_counts': category_counts,
         'total_listings': Listing.objects.count(),
         'featured_count': Listing.objects.filter(featured=True).count(),
@@ -307,6 +408,7 @@ def listing_list(request):
         'listing_scores': listing_scores,
         'listing_score_classes': listing_score_classes,
         'listing_reasons': listing_reasons,
+        'listing_explanations': listing_explanations,
     }
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':

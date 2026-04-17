@@ -19,14 +19,20 @@ class Listing(models.Model):
         ('whole', 'Whole property'),
     ]
     PROPERTY_TYPE_CHOICES = [
-        ('apartment', 'Apartment'),
-        ('condo',     'Condo'),
-        ('house',     'House'),
-        ('townhouse', 'Townhouse'),
-        ('basement',  'Basement'),
-        ('loft',      'Loft'),
-        ('studio',    'Studio'),
-        ('trailer',   'Trailer'),
+        # Rental types
+        ('apartment',     'Apartment'),
+        ('condo',         'Condo'),
+        ('house',         'House'),
+        ('townhouse',     'Townhouse'),
+        ('basement',      'Basement'),
+        ('loft',          'Loft'),
+        ('studio',        'Studio'),
+        ('trailer',       'Trailer'),
+        # Buy / Properties types
+        ('single_family', 'Single-Family Home'),
+        ('ranch_house',   'Ranch House'),
+        ('land',          'Land'),
+        ('ranch',         'Ranch'),
     ]
 
     PRICE_UNIT_CHOICES = [
