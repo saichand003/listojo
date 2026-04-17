@@ -45,7 +45,10 @@
         <div class="listing-body">
             <div class="card-title-row">
                 <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
-                {% if user.is_authenticated %}
+                {% with listing_scores|dict_get:listing.pk as score %}
+                {% if score %}
+                <span class="match-score-badge match-score-{{ listing_score_classes|dict_get:listing.pk }}">{{ score }}% match</span>
+                {% elif user.is_authenticated %}
                 <button type="button"
                     class="save-pill {% if listing.pk in fav_ids %}save-pill-active{% endif %}"
                     data-fav-url="{% url 'toggle_favourite' listing.pk %}"
@@ -53,6 +56,7 @@
                     {% if listing.pk in fav_ids %}♥ Saved{% else %}♡ Save{% endif %}
                 </button>
                 {% endif %}
+                {% endwith %}
             </div>
             <p class="card-location-time">
                 📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %} &nbsp;·&nbsp; {{ listing.created_at|timesince }} ago
@@ -70,6 +74,13 @@
                     <span style="font-size:1rem;font-weight:600;-webkit-text-fill-color:var(--muted);background:none;">Contact for price</span>
                 {% endif %}
             </p>
+            {% with listing_reasons|dict_get:listing.pk as reasons %}
+            {% if reasons %}
+            <div class="match-reason-pills">
+                {% for r in reasons %}<span class="match-reason-pill">{{ r }}</span>{% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
             <div class="card-actions">
                 <a href="{% url 'listing_detail' listing.pk %}" class="card-btn-primary">View details</a>
                 {% if user.is_authenticated and user != listing.owner %}

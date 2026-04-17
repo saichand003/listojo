@@ -3,67 +3,70 @@
 {% block content %}
 
 <section class="card hero">
-    <h1>List Anything. Find Everything.</h1>
-    <p class="muted" style="margin-top:.35rem;">Rentals, services, jobs &amp; local deals — all from real people near you.</p>
 
-    {# ── Find My Match widget ── #}
+    <div class="hero-eyebrow">Guided rental discovery</div>
+    <h1 class="hero-headline">Find the right place faster — based on what actually matters to you.</h1>
+    <p class="hero-sub">Tell us your priorities. We rank listings and explain exactly why each one fits — not just filters, but reasons.</p>
+
+    {# ── Find My Match CTA + wizard ── #}
     <div class="fmm-bar" id="fmm-bar">
-        <button type="button" class="fmm-trigger" id="fmm-trigger">
-            🎯 Find My Match
-        </button>
-        <div class="fmm-steps" id="fmm-steps" hidden>
-            <form method="get" id="fmm-form">
-                <div class="fmm-step" data-step="1">
-                    <p class="fmm-q">What are you looking for?</p>
-                    <div class="fmm-options">
-                        {% for key, label in category_choices %}
-                        <button type="button" class="fmm-opt" data-field="category" data-val="{{ key }}">{{ label }}</button>
-                        {% endfor %}
+                <button type="button" class="fmm-trigger" id="fmm-trigger">
+                    🎯 Find My Match
+                </button>
+                <div class="fmm-steps" id="fmm-steps" hidden>
+                    <form method="get" id="fmm-form">
+                        <input type="hidden" name="fmm" value="1">
+                        <div class="fmm-step" data-step="1">
+                            <p class="fmm-q">What are you looking for?</p>
+                            <div class="fmm-options">
+                                {% for key, label in category_choices %}
+                                <button type="button" class="fmm-opt" data-field="category" data-val="{{ key }}">{{ label }}</button>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="category" id="fmm-category">
+                        </div>
+                        <div class="fmm-step" data-step="2" hidden>
+                            <p class="fmm-q">Which city?</p>
+                            <div class="city-ac-wrap" id="fmm-city-wrap">
+                                <input type="text" name="city" id="fmm-city" placeholder="e.g. Dallas, Irving, Austin" class="fmm-input" autocomplete="new-password">
+                                <ul class="city-ac-dropdown" id="fmm-city-dropdown" hidden></ul>
+                            </div>
+                            <button type="button" class="fmm-next" data-next="3">Next →</button>
+                        </div>
+                        <div class="fmm-step" data-step="3" hidden>
+                            <p class="fmm-q">What's your max monthly budget?</p>
+                            <div style="display:flex;align-items:center;gap:.5rem;">
+                                <span style="font-size:1.1rem;font-weight:700;">$</span>
+                                <input type="number" name="max_price" id="fmm-budget" placeholder="e.g. 1800" class="fmm-input" min="0">
+                            </div>
+                            <button type="button" class="fmm-next" data-next="4">Next →</button>
+                        </div>
+                        <div class="fmm-step" data-step="4" hidden>
+                            <p class="fmm-q">Must-have qualities? <span class="muted" style="font-size:.8rem;">(pick any)</span></p>
+                            <div class="fmm-tags-wrap">
+                                {% for qt in "pet-friendly,parking,furnished,washer/dryer,gym,pool,utilities included,no deposit,near transit"|split_csv %}
+                                <button type="button" class="fmm-tag" data-tag="{{ qt }}">{{ qt }}</button>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="tags" id="fmm-tags">
+                            <button type="button" class="fmm-next" data-next="5">Next →</button>
+                        </div>
+                        <div class="fmm-step" data-step="5" hidden>
+                            <p class="fmm-q">When do you need it available by?</p>
+                            <input type="date" name="available_by" id="fmm-avail" class="fmm-input">
+                            <p class="muted" style="font-size:.75rem;margin-top:.25rem;">Leave blank to show all available listings</p>
+                            <button type="submit" class="fmm-submit">🔍 Show My Matches</button>
+                        </div>
+                    </form>
+                    <div class="fmm-progress" id="fmm-progress">
+                        <span class="fmm-dot active" data-step="1"></span>
+                        <span class="fmm-dot" data-step="2"></span>
+                        <span class="fmm-dot" data-step="3"></span>
+                        <span class="fmm-dot" data-step="4"></span>
+                        <span class="fmm-dot" data-step="5"></span>
                     </div>
-                    <input type="hidden" name="category" id="fmm-category">
                 </div>
-                <div class="fmm-step" data-step="2" hidden>
-                    <p class="fmm-q">Which city?</p>
-                    <div class="city-ac-wrap" id="fmm-city-wrap">
-                        <input type="text" name="city" id="fmm-city" placeholder="e.g. Dallas, Irving, Austin" class="fmm-input" autocomplete="new-password">
-                        <ul class="city-ac-dropdown" id="fmm-city-dropdown" hidden></ul>
-                    </div>
-                    <button type="button" class="fmm-next" data-next="3">Next →</button>
-                </div>
-                <div class="fmm-step" data-step="3" hidden>
-                    <p class="fmm-q">What's your max monthly budget?</p>
-                    <div style="display:flex;align-items:center;gap:.5rem;">
-                        <span style="font-size:1.1rem;font-weight:700;">$</span>
-                        <input type="number" name="max_price" id="fmm-budget" placeholder="e.g. 1800" class="fmm-input" min="0">
-                    </div>
-                    <button type="button" class="fmm-next" data-next="4">Next →</button>
-                </div>
-                <div class="fmm-step" data-step="4" hidden>
-                    <p class="fmm-q">Must-have qualities? <span class="muted" style="font-size:.8rem;">(pick any)</span></p>
-                    <div class="fmm-tags-wrap">
-                        {% for qt in "pet-friendly,parking,furnished,washer/dryer,gym,pool,utilities included,no deposit,near transit"|split_csv %}
-                        <button type="button" class="fmm-tag" data-tag="{{ qt }}">{{ qt }}</button>
-                        {% endfor %}
-                    </div>
-                    <input type="hidden" name="tags" id="fmm-tags">
-                    <button type="button" class="fmm-next" data-next="5">Next →</button>
-                </div>
-                <div class="fmm-step" data-step="5" hidden>
-                    <p class="fmm-q">When do you need it available by?</p>
-                    <input type="date" name="available_by" id="fmm-avail" class="fmm-input">
-                    <p class="muted" style="font-size:.75rem;margin-top:.25rem;">Leave blank to show all available listings</p>
-                    <button type="submit" class="fmm-submit">🔍 Show My Matches</button>
-                </div>
-            </form>
-            <div class="fmm-progress" id="fmm-progress">
-                <span class="fmm-dot active" data-step="1"></span>
-                <span class="fmm-dot" data-step="2"></span>
-                <span class="fmm-dot" data-step="3"></span>
-                <span class="fmm-dot" data-step="4"></span>
-                <span class="fmm-dot" data-step="5"></span>
             </div>
-        </div>
-    </div>
 
     <div class="hero-stats-row">
         <div class="hero-stat"><span class="hero-stat-num">{{ total_listings }}</span><span class="hero-stat-lbl">Active listings</span></div>
@@ -131,9 +134,20 @@
 
 <div class="listings-header">
     <div>
-        <h2 class="listings-header-title">{% if filters.category %}{{ filters.category|title }} listings{% else %}All listings{% endif %}</h2>
-        <p class="listings-header-sub">{% if filters.category %}Browsing {{ filters.category|title|lower }} — sorted by {{ filters.sort|default:"latest" }}.{% else %}Fresh, trusted listings from real people near you.{% endif %}</p>
+        {% if fmm_mode %}
+        <h2 class="listings-header-title">{{ listings|length }} match{{ listings|length|pluralize:"es" }} for you</h2>
+        <p class="listings-header-sub">Ranked by how well each listing fits your stated preferences.</p>
+        {% elif filters.category %}
+        <h2 class="listings-header-title">{{ filters.category|title }} listings</h2>
+        <p class="listings-header-sub">Browsing {{ filters.category|title|lower }} — sorted by {{ filters.sort|default:"latest" }}.</p>
+        {% else %}
+        <h2 class="listings-header-title">All listings</h2>
+        <p class="listings-header-sub">Fresh, trusted listings from real people near you.</p>
+        {% endif %}
     </div>
+    {% if fmm_mode %}
+    <a href="?" class="button secondary" style="font-size:.85rem;padding:.45rem 1rem;white-space:nowrap;flex-shrink:0;">✕ Clear matches</a>
+    {% else %}
     <form method="get" id="sort-form" style="display:flex;align-items:center;gap:.5rem;">
         <input type="hidden" name="q" value="{{ filters.q }}">
         <input type="hidden" name="category" value="{{ filters.category }}">
@@ -150,9 +164,75 @@
             <option value="price_high" {% if filters.sort == 'price_high' %}selected{% endif %}>Price: High → Low</option>
         </select>
     </form>
+    {% endif %}
 </div>
 
+{% if fmm_mode and fmm_inputs %}
+<div class="fmm-active-banner">
+    <div class="fmm-active-chips">
+        <span class="fmm-active-label">🎯 Your search</span>
+        {% if fmm_inputs.category_label %}<span class="fmm-active-chip">{{ fmm_inputs.category_label }}</span>{% endif %}
+        {% if fmm_inputs.city %}<span class="fmm-active-chip">📍 {{ fmm_inputs.city }}</span>{% endif %}
+        {% if fmm_inputs.max_price %}<span class="fmm-active-chip">💰 Up to ${{ fmm_inputs.max_price }}/mo</span>{% endif %}
+        {% if fmm_inputs.available_by %}<span class="fmm-active-chip">📅 By {{ fmm_inputs.available_by }}</span>{% endif %}
+        {% for tag in fmm_inputs.tags %}<span class="fmm-active-chip fmm-active-chip-tag">✓ {{ tag }}</span>{% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{# ── Market context — only shown in FMM mode ── #}
+{% if fmm_mode and fmm_market %}
+<div class="fmm-market-strip">
+    <div class="fmm-market-stat">
+        <span class="fmm-market-num">{{ fmm_market.exact_count }}</span>
+        <span class="fmm-market-lbl">listings match your criteria</span>
+    </div>
+    {% if fmm_market.near_count %}
+    <div class="fmm-market-stat">
+        <span class="fmm-market-num">{{ fmm_market.near_count }}</span>
+        <span class="fmm-market-lbl">more are close matches</span>
+    </div>
+    {% endif %}
+    {% if fmm_market.total_in_city and fmm_inputs.city %}
+    <div class="fmm-market-stat">
+        <span class="fmm-market-num">{{ fmm_market.total_in_city }}</span>
+        <span class="fmm-market-lbl">total listings in {{ fmm_inputs.city }}</span>
+    </div>
+    {% endif %}
+    {% if fmm_market.median_price and fmm_inputs.city %}
+    <div class="fmm-market-stat">
+        <span class="fmm-market-num">${{ fmm_market.median_price }}</span>
+        <span class="fmm-market-lbl">median price in {{ fmm_inputs.city }}</span>
+    </div>
+    {% endif %}
+    {% if fmm_market.budget_realistic and fmm_inputs.max_price %}
+    <div class="fmm-market-insight {% if fmm_market.budget_realistic == 'below' %}fmm-insight-warn{% elif fmm_market.budget_realistic == 'above' %}fmm-insight-good{% else %}fmm-insight-ok{% endif %}">
+        {% if fmm_market.budget_realistic == 'above' %}
+        ✓ Your budget is above the local median — you have strong options.
+        {% elif fmm_market.budget_realistic == 'at' %}
+        ✓ Your budget is right at the local median.
+        {% else %}
+        ⚠ Your budget is below the local median — consider expanding slightly or relaxing one must-have.
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
 {% include 'listings/_listings_grid.html' %}
+
+{# ── Near matches ── #}
+{% if fmm_mode and near_match_listings %}
+<div class="fmm-near-matches">
+    <div class="fmm-near-header">
+        <h3 class="fmm-near-title">{{ fmm_market.near_count }} close match{{ fmm_market.near_count|pluralize:"es" }}</h3>
+        <p class="fmm-near-sub muted">These listings miss one or two of your must-haves but may still be worth a look.</p>
+    </div>
+    {% with near_match_listings as listings %}
+    {% include 'listings/_listings_grid.html' %}
+    {% endwith %}
+</div>
+{% endif %}
 
 {# ── TRUST STRIP ── #}
 <div class="trust-strip">

@@ -4,7 +4,7 @@ from django.conf import settings
 
 def ui_asset_version(request):
     return {
-        'UI_ASSET_VERSION': os.getenv('UI_ASSET_VERSION', '2026-04-15-08'),
+        'UI_ASSET_VERSION': os.getenv('UI_ASSET_VERSION', '2026-04-15-14'),
     }
 
 

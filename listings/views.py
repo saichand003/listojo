@@ -13,6 +13,74 @@ from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Favourite, Listing, ListingImage
 
 
+def _fmm_score(listing, max_price_val, requested_tags, avail_date):
+    """
+    Return (pct: int 0-100, reasons: list[str], tag_hits: int) for a listing.
+    pct is NOT floored — callers use raw score to separate exact vs near matches.
+    """
+    pts, max_pts = 0, 0
+    reasons = []
+    tag_hits = 0
+
+    # ── Budget (35 pts) ──────────────────────────────────────────────────
+    if max_price_val and max_price_val > 0:
+        max_pts += 35
+        if listing.price:
+            price = float(listing.price)
+            # Effective price: subtract bills_included savings (~$150/mo average)
+            effective = price - (150 if listing.bills_included else 0)
+            headroom = float(max_price_val) - effective
+            if headroom >= 0:
+                # Score 25–35 based on headroom ratio
+                pts += 25 + min(10, int(headroom / float(max_price_val) * 25))
+                if listing.bills_included:
+                    reasons.append(f"Bills included (~${int(effective):,} effective)")
+                elif headroom >= 100:
+                    reasons.append(f"${int(headroom):,} under budget")
+                else:
+                    reasons.append("Within budget")
+            # Over budget but within 15% — partial credit, no reason pill
+            elif headroom >= -float(max_price_val) * 0.15:
+                pts += 10
+        else:
+            pts += 15  # "Contact for price" — neutral
+
+    # ── Tag matches (20 pts each) ────────────────────────────────────────
+    if requested_tags:
+        tags_lower = listing.tags.lower()
+        for tag in requested_tags:
+            max_pts += 20
+            if tag.lower() in tags_lower:
+                pts += 20
+                tag_hits += 1
+                reasons.append(tag)
+
+    # ── Availability (10 pts) ────────────────────────────────────────────
+    if avail_date:
+        max_pts += 10
+        if not listing.available_from or listing.available_from <= avail_date:
+            pts += 10
+            reasons.append("Available now" if not listing.available_from else "Meets move-in date")
+
+    # ── Freshness bonus (5 pts) — new listings are valuable ──────────────
+    from django.utils import timezone as _tz
+    age_days = (_tz.now() - listing.created_at).days
+    if age_days <= 3:
+        pts += 5
+        max_pts += 5
+        reasons.append("Just listed" if age_days == 0 else f"Listed {age_days}d ago")
+
+    # ── Deposit-free bonus (5 pts) ───────────────────────────────────────
+    tags_lower_check = listing.tags.lower()
+    if 'no deposit' in tags_lower_check or 'no-deposit' in tags_lower_check:
+        pts += 5
+        max_pts += 5
+        reasons.append("No deposit")
+
+    pct = int(round(pts / max_pts * 100)) if max_pts else 70
+    return min(100, max(0, pct)), reasons, tag_hits
+
+
 def _render_db_setup_page(request):
     return render(request, 'db_not_ready.html', status=503)
 
@@ -39,6 +107,7 @@ def listing_list(request):
     max_price      = request.GET.get('max_price', '').strip()
     tags_raw       = request.GET.get('tags', '').strip()
     available_by   = request.GET.get('available_by', '').strip()
+    fmm            = request.GET.get('fmm', '').strip() == '1'
 
     # ── Text search ──
     terms = [t.strip() for t in q.split(',') if t.strip()] if q else []
@@ -57,8 +126,18 @@ def listing_list(request):
 
     # Quality tags (multi-select from chips)
     quality_tags = [t.strip() for t in tags_raw.split(',') if t.strip()]
-    for qt in quality_tags:
-        listings = listings.filter(tags__icontains=qt)
+    if quality_tags:
+        if fmm:
+            # FMM mode: OR — listing must match AT LEAST ONE tag (scored later)
+            from django.db.models import Q as _Q
+            tag_q = _Q()
+            for qt in quality_tags:
+                tag_q |= _Q(tags__icontains=qt)
+            listings = listings.filter(tag_q)
+        else:
+            # Regular mode: AND — listing must have ALL selected tags
+            for qt in quality_tags:
+                listings = listings.filter(tags__icontains=qt)
 
     # Price range
     try:
@@ -93,7 +172,10 @@ def listing_list(request):
         )
 
     # ── Ordering ──
-    if sort == 'price_low':
+    if fmm:
+        # FMM: sort by match score (computed below); fall back to featured then date
+        listings = listings.order_by('-featured', '-created_at')
+    elif sort == 'price_low':
         listings = listings.order_by('price', '-featured', '-created_at')
     elif sort == 'price_high':
         listings = listings.order_by('-price', '-featured', '-created_at')
@@ -103,9 +185,98 @@ def listing_list(request):
         listings = listings.order_by('-featured', '-created_at')
 
     # Auto-switch to best_match when user is searching and hasn't chosen another sort
-    if terms and sort == 'latest':
+    if terms and sort == 'latest' and not fmm:
         listings = listings.order_by('-relevance', '-featured', '-created_at')
         sort = 'best_match'
+
+    # ── FMM scoring ──
+    listing_scores = {}
+    listing_score_classes = {}
+    listing_reasons = {}
+    fmm_inputs = None
+    fmm_market = None
+    near_match_listings = []
+
+    if fmm:
+        max_price_val = None
+        if max_price:
+            try:
+                max_price_val = float(max_price)
+            except ValueError:
+                pass
+
+        avail_date = None
+        if available_by:
+            from datetime import date as _date
+            try:
+                avail_date = _date.fromisoformat(available_by)
+            except ValueError:
+                pass
+
+        # ── Score ALL listings in the filtered set ──
+        scored = []
+        for l in list(listings):
+            pct, reasons, tag_hits = _fmm_score(l, max_price_val, quality_tags, avail_date)
+            scored.append((l, pct, reasons, tag_hits))
+        scored.sort(key=lambda x: (-x[1], -x[0].featured, x[0].created_at))
+
+        # ── Split into exact matches (≥65%) vs near matches (<65%) ──
+        exact_scored  = [x for x in scored if x[1] >= 65]
+        near_scored   = [x for x in scored if x[1] < 65]
+
+        listings             = [x[0] for x in exact_scored]
+        near_match_listings  = [x[0] for x in near_scored[:4]]  # show up to 4
+
+        listing_scores        = {x[0].pk: x[1] for x in scored}
+        listing_score_classes = {x[0].pk: 'high' if x[1] >= 85 else 'mid' for x in scored}
+        listing_reasons       = {x[0].pk: x[2] for x in scored}
+
+        # ── Market context ──
+        total_in_city = Listing.objects.filter(city__icontains=city).count() if city else 0
+        prices_in_city = list(
+            Listing.objects.filter(city__icontains=city, price__isnull=False)
+            .values_list('price', flat=True)
+        ) if city else []
+        median_price = None
+        if prices_in_city:
+            s = sorted(prices_in_city)
+            mid = len(s) // 2
+            median_price = int(s[mid] if len(s) % 2 else (s[mid - 1] + s[mid]) / 2)
+
+        budget_realistic = None
+        if max_price_val and median_price:
+            ratio = float(max_price_val) / median_price
+            if ratio >= 1.1:
+                budget_realistic = 'above'
+            elif ratio >= 0.9:
+                budget_realistic = 'at'
+            else:
+                budget_realistic = 'below'
+
+        category_label = dict(Listing.CATEGORY_CHOICES).get(category, '')
+        avail_display = ''
+        if available_by:
+            from datetime import date as _date2
+            try:
+                avail_display = _date2.fromisoformat(available_by).strftime('%b %-d')
+            except ValueError:
+                avail_display = available_by
+
+        fmm_inputs = {
+            'city': city,
+            'max_price': max_price,
+            'category': category,
+            'category_label': category_label,
+            'tags': quality_tags,
+            'available_by': avail_display,
+        }
+        fmm_market = {
+            'total_in_city': total_in_city,
+            'exact_count': len(exact_scored),
+            'near_count': len(near_scored),
+            'median_price': median_price,
+            'budget_realistic': budget_realistic,
+        }
 
     category_counts = dict(
         Listing.objects.values_list('category').annotate(total=Count('id'))
@@ -129,6 +300,13 @@ def listing_list(request):
         },
         'active_quality_tags': quality_tags,
         'new_threshold': timezone.now() - timedelta(hours=48),
+        'fmm_mode': fmm,
+        'fmm_inputs': fmm_inputs,
+        'fmm_market': fmm_market,
+        'near_match_listings': near_match_listings,
+        'listing_scores': listing_scores,
+        'listing_score_classes': listing_score_classes,
+        'listing_reasons': listing_reasons,
     }
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
