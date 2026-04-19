@@ -9,15 +9,22 @@
     <option value="{{ key }}" {% if category == key %}selected{% endif %}>{{ label }}</option>
     {% endfor %}
   </select>
+  <select name="status">
+    <option value="">All statuses</option>
+    <option value="active"  {% if status_filter == 'active'  %}selected{% endif %}>Active</option>
+    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+    <option value="flagged" {% if status_filter == 'flagged' %}selected{% endif %}>Flagged</option>
+    <option value="draft"   {% if status_filter == 'draft'   %}selected{% endif %}>Draft</option>
+  </select>
   <button type="submit" class="btn btn-primary">Filter</button>
-  {% if q or category %}<a href="{% url 'portal_listings' %}" class="btn btn-ghost">Clear</a>{% endif %}
+  {% if q or category or status_filter %}<a href="{% url 'portal_listings' %}" class="btn btn-ghost">Clear</a>{% endif %}
 </form>
 
 <div class="card">
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>#</th><th>Title</th><th>Owner</th><th>Category</th><th>Price</th><th>Tags</th><th>Featured</th><th>Posted</th><th>Actions</th></tr>
+        <tr><th>#</th><th>Title</th><th>Owner</th><th>Category</th><th>Price</th><th>Status</th><th>Featured</th><th>Posted</th><th>Actions</th></tr>
       </thead>
       <tbody>
       {% for l in listings %}
@@ -31,10 +38,36 @@
         <td style="color:var(--muted);">{{ l.owner.username }}</td>
         <td><span class="badge badge-blue">{{ l.get_category_display }}</span></td>
         <td>{% if l.price %}${{ l.price }}{% else %}—{% endif %}</td>
-        <td style="color:var(--muted);font-size:.78rem;">{{ l.tags|truncatechars:30|default:"—" }}</td>
+        <td>
+          {% if l.status == 'active' %}<span class="badge badge-green">Active</span>
+          {% elif l.status == 'pending' %}<span class="badge badge-orange">Pending</span>
+          {% elif l.status == 'flagged' %}<span class="badge badge-red">Flagged</span>
+          {% elif l.status == 'draft' %}<span class="badge" style="background:#F3F4F6;color:#374151">Draft</span>
+          {% endif %}
+        </td>
         <td>{% if l.featured %}<span class="badge badge-orange">★ Yes</span>{% else %}—{% endif %}</td>
         <td style="color:var(--muted);">{{ l.created_at|date:"M d, Y" }}</td>
         <td style="display:flex;gap:.4rem;flex-wrap:wrap;">
+          {% if l.status == 'pending' %}
+          <form method="post" action="{% url 'portal_approve_listing' l.pk %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_listings' %}">
+            <button type="submit" class="btn btn-primary btn-sm">Approve</button>
+          </form>
+          <form method="post" action="{% url 'portal_reject_listing' l.pk %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_listings' %}">
+            <button type="submit" class="btn btn-ghost btn-sm">Reject</button>
+          </form>
+          {% elif l.status == 'active' %}
+          <form method="post" action="{% url 'portal_flag_listing' l.pk %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_listings' %}">
+            <button type="submit" class="btn btn-ghost btn-sm">Flag</button>
+          </form>
+          {% elif l.status == 'flagged' %}
+          <form method="post" action="{% url 'portal_approve_listing' l.pk %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_listings' %}">
+            <button type="submit" class="btn btn-primary btn-sm">Restore</button>
+          </form>
+          {% endif %}
           <form method="post" action="{% url 'portal_toggle_featured' l.pk %}">
             {% csrf_token %}
             <button type="submit" class="btn btn-ghost btn-sm">{% if l.featured %}Unfeature{% else %}Feature{% endif %}</button>

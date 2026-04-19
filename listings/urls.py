@@ -10,4 +10,6 @@ urlpatterns = [
     path('listing/<int:pk>/edit/', views.edit_listing, name='edit_listing'),
     path('listing/<int:pk>/favourite/', views.toggle_favourite, name='toggle_favourite'),
     path('coming-soon/waitlist/', views.waitlist_signup, name='waitlist_signup'),
+    path('listing/<int:pk>/delete/', views.delete_listing, name='delete_listing'),
+    path('listing/<int:pk>/inquiries/', views.listing_inquiries, name='listing_inquiries'),
 ]

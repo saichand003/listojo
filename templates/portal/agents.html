@@ -1,0 +1,47 @@
+{% extends 'portal/base.html' %}
+{% block page_title %}Agents{% endblock %}
+{% block content %}
+
+<div style="margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center">
+  <p style="color:var(--muted);font-size:.875rem;">
+    Agents have <code>is_staff=True</code> access. To add an agent, promote a user via Django admin or the Users page.
+  </p>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Username</th><th>Email</th><th>Joined</th><th>Listings</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+      {% for agent in agents %}
+      <tr>
+        <td>
+          <a href="{% url 'portal_user_detail' agent.pk %}" style="color:var(--primary);font-weight:600;text-decoration:none;">
+            {{ agent.username }}
+          </a>
+        </td>
+        <td style="color:var(--muted);">{{ agent.email|default:"—" }}</td>
+        <td style="color:var(--muted);">{{ agent.date_joined|date:"M d, Y" }}</td>
+        <td>{{ agent.listing_count|default:0 }}</td>
+        <td>
+          {% if agent.is_active %}<span class="badge badge-green">Active</span>
+          {% else %}<span class="badge badge-red">Inactive</span>{% endif %}
+        </td>
+        <td>
+          <a href="{% url 'portal_user_detail' agent.pk %}" class="btn btn-ghost btn-sm">View</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">
+          No agents yet. Mark users as <code>is_staff=True</code> in Django admin to add agents.
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

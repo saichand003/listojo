@@ -43,6 +43,13 @@ class Listing(models.Model):
         ('hr',  '/Hour'),
     ]
 
+    STATUS_CHOICES = [
+        ('active',  'Active'),
+        ('draft',   'Draft'),
+        ('pending', 'Pending Review'),
+        ('flagged', 'Flagged'),
+    ]
+
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listings')
     title = models.CharField(max_length=120)
     description = models.TextField()
@@ -62,6 +69,7 @@ class Listing(models.Model):
     security_deposit   = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     available_from = models.DateField(blank=True, null=True,
                                       help_text='Date the listing becomes available (leave blank if available now)')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     featured = models.BooleanField(default=False)
     image = models.ImageField(upload_to='listing_images/', blank=True, null=True)
     tags = models.CharField(max_length=1000, blank=True, default='',

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width:480px;margin:40px auto;padding:0 16px">
+  <div style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:32px;text-align:center">
+    <div style="font-size:40px;margin-bottom:12px">🗑️</div>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:8px">Delete listing?</h2>
+    <p style="color:#6B7280;font-size:14px;margin-bottom:24px">
+      "<strong>{{ listing.title }}</strong>" will be permanently deleted and cannot be recovered.
+    </p>
+    <form method="post" style="display:flex;gap:12px;justify-content:center">
+      {% csrf_token %}
+      <a href="{% url 'profile' %}" style="padding:10px 20px;border:1px solid #E5E7EB;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;color:#374151">Cancel</a>
+      <button type="submit" style="padding:10px 20px;background:#DC2626;color:#fff;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer">Yes, delete</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

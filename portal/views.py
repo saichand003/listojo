@@ -54,6 +54,8 @@ def dashboard(request):
     total_listings  = Listing.objects.count()
     featured        = Listing.objects.filter(featured=True).count()
     new_listings_7  = Listing.objects.filter(created_at__gte=last_7).count()
+    pending_count   = Listing.objects.filter(status='pending').count()
+    flagged_count   = Listing.objects.filter(status='flagged').count()
 
     total_messages  = ChatMessage.objects.count()
     total_inquiries = ListingInquiry.objects.count()
@@ -77,7 +79,11 @@ def dashboard(request):
         .order_by('day')
     )
 
-    recent_listings = Listing.objects.select_related('owner').order_by('-created_at')[:8]
+    recent_listings = (
+        Listing.objects.select_related('owner')
+        .filter(Q(status='pending') | Q(status='flagged') | Q(status='active'))
+        .order_by('-created_at')[:8]
+    )
     recent_users    = User.objects.order_by('-date_joined')[:8]
 
     return render(request, 'portal/dashboard.html', {
@@ -87,6 +93,8 @@ def dashboard(request):
         'total_listings': total_listings,
         'featured':       featured,
         'new_listings_7': new_listings_7,
+        'pending_count':  pending_count,
+        'flagged_count':  flagged_count,
         'total_messages': total_messages,
         'total_inquiries':total_inquiries,
         'category_data':  category_data,
@@ -124,17 +132,21 @@ def toggle_user_active(request, pk):
 
 @portal_login_required
 def listings_view(request):
-    q        = request.GET.get('q', '').strip()
-    category = request.GET.get('category', '').strip()
+    q             = request.GET.get('q', '').strip()
+    category      = request.GET.get('category', '').strip()
+    status_filter = request.GET.get('status', '').strip()
     qs = Listing.objects.select_related('owner').order_by('-created_at')
     if q:
         qs = qs.filter(Q(title__icontains=q) | Q(owner__username__icontains=q))
     if category:
         qs = qs.filter(category=category)
+    if status_filter:
+        qs = qs.filter(status=status_filter)
     return render(request, 'portal/listings.html', {
         'listings':         qs,
         'q':                q,
         'category':         category,
+        'status_filter':    status_filter,
         'category_choices': Listing.CATEGORY_CHOICES,
     })
 
@@ -153,3 +165,41 @@ def delete_listing(request, pk):
     if request.method == 'POST':
         get_object_or_404(Listing, pk=pk).delete()
     return redirect('portal_listings')
+
+
+@portal_login_required
+def approve_listing(request, pk):
+    if request.method == 'POST':
+        listing = get_object_or_404(Listing, pk=pk)
+        listing.status = 'active'
+        listing.save()
+    return redirect(request.POST.get('next', 'portal_listings'))
+
+
+@portal_login_required
+def reject_listing(request, pk):
+    if request.method == 'POST':
+        listing = get_object_or_404(Listing, pk=pk)
+        listing.status = 'draft'
+        listing.save()
+    return redirect(request.POST.get('next', 'portal_listings'))
+
+
+@portal_login_required
+def flag_listing(request, pk):
+    if request.method == 'POST':
+        listing = get_object_or_404(Listing, pk=pk)
+        listing.status = 'flagged'
+        listing.save()
+    return redirect(request.POST.get('next', 'portal_listings'))
+
+
+@portal_login_required
+def agents_view(request):
+    agents = (
+        User.objects
+        .filter(is_staff=True, is_superuser=False)
+        .annotate(listing_count=Count('listings'))
+        .order_by('-date_joined')
+    )
+    return render(request, 'portal/agents.html', {'agents': agents})

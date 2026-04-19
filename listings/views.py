@@ -568,3 +568,22 @@ def waitlist_signup(request):
             'email':   email,
         })
     return redirect('listing_list')
+
+
+@login_required
+def delete_listing(request, pk):
+    listing = get_object_or_404(Listing, pk=pk, owner=request.user)
+    if request.method == 'POST':
+        listing.delete()
+        return redirect('profile')
+    return render(request, 'listings/confirm_delete.html', {'listing': listing})
+
+
+@login_required
+def listing_inquiries(request, pk):
+    listing = get_object_or_404(Listing, pk=pk, owner=request.user)
+    inquiries = listing.inquiries.order_by('-created_at')
+    return render(request, 'listings/listing_inquiries.html', {
+        'listing':   listing,
+        'inquiries': inquiries,
+    })

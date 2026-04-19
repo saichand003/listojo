@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width:800px;margin:0 auto;padding:24px 16px">
+  <div style="margin-bottom:20px">
+    <a href="{% url 'profile' %}" style="color:#6B7280;font-size:14px;text-decoration:none">&larr; Back to My Listings</a>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">Inquiries</h1>
+      <p style="color:#6B7280;font-size:14px">{{ inquiries.count }} total for <strong>{{ listing.title }}</strong></p>
+    </div>
+    <a href="{% url 'listing_detail' listing.pk %}" style="padding:8px 16px;border:1px solid #E5E7EB;border-radius:10px;font-size:13.5px;font-weight:600;text-decoration:none;color:#374151">View listing &rarr;</a>
+  </div>
+
+  {% if inquiries %}
+  <div style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;overflow:hidden">
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB">
+          <th style="padding:12px 16px;text-align:left;font-size:13px;font-weight:600;color:#374151">Name</th>
+          <th style="padding:12px 16px;text-align:left;font-size:13px;font-weight:600;color:#374151">Contact</th>
+          <th style="padding:12px 16px;text-align:left;font-size:13px;font-weight:600;color:#374151">Message</th>
+          <th style="padding:12px 16px;text-align:left;font-size:13px;font-weight:600;color:#374151">Received</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inq in inquiries %}
+        <tr style="border-bottom:1px solid #F3F4F6">
+          <td style="padding:14px 16px">
+            <div style="font-weight:600;font-size:14px">{{ inq.name }}</div>
+          </td>
+          <td style="padding:14px 16px">
+            <div style="font-size:13px;color:#0A5C45">{{ inq.email }}</div>
+            {% if inq.phone %}<div style="font-size:12.5px;color:#6B7280">{{ inq.phone }}</div>{% endif %}
+          </td>
+          <td style="padding:14px 16px;max-width:280px">
+            <div style="font-size:13px;color:#374151">{{ inq.message|truncatechars:120 }}</div>
+          </td>
+          <td style="padding:14px 16px;font-size:13px;color:#6B7280;white-space:nowrap">
+            {{ inq.created_at|timesince }} ago
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:48px 24px;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">📬</div>
+    <div style="font-weight:600;font-size:16px;margin-bottom:6px">No inquiries yet</div>
+    <div style="color:#6B7280;font-size:14px">Renters will appear here once they contact you about this listing.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

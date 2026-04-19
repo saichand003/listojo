@@ -15,6 +15,20 @@
     <div class="kpi-sub">+{{ new_listings_7 }} this week</div>
   </div>
   <div class="card kpi-card">
+    <div class="kpi-label">Pending Review</div>
+    <div class="kpi-value" style="color:var(--warning, #D97706);">{{ pending_count }}</div>
+    <div class="kpi-sub"><a href="{% url 'portal_listings' %}?status=pending" style="color:var(--primary);text-decoration:none;">Review now &rarr;</a></div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-label">Flagged</div>
+    <div class="kpi-value" style="color:var(--danger, #DC2626);">{{ flagged_count }}</div>
+    <div class="kpi-sub"><a href="{% url 'portal_listings' %}?status=flagged" style="color:var(--primary);text-decoration:none;">View flagged &rarr;</a></div>
+  </div>
+</div>
+
+<!-- Secondary KPI Row -->
+<div class="grid grid-4" style="margin-bottom:1.25rem;">
+  <div class="card kpi-card">
     <div class="kpi-label">Chat Messages</div>
     <div class="kpi-value">{{ total_messages }}</div>
     <div class="kpi-sub" style="color:var(--primary);">Live chats</div>
@@ -23,6 +37,16 @@
     <div class="kpi-label">Inquiries</div>
     <div class="kpi-value">{{ total_inquiries }}</div>
     <div class="kpi-sub" style="color:var(--primary);">Via inquiry form</div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-label">Featured</div>
+    <div class="kpi-value">{{ featured }}</div>
+    <div class="kpi-sub">Boosted listings</div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-label">New Users (30d)</div>
+    <div class="kpi-value">{{ new_users_30 }}</div>
+    <div class="kpi-sub">+{{ new_users_7 }} this week</div>
   </div>
 </div>
 
@@ -84,22 +108,48 @@
     </div>
   </div>
 
-  <!-- Recent listings -->
+  <!-- Recent listings requiring review -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;">
-      <div class="section-head" style="margin:0;">Recent Listings</div>
+      <div class="section-head" style="margin:0;">Listings Requiring Review</div>
       <a href="{% url 'portal_listings' %}" class="btn btn-ghost btn-sm">View all</a>
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Title</th><th>Owner</th><th>Category</th></tr></thead>
+        <thead><tr><th>Title</th><th>Owner</th><th>Price</th><th>Status</th><th>Action</th></tr></thead>
         <tbody>
         {% for l in recent_listings %}
         <tr>
           <td><a href="{% url 'listing_detail' l.pk %}" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ l.title|truncatechars:28 }}</a></td>
           <td style="color:var(--muted);">{{ l.owner.username }}</td>
-          <td><span class="badge badge-blue">{{ l.get_category_display }}</span></td>
+          <td>{% if l.price %}${{ l.price }}{% else %}—{% endif %}</td>
+          <td>
+            {% if l.status == 'active' %}<span class="badge badge-green">Active</span>
+            {% elif l.status == 'pending' %}<span class="badge badge-orange">Pending</span>
+            {% elif l.status == 'flagged' %}<span class="badge badge-red">Flagged</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if l.status == 'pending' %}
+            <form method="post" action="{% url 'portal_approve_listing' l.pk %}" style="display:inline">
+              {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_dashboard' %}">
+              <button type="submit" class="btn btn-primary btn-sm">Approve</button>
+            </form>
+            {% elif l.status == 'flagged' %}
+            <form method="post" action="{% url 'portal_approve_listing' l.pk %}" style="display:inline">
+              {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_dashboard' %}">
+              <button type="submit" class="btn btn-ghost btn-sm">Restore</button>
+            </form>
+            {% else %}
+            <form method="post" action="{% url 'portal_flag_listing' l.pk %}" style="display:inline">
+              {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_dashboard' %}">
+              <button type="submit" class="btn btn-ghost btn-sm">Flag</button>
+            </form>
+            {% endif %}
+          </td>
         </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.5rem;">All clear — no listings need review.</td></tr>
         {% endfor %}
         </tbody>
       </table>
