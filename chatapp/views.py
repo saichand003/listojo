@@ -34,21 +34,23 @@ def inbox(request):
         key = (msg.listing_id, other.pk)
         if key not in seen:
             seen.add(key)
+            unread_count = ChatMessage.objects.filter(
+                listing=msg.listing,
+                recipient=request.user,
+                is_read=False,
+            ).filter(
+                Q(sender=other)
+            ).count()
             listing_conversations.append({
                 'listing': msg.listing,
                 'user': other,
                 'last_message': msg,
                 'is_owner': msg.listing.owner == request.user,
+                'unread_count': unread_count,
             })
 
-    guest_messages = GuestChatMessage.objects.filter(
-        recipient=request.user
-    ).order_by('-sent_at')
-
     return render(request, 'chatapp/inbox.html', {
-        'listing_inquiries': listing_inquiries,
         'listing_conversations': listing_conversations,
-        'guest_messages': guest_messages,
     })
 
 
@@ -238,12 +240,21 @@ def listing_chat_thread(request, listing_id, other_user_id=None):
         | Q(sender=other_user, recipient=request.user)
     ).order_by('sent_at')
 
+    # Mark incoming messages as read
+    ChatMessage.objects.filter(
+        listing=listing,
+        sender=other_user,
+        recipient=request.user,
+        is_read=False,
+    ).update(is_read=True)
+
     payload = [
         {
             'sender': msg.sender.username,
             'message': msg.message,
             'sent_at': msg.sent_at.strftime('%H:%M'),
             'mine': msg.sender_id == request.user.id,
+            'is_read': msg.is_read,
         }
         for msg in thread
     ]

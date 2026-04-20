@@ -14,5 +14,4 @@ urlpatterns = [
     path('listings/<int:pk>/approve/',         views.approve_listing,  name='portal_approve_listing'),
     path('listings/<int:pk>/reject/',          views.reject_listing,   name='portal_reject_listing'),
     path('listings/<int:pk>/flag/',            views.flag_listing,     name='portal_flag_listing'),
-    path('agents/',                            views.agents_view,      name='portal_agents'),
 ]

@@ -160,9 +160,6 @@
     <a href="{% url 'portal_listings' %}" class="{% if 'portal_listing' in request.resolver_match.url_name %}active{% endif %}">
       <span class="icon">📋</span> Listings
     </a>
-    <a href="{% url 'portal_agents' %}" class="{% if request.resolver_match.url_name == 'portal_agents' %}active{% endif %}">
-      <span class="icon">🤝</span> Agents
-    </a>
   </nav>
   <div class="sidebar-footer">
     <a href="{% url 'listing_list' %}">↗ View Site</a> &nbsp;·&nbsp;

@@ -38,10 +38,12 @@ class ListingForm(forms.ModelForm):
             'category': forms.Select(attrs={'required': True}),
         }
 
+    ALLOWED_CATEGORIES = {'rentals', 'properties'}
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['category'].choices = [('', '— Select a category —')] + [
-            c for c in self.fields['category'].choices if c[0]
+            c for c in self.fields['category'].choices if c[0] in self.ALLOWED_CATEGORIES
         ]
         self.fields['category'].required = True
 

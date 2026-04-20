@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.ml-listing-row{display:flex;align-items:flex-start;gap:16px;padding:18px 0;border-bottom:1px solid var(--border)}
+.ml-listing-row:last-child{border-bottom:none}
+.ml-thumb{width:80px;height:64px;border-radius:10px;background:linear-gradient(135deg,#a5b4fc,#7dd3fc);flex-shrink:0;overflow:hidden}
+.ml-thumb img{width:100%;height:100%;object-fit:cover}
+.ml-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.ml-pill-active{background:#EBF3FF;color:var(--primary)}
+.ml-pill-draft{background:#F3F4F6;color:#374151}
+.ml-pill-pending{background:#FEF6E8;color:#D97706}
+.ml-pill-flagged{background:#FEF2F2;color:#DC2626}
+.ml-stat-row{display:flex;gap:16px;font-size:12.5px;margin-top:6px;color:var(--muted)}
+.ml-tips{background:#FEF6E8;border:1px solid rgba(232,160,32,.25);border-radius:12px;padding:16px 20px;margin-top:24px}
+.ml-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:9px;font-size:12.5px;font-weight:600;text-decoration:none;transition:opacity .15s}
+.ml-btn:hover{opacity:.85}
+</style>
+
+<div style="max-width:860px;margin:0 auto;padding:24px 16px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 style="font-size:1.5rem;font-weight:800;color:var(--text);margin:0 0 4px">My Listings</h1>
+      <p style="color:var(--muted);font-size:.875rem;margin:0">{{ active_count }} active &middot; {{ draft_count }} draft &middot; {{ total_views }} total views</p>
+    </div>
+    <a href="{% url 'create_listing' %}" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:var(--primary);color:#fff;border-radius:10px;font-weight:700;font-size:.875rem;text-decoration:none;box-shadow:0 2px 8px rgba(42,126,242,.3)">
+      + Post new listing
+    </a>
+  </div>
+
+  {% if my_listings %}
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:8px 20px">
+    {% for listing in my_listings %}
+    <div class="ml-listing-row">
+      <div class="ml-thumb">
+        {% with listing.images.first as img %}
+          {% if img %}<img src="{{ img.image.url }}" alt="">
+          {% elif listing.image %}<img src="{{ listing.image.url }}" alt="">
+          {% endif %}
+        {% endwith %}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:.9rem;color:var(--text)">{{ listing.title }}</span>
+          {% if listing.status == 'active' %}
+            <span class="ml-pill ml-pill-active">Active</span>
+          {% elif listing.status == 'draft' %}
+            <span class="ml-pill ml-pill-draft">Draft</span>
+          {% elif listing.status == 'pending' %}
+            <span class="ml-pill ml-pill-pending">Pending Review</span>
+          {% elif listing.status == 'flagged' %}
+            <span class="ml-pill ml-pill-flagged">Flagged</span>
+          {% endif %}
+        </div>
+        <div style="font-size:.8rem;color:var(--muted)">
+          {% if listing.price %}${{ listing.price }}{% if listing.price_unit %}/{{ listing.price_unit }}{% endif %} &middot; {% endif %}
+          {{ listing.city }}
+          {% if listing.created_at %} &middot; Posted {{ listing.created_at|timesince }} ago{% endif %}
+        </div>
+        <div class="ml-stat-row">
+          {% if listing.status != 'draft' %}
+            <span>👁 {{ listing.view_count }} view{{ listing.view_count|pluralize }}</span>
+            <span>💬 {{ listing.inquiry_count }} inquir{{ listing.inquiry_count|pluralize:"y,ies" }}</span>
+            <span>❤️ {{ listing.save_count }} save{{ listing.save_count|pluralize }}</span>
+          {% else %}
+            <span style="color:#9CA3AF">Not published yet</span>
+          {% endif %}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-shrink:0">
+        {% if listing.status == 'active' %}
+          <a href="{% url 'listing_inquiries' listing.pk %}" class="ml-btn" style="background:#F3F4F6;color:#111827">View inquiries</a>
+          <a href="{% url 'edit_listing' listing.pk %}" class="ml-btn" style="border:1.5px solid var(--primary);color:var(--primary)">Edit</a>
+        {% elif listing.status == 'draft' %}
+          <a href="{% url 'edit_listing' listing.pk %}" class="ml-btn" style="background:var(--primary);color:#fff">Complete &amp; publish</a>
+          <a href="{% url 'delete_listing' listing.pk %}" class="ml-btn" style="border:1px solid var(--border);color:var(--muted)">Delete draft</a>
+        {% else %}
+          <a href="{% url 'edit_listing' listing.pk %}" class="ml-btn" style="border:1.5px solid var(--primary);color:var(--primary)">Edit</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="ml-tips">
+    <div style="font-weight:700;color:#D97706;margin-bottom:8px;font-size:.9rem">💡 Tips to get more inquiries</div>
+    <div style="font-size:.8rem;color:#92400E;display:flex;gap:20px;flex-wrap:wrap;line-height:1.6">
+      <span>📸 Add 10+ photos to each listing</span>
+      <span>🏷️ Add tags like pet-friendly, parking</span>
+      <span>✅ Fill in all details for better match scores</span>
+    </div>
+  </div>
+
+  {% else %}
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:56px 24px;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:12px">🏠</div>
+    <div style="font-weight:700;font-size:1rem;margin-bottom:6px;color:var(--text)">No listings yet</div>
+    <div style="color:var(--muted);font-size:.875rem;margin-bottom:20px">Post your first listing to start getting inquiries from renters.</div>
+    <a href="{% url 'create_listing' %}" style="display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--primary);color:#fff;border-radius:10px;font-weight:700;font-size:.875rem;text-decoration:none">
+      + Post your first listing
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

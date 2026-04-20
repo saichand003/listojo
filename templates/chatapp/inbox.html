@@ -1,79 +1,423 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Messages</h1>
+<style>
+.msgs-shell{display:grid;grid-template-columns:300px 1fr;gap:0;height:calc(100vh - 160px);min-height:480px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm)}
 
-{# ── LIVE CHAT CONVERSATIONS ── #}
-<section class="card" style="margin-bottom:1rem;">
-    <h2>Live chat conversations</h2>
+/* ── Thread list (left) ── */
+.msgs-threads{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.msgs-threads-header{
+  padding:1.4rem 1.25rem 1.1rem;
+  border-bottom:2px solid var(--border);
+  flex-shrink:0;
+  background:var(--surface);
+}
+.msgs-threads-header h1{font-size:1.4rem;font-weight:800;color:var(--text);margin:0}
+.msgs-threads-header p{font-size:.78rem;color:var(--muted);margin:.3rem 0 0}
+.msgs-thread-list{flex:1;overflow-y:auto;background:var(--bg);padding:.75rem .75rem 1rem}
+.msgs-thread{
+  padding:.85rem 1rem;
+  cursor:pointer;
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  margin-bottom:.55rem;
+  background:var(--surface);
+  transition:border-color .15s,box-shadow .15s;
+}
+.msgs-thread:hover{border-color:#aab6d0;box-shadow:0 2px 8px rgba(24,43,82,.07)}
+.msgs-thread.active{border-color:var(--primary);background:rgba(42,126,242,.04);box-shadow:0 2px 10px rgba(42,126,242,.12)}
+.msgs-thread.has-unread{border-color:var(--primary)}
+.msgs-thread-top{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;margin-bottom:.2rem}
+.msgs-thread-name{font-weight:700;font-size:.9rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msgs-thread-time{font-size:.72rem;color:var(--muted);flex-shrink:0}
+.msgs-thread-listing{font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.25rem}
+.msgs-thread-preview{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msgs-unread-indicator{
+  font-size:.78rem;font-weight:700;color:var(--primary);
+  margin-top:.3rem;
+}
+.msgs-empty{padding:2rem .75rem;text-align:center;color:var(--muted);font-size:.875rem}
+
+/* ── Chat pane (right) ── */
+.msgs-chat{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+
+/* Header */
+.msgs-chat-header{
+  padding:1rem 1.5rem;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:.65rem;
+  flex-shrink:0;background:var(--surface);
+}
+.msgs-chat-header-icon{font-size:1.05rem;color:var(--muted)}
+.msgs-chat-header-title{
+  font-weight:700;font-size:1rem;color:var(--text);
+  display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;
+}
+.msgs-chat-header-sep{font-weight:400;color:var(--muted)}
+
+/* Scroll area */
+.msgs-chat-scroll{
+  flex:1;overflow-y:auto;
+  padding:1.25rem 1.5rem;
+  background:var(--bg);
+}
+
+/* Outer white card — contains ALL bubbles */
+.msgs-bubbles-card{
+  background:var(--surface);
+  border-radius:16px;
+  border:1px solid var(--border);
+  padding:1.5rem 1.75rem;
+  display:flex;flex-direction:column;
+  gap:1rem;
+  min-height:120px;
+  box-shadow:0 1px 6px rgba(24,43,82,.06);
+}
+
+/* Individual bubble rows */
+.msgs-bubble-wrap{display:flex;flex-direction:column;width:100%;gap:.15rem}
+.msgs-bubble-wrap.mine{align-items:flex-end}
+.msgs-bubble-wrap.theirs{align-items:flex-start}
+
+/* Theirs: white, left side */
+.msgs-bubble-wrap.theirs .msgs-bubble{
+  background:#ffffff;
+  border:1px solid #e5e9f2;
+  border-radius:14px;
+  padding:.9rem 1.15rem;
+  font-size:.975rem;line-height:1.65;
+  color:var(--text);
+  max-width:72%;
+  box-sizing:border-box;
+  box-shadow:0 1px 3px rgba(24,43,82,.05);
+}
+
+/* Mine: blue, right side */
+.msgs-bubble-wrap.mine .msgs-bubble{
+  background:var(--primary);
+  color:#fff;
+  border-radius:14px;
+  padding:.9rem 1.15rem;
+  font-size:.975rem;line-height:1.65;
+  max-width:65%;
+  box-sizing:border-box;
+  box-shadow:0 2px 8px rgba(42,126,242,.25);
+}
+
+.msgs-bubble-meta{
+  display:flex;align-items:center;gap:.25rem;padding:0 .15rem;
+}
+.msgs-bubble-wrap.mine .msgs-bubble-meta{justify-content:flex-end}
+.msgs-bubble-wrap.theirs .msgs-bubble-meta{justify-content:flex-start}
+.msgs-bubble-time{font-size:.68rem;color:var(--muted)}
+.msgs-tick{display:inline-flex;align-items:center;line-height:1}
+.msgs-tick svg{display:block}
+
+/* Empty state inside card */
+.msgs-no-msgs{
+  display:flex;align-items:center;justify-content:center;
+  min-height:80px;color:var(--muted);font-size:.88rem;
+}
+
+/* Empty state — no thread selected */
+.msgs-no-thread{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:.75rem;color:var(--muted);padding:2rem;
+}
+.msgs-no-thread-icon{font-size:2.5rem;opacity:.4}
+
+/* ── Input row — separate below the card ── */
+.msgs-input-row{
+  padding:1rem 1.5rem 1.25rem;
+  display:flex;gap:.75rem;align-items:center;
+  flex-shrink:0;background:var(--bg);
+}
+.msgs-input-row textarea{
+  flex:1;
+  border:1.5px solid #CDD5E8;
+  border-radius:14px;
+  padding:.75rem 1.1rem;
+  font-family:inherit;font-size:.975rem;
+  resize:none;outline:none;
+  color:var(--text);background:#fff;
+  line-height:1.5;max-height:110px;
+  transition:border .15s;
+  box-shadow:0 1px 4px rgba(24,43,82,.05);
+}
+.msgs-input-row textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(42,126,242,.12)}
+.msgs-send-btn{
+  background:var(--primary);color:#fff;border:none;
+  border-radius:14px;padding:.75rem 1.6rem;
+  font-weight:700;font-size:.975rem;cursor:pointer;
+  white-space:nowrap;flex-shrink:0;
+  transition:opacity .15s,transform .12s;
+  box-shadow:0 3px 10px rgba(42,126,242,.3);
+}
+.msgs-send-btn:hover{opacity:.9;transform:translateY(-1px)}
+.msgs-send-btn:active{transform:translateY(0)}
+
+@media(max-width:700px){
+  .msgs-shell{grid-template-columns:1fr;height:auto}
+  .msgs-threads{height:220px}
+}
+</style>
+
+<div class="msgs-shell">
+
+  {# ── LEFT: Thread list ── #}
+  <div class="msgs-threads">
+    <div class="msgs-threads-header">
+      <h1>Messages</h1>
+      <p>Your conversations with listers and agents</p>
+    </div>
+    <div class="msgs-thread-list" id="thread-list">
+      {% for conv in listing_conversations %}
+      <div class="msgs-thread {% if forloop.first %}active{% endif %}{% if conv.unread_count %} has-unread{% endif %}"
+           data-listing-id="{{ conv.listing.pk }}"
+           data-other-user-id="{{ conv.user.pk }}"
+           data-is-owner="{% if conv.is_owner %}true{% else %}false{% endif %}"
+           data-other-name="{{ conv.user.get_full_name|default:conv.user.username }}"
+           data-listing-title="{{ conv.listing.title|truncatechars:45 }}"
+           onclick="selectThread(this)">
+        <div class="msgs-thread-top">
+          <span class="msgs-thread-name">{{ conv.user.get_full_name|default:conv.user.username }}</span>
+          <span class="msgs-thread-time">{{ conv.last_message.sent_at|timesince }} ago</span>
+        </div>
+        <div class="msgs-thread-listing">Re: {{ conv.listing.title|truncatechars:40 }}</div>
+        <div class="msgs-thread-preview">{{ conv.last_message.message|truncatechars:50 }}</div>
+        {% if conv.unread_count %}
+        <div class="msgs-unread-indicator">
+          ● {% if conv.unread_count == 1 %}New message{% else %}{{ conv.unread_count }} new{% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div class="msgs-empty">No conversations yet.<br>Start chatting from a listing page.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── RIGHT: Chat pane ── #}
+  <div class="msgs-chat" id="chat-pane">
+
     {% if listing_conversations %}
-    <p class="muted" style="margin-top:0;">Click a conversation to open the chat and reply.</p>
-    <ul style="list-style:none;padding:0;margin:0;">
-        {% for conv in listing_conversations %}
-        <li style="border-bottom:1px solid var(--border);padding:.75rem 0;display:flex;justify-content:space-between;align-items:center;gap:1rem;">
-            <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;">{{ conv.user.username }}</div>
-                <div class="muted" style="font-size:.82rem;">
-                    Re: <a href="{% url 'listing_detail' conv.listing.pk %}">{{ conv.listing.title }}</a>
-                </div>
-                <div style="font-size:.88rem;margin-top:.2rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px;">
-                    {{ conv.last_message.message }}
-                </div>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.35rem;flex-shrink:0;">
-                <span class="muted" style="font-size:.75rem;">{{ conv.last_message.sent_at|date:"M d, H:i" }}</span>
-                {% if conv.is_owner %}
-                    <a href="{% url 'owner_chat' listing_id=conv.listing.pk other_user_id=conv.user.pk %}" class="button" style="padding:.35rem .75rem;font-size:.82rem;">Reply</a>
-                {% else %}
-                    <a href="{% url 'listing_detail' conv.listing.pk %}" class="button" style="padding:.35rem .75rem;font-size:.82rem;">Open Chat</a>
-                {% endif %}
-            </div>
-        </li>
-        {% endfor %}
-    </ul>
+    {# Header — updated via JS #}
+    <div class="msgs-chat-header" id="chat-header">
+      <span class="msgs-chat-header-icon">💬</span>
+      <div class="msgs-chat-header-title" id="chat-header-title">
+        {{ listing_conversations.0.user.get_full_name|default:listing_conversations.0.user.username }}
+        <span class="msgs-chat-header-sep"> — </span>
+        {{ listing_conversations.0.listing.title|truncatechars:40 }}
+      </div>
+    </div>
+
+    {# Scrollable messages area #}
+    <div class="msgs-chat-scroll" id="chat-scroll">
+      <div class="msgs-bubbles-card" id="chat-body">
+        <div class="msgs-no-msgs">Loading…</div>
+      </div>
+    </div>
+
+    {# Input row — outside the card #}
+    <div class="msgs-input-row">
+      <textarea id="msg-input" rows="1" placeholder="Type a message…"
+                oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,110)+'px'"></textarea>
+      <button class="msgs-send-btn" onclick="sendMessage()">Send</button>
+    </div>
+
     {% else %}
-    <p class="muted">No live chat conversations yet.</p>
+    <div class="msgs-no-thread">
+      <div class="msgs-no-thread-icon">💬</div>
+      <div class="msgs-no-thread-text">No conversations yet. Start chatting from a listing page.</div>
+    </div>
     {% endif %}
-</section>
 
-{# ── LISTING INQUIRIES ── #}
-<section class="card" style="margin-bottom:1rem;">
-    <h2>Inquiries on your listings</h2>
-    <p class="muted" style="margin-top:0;">Submitted via the inquiry form on your listings.</p>
-    <ul style="list-style:none;padding:0;margin:0;">
-    {% for inquiry in listing_inquiries %}
-        <li style="border-bottom:1px solid var(--border);padding:.75rem 0;">
-            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;">
-                <strong>{{ inquiry.name }}</strong>
-                <span class="muted" style="font-size:.78rem;">{{ inquiry.created_at|date:"M d, Y P" }}</span>
-            </div>
-            <div class="muted" style="font-size:.82rem;">
-                <a href="{% url 'listing_detail' inquiry.listing.pk %}">{{ inquiry.listing.title }}</a>
-                · {{ inquiry.email }}{% if inquiry.phone %} · {{ inquiry.phone }}{% endif %}
-            </div>
-            <p style="margin:.4rem 0 0;">{{ inquiry.message }}</p>
-        </li>
-    {% empty %}
-        <li class="muted">No listing inquiries yet.</li>
-    {% endfor %}
-    </ul>
-</section>
+  </div>
+</div>
 
-{# ── GUEST DIRECT MESSAGES ── #}
-<section class="card">
-    <h2>Guest direct messages</h2>
-    <ul style="list-style:none;padding:0;margin:0;">
-    {% for msg in guest_messages %}
-        <li style="border-bottom:1px solid var(--border);padding:.75rem 0;">
-            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;">
-                <strong>{{ msg.guest_name }}</strong>
-                <span class="muted" style="font-size:.78rem;">{{ msg.sent_at|date:"M d, Y P" }}</span>
-            </div>
-            <div class="muted" style="font-size:.82rem;">{{ msg.guest_email }}</div>
-            <p style="margin:.4rem 0 0;">{{ msg.message }}</p>
-        </li>
-    {% empty %}
-        <li class="muted">No guest messages yet.</li>
-    {% endfor %}
-    </ul>
-</section>
+<script>
+(function () {
+  var activeThread = null;
+  var pollTimer    = null;
+
+  /* Build API URLs based on whether the user is the owner or the visitor */
+  function threadUrl(listingId, otherUserId, isOwner) {
+    if (isOwner) {
+      return '/chat/listing/' + listingId + '/with/' + otherUserId + '/thread/';
+    }
+    return '/chat/listing/' + listingId + '/thread/';
+  }
+  function sendUrl(listingId, otherUserId, isOwner) {
+    if (isOwner) {
+      return '/chat/listing/' + listingId + '/with/' + otherUserId + '/send/';
+    }
+    return '/chat/listing/' + listingId + '/send/';
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function timeFmt(str) {
+    /* str is HH:MM from the server */
+    return str;
+  }
+
+  function renderMessages(msgs) {
+    var body   = document.getElementById('chat-body');
+    var scroll = document.getElementById('chat-scroll');
+    if (!msgs.length) {
+      body.innerHTML = '<div class="msgs-no-msgs">No messages yet. Say hello!</div>';
+      return;
+    }
+    body.innerHTML = msgs.map(function(m) {
+      var dir = m.mine ? 'mine' : 'theirs';
+      var meta = '<div class="msgs-bubble-meta">' +
+        '<span class="msgs-bubble-time">' + esc(m.sent_at) + '</span>';
+      if (m.mine) {
+        if (m.is_read) {
+          /* Double blue ticks — read */
+          meta += '<span class="msgs-tick" title="Seen">' +
+            '<svg width="16" height="10" viewBox="0 0 16 10" fill="none">' +
+              '<path d="M1 5l3 3 5-7" stroke="#2A7EF2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+              '<path d="M5 5l3 3 5-7" stroke="#2A7EF2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '</svg></span>';
+        } else {
+          /* Single grey tick — sent */
+          meta += '<span class="msgs-tick" title="Sent">' +
+            '<svg width="10" height="10" viewBox="0 0 10 10" fill="none">' +
+              '<path d="M1.5 5l2.5 2.5 4.5-5.5" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '</svg></span>';
+        }
+      }
+      meta += '</div>';
+      return '<div class="msgs-bubble-wrap ' + dir + '">' +
+        '<div class="msgs-bubble">' + esc(m.message) + '</div>' +
+        meta +
+      '</div>';
+    }).join('');
+    if (scroll) scroll.scrollTop = scroll.scrollHeight;
+  }
+
+  function loadThread() {
+    if (!activeThread) return;
+    var t = activeThread;
+    fetch(threadUrl(t.listingId, t.otherUserId, t.isOwner), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(d) { if (d) renderMessages(d.messages || []); })
+    .catch(function(){});
+  }
+
+  window.selectThread = function(el) {
+    /* Highlight active */
+    document.querySelectorAll('.msgs-thread').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+
+    var listingId   = el.dataset.listingId;
+    var otherUserId = el.dataset.otherUserId;
+    var isOwner     = el.dataset.isOwner === 'true';
+    var otherName   = el.dataset.otherName;
+    var listingTitle= el.dataset.listingTitle;
+
+    activeThread = { listingId: listingId, otherUserId: otherUserId, isOwner: isOwner };
+
+    /* Clear unread indicator immediately */
+    el.classList.remove('has-unread');
+    var indicator = el.querySelector('.msgs-unread-indicator');
+    if (indicator) indicator.remove();
+
+    /* Update header */
+    var title = document.getElementById('chat-header-title');
+    if (title) {
+      title.innerHTML = esc(otherName) +
+        ' <span style="color:var(--muted);font-weight:400"> — </span>' +
+        esc(listingTitle);
+    }
+
+    /* Clear & load */
+    var body = document.getElementById('chat-body');
+    if (body) body.innerHTML = '<p class="muted" style="text-align:center;font-size:.82rem;margin:auto;">Loading…</p>';
+
+    loadThread();
+
+    /* Poll every 4s */
+    clearInterval(pollTimer);
+    pollTimer = setInterval(loadThread, 4000);
+  };
+
+  window.sendMessage = function() {
+    if (!activeThread) return;
+    var input = document.getElementById('msg-input');
+    var text  = (input.value || '').trim();
+    if (!text) return;
+
+    var csrf = document.querySelector('[name="csrfmiddlewaretoken"]');
+    var csrfVal = csrf ? csrf.value : '';
+
+    /* Optimistic render */
+    var body   = document.getElementById('chat-body');
+    var scroll = document.getElementById('chat-scroll');
+    var bubble = document.createElement('div');
+    bubble.className = 'msgs-bubble-wrap mine';
+    bubble.innerHTML = '<div class="msgs-bubble">' + esc(text) + '</div>' +
+      '<div class="msgs-bubble-meta"><span class="msgs-bubble-time">sending…</span>' +
+      '<span class="msgs-tick"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-5.5" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>';
+    body.appendChild(bubble);
+    if (scroll) scroll.scrollTop = scroll.scrollHeight;
+
+    input.value = '';
+    input.style.height = 'auto';
+
+    var t = activeThread;
+    var fd = new FormData();
+    fd.append('message', text);
+    fd.append('csrfmiddlewaretoken', csrfVal);
+
+    fetch(sendUrl(t.listingId, t.otherUserId, t.isOwner), {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-CSRFToken': csrfVal }
+    })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(d) { if (d) loadThread(); })
+    .catch(function(){});
+  };
+
+  /* Enter to send, Shift+Enter for newline */
+  document.addEventListener('DOMContentLoaded', function() {
+    var input = document.getElementById('msg-input');
+    if (input) {
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+    }
+
+    /* Auto-load the first thread */
+    var first = document.querySelector('.msgs-thread');
+    if (first) selectThread(first);
+  });
+
+  /* Get CSRF from cookie as fallback */
+  (function injectCsrf() {
+    if (document.querySelector('[name="csrfmiddlewaretoken"]')) return;
+    var name = 'csrftoken';
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+      var c = cookies[i].trim();
+      if (c.startsWith(name + '=')) {
+        var val = decodeURIComponent(c.slice(name.length + 1));
+        var inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'csrfmiddlewaretoken'; inp.value = val;
+        document.body.appendChild(inp);
+        break;
+      }
+    }
+  })();
+})();
+</script>
 {% endblock %}

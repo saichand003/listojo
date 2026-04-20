@@ -3,7 +3,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import connection
 from django.db.utils import OperationalError
-from django.db.models import Case, Count, IntegerField, Q, Value, When
+from django.db import models as django_models
+from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -417,11 +418,22 @@ def listing_list(request):
     return render(request, 'listings/listing_list.html', context)
 
 
+def guided_search(request):
+    return render(request, 'listings/guided_search.html', {
+        'category_choices': Listing.CATEGORY_CHOICES,
+    })
+
+
 def listing_detail(request, pk):
     if not _listings_table_ready():
         return _render_db_setup_page(request)
 
     listing = get_object_or_404(Listing.objects.select_related('owner').prefetch_related('images'), pk=pk)
+
+    # Increment view count (skip owner's own visits)
+    if not request.user.is_authenticated or request.user != listing.owner:
+        Listing.objects.filter(pk=pk).update(view_count=django_models.F('view_count') + 1)
+        listing.view_count += 1
 
     if request.method == 'POST':
         inquiry_form = ListingInquiryForm(request.POST)

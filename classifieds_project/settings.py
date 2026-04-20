@@ -50,6 +50,7 @@ TEMPLATES = [
                 'classifieds_project.context_processors.ui_asset_version',
                 'classifieds_project.context_processors.launch_config',
                 'classifieds_project.context_processors.google_maps',
+                'classifieds_project.context_processors.sidebar_counts',
             ],
         },
     },

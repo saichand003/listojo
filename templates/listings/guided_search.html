@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.gs-wrap{max-width:680px;margin:0 auto;padding:32px 16px 64px}
+.gs-header{text-align:center;margin-bottom:36px}
+.gs-header h1{font-size:1.75rem;font-weight:800;color:#0f1c35;margin-bottom:8px}
+.gs-header p{color:#6B7280;font-size:15px}
+.gs-steps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:40px}
+.gs-step{display:flex;flex-direction:column;align-items:center;gap:6px}
+.gs-step-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid #E5E7EB;background:#fff;color:#9CA3AF;transition:all .25s}
+.gs-step.active .gs-step-num{border-color:var(--primary,#2A7EF2);background:var(--primary,#2A7EF2);color:#fff}
+.gs-step.done .gs-step-num{border-color:var(--primary,#2A7EF2);background:#EAF5F0;color:#0A5C45}
+.gs-step-label{font-size:11px;font-weight:600;color:#9CA3AF;white-space:nowrap}
+.gs-step.active .gs-step-label,.gs-step.done .gs-step-label{color:var(--primary,#2A7EF2)}
+.gs-line{width:80px;height:2px;background:#E5E7EB;margin-bottom:18px;transition:background .25s}
+.gs-line.done{background:var(--primary,#2A7EF2)}
+.gs-card{background:#fff;border:1px solid #E5E7EB;border-radius:20px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+.gs-card h2{font-size:1.1rem;font-weight:700;color:#0f1c35;margin-bottom:6px}
+.gs-card .gs-sub{font-size:13px;color:#6B7280;margin-bottom:24px}
+.gs-label{font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:block}
+.gs-group{margin-bottom:22px}
+.gs-input{width:100%;padding:10px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;font-family:inherit;color:#0f1c35;outline:none;transition:border-color .15s}
+.gs-input:focus{border-color:var(--primary,#2A7EF2)}
+.gs-row{display:flex;gap:12px;align-items:center}
+.gs-row .gs-input{flex:1}
+.gs-sep{color:#9CA3AF;font-size:13px;flex-shrink:0}
+.gs-slider{width:100%;accent-color:var(--primary,#2A7EF2);height:4px;margin:6px 0}
+.tag-grid{display:flex;flex-wrap:wrap;gap:8px}
+.tag-pill{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:500;border:1.5px solid #E5E7EB;background:#fff;color:#374151;cursor:pointer;transition:all .15s;user-select:none}
+.tag-pill:hover{border-color:var(--primary,#2A7EF2);color:var(--primary,#2A7EF2)}
+.tag-pill.sel{border-color:var(--primary,#2A7EF2);background:rgba(42,126,242,.08);color:var(--primary,#2A7EF2);font-weight:600}
+.gs-options{display:flex;flex-direction:column;gap:10px}
+.gs-option{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1.5px solid #E5E7EB;border-radius:12px;cursor:pointer;transition:all .15s}
+.gs-option:hover{border-color:var(--primary,#2A7EF2)}
+.gs-option.sel{border-color:var(--primary,#2A7EF2);background:rgba(42,126,242,.05)}
+.gs-option .radio{width:18px;height:18px;border-radius:50%;border:2px solid #D1D5DB;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.gs-option.sel .radio{border-color:var(--primary,#2A7EF2);background:var(--primary,#2A7EF2)}
+.gs-option.sel .radio::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff}
+.gs-option-title{font-size:14px;font-weight:600;color:#0f1c35}
+.gs-option-sub{font-size:12px;color:#9CA3AF;margin-top:2px}
+.gs-actions{display:flex;gap:12px;margin-top:28px}
+.gs-btn{padding:11px 24px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.gs-btn-primary{background:var(--primary,#2A7EF2);color:#fff;flex:1}
+.gs-btn-primary:hover{opacity:.9}
+.gs-btn-ghost{background:transparent;border:1.5px solid #E5E7EB;color:#374151}
+.gs-btn-ghost:hover{border-color:var(--primary,#2A7EF2);color:var(--primary,#2A7EF2)}
+.gs-btn-lg{padding:13px 28px;font-size:15px}
+</style>
+
+<div class="gs-wrap">
+  <div class="gs-header">
+    <h1>Find the right listing, not just a listing.</h1>
+    <p>Answer a few questions and we'll score every match for you.</p>
+  </div>
+
+  <div class="gs-steps">
+    <div class="gs-step active" id="s1"><div class="gs-step-num" id="sn1">1</div><div class="gs-step-label">Location & Budget</div></div>
+    <div class="gs-line" id="l1"></div>
+    <div class="gs-step" id="s2"><div class="gs-step-num" id="sn2">2</div><div class="gs-step-label">Preferences</div></div>
+    <div class="gs-line" id="l2"></div>
+    <div class="gs-step" id="s3"><div class="gs-step-num" id="sn3">3</div><div class="gs-step-label">Timeline</div></div>
+  </div>
+
+  <div id="step1">
+    <div class="gs-card">
+      <h2>Where are you looking?</h2>
+      <p class="gs-sub">Set your location and budget so we can focus the results.</p>
+      <div class="gs-group">
+        <label class="gs-label">City / Area</label>
+        <input id="city" class="gs-input" placeholder="e.g. Irving, TX or Las Colinas">
+      </div>
+      <div class="gs-group">
+        <label class="gs-label">Category</label>
+        <select id="category" class="gs-input">
+          <option value="">All categories</option>
+          {% for key, label in category_choices %}
+          <option value="{{ key }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="gs-group">
+        <label class="gs-label">Monthly budget</label>
+        <div class="gs-row">
+          <input id="min_price" class="gs-input" placeholder="Min $" type="number" min="0">
+          <span class="gs-sep">to</span>
+          <input id="max_price" class="gs-input" placeholder="Max $" type="number" min="0">
+        </div>
+        <div style="margin-top:12px">
+          <input type="range" class="gs-slider" id="budget_slider" min="500" max="10000" step="50" value="3000"
+                 oninput="document.getElementById('budget_disp').textContent='$'+Number(this.value).toLocaleString();document.getElementById('max_price').value=this.value">
+          <div style="font-size:12.5px;color:#6B7280;margin-top:4px">Max: <strong id="budget_disp">$3,000</strong></div>
+        </div>
+      </div>
+      <div class="gs-group">
+        <label class="gs-label">Bedrooms</label>
+        <div class="tag-grid" id="beds-group">
+          <div class="tag-pill sel" data-val="">Any</div>
+          <div class="tag-pill" data-val="1 bed">1 bed</div>
+          <div class="tag-pill" data-val="2 bed">2 bed</div>
+          <div class="tag-pill" data-val="3 bed">3 bed</div>
+          <div class="tag-pill" data-val="4+ bed">4+ bed</div>
+        </div>
+      </div>
+      <div class="gs-actions">
+        <button class="gs-btn gs-btn-primary" onclick="goStep(2)">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="step2" style="display:none">
+    <div class="gs-card">
+      <h2>What matters most to you?</h2>
+      <p class="gs-sub">Select everything that applies — we'll weight your results accordingly.</p>
+      <div class="gs-group">
+        <label class="gs-label">Must-have features</label>
+        <div class="tag-grid">
+          <div class="tag-pill" data-group="features" data-val="pet friendly" onclick="toggleTag(this)">🐾 Pet friendly</div>
+          <div class="tag-pill" data-group="features" data-val="washer dryer" onclick="toggleTag(this)">🚿 Washer/dryer</div>
+          <div class="tag-pill" data-group="features" data-val="parking" onclick="toggleTag(this)">🅿️ Parking</div>
+          <div class="tag-pill" data-group="features" data-val="central ac" onclick="toggleTag(this)">❄️ Central AC</div>
+          <div class="tag-pill" data-group="features" data-val="gym" onclick="toggleTag(this)">🏋️ Gym</div>
+          <div class="tag-pill" data-group="features" data-val="pool" onclick="toggleTag(this)">🌊 Pool</div>
+          <div class="tag-pill" data-group="features" data-val="balcony" onclick="toggleTag(this)">🌇 Balcony</div>
+          <div class="tag-pill" data-group="features" data-val="gated" onclick="toggleTag(this)">🔒 Gated</div>
+          <div class="tag-pill" data-group="features" data-val="high-speed internet" onclick="toggleTag(this)">📶 High-speed internet</div>
+          <div class="tag-pill" data-group="features" data-val="bills included" onclick="toggleTag(this)">💡 Bills included</div>
+          <div class="tag-pill" data-group="features" data-val="furnished" onclick="toggleTag(this)">🛋️ Furnished</div>
+          <div class="tag-pill" data-group="features" data-val="no deposit" onclick="toggleTag(this)">✅ No deposit</div>
+        </div>
+      </div>
+      <div class="gs-group">
+        <label class="gs-label">Neighborhood vibe</label>
+        <div class="tag-grid">
+          <div class="tag-pill" data-group="vibe" data-val="quiet" onclick="toggleTag(this)">🏘️ Quiet & residential</div>
+          <div class="tag-pill" data-group="vibe" data-val="walkable" onclick="toggleTag(this)">🌆 Urban & walkable</div>
+          <div class="tag-pill" data-group="vibe" data-val="schools" onclick="toggleTag(this)">🏫 Near good schools</div>
+          <div class="tag-pill" data-group="vibe" data-val="indian community" onclick="toggleTag(this)">🕌 Indian community</div>
+          <div class="tag-pill" data-group="vibe" data-val="indian grocery" onclick="toggleTag(this)">🛒 Near Indian grocery</div>
+        </div>
+      </div>
+      <div class="gs-actions">
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(1)">← Back</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(3)">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="step3" style="display:none">
+    <div class="gs-card">
+      <h2>When do you need to move?</h2>
+      <p class="gs-sub">We'll filter by availability so you only see what's actually open.</p>
+      <div class="gs-group">
+        <label class="gs-label">Move-in timeline</label>
+        <div class="gs-options" id="timeline-group">
+          <div class="gs-option" data-days="14" onclick="selectOption(this,'timeline')">
+            <div class="radio"></div>
+            <div><div class="gs-option-title">ASAP — within 2 weeks</div><div class="gs-option-sub">Show what's available now</div></div>
+          </div>
+          <div class="gs-option sel" data-days="30" onclick="selectOption(this,'timeline')">
+            <div class="radio"></div>
+            <div><div class="gs-option-title">Next month</div><div class="gs-option-sub">Flexible on exact date</div></div>
+          </div>
+          <div class="gs-option" data-days="90" onclick="selectOption(this,'timeline')">
+            <div class="radio"></div>
+            <div><div class="gs-option-title">In 2–3 months</div><div class="gs-option-sub">Just exploring options</div></div>
+          </div>
+          <div class="gs-option" data-days="" onclick="selectOption(this,'timeline')">
+            <div class="radio"></div>
+            <div><div class="gs-option-title">No specific timeline</div><div class="gs-option-sub">Show all available listings</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="gs-group">
+        <label class="gs-label">Lease preference</label>
+        <div class="tag-grid">
+          <div class="tag-pill" data-group="lease" data-val="12 month lease" onclick="toggleTag(this)">12 months</div>
+          <div class="tag-pill" data-group="lease" data-val="6 month lease" onclick="toggleTag(this)">6 months</div>
+          <div class="tag-pill" data-group="lease" data-val="month-to-month" onclick="toggleTag(this)">Month-to-month</div>
+        </div>
+      </div>
+      <div class="gs-actions">
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(2)">← Back</button>
+        <button class="gs-btn gs-btn-primary gs-btn-lg" onclick="submitSearch()">🔍 Find my matches →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function goStep(n) {
+  [1,2,3].forEach(function(i) {
+    document.getElementById('step'+i).style.display = i===n ? 'block' : 'none';
+    var s = document.getElementById('s'+i);
+    s.className = 'gs-step' + (i===n ? ' active' : i<n ? ' done' : '');
+    var sn = document.getElementById('sn'+i);
+    sn.textContent = i<n ? '✓' : i;
+    var l = document.getElementById('l'+i);
+    if (l) l.className = 'gs-line' + (i<n ? ' done' : '');
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleTag(el) { el.classList.toggle('sel'); }
+document.getElementById('beds-group').addEventListener('click', function(e) {
+  var pill = e.target.closest('.tag-pill');
+  if (!pill) return;
+  this.querySelectorAll('.tag-pill').forEach(function(p){p.classList.remove('sel');});
+  pill.classList.add('sel');
+});
+function selectOption(el, group) {
+  document.querySelectorAll('[data-group="'+group+'"]').forEach(function(o){o.classList.remove('sel');});
+  el.classList.add('sel');
+}
+function submitSearch() {
+  var params = new URLSearchParams();
+  var city = document.getElementById('city').value.trim();
+  if (city) params.set('city', city);
+  var category = document.getElementById('category').value;
+  if (category) params.set('category', category);
+  var minPrice = document.getElementById('min_price').value.trim();
+  var maxPrice = document.getElementById('max_price').value.trim();
+  if (minPrice) params.set('min_price', minPrice);
+  if (maxPrice) params.set('max_price', maxPrice);
+  var bedPill = document.querySelector('#beds-group .tag-pill.sel');
+  var tagVals = [];
+  if (bedPill && bedPill.dataset.val) tagVals.push(bedPill.dataset.val);
+  document.querySelectorAll('.tag-pill.sel[data-group="features"]').forEach(function(p){tagVals.push(p.dataset.val);});
+  document.querySelectorAll('.tag-pill.sel[data-group="vibe"]').forEach(function(p){tagVals.push(p.dataset.val);});
+  document.querySelectorAll('.tag-pill.sel[data-group="lease"]').forEach(function(p){tagVals.push(p.dataset.val);});
+  if (tagVals.length) params.set('tags', tagVals.join(','));
+  var timelineOpt = document.querySelector('[data-group="timeline"].sel, #timeline-group .gs-option.sel');
+  if (!timelineOpt) timelineOpt = document.querySelector('#timeline-group .gs-option.sel');
+  if (timelineOpt && timelineOpt.dataset.days) {
+    var d = new Date();
+    d.setDate(d.getDate() + parseInt(timelineOpt.dataset.days));
+    params.set('available_by', d.toISOString().slice(0,10));
+  }
+  params.set('fmm', '1');
+  window.location.href = '{% url "listing_list" %}?' + params.toString();
+}
+</script>
+{% endblock %}

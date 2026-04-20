@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.perf-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.5rem;text-align:center}
+.perf-stat-val{font-size:2rem;font-weight:800;color:var(--text);line-height:1.1}
+.perf-stat-label{font-size:.8rem;color:var(--muted);margin-top:.3rem}
+.perf-row{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
+.perf-row:last-child{border-bottom:none}
+.perf-bar-wrap{flex:1;height:8px;background:var(--border);border-radius:99px;overflow:hidden;min-width:80px}
+.perf-bar{height:100%;background:var(--primary);border-radius:99px;transition:width .4s ease}
+</style>
+
+<div style="max-width:860px;margin:0 auto;padding:24px 16px">
+  <h1 style="font-size:1.5rem;font-weight:800;color:var(--text);margin:0 0 4px">Performance</h1>
+  <p style="color:var(--muted);font-size:.875rem;margin:0 0 1.5rem">Analytics across all your active listings</p>
+
+  {# Summary cards #}
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.75rem">
+    <div class="perf-stat-card">
+      <div class="perf-stat-val">{{ totals.total_views|default:0 }}</div>
+      <div class="perf-stat-label">👁 Total views</div>
+    </div>
+    <div class="perf-stat-card">
+      <div class="perf-stat-val">{{ totals.total_inquiries|default:0 }}</div>
+      <div class="perf-stat-label">💬 Total inquiries</div>
+    </div>
+    <div class="perf-stat-card">
+      <div class="perf-stat-val">{{ totals.total_saves|default:0 }}</div>
+      <div class="perf-stat-label">❤️ Total saves</div>
+    </div>
+  </div>
+
+  {% if listings %}
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.5rem">
+    <div style="padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 80px 80px 80px 120px;gap:.75rem;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">
+      <span>Listing</span>
+      <span style="text-align:right">Views</span>
+      <span style="text-align:right">Inquiries</span>
+      <span style="text-align:right">Saves</span>
+      <span style="text-align:right">Views trend</span>
+    </div>
+    {% with max_views=listings.0.view_count %}
+    {% for listing in listings %}
+    <div class="perf-row">
+      <div style="min-width:0">
+        <a href="{% url 'listing_detail' listing.pk %}" style="font-weight:700;font-size:.875rem;color:var(--text);text-decoration:none;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ listing.title|truncatechars:45 }}</a>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:2px">{{ listing.city }}{% if listing.price %} &middot; ${{ listing.price }}/{{ listing.price_unit }}{% endif %}</div>
+      </div>
+      <div style="text-align:right;font-weight:700;font-size:.9rem;color:var(--text)">{{ listing.view_count }}</div>
+      <div style="text-align:right;font-weight:700;font-size:.9rem;color:var(--text)">{{ listing.inquiry_count }}</div>
+      <div style="text-align:right;font-weight:700;font-size:.9rem;color:var(--text)">{{ listing.save_count }}</div>
+      <div style="display:flex;align-items:center;gap:.5rem;justify-content:flex-end">
+        <div class="perf-bar-wrap">
+          {% if max_views > 0 %}
+          <div class="perf-bar" style="width:{{ listing.view_count|floatformat:0 }}%"
+               data-pct="{% widthratio listing.view_count max_views 100 %}"></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% endwith %}
+  </div>
+
+  <div style="background:#EBF3FF;border:1px solid rgba(42,126,242,.2);border-radius:12px;padding:1rem 1.25rem">
+    <div style="font-weight:700;color:var(--primary);margin-bottom:.5rem;font-size:.9rem">💡 Tips to improve performance</div>
+    <div style="font-size:.8rem;color:#1e3a6e;display:flex;gap:20px;flex-wrap:wrap;line-height:1.6">
+      <span>📸 Add 10+ photos to each listing</span>
+      <span>🏷️ Use tags like pet-friendly, parking</span>
+      <span>✅ Fill in all details for better search ranking</span>
+      <span>💬 Respond to inquiries within 24 hours</span>
+    </div>
+  </div>
+
+  {% else %}
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:56px 24px;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:12px">📊</div>
+    <div style="font-weight:700;font-size:1rem;margin-bottom:6px;color:var(--text)">No active listings</div>
+    <div style="color:var(--muted);font-size:.875rem;margin-bottom:20px">Post a listing to start tracking views, inquiries, and saves.</div>
+    <a href="{% url 'create_listing' %}" style="display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--primary);color:#fff;border-radius:10px;font-weight:700;font-size:.875rem;text-decoration:none">+ Post a listing</a>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+/* Animate bars to correct width on load */
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.perf-bar[data-pct]').forEach(function(bar) {
+    bar.style.width = bar.dataset.pct + '%';
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:24px 16px">
+  <h1 style="font-size:1.5rem;font-weight:800;color:var(--text);margin:0 0 4px">Inquiries</h1>
+  <p style="color:var(--muted);font-size:.875rem;margin:0 0 1.5rem">Messages from renters about your listings</p>
+
+  {% if inquiries %}
+  <div style="display:flex;flex-direction:column;gap:.75rem">
+    {% for inq in inquiries %}
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.25rem;display:flex;gap:1rem;align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.3rem">
+          <span style="font-weight:700;font-size:.9rem;color:var(--text)">{{ inq.name|default:"Anonymous" }}</span>
+          {% if inq.email %}<span style="font-size:.78rem;color:var(--muted)">{{ inq.email }}</span>{% endif %}
+          <span style="font-size:.72rem;color:var(--muted);margin-left:auto">{{ inq.created_at|timesince }} ago</span>
+        </div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem">
+          Re: <a href="{% url 'listing_detail' inq.listing.pk %}" style="color:var(--primary);text-decoration:none;font-weight:600">{{ inq.listing.title|truncatechars:50 }}</a>
+        </div>
+        <div style="font-size:.875rem;color:var(--text);line-height:1.55">{{ inq.message|truncatechars:200 }}</div>
+        {% if inq.phone %}<div style="font-size:.78rem;color:var(--muted);margin-top:.3rem">📞 {{ inq.phone }}</div>{% endif %}
+      </div>
+      <a href="{% url 'listing_inquiries' inq.listing.pk %}" style="flex-shrink:0;padding:6px 14px;background:#F3F4F6;border-radius:8px;font-size:.78rem;font-weight:600;text-decoration:none;color:#111827;white-space:nowrap">View all</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:56px 24px;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:12px">💬</div>
+    <div style="font-weight:700;font-size:1rem;margin-bottom:6px;color:var(--text)">No inquiries yet</div>
+    <div style="color:var(--muted);font-size:.875rem">When renters reach out about your listings, they'll appear here.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

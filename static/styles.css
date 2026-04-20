@@ -77,6 +77,160 @@ p { line-height: 1.65; }
   padding: 1.75rem 1.5rem 1.5rem;
 }
 
+/* ── APP SHELL — Sidebar layout ─────────────────────────────── */
+.site-topbar {
+  padding: 1.25rem 1.5rem 0;
+  background: var(--bg);
+  position: relative;
+  z-index: 200;
+}
+
+.site-body {
+  display: flex;
+  flex-direction: row;
+  min-height: calc(100vh - 100px);
+  align-items: stretch;
+}
+
+/* ── LEFT SIDEBAR ──────────────────────────────────────────── */
+.app-sidebar {
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
+  flex-shrink: 0;
+  background: var(--surface);
+  padding: 1.5rem 1rem 1rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-right: 1px solid var(--border);
+  z-index: 100;
+}
+:root.dark .app-sidebar { background: #111827; }
+
+.app-sidebar::-webkit-scrollbar { width: 4px; }
+.app-sidebar::-webkit-scrollbar-track { background: transparent; }
+.app-sidebar::-webkit-scrollbar-thumb { background: rgba(0,0,0,.1); border-radius: 4px; }
+
+.sb-section { margin-bottom: 1.75rem; }
+
+.sb-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  padding: 0 .5rem;
+  margin-bottom: .6rem;
+  display: block;
+}
+
+.sb-link {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  padding: .5rem .65rem;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: background .15s, color .15s;
+  margin-bottom: 2px;
+}
+.sb-link:hover { background: var(--surface-2); }
+.sb-link.sb-active {
+  color: var(--primary);
+  background: rgba(42,126,242,.09);
+  font-weight: 600;
+}
+.sb-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sb-icon svg { display: block; }
+.sb-badge {
+  margin-left: auto;
+  background: var(--primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+
+.sb-footer {
+  margin-top: auto;
+  padding-top: .85rem;
+  border-top: 1px solid var(--border);
+}
+.sb-footer a {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .8rem;
+  color: var(--muted);
+  text-decoration: none;
+  padding: .3rem .5rem;
+  border-radius: 6px;
+  transition: color .15s;
+}
+.sb-footer a:hover { color: var(--text); }
+.sb-footer .sb-footer-user {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text);
+  padding: .4rem .5rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.sb-footer form { display: inline; }
+.sb-footer button {
+  background: none !important;
+  border: none !important;
+  color: var(--muted) !important;
+  font-size: .8rem !important;
+  font-weight: 500 !important;
+  padding: .3rem .5rem !important;
+  cursor: pointer;
+  border-radius: 6px !important;
+  transition: color .15s !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: .4rem !important;
+  width: 100% !important;
+  justify-content: flex-start !important;
+}
+.sb-footer button:hover { color: var(--text) !important; background: var(--surface-2) !important; }
+.sb-footer button::after { display: none !important; }
+
+/* ── MAIN CONTENT (right of sidebar) ─────────────────────── */
+.app-content {
+  flex: 1;
+  min-width: 0;
+  padding: 1.5rem 1.5rem 2rem;
+  overflow-x: hidden;
+}
+
+/* Sidebar-aware responsive */
+@media (max-width: 900px) {
+  .app-sidebar { display: none !important; }
+  .site-topbar { padding: .75rem .75rem 0; }
+  .site-body { display: block; }
+}
+
 /* ── NAVBAR — Floating Glass Card ───────────────────────────── */
 .navbar {
   display: flex;

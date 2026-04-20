@@ -1,166 +1,40 @@
 {% extends 'base.html' %}
 {% block content %}
-<style>
-.profile-tabs{display:flex;gap:4px;border-bottom:2px solid #E5E7EB;margin-bottom:24px}
-.profile-tab{padding:10px 20px;border:none;background:transparent;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit;transition:all .15s}
-.profile-tab.active{color:#0A5C45;border-bottom-color:#0A5C45;font-weight:600}
-.tab-pane{display:none}
-.tab-pane.active{display:block}
+<div style="max-width:680px;margin:0 auto;padding:24px 16px">
+  <h1 style="font-size:1.5rem;font-weight:800;margin-bottom:1.5rem;color:var(--text)">Profile Info</h1>
 
-.listing-row{display:flex;align-items:flex-start;gap:16px;padding:18px 0;border-bottom:1px solid #F3F4F6}
-.listing-row:last-child{border-bottom:none}
-.listing-thumb{width:80px;height:64px;border-radius:10px;background:linear-gradient(135deg,#a5b4fc,#7dd3fc);flex-shrink:0;overflow:hidden}
-.listing-thumb img{width:100%;height:100%;object-fit:cover}
-
-.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
-.pill-green{background:#EAF5F0;color:#0A5C45}
-.pill-gray{background:#F3F4F6;color:#374151}
-.pill-amber{background:#FEF6E8;color:#D97706}
-.pill-danger{background:#FEF2F2;color:#DC2626}
-
-.stat-row{display:flex;gap:16px;font-size:12.5px;margin-top:6px;color:#6B7280}
-.tips-box{background:#FEF6E8;border:1px solid rgba(232,160,32,.25);border-radius:12px;padding:14px 18px;margin-top:20px}
-</style>
-
-<div style="max-width:800px;margin:0 auto;padding:24px 16px">
-
-  <div class="profile-tabs">
-    <button class="profile-tab active" onclick="switchTab('info')">Profile Info</button>
-    <button class="profile-tab" onclick="switchTab('listings')">My Listings
-      {% if active_count or draft_count %}
-        <span style="background:#0A5C45;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;margin-left:4px">{{ active_count|add:draft_count }}</span>
-      {% endif %}
-    </button>
-  </div>
-
-  <!-- Profile Info tab -->
-  <div class="tab-pane active" id="tab-info">
-    <div class="card" style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:24px">
-      <h2 style="font-size:18px;font-weight:700;margin-bottom:20px">Account Information</h2>
-      <table style="width:100%;border-collapse:collapse">
-        <tbody>
-          <tr style="border-bottom:1px solid #F3F4F6">
-            <td style="padding:10px 0;color:#6B7280;width:140px;font-size:14px">Username</td>
-            <td style="padding:10px 0;font-weight:600;font-size:14px">{{ user.username }}</td>
-          </tr>
-          <tr style="border-bottom:1px solid #F3F4F6">
-            <td style="padding:10px 0;color:#6B7280;font-size:14px">Email</td>
-            <td style="padding:10px 0;font-weight:600;font-size:14px">{{ user.email|default:'Not provided' }}</td>
-          </tr>
-          <tr style="border-bottom:1px solid #F3F4F6">
-            <td style="padding:10px 0;color:#6B7280;font-size:14px">Member since</td>
-            <td style="padding:10px 0;font-weight:600;font-size:14px">{{ user.date_joined|date:"M d, Y" }}</td>
-          </tr>
-          <tr>
-            <td style="padding:10px 0;color:#6B7280;font-size:14px">Account type</td>
-            <td style="padding:10px 0;font-size:14px">
-              {% if my_listings.count > 0 %}
-                <span class="pill pill-green">Lister</span>
-              {% else %}
-                <span class="pill pill-gray">Renter</span>
-              {% endif %}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- My Listings tab -->
-  <div class="tab-pane" id="tab-listings">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
-      <div>
-        <p style="color:#6B7280;font-size:14px">
-          {{ active_count }} active &middot; {{ draft_count }} draft
-        </p>
-      </div>
-      <a href="{% url 'create_listing' %}" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:#0A5C45;color:#fff;border-radius:10px;font-weight:600;font-size:13.5px;text-decoration:none">
-        + Post new listing
-      </a>
-    </div>
-
-    {% if my_listings %}
-    <div class="card" style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:8px 20px">
-      {% for listing in my_listings %}
-      <div class="listing-row">
-        <div class="listing-thumb">
-          {% with listing.images.first as img %}
-            {% if img %}<img src="{{ img.image.url }}" alt="">
-            {% elif listing.image %}<img src="{{ listing.image.url }}" alt="">
-            {% endif %}
-          {% endwith %}
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
-            <span style="font-weight:700;font-size:14px">{{ listing.title }}</span>
-            {% if listing.status == 'active' %}
-              <span class="pill pill-green">Active</span>
-            {% elif listing.status == 'draft' %}
-              <span class="pill pill-gray">Draft</span>
-            {% elif listing.status == 'pending' %}
-              <span class="pill pill-amber">Pending Review</span>
-            {% elif listing.status == 'flagged' %}
-              <span class="pill pill-danger">Flagged</span>
-            {% endif %}
-          </div>
-          <div style="font-size:13px;color:#6B7280">
-            {% if listing.price %}${{ listing.price }}{% if listing.price_unit %}/{{ listing.price_unit }}{% endif %} &middot; {% endif %}
-            {{ listing.city }}
-            {% if listing.created_at %} &middot; Posted {{ listing.created_at|timesince }} ago{% endif %}
-          </div>
-          <div class="stat-row">
-            {% if listing.status != 'draft' %}
-              <span>💬 {{ listing.inquiry_count }} inquir{{ listing.inquiry_count|pluralize:"y,ies" }}</span>
-              <span>❤️ {{ listing.save_count }} save{{ listing.save_count|pluralize }}</span>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px">
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:20px;color:var(--text)">Account Information</h2>
+    <table style="width:100%;border-collapse:collapse">
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:12px 0;color:var(--muted);width:140px;font-size:.875rem">Username</td>
+          <td style="padding:12px 0;font-weight:600;font-size:.875rem;color:var(--text)">{{ user.username }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:12px 0;color:var(--muted);font-size:.875rem">Full name</td>
+          <td style="padding:12px 0;font-weight:600;font-size:.875rem;color:var(--text)">{{ user.get_full_name|default:'Not provided' }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:12px 0;color:var(--muted);font-size:.875rem">Email</td>
+          <td style="padding:12px 0;font-weight:600;font-size:.875rem;color:var(--text)">{{ user.email|default:'Not provided' }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:12px 0;color:var(--muted);font-size:.875rem">Member since</td>
+          <td style="padding:12px 0;font-weight:600;font-size:.875rem;color:var(--text)">{{ user.date_joined|date:"M d, Y" }}</td>
+        </tr>
+        <tr>
+          <td style="padding:12px 0;color:var(--muted);font-size:.875rem">Account type</td>
+          <td style="padding:12px 0;font-size:.875rem">
+            {% if user.listing_set.exists %}
+              <span style="background:#EBF3FF;color:var(--primary);font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:999px">Lister</span>
             {% else %}
-              <span style="color:#9CA3AF">Not published yet</span>
+              <span style="background:#F3F4F6;color:#374151;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:999px">Renter</span>
             {% endif %}
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-shrink:0">
-          {% if listing.status == 'active' %}
-            <a href="{% url 'listing_inquiries' listing.pk %}" style="padding:6px 14px;background:#F3F4F6;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;color:#111827">View inquiries</a>
-            <a href="{% url 'edit_listing' listing.pk %}" style="padding:6px 14px;border:1px solid #0A5C45;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;color:#0A5C45">Edit</a>
-          {% elif listing.status == 'draft' %}
-            <a href="{% url 'edit_listing' listing.pk %}" style="padding:6px 14px;background:#0A5C45;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;color:#fff">Complete &amp; publish</a>
-            <a href="{% url 'delete_listing' listing.pk %}" style="padding:6px 14px;border:1px solid #E5E7EB;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;color:#6B7280">Delete draft</a>
-          {% else %}
-            <a href="{% url 'edit_listing' listing.pk %}" style="padding:6px 14px;border:1px solid #0A5C45;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;color:#0A5C45">Edit</a>
-          {% endif %}
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-
-    <div class="tips-box">
-      <div style="font-weight:700;color:#D97706;margin-bottom:6px">💡 Tips to get more inquiries</div>
-      <div style="font-size:13px;display:flex;gap:20px;flex-wrap:wrap">
-        <span>📸 Add 10+ photos to each listing</span>
-        <span>🏷️ Add tags like pet-friendly, parking</span>
-        <span>✅ Fill in all details for better match scores</span>
-      </div>
-    </div>
-
-    {% else %}
-    <div class="card" style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:48px 24px;text-align:center">
-      <div style="font-size:40px;margin-bottom:12px">🏠</div>
-      <div style="font-weight:700;font-size:16px;margin-bottom:6px">No listings yet</div>
-      <div style="color:#6B7280;font-size:14px;margin-bottom:20px">Post your first listing to start getting inquiries from renters.</div>
-      <a href="{% url 'create_listing' %}" style="display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:#0A5C45;color:#fff;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none">
-        + Post your first listing
-      </a>
-    </div>
-    {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
-
 </div>
-
-<script>
-function switchTab(name) {
-  document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  event.currentTarget.classList.add('active');
-}
-</script>
 {% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.agent-kpi{background:#fff;border:1px solid #E5E7EB;border-radius:14px;padding:18px 20px}
+.agent-kpi .kpi-label{font-size:11.5px;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.agent-kpi .kpi-value{font-size:2rem;font-weight:800;color:#0f1c35;font-family:'Montserrat',sans-serif}
+.agent-kpi .kpi-sub{font-size:12px;color:#0A5C45;font-weight:600;margin-top:4px}
+.section-title{font-size:15px;font-weight:700;color:#0f1c35;margin-bottom:14px}
+.card-box{background:#fff;border:1px solid #E5E7EB;border-radius:14px;padding:20px;margin-bottom:20px}
+.listing-row{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid #F3F4F6}
+.listing-row:last-child{border-bottom:none}
+.agent-thumb{width:72px;height:58px;border-radius:10px;background:linear-gradient(135deg,#a5b4fc,#7dd3fc);flex-shrink:0;overflow:hidden}
+.agent-thumb img{width:100%;height:100%;object-fit:cover}
+.listing-meta{flex:1;min-width:0}
+.listing-title{font-size:14px;font-weight:600;color:#0f1c35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.listing-stats{display:flex;gap:12px;font-size:12px;color:#6B7280;margin-top:5px}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.pill-green{background:#EAF5F0;color:#0A5C45}
+.pill-amber{background:#FEF6E8;color:#D97706}
+.pill-gray{background:#F3F4F6;color:#374151}
+.pill-danger{background:#FEF2F2;color:#DC2626}
+.inq-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #F3F4F6;font-size:13px}
+.inq-row:last-child{border-bottom:none}
+.inq-sender{font-weight:600;color:#0f1c35;min-width:100px}
+.inq-date{color:#9CA3AF;white-space:nowrap;font-size:12px}
+.action-btns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.btn-sm{padding:4px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-block}
+.btn-outline{background:transparent;border:1.5px solid #E5E7EB;color:#374151}
+.btn-primary-sm{background:#2A7EF2;color:#fff}
+</style>
+
+<div style="max-width:900px;margin:0 auto;padding:24px 16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 style="font-size:1.5rem;font-weight:800;color:#0f1c35;margin:0">Agent Dashboard</h1>
+      <p style="font-size:13px;color:#6B7280;margin-top:4px">Welcome back, {{ request.user.get_full_name|default:request.user.username }}</p>
+    </div>
+    <a href="{% url 'create_listing' %}" class="btn-sm btn-primary-sm" style="padding:8px 18px;font-size:13px;border-radius:10px">+ New Listing</a>
+  </div>
+
+  <div class="agent-grid">
+    <div class="agent-kpi">
+      <div class="kpi-label">Active Listings</div>
+      <div class="kpi-value">{{ active_count }}</div>
+      <div class="kpi-sub">Live on site</div>
+    </div>
+    <div class="agent-kpi">
+      <div class="kpi-label">Pending Review</div>
+      <div class="kpi-value" style="{% if pending_count %}color:#D97706{% endif %}">{{ pending_count }}</div>
+      <div class="kpi-sub">Awaiting approval</div>
+    </div>
+    <div class="agent-kpi">
+      <div class="kpi-label">Total Listings</div>
+      <div class="kpi-value">{{ my_listings.count }}</div>
+      <div class="kpi-sub">All time</div>
+    </div>
+    <div class="agent-kpi">
+      <div class="kpi-label">New Inquiries (7d)</div>
+      <div class="kpi-value">{{ new_inquiries_7 }}</div>
+      <div class="kpi-sub">This week</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+    <div class="card-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="section-title" style="margin:0">My Listings</div>
+        <a href="{% url 'profile' %}" style="font-size:12px;color:#2A7EF2;text-decoration:none;font-weight:600">View all →</a>
+      </div>
+      {% for l in my_listings|slice:":8" %}
+      <div class="listing-row">
+        <div class="agent-thumb">
+          {% with l.images.first as img %}{% if img %}<img src="{{ img.image.url }}" alt="">{% endif %}{% endwith %}
+        </div>
+        <div class="listing-meta">
+          <div class="listing-title">
+            <a href="{% url 'listing_detail' l.pk %}" style="color:inherit;text-decoration:none">{{ l.title|truncatechars:36 }}</a>
+          </div>
+          <div style="margin-top:5px">
+            {% if l.status == 'active' %}<span class="pill pill-green">Active</span>
+            {% elif l.status == 'pending' %}<span class="pill pill-amber">Pending</span>
+            {% elif l.status == 'draft' %}<span class="pill pill-gray">Draft</span>
+            {% elif l.status == 'flagged' %}<span class="pill pill-danger">Flagged</span>
+            {% endif %}
+          </div>
+          <div class="listing-stats">
+            <span>{{ l.inquiry_count }} inquir{{ l.inquiry_count|pluralize:"y,ies" }}</span>
+            <span>{{ l.save_count }} saved</span>
+          </div>
+          <div class="action-btns">
+            <a href="{% url 'edit_listing' l.pk %}" class="btn-sm btn-outline">Edit</a>
+            <a href="{% url 'listing_inquiries' l.pk %}" class="btn-sm btn-outline">Inquiries</a>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <p style="color:#9CA3AF;font-size:13px;text-align:center;padding:24px 0">No listings yet. <a href="{% url 'create_listing' %}" style="color:#2A7EF2">Create one →</a></p>
+      {% endfor %}
+    </div>
+
+    <div class="card-box">
+      <div class="section-title">Recent Inquiries</div>
+      {% for inq in recent_inquiries %}
+      <div class="inq-row">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;gap:8px">
+            <span class="inq-sender">{{ inq.name }}</span>
+            <span class="inq-date">{{ inq.created_at|date:"M d" }}</span>
+          </div>
+          <div style="color:#6B7280;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">re: {{ inq.listing.title|truncatechars:40 }}</div>
+          {% if inq.message %}<div style="color:#6B7280;font-size:12px;margin-top:3px">{{ inq.message|truncatechars:80 }}</div>{% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <p style="color:#9CA3AF;font-size:13px;text-align:center;padding:24px 0">No inquiries yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

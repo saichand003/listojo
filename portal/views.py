@@ -194,12 +194,3 @@ def flag_listing(request, pk):
     return redirect(request.POST.get('next', 'portal_listings'))
 
 
-@portal_login_required
-def agents_view(request):
-    agents = (
-        User.objects
-        .filter(is_staff=True, is_superuser=False)
-        .annotate(listing_count=Count('listings'))
-        .order_by('-date_joined')
-    )
-    return render(request, 'portal/agents.html', {'agents': agents})

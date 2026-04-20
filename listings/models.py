@@ -75,6 +75,7 @@ class Listing(models.Model):
     tags = models.CharField(max_length=1000, blank=True, default='',
                             help_text='Comma-separated tags, e.g. pet-friendly, parking, furnished')
     created_at = models.DateTimeField(auto_now_add=True)
+    view_count = models.PositiveIntegerField(default=0)
 
     INCOME_QUALIFIER_CATEGORIES = {'rentals', 'roommates'}
 
