@@ -56,3 +56,28 @@ Key routing rules:
 - Architecture review → invoke plan-eng-review
 - Save progress, checkpoint, resume → invoke checkpoint
 - Code quality, health check → invoke health
+
+## context-router <!-- context-router: setup -->
+
+Use context-router MCP tools for every coding task — it selects the minimum relevant context
+from the indexed codebase so you work with ranked, token-budgeted files instead of grepping.
+
+### When to use context-router FIRST
+- **Starting any task**: `get_context_pack(mode="implement", query="your task")`
+- **Debugging**: `get_debug_pack(query="error description")`
+- **Resuming work**: `get_context_pack(mode="handover")` + `search_memory(query="...")`
+- **Looking up decisions**: `get_decisions(query="...")`
+
+### Key MCP tools
+| Tool | Use when |
+|------|----------|
+| `get_context_pack` | Starting review / implement / handover task |
+| `get_debug_pack` | Debugging a failure |
+| `search_memory` | Finding past observations |
+| `get_decisions` | Looking up architectural decisions |
+| `save_observation` | Persisting task learnings after completion |
+
+### Workflow
+1. `get_context_pack` → ranked files for the task (token-budgeted starting point)
+2. Read selected items before touching code
+3. After task: `save_observation(summary="...", task_type="...", files_touched=[...])`
