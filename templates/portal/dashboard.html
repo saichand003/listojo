@@ -2,159 +2,392 @@
 {% block page_title %}Dashboard{% endblock %}
 {% block content %}
 
-<!-- KPI Row -->
-<div class="grid grid-4" style="margin-bottom:1.25rem;">
-  <div class="card kpi-card">
-    <div class="kpi-label">Total Users</div>
-    <div class="kpi-value">{{ total_users }}</div>
-    <div class="kpi-sub">+{{ new_users_7 }} this week</div>
+<style>
+/* ── KPI grid ─────────────────────────────────────────────────── */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.25rem; }
+.kpi-card { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:1.25rem 1.4rem; box-shadow:var(--shadow); display:flex; align-items:flex-start; gap:1rem; }
+.kpi-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.35rem; flex-shrink:0; }
+.kpi-body { flex:1; min-width:0; }
+.kpi-label { font-size:.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.2rem; }
+.kpi-value { font-family:'Montserrat',sans-serif; font-size:1.9rem; font-weight:800; color:var(--text); line-height:1.1; }
+.kpi-delta { font-size:.75rem; font-weight:600; margin-top:.25rem; }
+.kpi-delta.up   { color:#16a34a; }
+.kpi-delta.warn { color:#d97706; }
+.kpi-delta.danger { color:#dc2626; }
+.kpi-delta a { color:inherit; text-decoration:none; }
+
+/* ── Two-col layout ───────────────────────────────────────────── */
+.dash-row { display:grid; gap:1rem; margin-bottom:1rem; }
+.dash-row-2 { grid-template-columns:1fr 1fr; }
+.dash-row-3 { grid-template-columns:1.6fr 1fr; }
+
+/* ── Funnel ───────────────────────────────────────────────────── */
+.funnel-row { display:flex; align-items:center; gap:.85rem; padding:.65rem 0; border-bottom:1px solid var(--border); }
+.funnel-row:last-child { border-bottom:none; }
+.funnel-label { flex:0 0 210px; font-size:.85rem; color:var(--text); font-weight:500; }
+.funnel-track { flex:1; height:10px; background:var(--bg); border-radius:99px; overflow:hidden; }
+.funnel-fill  { height:100%; border-radius:99px; background:linear-gradient(90deg,#0f1c35,#2A7EF2); transition:width .4s ease; }
+.funnel-nums  { width:110px; text-align:right; font-size:.82rem; font-weight:700; color:var(--text); white-space:nowrap; }
+.funnel-pct   { color:var(--muted); font-weight:400; font-size:.75rem; }
+
+/* ── Category / intent bars ───────────────────────────────────── */
+.intent-row { display:flex; align-items:center; gap:.85rem; padding:.55rem 0; border-bottom:1px solid var(--border); }
+.intent-row:last-child { border-bottom:none; }
+.intent-label { flex:0 0 160px; font-size:.82rem; color:var(--text); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.intent-track { flex:1; height:10px; background:var(--bg); border-radius:99px; overflow:hidden; }
+.intent-fill  { height:100%; border-radius:99px; background:linear-gradient(90deg,#3DB549,#2A7EF2); }
+.intent-pct   { width:38px; text-align:right; font-size:.82rem; font-weight:700; color:var(--text); }
+
+/* ── Review table ─────────────────────────────────────────────── */
+.review-table table { width:100%; border-collapse:collapse; font-size:.875rem; }
+.review-table thead th { text-align:left; padding:.5rem .75rem; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); border-bottom:2px solid var(--border); }
+.review-table tbody td { padding:.7rem .75rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+.review-table tbody tr:last-child td { border-bottom:none; }
+.review-table tbody tr:hover td { background:#f8faff; }
+
+/* ── Top listers table ────────────────────────────────────────── */
+.lister-rank { font-size:.75rem; font-weight:800; color:var(--muted); width:24px; }
+
+/* ── Quality alerts ───────────────────────────────────────────── */
+.quality-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; }
+.quality-card { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:.9rem 1rem; display:flex; align-items:center; gap:.75rem; }
+.quality-icon { font-size:1.5rem; flex-shrink:0; }
+.quality-count { font-family:'Montserrat',sans-serif; font-size:1.5rem; font-weight:800; line-height:1; }
+.quality-label { font-size:.75rem; color:var(--muted); margin-top:.1rem; }
+.quality-warn  .quality-count { color:#d97706; }
+.quality-danger .quality-count { color:#dc2626; }
+
+/* ── Card header ──────────────────────────────────────────────── */
+.card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+.card-head h2 { font-family:'Montserrat',sans-serif; font-weight:700; font-size:.97rem; color:var(--text); margin:0; }
+.view-all { font-size:.78rem; font-weight:600; color:var(--primary); text-decoration:none; border:1px solid var(--border); padding:.25rem .7rem; border-radius:8px; }
+.view-all:hover { background:var(--bg); }
+
+/* ── Recent users ─────────────────────────────────────────────── */
+.user-row { display:flex; align-items:center; justify-content:space-between; padding:.55rem 0; border-bottom:1px solid var(--border); font-size:.84rem; }
+.user-row:last-child { border-bottom:none; }
+.user-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#a5b4fc,#7dd3fc); display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; color:#1e40af; flex-shrink:0; }
+.user-name { font-weight:600; color:var(--text); }
+.user-meta { font-size:.72rem; color:var(--muted); margin-top:1px; }
+</style>
+
+{# ── PAGE HEADER ────────────────────────────────────────────── #}
+<div style="margin-bottom:1.5rem;">
+  <h1 style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.6rem;color:var(--text);margin:0 0 .2rem;">Admin Dashboard</h1>
+  <p style="color:var(--muted);font-size:.82rem;margin:0;">Platform overview &middot; Listojo &middot; Irving, TX launch</p>
+</div>
+
+{# ── ROW 1: PRIMARY KPIs ─────────────────────────────────────── #}
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background:#EBF3FF;">🏠</div>
+    <div class="kpi-body">
+      <div class="kpi-label">Active Listings</div>
+      <div class="kpi-value">{{ active_listings }}</div>
+      <div class="kpi-delta up">+{{ new_listings_7 }} this week</div>
+    </div>
   </div>
-  <div class="card kpi-card">
-    <div class="kpi-label">Total Listings</div>
-    <div class="kpi-value">{{ total_listings }}</div>
-    <div class="kpi-sub">+{{ new_listings_7 }} this week</div>
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background:#F0FDF4;">👥</div>
+    <div class="kpi-body">
+      <div class="kpi-label">Registered Users</div>
+      <div class="kpi-value">{{ total_users }}</div>
+      <div class="kpi-delta up">+{{ new_users_7 }} this week</div>
+    </div>
   </div>
-  <div class="card kpi-card">
-    <div class="kpi-label">Pending Review</div>
-    <div class="kpi-value" style="color:var(--warning, #D97706);">{{ pending_count }}</div>
-    <div class="kpi-sub"><a href="{% url 'portal_listings' %}?status=pending" style="color:var(--primary);text-decoration:none;">Review now &rarr;</a></div>
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background:#FFFBEB;">🏡</div>
+    <div class="kpi-body">
+      <div class="kpi-label">Active Listers</div>
+      <div class="kpi-value">{{ active_listers }}</div>
+      <div class="kpi-delta up">Users with live listings</div>
+    </div>
   </div>
-  <div class="card kpi-card">
-    <div class="kpi-label">Flagged</div>
-    <div class="kpi-value" style="color:var(--danger, #DC2626);">{{ flagged_count }}</div>
-    <div class="kpi-sub"><a href="{% url 'portal_listings' %}?status=flagged" style="color:var(--primary);text-decoration:none;">View flagged &rarr;</a></div>
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background:#FFF1F2;">💬</div>
+    <div class="kpi-body">
+      <div class="kpi-label">Inquiries (7 days)</div>
+      <div class="kpi-value">{{ new_inquiries_7 }}</div>
+      <div class="kpi-delta up">{{ total_inquiries }} all time</div>
+    </div>
   </div>
 </div>
 
-<!-- Secondary KPI Row -->
-<div class="grid grid-4" style="margin-bottom:1.25rem;">
-  <div class="card kpi-card">
-    <div class="kpi-label">Chat Messages</div>
-    <div class="kpi-value">{{ total_messages }}</div>
-    <div class="kpi-sub" style="color:var(--primary);">Live chats</div>
+{# ── ROW 2: SECONDARY KPIs ───────────────────────────────────── #}
+<div class="kpi-grid" style="margin-bottom:1.25rem;">
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background:#FFF1F2;">⏳</div>
+    <div class="kpi-body">
+      <div class="kpi-label">Pending Review</div>
+      <div class="kpi-value" style="color:#d97706;">{{ pending_count }}</div>
+      <div class="kpi-delta warn"><a href="{% url 'portal_listings' %}?status=pending">Review now &rarr;</a></div>
+    </div>
   </div>
-  <div class="card kpi-card">
-    <div class="kpi-label">Inquiries</div>
-    <div class="kpi-value">{{ total_inquiries }}</div>
-    <div class="kpi-sub" style="color:var(--primary);">Via inquiry form</div>
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background:#FFF1F2;">🚩</div>
+    <div class="kpi-body">
+      <div class="kpi-label">Flagged</div>
+      <div class="kpi-value" style="color:#dc2626;">{{ flagged_count }}</div>
+      <div class="kpi-delta danger"><a href="{% url 'portal_listings' %}?status=flagged">Investigate &rarr;</a></div>
+    </div>
   </div>
-  <div class="card kpi-card">
-    <div class="kpi-label">Featured</div>
-    <div class="kpi-value">{{ featured }}</div>
-    <div class="kpi-sub">Boosted listings</div>
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background:#EBF3FF;">👁</div>
+    <div class="kpi-body">
+      <div class="kpi-label">Total Listing Views</div>
+      <div class="kpi-value">{{ total_views }}</div>
+      <div class="kpi-delta up">Across all listings</div>
+    </div>
   </div>
-  <div class="card kpi-card">
-    <div class="kpi-label">New Users (30d)</div>
-    <div class="kpi-value">{{ new_users_30 }}</div>
-    <div class="kpi-sub">+{{ new_users_7 }} this week</div>
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background:#F0FDF4;">⭐</div>
+    <div class="kpi-body">
+      <div class="kpi-label">Featured Listings</div>
+      <div class="kpi-value">{{ featured }}</div>
+      <div class="kpi-delta up">Boosted on search</div>
+    </div>
   </div>
 </div>
 
-<div class="grid grid-2" style="margin-bottom:1.25rem;">
+{# ── ROW 3: FUNNEL + SEARCH INTENT ──────────────────────────── #}
+<div class="dash-row dash-row-2" style="margin-bottom:1rem;">
 
-  <!-- Category breakdown -->
+  {# Conversion funnel #}
   <div class="card">
-    <div class="section-head">Listings by Category</div>
-    {% with max_count=category_data.0.count %}
-    {% for row in category_data %}
-    <div class="bar-row">
-      <div class="bar-label">{{ row.label }}</div>
-      <div class="bar-track">
-        <div class="bar-fill" style="width:{% if max_count %}{% widthratio row.count max_count 100 %}%{% else %}0%{% endif %}"></div>
+    <div class="card-head">
+      <h2>Conversion funnel</h2>
+      <span style="font-size:.75rem;color:var(--muted);">All time</span>
+    </div>
+    {% for step in funnel_steps %}
+    <div class="funnel-row">
+      <div class="funnel-label">{{ step.label }}</div>
+      <div class="funnel-track">
+        <div class="funnel-fill" style="width:{{ step.pct }}%"></div>
       </div>
-      <div class="bar-count">{{ row.count }}</div>
+      <div class="funnel-nums">
+        {{ step.count }}
+        <span class="funnel-pct">({{ step.pct }}%)</span>
+      </div>
     </div>
     {% empty %}
-    <p style="color:var(--muted);font-size:.85rem;">No listings yet.</p>
+    <p style="color:var(--muted);font-size:.85rem;">No data yet.</p>
     {% endfor %}
-    {% endwith %}
   </div>
 
-  <!-- Quick stats -->
+  {# Search intent #}
   <div class="card">
-    <div class="section-head">Highlights</div>
-    <table>
-      <tbody>
-        <tr><td style="color:var(--muted);">Featured listings</td><td><strong>{{ featured }}</strong></td></tr>
-        <tr><td style="color:var(--muted);">New users (30 days)</td><td><strong>{{ new_users_30 }}</strong></td></tr>
-        <tr><td style="color:var(--muted);">New users (7 days)</td><td><strong>{{ new_users_7 }}</strong></td></tr>
-        <tr><td style="color:var(--muted);">New listings (7 days)</td><td><strong>{{ new_listings_7 }}</strong></td></tr>
-      </tbody>
-    </table>
+    <div class="card-head">
+      <h2>Listing breakdown by type</h2>
+      <span style="font-size:.75rem;color:var(--muted);">Active only</span>
+    </div>
+    {% for row in category_data %}
+    <div class="intent-row">
+      <div class="intent-label">{{ row.label }}</div>
+      <div class="intent-track">
+        <div class="intent-fill" style="width:{{ row.pct }}%"></div>
+      </div>
+      <div class="intent-pct">{{ row.pct }}%</div>
+    </div>
+    {% empty %}
+    <p style="color:var(--muted);font-size:.85rem;">No active listings.</p>
+    {% endfor %}
+    {% if category_data %}
+    <div style="margin-top:.85rem;font-size:.75rem;color:var(--muted);">
+      Top category: <strong style="color:var(--text);">{{ category_data.0.label }}</strong> &middot; {{ category_data.0.count }} listings
+    </div>
+    {% endif %}
   </div>
+
 </div>
 
-<div class="grid grid-2">
-
-  <!-- Recent users -->
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;">
-      <div class="section-head" style="margin:0;">Recent Users</div>
-      <a href="{% url 'portal_users' %}" class="btn btn-ghost btn-sm">View all</a>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Username</th><th>Joined</th><th>Status</th></tr></thead>
-        <tbody>
-        {% for u in recent_users %}
-        <tr>
-          <td><a href="{% url 'portal_user_detail' u.pk %}" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ u.username }}</a></td>
-          <td style="color:var(--muted);">{{ u.date_joined|date:"M d, Y" }}</td>
-          <td>{% if u.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Inactive</span>{% endif %}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
+{# ── ROW 4: REVIEW QUEUE ─────────────────────────────────────── #}
+<div class="card" style="margin-bottom:1rem;">
+  <div class="card-head">
+    <h2>Listings requiring review</h2>
+    <a href="{% url 'portal_listings' %}?status=pending" class="view-all">View all &rarr;</a>
   </div>
-
-  <!-- Recent listings requiring review -->
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;">
-      <div class="section-head" style="margin:0;">Listings Requiring Review</div>
-      <a href="{% url 'portal_listings' %}" class="btn btn-ghost btn-sm">View all</a>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Title</th><th>Owner</th><th>Price</th><th>Status</th><th>Action</th></tr></thead>
-        <tbody>
-        {% for l in recent_listings %}
+  {% if review_listings %}
+  <div class="review-table">
+    <table>
+      <thead>
         <tr>
-          <td><a href="{% url 'listing_detail' l.pk %}" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ l.title|truncatechars:28 }}</a></td>
-          <td style="color:var(--muted);">{{ l.owner.username }}</td>
-          <td>{% if l.price %}${{ l.price }}{% else %}—{% endif %}</td>
+          <th>Listing</th>
+          <th>Lister</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th>Posted</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in review_listings %}
+        <tr>
           <td>
-            {% if l.status == 'active' %}<span class="badge badge-green">Active</span>
-            {% elif l.status == 'pending' %}<span class="badge badge-orange">Pending</span>
-            {% elif l.status == 'flagged' %}<span class="badge badge-red">Flagged</span>
-            {% endif %}
+            <a href="{% url 'listing_detail' l.pk %}" target="_blank"
+               style="color:var(--text);font-weight:600;text-decoration:none;font-size:.85rem;">
+              {{ l.title|truncatechars:32 }}
+            </a>
+            {% if l.city %}<div style="font-size:.72rem;color:var(--muted);">{{ l.city }}</div>{% endif %}
+          </td>
+          <td style="font-size:.84rem;color:var(--muted);">{{ l.owner.username }}</td>
+          <td style="font-size:.78rem;color:var(--muted);">{{ l.get_category_display }}</td>
+          <td style="font-size:.84rem;font-weight:600;">
+            {% if l.price %}${{ l.price }}{% if l.price_unit %}/{{ l.price_unit }}{% endif %}{% else %}—{% endif %}
           </td>
           <td>
             {% if l.status == 'pending' %}
-            <form method="post" action="{% url 'portal_approve_listing' l.pk %}" style="display:inline">
-              {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_dashboard' %}">
-              <button type="submit" class="btn btn-primary btn-sm">Approve</button>
-            </form>
+              <span class="badge badge-orange">Pending</span>
             {% elif l.status == 'flagged' %}
-            <form method="post" action="{% url 'portal_approve_listing' l.pk %}" style="display:inline">
-              {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_dashboard' %}">
-              <button type="submit" class="btn btn-ghost btn-sm">Restore</button>
-            </form>
-            {% else %}
-            <form method="post" action="{% url 'portal_flag_listing' l.pk %}" style="display:inline">
-              {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_dashboard' %}">
-              <button type="submit" class="btn btn-ghost btn-sm">Flag</button>
-            </form>
+              <span class="badge badge-red">Flagged</span>
+            {% elif l.status == 'active' %}
+              <span class="badge badge-green">Active</span>
             {% endif %}
           </td>
+          <td style="font-size:.75rem;color:var(--muted);white-space:nowrap;">{{ l.created_at|timesince }} ago</td>
+          <td>
+            <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+              {% if l.status == 'pending' %}
+                <form method="post" action="{% url 'portal_approve_listing' l.pk %}" style="display:inline">
+                  {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_dashboard' %}">
+                  <button type="submit" class="btn btn-primary btn-sm">Approve</button>
+                </form>
+                <form method="post" action="{% url 'portal_reject_listing' l.pk %}" style="display:inline">
+                  {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_dashboard' %}">
+                  <button type="submit" class="btn btn-ghost btn-sm">Reject</button>
+                </form>
+              {% elif l.status == 'flagged' %}
+                <form method="post" action="{% url 'portal_approve_listing' l.pk %}" style="display:inline">
+                  {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_dashboard' %}">
+                  <button type="submit" class="btn btn-ghost btn-sm">Restore</button>
+                </form>
+                <form method="post" action="{% url 'portal_delete_listing' l.pk %}" style="display:inline"
+                      onsubmit="return confirm('Delete this listing permanently?')">
+                  {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_dashboard' %}">
+                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+              {% else %}
+                <form method="post" action="{% url 'portal_flag_listing' l.pk %}" style="display:inline">
+                  {% csrf_token %}<input type="hidden" name="next" value="{% url 'portal_dashboard' %}">
+                  <button type="submit" class="btn btn-ghost btn-sm">Flag</button>
+                </form>
+              {% endif %}
+            </div>
+          </td>
         </tr>
-        {% empty %}
-        <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.5rem;">All clear — no listings need review.</td></tr>
         {% endfor %}
-        </tbody>
-      </table>
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:2.5rem 1rem;color:var(--muted);">
+    <div style="font-size:2rem;margin-bottom:.5rem;">✅</div>
+    <div style="font-weight:600;">All clear — no listings need review.</div>
+  </div>
+  {% endif %}
+</div>
+
+{# ── ROW 5: TOP LISTERS + RECENT USERS ──────────────────────── #}
+<div class="dash-row dash-row-2" style="margin-bottom:1rem;">
+
+  {# Top listers #}
+  <div class="card">
+    <div class="card-head">
+      <h2>Top listers by views</h2>
+      <a href="{% url 'portal_users' %}" class="view-all">View all &rarr;</a>
     </div>
+    {% if top_listers %}
+    <table style="width:100%;border-collapse:collapse;font-size:.84rem;">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:.4rem .5rem;font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.07em;border-bottom:2px solid var(--border);">#</th>
+          <th style="text-align:left;padding:.4rem .5rem;font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.07em;border-bottom:2px solid var(--border);">Lister</th>
+          <th style="text-align:right;padding:.4rem .5rem;font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.07em;border-bottom:2px solid var(--border);">Listings</th>
+          <th style="text-align:right;padding:.4rem .5rem;font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.07em;border-bottom:2px solid var(--border);">Views</th>
+          <th style="text-align:right;padding:.4rem .5rem;font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.07em;border-bottom:2px solid var(--border);">Inquiries</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in top_listers %}
+        <tr>
+          <td style="padding:.6rem .5rem;border-bottom:1px solid var(--border);color:var(--muted);font-weight:800;font-size:.8rem;">{{ forloop.counter }}</td>
+          <td style="padding:.6rem .5rem;border-bottom:1px solid var(--border);">
+            <a href="{% url 'portal_user_detail' u.pk %}" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ u.username }}</a>
+          </td>
+          <td style="padding:.6rem .5rem;border-bottom:1px solid var(--border);text-align:right;color:var(--muted);">{{ u.lc }}</td>
+          <td style="padding:.6rem .5rem;border-bottom:1px solid var(--border);text-align:right;font-weight:700;">{{ u.lv|default:0 }}</td>
+          <td style="padding:.6rem .5rem;border-bottom:1px solid var(--border);text-align:right;color:var(--muted);">{{ u.iq }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--muted);font-size:.85rem;text-align:center;padding:1.5rem;">No listers yet.</p>
+    {% endif %}
+  </div>
+
+  {# Recent user signups #}
+  <div class="card">
+    <div class="card-head">
+      <h2>Recent signups</h2>
+      <a href="{% url 'portal_users' %}" class="view-all">View all &rarr;</a>
+    </div>
+    {% for u in recent_users %}
+    <div class="user-row">
+      <div style="display:flex;align-items:center;gap:.6rem;">
+        <div class="user-avatar">{{ u.username|first|upper }}</div>
+        <div>
+          <div class="user-name">
+            <a href="{% url 'portal_user_detail' u.pk %}" style="color:var(--text);text-decoration:none;">{{ u.username }}</a>
+          </div>
+          <div class="user-meta">{{ u.date_joined|date:"M d, Y" }}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        {% if u.is_active %}
+          <span class="badge badge-green">Active</span>
+        {% else %}
+          <span class="badge badge-red">Inactive</span>
+        {% endif %}
+        {% if u.is_staff %}
+          <span class="badge badge-blue">Staff</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
   </div>
 
 </div>
+
+{# ── ROW 6: QUALITY ALERTS ───────────────────────────────────── #}
+<div class="card">
+  <div class="card-head">
+    <h2>Listing quality alerts</h2>
+    <a href="{% url 'portal_listings' %}" class="view-all">Fix now &rarr;</a>
+  </div>
+  <div class="quality-grid">
+    <div class="quality-card {% if no_photos > 0 %}quality-warn{% endif %}">
+      <div class="quality-icon">📷</div>
+      <div>
+        <div class="quality-count">{{ no_photos }}</div>
+        <div class="quality-label">Active listings with no photos</div>
+      </div>
+    </div>
+    <div class="quality-card {% if no_tags > 0 %}quality-warn{% endif %}">
+      <div class="quality-icon">🏷️</div>
+      <div>
+        <div class="quality-count">{{ no_tags }}</div>
+        <div class="quality-label">Active listings with no tags</div>
+      </div>
+    </div>
+    <div class="quality-card {% if stale > 0 %}quality-danger{% endif %}">
+      <div class="quality-icon">⏰</div>
+      <div>
+        <div class="quality-count">{{ stale }}</div>
+        <div class="quality-label">Stale listings (&gt;14 days, &lt;3 views)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

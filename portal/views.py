@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -47,60 +47,125 @@ def dashboard(request):
     last_7  = now - timedelta(days=7)
     last_30 = now - timedelta(days=30)
 
+    # ── Users ──────────────────────────────────────────────────
     total_users     = User.objects.count()
     new_users_7     = User.objects.filter(date_joined__gte=last_7).count()
     new_users_30    = User.objects.filter(date_joined__gte=last_30).count()
+    recent_users    = User.objects.order_by('-date_joined')[:6]
 
+    # ── Listings ───────────────────────────────────────────────
     total_listings  = Listing.objects.count()
-    featured        = Listing.objects.filter(featured=True).count()
+    active_listings = Listing.objects.filter(status='active').count()
     new_listings_7  = Listing.objects.filter(created_at__gte=last_7).count()
     pending_count   = Listing.objects.filter(status='pending').count()
     flagged_count   = Listing.objects.filter(status='flagged').count()
+    featured        = Listing.objects.filter(featured=True).count()
+    total_views     = Listing.objects.aggregate(t=Sum('view_count'))['t'] or 0
 
-    total_messages  = ChatMessage.objects.count()
-    total_inquiries = ListingInquiry.objects.count()
+    # ── Engagement ─────────────────────────────────────────────
+    total_messages   = ChatMessage.objects.count()
+    total_inquiries  = ListingInquiry.objects.count()
+    new_inquiries_7  = ListingInquiry.objects.filter(created_at__gte=last_7).count()
 
+    # ── Active listers (users with at least 1 active listing) ──
+    active_listers = (
+        User.objects.filter(listings__status='active')
+        .distinct().count()
+    )
+
+    # ── Conversion funnel (views → inquiries → messages) ───────
+    funnel_steps = [
+        {'label': 'Listing views',              'count': total_views},
+        {'label': 'Inquiries sent',             'count': total_inquiries},
+        {'label': 'Chat conversations started', 'count': ChatMessage.objects.values('listing').distinct().count()},
+    ]
+    funnel_max = funnel_steps[0]['count'] or 1
+    for s in funnel_steps:
+        s['pct'] = round(s['count'] / funnel_max * 100) if funnel_max else 0
+
+    # ── Search intent — listing count by category ───────────────
     cat_map = dict(Listing.CATEGORY_CHOICES)
-    by_category = (
-        Listing.objects.values('category')
+    by_category = list(
+        Listing.objects.filter(status='active')
+        .values('category')
         .annotate(total=Count('id'))
         .order_by('-total')
     )
+    total_active = active_listings or 1
     category_data = [
-        {'label': cat_map.get(r['category'], r['category']), 'count': r['total']}
+        {
+            'label': cat_map.get(r['category'], r['category']),
+            'count': r['total'],
+            'pct':   round(r['total'] / total_active * 100),
+        }
         for r in by_category
     ]
 
-    listings_trend = list(
-        Listing.objects.filter(created_at__gte=now - timedelta(days=14))
-        .annotate(day=TruncDate('created_at'))
-        .values('day')
-        .annotate(count=Count('id'))
-        .order_by('day')
+    # ── Top listers ─────────────────────────────────────────────
+    top_listers = list(
+        User.objects
+        .annotate(
+            lv=Sum('listings__view_count'),
+            lc=Count('listings', filter=Q(listings__status='active'), distinct=True),
+            iq=Count('listings__inquiries', distinct=True),
+        )
+        .filter(lc__gt=0)
+        .order_by('-lv')[:5]
     )
 
-    recent_listings = (
+    # ── Listings needing review (pending first, then flagged) ───
+    review_listings = (
         Listing.objects.select_related('owner')
-        .filter(Q(status='pending') | Q(status='flagged') | Q(status='active'))
-        .order_by('-created_at')[:8]
+        .filter(Q(status='pending') | Q(status='flagged'))
+        .order_by('-created_at')[:10]
     )
-    recent_users    = User.objects.order_by('-date_joined')[:8]
+
+    # ── Quality issues ──────────────────────────────────────────
+    no_photos   = (
+        Listing.objects.filter(status='active')
+        .annotate(img_count=Count('images'))
+        .filter(img_count=0).count()
+    )
+    no_tags     = Listing.objects.filter(status='active', tags='').count()
+    stale       = (
+        Listing.objects.filter(
+            status='active',
+            created_at__lte=now - timedelta(days=14),
+            view_count__lt=3,
+        ).count()
+    )
 
     return render(request, 'portal/dashboard.html', {
-        'total_users':    total_users,
-        'new_users_7':    new_users_7,
-        'new_users_30':   new_users_30,
-        'total_listings': total_listings,
-        'featured':       featured,
-        'new_listings_7': new_listings_7,
-        'pending_count':  pending_count,
-        'flagged_count':  flagged_count,
-        'total_messages': total_messages,
-        'total_inquiries':total_inquiries,
-        'category_data':  category_data,
-        'listings_trend': listings_trend,
-        'recent_listings':recent_listings,
-        'recent_users':   recent_users,
+        # Users
+        'total_users':      total_users,
+        'new_users_7':      new_users_7,
+        'new_users_30':     new_users_30,
+        'recent_users':     recent_users,
+        # Listings
+        'total_listings':   total_listings,
+        'active_listings':  active_listings,
+        'new_listings_7':   new_listings_7,
+        'pending_count':    pending_count,
+        'flagged_count':    flagged_count,
+        'featured':         featured,
+        'total_views':      total_views,
+        # Engagement
+        'total_messages':   total_messages,
+        'total_inquiries':  total_inquiries,
+        'new_inquiries_7':  new_inquiries_7,
+        'active_listers':   active_listers,
+        # Funnel
+        'funnel_steps':     funnel_steps,
+        # Categories
+        'category_data':    category_data,
+        # Top listers
+        'top_listers':      top_listers,
+        # Review queue
+        'review_listings':  review_listings,
+        # Quality
+        'no_photos':        no_photos,
+        'no_tags':          no_tags,
+        'stale':            stale,
     })
 
 
