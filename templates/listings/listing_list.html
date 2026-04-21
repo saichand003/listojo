@@ -2,156 +2,35 @@
 {% load listing_extras %}
 {% block content %}
 
-<section class="card hero">
+<section class="hero">
+    {# Decorative accent circle #}
+    <div style="position:absolute;top:30px;right:60px;width:100px;height:100px;border-radius:50%;background:rgba(98,194,255,.12);pointer-events:none;z-index:0;"></div>
 
-    <div class="hero-eyebrow">Rent smarter · Buy confidently</div>
-    <h1 class="hero-headline">Find a rental or property that actually fits your life.</h1>
-    <p class="hero-sub">Tell us what you need. We rank every listing by how well it matches you — and explain exactly why.</p>
-
-    {# ── Wizard — always visible, step 1 shown by default ── #}
-    <div class="fmm-wizard" id="fmm-wizard">
-        <form method="get" id="fmm-form">
-            <input type="hidden" name="fmm" value="1">
-
-            {# Step 1 — Rentals or Properties #}
-            <div class="fmm-step" data-step="1">
-                <p class="fmm-wizard-q">Are you looking to rent or buy?</p>
-                <div class="fmm-cat-grid fmm-cat-grid-2">
-                    <button type="button" class="fmm-cat-card" data-val="rentals">
-                        <span class="fmm-cat-icon">🔑</span>
-                        <span class="fmm-cat-label">Rent a Place</span>
-                        <span class="fmm-cat-sublabel">Rooms, apartments, houses &amp; more</span>
-                    </button>
-                    <button type="button" class="fmm-cat-card" data-val="properties">
-                        <span class="fmm-cat-icon">🏠</span>
-                        <span class="fmm-cat-label">Buy a Property</span>
-                        <span class="fmm-cat-sublabel">Houses, land, ranches &amp; more</span>
-                    </button>
-                </div>
-                <input type="hidden" name="category" id="fmm-category">
-            </div>
-
-            {# Step 2 — Room vs whole place (rentals only; properties skips here) #}
-            <div class="fmm-step" data-step="2" hidden>
-                <p class="fmm-wizard-q">Are you looking for a private room or the whole place?</p>
-                <div class="fmm-choice-grid">
-                    <button type="button" class="fmm-choice-card" data-accom="room">
-                        <span class="fmm-choice-icon">🛏️</span>
-                        <span class="fmm-choice-title">Just a room</span>
-                        <span class="fmm-choice-desc">Private room in a shared house or apartment</span>
-                    </button>
-                    <button type="button" class="fmm-choice-card" data-accom="whole">
-                        <span class="fmm-choice-icon">🏠</span>
-                        <span class="fmm-choice-title">Whole place</span>
-                        <span class="fmm-choice-desc">The entire property — no sharing</span>
-                    </button>
-                </div>
-                <input type="hidden" name="accommodation_type" id="fmm-accom">
-                <button type="button" class="fmm-skip-link" data-next="3">Skip — show all →</button>
-            </div>
-
-            {# Step 3 — Property type (different options per category) #}
-            <div class="fmm-step" data-step="3" hidden>
-                <p class="fmm-wizard-q" id="fmm-proptype-q">What type of property?</p>
-
-                {# Rental property types #}
-                <div class="fmm-prop-grid" id="fmm-rental-types">
-                    <button type="button" class="fmm-prop-card" data-prop="apartment"><span>🏢</span> Apartment</button>
-                    <button type="button" class="fmm-prop-card" data-prop="house"><span>🏠</span> House</button>
-                    <button type="button" class="fmm-prop-card" data-prop="studio"><span>🚪</span> Studio</button>
-                    <button type="button" class="fmm-prop-card" data-prop="condo"><span>🏙️</span> Condo</button>
-                    <button type="button" class="fmm-prop-card" data-prop="townhouse"><span>🏘️</span> Townhouse</button>
-                    <button type="button" class="fmm-prop-card" data-prop="basement"><span>⬇️</span> Basement Suite</button>
-                    <button type="button" class="fmm-prop-card" data-prop="loft"><span>🪟</span> Loft</button>
-                    <button type="button" class="fmm-prop-card fmm-prop-any" data-prop="">Any type</button>
-                </div>
-
-                {# Buy / Properties types #}
-                <div class="fmm-prop-grid" id="fmm-buy-types" hidden>
-                    <button type="button" class="fmm-prop-card" data-prop="house"><span>🏠</span> House</button>
-                    <button type="button" class="fmm-prop-card" data-prop="apartment"><span>🏢</span> Apartment</button>
-                    <button type="button" class="fmm-prop-card" data-prop="townhouse"><span>🏘️</span> Townhouse</button>
-                    <button type="button" class="fmm-prop-card" data-prop="single_family"><span>🏡</span> Single-Family Home</button>
-                    <button type="button" class="fmm-prop-card" data-prop="ranch_house"><span>🏚️</span> Ranch House</button>
-                    <button type="button" class="fmm-prop-card" data-prop="condo"><span>🏙️</span> Condo</button>
-                    <button type="button" class="fmm-prop-card" data-prop="land"><span>🌿</span> Land</button>
-                    <button type="button" class="fmm-prop-card" data-prop="ranch"><span>🐄</span> Ranch</button>
-                    <button type="button" class="fmm-prop-card fmm-prop-any" data-prop="">Any type</button>
-                </div>
-
-                <input type="hidden" name="property_type" id="fmm-proptype">
-                <button type="button" class="fmm-skip-link" data-next="4">Skip — show all types →</button>
-            </div>
-
-            {# Step 4 — City #}
-            <div class="fmm-step" data-step="4" hidden>
-                <p class="fmm-wizard-q">Which city?</p>
-                <div class="city-ac-wrap" id="fmm-city-wrap">
-                    <input type="text" name="city" id="fmm-city" placeholder="e.g. Dallas, Irving, Plano…" class="fmm-input" autocomplete="new-password">
-                    <ul class="city-ac-dropdown" id="fmm-city-dropdown" hidden></ul>
-                </div>
-                <button type="button" class="fmm-next" data-next="5">Next →</button>
-            </div>
-
-            {# Step 5 — Budget #}
-            <div class="fmm-step" data-step="5" hidden>
-                <p class="fmm-wizard-q">What's your max monthly budget?</p>
-                <div class="fmm-budget-row">
-                    <span class="fmm-budget-symbol">$</span>
-                    <input type="number" name="max_price" id="fmm-budget" placeholder="e.g. 1800" class="fmm-input" min="0">
-                </div>
-                <button type="button" class="fmm-next" data-next="6">Next →</button>
-            </div>
-
-            {# Step 6 — Must-haves #}
-            <div class="fmm-step" data-step="6" hidden>
-                <p class="fmm-wizard-q">Any must-haves? <span style="font-size:.82rem;font-weight:400;color:var(--muted);">Pick any that apply</span></p>
-                <div class="fmm-tags-wrap">
-                    {% for qt in "pet-friendly,parking,furnished,washer/dryer,gym,pool,utilities included,no deposit,near transit"|split_csv %}
-                    <button type="button" class="fmm-tag" data-tag="{{ qt }}">{{ qt }}</button>
-                    {% endfor %}
-                </div>
-                <input type="hidden" name="tags" id="fmm-tags">
-                <button type="button" class="fmm-next" data-next="7">Next →</button>
-            </div>
-
-            {# Step 7 — Availability #}
-            <div class="fmm-step" data-step="7" hidden>
-                <p class="fmm-wizard-q">When do you need it by?</p>
-                <input type="date" name="available_by" id="fmm-avail" class="fmm-input">
-                <p class="muted" style="font-size:.78rem;margin-top:.3rem;">Leave blank to see all available listings</p>
-                <button type="submit" class="fmm-submit">✦ Show My Matches</button>
-            </div>
-        </form>
-
-        <div class="fmm-progress" id="fmm-progress">
-            <span class="fmm-prog-step active" data-step="1"><span class="fmm-prog-num">1</span><span class="fmm-prog-lbl">Rent/Buy</span></span>
-            <span class="fmm-prog-line"></span>
-            <span class="fmm-prog-step" data-step="2" data-optional="1"><span class="fmm-prog-num">2</span><span class="fmm-prog-lbl">Room?</span></span>
-            <span class="fmm-prog-line"></span>
-            <span class="fmm-prog-step" data-step="3" data-optional="1"><span class="fmm-prog-num">3</span><span class="fmm-prog-lbl">Type</span></span>
-            <span class="fmm-prog-line"></span>
-            <span class="fmm-prog-step" data-step="4"><span class="fmm-prog-num">4</span><span class="fmm-prog-lbl">City</span></span>
-            <span class="fmm-prog-line"></span>
-            <span class="fmm-prog-step" data-step="5"><span class="fmm-prog-num">5</span><span class="fmm-prog-lbl">Budget</span></span>
-            <span class="fmm-prog-line"></span>
-            <span class="fmm-prog-step" data-step="6"><span class="fmm-prog-num">6</span><span class="fmm-prog-lbl">Must-haves</span></span>
-            <span class="fmm-prog-line"></span>
-            <span class="fmm-prog-step" data-step="7"><span class="fmm-prog-num">7</span><span class="fmm-prog-lbl">When</span></span>
+    <div style="position:relative;z-index:1;max-width:620px;">
+        <div class="hero-eyebrow">
+            <span class="hero-eyebrow-star">✦</span>
+            Built for South Asian communities &amp; beyond
         </div>
-    </div>
+        <h1 class="hero-headline">Find the right home,<br>not just a listing.</h1>
+        <p class="hero-sub">Listojo understands what matters — budget, commute, neighborhood, lifestyle — and shows you exactly why each result fits.</p>
 
-    <div class="hero-stats-row">
-        <div class="hero-stat"><span class="hero-stat-num">{{ total_listings }}</span><span class="hero-stat-lbl">Active listings</span></div>
-        <div class="hero-stat"><span class="hero-stat-num">{{ featured_count }}</span><span class="hero-stat-lbl">Featured</span></div>
-        <div class="hero-stat"><span class="hero-stat-num">{{ listings|length }}</span><span class="hero-stat-lbl">Results shown</span></div>
-    </div>
+        <div class="hero-ctas">
+            <a href="{% url 'guided_search' %}?mode={% if filters.category == 'properties' %}buy{% else %}rent{% endif %}" class="fmm-cta-btn">Start guided search →</a>
+            <a href="#listings-grid" class="hero-ghost-btn">Browse all listings</a>
+        </div>
 
+    </div>
+</section>
+
+{# ── Search card — separate from hero ── #}
+<div class="search-card">
     <form method="get" class="filters" id="search-form">
         <input type="text" id="tag-search-input" placeholder="🔍  Search… e.g. pet-friendly, 2BHK, parking" autocomplete="off">
         <input type="hidden" name="q" id="tag-search-hidden" value="{{ filters.q }}">
+        <input type="hidden" name="min_price" id="filter-min-price" value="{{ filters.min_price }}">
+        <input type="hidden" name="max_price" id="filter-max-price" value="{{ filters.max_price }}">
         <select name="category">
-            <option value="">Rentals &amp; Properties</option>
+            <option value="">All Types</option>
             {% for key, label in wizard_categories %}
                 <option value="{{ key }}" {% if filters.category == key %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
@@ -160,8 +39,6 @@
             <input type="text" name="city" id="filter-city" placeholder="📍  City" value="{{ filters.city }}" autocomplete="new-password">
             <ul class="city-ac-dropdown" id="filter-city-dropdown" hidden></ul>
         </div>
-        <input type="number" name="min_price" placeholder="$ Min" value="{{ filters.min_price }}" min="0" style="width:90px;">
-        <input type="number" name="max_price" placeholder="$ Max" value="{{ filters.max_price }}" min="0" style="width:90px;">
         <button type="submit">Search</button>
     </form>
     {% if filters.q %}
@@ -174,62 +51,43 @@
     <div id="search-tags-display" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem;"></div>
     {% endif %}
 
-    {# ── Amenity filter chips ── #}
+    {# ── Amenity filter chips — context-aware by tab ── #}
     <div class="quality-chips-row" id="quality-chips-row">
         <span class="trending-label">POPULAR</span>
-        {% for qt in "pet-friendly,parking,furnished,washer/dryer,gym,pool,balcony,utilities included,no deposit,near transit"|split_csv %}
-        <button type="button"
-            class="quality-chip {% if qt in active_quality_tags %}quality-chip-active{% endif %}"
-            data-tag="{{ qt }}">{{ qt }}</button>
-        {% endfor %}
-    </div>
-    <input type="hidden" name="tags" id="quality-tags-hidden" value="{{ filters.tags }}">
-</section>
-
-<div class="chips" style="margin-bottom:1.25rem;">
-    <a class="chip {% if not filters.category %}chip-active{% endif %}" href="?">All</a>
-    {% for key, label in wizard_categories %}
-        <a class="chip cat-chip-{{ key }} {% if filters.category == key %}chip-active{% endif %}" href="?category={{ key }}">
-            <span class="cat-dot cat-dot-{{ key }}"></span>{{ label }}
-            {% with cnt=category_counts|dict_get:key %}
-                {% if cnt %}<span class="chip-count">{{ cnt }}</span>{% endif %}
-            {% endwith %}
-        </a>
-    {% endfor %}
-</div>
-
-{% if filters.tag %}
-<div style="margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
-    <span class="muted" style="font-size:.85rem;">Filtering by tag:</span>
-    <span class="tag-chip tag-chip-active">{{ filters.tag }} <a href="?" style="color:inherit;margin-left:.3rem;text-decoration:none;">✕</a></span>
-</div>
-{% endif %}
-
-<div class="listings-header">
-    <div>
-        {% if fmm_mode %}
-        <h2 class="listings-header-title">{{ listings|length }} match{{ listings|length|pluralize:"es" }} for you</h2>
-        <p class="listings-header-sub">Ranked by how well each listing fits your stated preferences.</p>
-        {% elif filters.category %}
-        <h2 class="listings-header-title">{{ filters.category|title }} listings</h2>
-        <p class="listings-header-sub">Browsing {{ filters.category|title|lower }} — sorted by {{ filters.sort|default:"latest" }}.</p>
+        {% if filters.category == 'properties' %}
+            {% for qt in "garage,backyard,pool,new build,HOA,corner lot,no HOA,fireplace,renovated,open floor plan,golf community,schools"|split_csv %}
+            <button type="button"
+                class="quality-chip {% if qt in active_quality_tags %}quality-chip-active{% endif %}"
+                data-tag="{{ qt }}">{{ qt }}</button>
+            {% endfor %}
         {% else %}
-        <h2 class="listings-header-title">All listings</h2>
-        <p class="listings-header-sub">Fresh, trusted listings from real people near you.</p>
+            {% for qt in "pet-friendly,parking,furnished,washer/dryer,gym,pool,balcony,utilities included,no deposit,near transit"|split_csv %}
+            <button type="button"
+                class="quality-chip {% if qt in active_quality_tags %}quality-chip-active{% endif %}"
+                data-tag="{{ qt }}">{{ qt }}</button>
+            {% endfor %}
         {% endif %}
     </div>
+    <input type="hidden" name="tags" id="quality-tags-hidden" value="{{ filters.tags }}">
+</div>
+
+{# ── Sub-tab bar + sort ── #}
+<div class="sub-tab-bar">
+    <div class="sub-tabs">
+        <a href="?" class="sub-tab {% if not fmm_mode %}sub-tab-active{% endif %}">
+            {% if filters.category == 'properties' %}Trending Properties{% else %}Trending Rentals{% endif %}
+        </a>
+        <a href="{% url 'guided_search' %}?mode={% if filters.category == 'properties' %}buy{% else %}rent{% endif %}" class="sub-tab">Guided Search</a>
+    </div>
     {% if fmm_mode %}
-    <a href="?" class="button secondary" style="font-size:.85rem;padding:.45rem 1rem;white-space:nowrap;flex-shrink:0;">✕ Clear matches</a>
+    <a href="?" class="button secondary" style="font-size:.82rem;padding:.38rem .9rem;white-space:nowrap;flex-shrink:0;">✕ Clear matches</a>
     {% else %}
-    <form method="get" id="sort-form" style="display:flex;align-items:center;gap:.5rem;">
+    <form method="get" id="sort-form" style="display:flex;align-items:center;">
         <input type="hidden" name="q" value="{{ filters.q }}">
         <input type="hidden" name="category" value="{{ filters.category }}">
         <input type="hidden" name="city" value="{{ filters.city }}">
         <input type="hidden" name="tag" value="{{ filters.tag }}">
-        <input type="hidden" name="min_price" value="{{ filters.min_price }}">
-        <input type="hidden" name="max_price" value="{{ filters.max_price }}">
         <input type="hidden" name="tags" value="{{ filters.tags }}">
-        <input type="hidden" name="available_by" value="{{ filters.available_by }}">
         <select name="sort" class="sort-select" id="sort-select">
             {% if filters.q %}<option value="best_match" {% if filters.sort == 'best_match' %}selected{% endif %}>✦ Best match</option>{% endif %}
             <option value="latest"     {% if filters.sort == 'latest'     %}selected{% endif %}>Latest first</option>
@@ -239,6 +97,30 @@
     </form>
     {% endif %}
 </div>
+
+{# ── Section heading ── #}
+<div style="margin-bottom:1rem;">
+    {% if fmm_mode %}
+    <h2 class="listings-header-title">{{ listings|length }} match{{ listings|length|pluralize:"es" }} for you</h2>
+    <p class="listings-header-sub">Ranked by how well each listing fits your stated preferences.</p>
+    {% elif filters.category == 'properties' %}
+    <h2 class="listings-header-title">Trending Properties for Sale</h2>
+    <p class="listings-header-sub">Trusted DFW listings from real sellers.</p>
+    {% elif filters.category %}
+    <h2 class="listings-header-title">Trending {{ filters.category|title }}</h2>
+    <p class="listings-header-sub">Fresh, trusted listings from real people near you.</p>
+    {% else %}
+    <h2 class="listings-header-title">Trending Rentals</h2>
+    <p class="listings-header-sub">Fresh, trusted listings from real people near you.</p>
+    {% endif %}
+</div>
+
+{% if filters.tag %}
+<div style="margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
+    <span class="muted" style="font-size:.85rem;">Filtering by tag:</span>
+    <span class="tag-chip tag-chip-active">{{ filters.tag }} <a href="?" style="color:inherit;margin-left:.3rem;text-decoration:none;">✕</a></span>
+</div>
+{% endif %}
 
 {% if fmm_mode and fmm_inputs %}
 <div class="fmm-active-banner">
@@ -311,25 +193,40 @@
 <div class="trust-strip">
     <div class="trust-item">
         <div class="trust-icon" style="background:rgba(42,126,242,.15);">⚡</div>
-        <div class="trust-title">Post in 60 seconds</div>
-        <div class="trust-desc">Create a listing fast with photo upload and smart fields.</div>
+        <div>
+            <div class="trust-title">Post in 60 seconds</div>
+            <div class="trust-desc">Create a listing fast with photo upload and smart fields.</div>
+        </div>
     </div>
     <div class="trust-item">
         <div class="trust-icon" style="background:rgba(61,181,73,.15);">📍</div>
-        <div class="trust-title">Hyperlocal search</div>
-        <div class="trust-desc">Results filtered to your city, neighborhood, or area.</div>
+        <div>
+            <div class="trust-title">Hyperlocal search</div>
+            <div class="trust-desc">Results filtered to your city, neighborhood, or area.</div>
+        </div>
     </div>
     <div class="trust-item">
         <div class="trust-icon" style="background:rgba(98,194,255,.15);">💬</div>
-        <div class="trust-title">Safe messaging</div>
-        <div class="trust-desc">Chat with sellers via live chat without sharing your contact.</div>
+        <div>
+            <div class="trust-title">Safe messaging</div>
+            <div class="trust-desc">Chat without sharing your contact info.</div>
+        </div>
     </div>
     <div class="trust-item">
         <div class="trust-icon" style="background:rgba(245,158,11,.15);">★</div>
-        <div class="trust-title">Featured listings</div>
-        <div class="trust-desc">Boost visibility with featured placement across the platform.</div>
+        <div>
+            <div class="trust-title">Featured listings</div>
+            <div class="trust-desc">Boost visibility with featured placement across the platform.</div>
+        </div>
     </div>
 </div>
+
+{% if fmm_mode %}
+<script>
+/* Store FMM results URL so listing detail page can show "Back to results" */
+sessionStorage.setItem('fmm_results_url', window.location.href);
+</script>
+{% endif %}
 
 <script>
 (function () {
@@ -344,17 +241,28 @@
   }
   function setTags(tags) { hidden.value = tags.join(','); }
 
+  function syncChipHighlights(tags) {
+    document.querySelectorAll('.quality-chip').forEach(function(btn) {
+      btn.classList.toggle('quality-chip-active', tags.indexOf(btn.dataset.tag) !== -1);
+    });
+  }
+
   function renderChips(tags) {
     display.innerHTML = '';
     tags.forEach(function(tag) {
       var chip = document.createElement('span');
       chip.className = 'search-tag-chip';
-      chip.innerHTML = tag + '<button type="button" class="search-tag-remove" data-val="' + tag + '">×</button>';
+      chip.innerHTML = tag + ' <button type="button" class="search-tag-remove" data-val="' + tag + '">×</button>';
       chip.querySelector('.search-tag-remove').addEventListener('click', function(){
-        removeTag(this.dataset.val);
+        var t = this.dataset.val;
+        var next = getTags().filter(function(x){ return x !== t; });
+        setTags(next);
+        renderChips(next);
+        refreshGrid();
       });
       display.appendChild(chip);
     });
+    syncChipHighlights(tags);
   }
 
   function addTag(val) {
@@ -367,32 +275,84 @@
     input.value = '';
   }
 
-  function removeTag(val) {
-    var tags = getTags().filter(function(t){ return t !== val; });
-    setTags(tags);
-    renderChips(tags);
+  /* AJAX grid refresh — swaps only #listings-grid, updates URL bar */
+  function refreshGrid() {
+    var params = new URLSearchParams(new FormData(form));
+    var grid = document.getElementById('listings-grid');
+    if (grid) { grid.style.opacity = '.4'; grid.style.pointerEvents = 'none'; }
+    fetch('?' + params.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        var newGrid = tmp.querySelector('#listings-grid');
+        if (newGrid && grid) {
+          grid.replaceWith(newGrid);
+          newGrid.querySelectorAll('.js-reveal').forEach(function(el) {
+            setTimeout(function() { el.classList.add('visible'); }, 10);
+          });
+          if (typeof bindSavePills === 'function') bindSavePills(newGrid);
+        } else if (grid) {
+          grid.style.opacity = '';
+          grid.style.pointerEvents = '';
+        }
+        history.pushState(null, '', '?' + params.toString());
+      })
+      .catch(function() {
+        if (grid) { grid.style.opacity = ''; grid.style.pointerEvents = ''; }
+      });
   }
 
+  /* Sync quality chip highlights on page load */
+  syncChipHighlights(getTags());
+
   display.querySelectorAll('.search-tag-remove').forEach(function(btn){
-    btn.addEventListener('click', function(){ removeTag(this.dataset.val); });
+    btn.addEventListener('click', function(){
+      var t = this.dataset.val;
+      var next = getTags().filter(function(x){ return x !== t; });
+      setTags(next);
+      renderChips(next);
+      refreshGrid();
+    });
   });
 
   input.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (input.value.trim()) { addTag(input.value); }
-      else { form.submit(); }
+      if (input.value.trim()) { addTag(input.value); refreshGrid(); }
+      else { refreshGrid(); }
     } else if (e.key === ',') {
       e.preventDefault();
       addTag(input.value);
     } else if (e.key === 'Backspace' && input.value === '') {
       var tags = getTags();
-      if (tags.length) removeTag(tags[tags.length - 1]);
+      if (tags.length) {
+        var next = tags.slice(0, -1);
+        setTags(next);
+        renderChips(next);
+        refreshGrid();
+      }
     }
   });
 
   form.addEventListener('submit', function() {
     if (input.value.trim()) addTag(input.value);
+  });
+
+  /* Quality chips: toggle tag + AJAX refresh, no page reload */
+  document.querySelectorAll('.quality-chip').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var tag  = btn.dataset.tag;
+      var tags = getTags();
+      if (tags.indexOf(tag) === -1) {
+        addTag(tag);
+      } else {
+        var next = tags.filter(function(t){ return t !== tag; });
+        setTags(next);
+        renderChips(next);
+      }
+      refreshGrid();
+    });
   });
 })();
 </script>
@@ -511,29 +471,6 @@
   });
 })();
 
-/* ── Quality chip toggle ── */
-(function () {
-  var hidden = document.getElementById('quality-tags-hidden');
-  if (!hidden) return;
-
-  function getTags() {
-    return hidden.value.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
-  }
-
-  document.querySelectorAll('.quality-chip').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var tag  = btn.dataset.tag;
-      var tags = getTags();
-      var idx  = tags.indexOf(tag);
-      if (idx === -1) { tags.push(tag); }
-      else            { tags.splice(idx, 1); }
-      hidden.value = tags.join(',');
-      btn.classList.toggle('quality-chip-active', tags.indexOf(tag) !== -1);
-      /* Auto-submit the search form */
-      document.getElementById('search-form').submit();
-    });
-  });
-})();
 
 /* ── AJAX sort — swap only the grid, no full reload ── */
 (function () {

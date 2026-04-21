@@ -17,60 +17,81 @@ from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, Listing
 def _fmm_score(listing, max_price_val, requested_tags, avail_date,
                accommodation_type='', property_type=''):
     """
-    Return (pct: int 0-100, reasons: list[str], tag_hits: int) for a listing.
-    pct is NOT floored — callers use raw score to separate exact vs near matches.
+    Return (pct: int 0-100, reasons: list[str], tag_hits: int).
+    Scores are always relative to what the user asked for.
+    Missing criteria lower the score but never zero it out — users always see results.
     """
     pts, max_pts = 0, 0
     reasons = []
     tag_hits = 0
+    tags_lower = (listing.tags or '').lower()
 
-    # ── Accommodation type match (20 pts) ────────────────────────────────
-    if accommodation_type:
-        max_pts += 20
-        if listing.accommodation_type == accommodation_type:
-            pts += 20
-            label = 'Whole place' if accommodation_type == 'whole' else 'Single room'
-            reasons.append(label)
-
-    # ── Property type match (15 pts) ─────────────────────────────────────
-    if property_type:
-        max_pts += 15
-        if listing.property_type == property_type:
-            pts += 15
-            reasons.append(listing.get_property_type_display())
-
-    # ── Budget (35 pts) ──────────────────────────────────────────────────
+    # ── Budget (40 pts) — most important criterion ───────────────────────
     if max_price_val and max_price_val > 0:
-        max_pts += 35
+        max_pts += 40
         if listing.price:
             price = float(listing.price)
-            # Effective price: subtract bills_included savings (~$150/mo average)
             effective = price - (150 if listing.bills_included else 0)
             headroom = float(max_price_val) - effective
             if headroom >= 0:
-                # Score 25–35 based on headroom ratio
-                pts += 25 + min(10, int(headroom / float(max_price_val) * 25))
+                ratio = headroom / float(max_price_val)
+                pts += 30 + min(10, int(ratio * 20))
                 if listing.bills_included:
-                    reasons.append(f"Bills included (~${int(effective):,} effective)")
+                    reasons.append(f"Bills included (effective ~${int(effective):,}/mo)")
+                elif headroom >= 500:
+                    reasons.append(f"${int(headroom):,} under budget")
                 elif headroom >= 100:
                     reasons.append(f"${int(headroom):,} under budget")
                 else:
                     reasons.append("Within budget")
-            # Over budget but within 15% — partial credit, no reason pill
-            elif headroom >= -float(max_price_val) * 0.15:
-                pts += 10
+            elif headroom >= -float(max_price_val) * 0.10:
+                pts += 12  # just over budget, small partial credit
+            # else: well over budget — 0 pts
         else:
-            pts += 15  # "Contact for price" — neutral
+            pts += 20  # no price listed — neutral
 
-    # ── Tag matches (20 pts each) ────────────────────────────────────────
+    # ── Accommodation type match (15 pts) ────────────────────────────────
+    if accommodation_type:
+        max_pts += 15
+        if listing.accommodation_type == accommodation_type:
+            pts += 15
+            label = 'Whole place' if accommodation_type == 'whole' else 'Single room'
+            reasons.append(label)
+        # No match — 0 pts, but listing still surfaces with lower score
+
+    # ── Property type match (10 pts) ─────────────────────────────────────
+    if property_type:
+        max_pts += 10
+        if listing.property_type == property_type:
+            pts += 10
+            reasons.append(listing.get_property_type_display())
+
+    # ── Tag matches (15 pts each, partial credit for related tags) ───────
     if requested_tags:
-        tags_lower = listing.tags.lower()
         for tag in requested_tags:
-            max_pts += 20
-            if tag.lower() in tags_lower:
-                pts += 20
+            max_pts += 15
+            tag_l = tag.lower()
+            if tag_l in tags_lower:
+                pts += 15
                 tag_hits += 1
                 reasons.append(tag)
+            else:
+                # Partial credit for semantically related tags
+                related = {
+                    'garage': ['parking', 'covered parking', 'carport'],
+                    'lake': ['waterway', 'water view', 'canal', 'pond', 'pool'],
+                    'pool': ['gym', 'amenities', 'community pool'],
+                    'gym': ['fitness', 'workout', 'exercise'],
+                    'pet friendly': ['pet-friendly', 'pets allowed', 'dogs ok'],
+                    'furnished': ['fully furnished', 'semi-furnished'],
+                    'balcony': ['patio', 'terrace', 'deck', 'outdoor'],
+                    'gated': ['secured', 'secure', 'fenced'],
+                    'schools': ['near schools', 'good schools', 'school district'],
+                }
+                close = related.get(tag_l, [])
+                if any(r in tags_lower for r in close):
+                    pts += 5  # partial credit
+                    reasons.append(f"Similar to {tag}")
 
     # ── Availability (10 pts) ────────────────────────────────────────────
     if avail_date:
@@ -79,7 +100,7 @@ def _fmm_score(listing, max_price_val, requested_tags, avail_date,
             pts += 10
             reasons.append("Available now" if not listing.available_from else "Meets move-in date")
 
-    # ── Freshness bonus (5 pts) — new listings are valuable ──────────────
+    # ── Freshness bonus (5 pts) ──────────────────────────────────────────
     from django.utils import timezone as _tz
     age_days = (_tz.now() - listing.created_at).days
     if age_days <= 3:
@@ -87,71 +108,94 @@ def _fmm_score(listing, max_price_val, requested_tags, avail_date,
         max_pts += 5
         reasons.append("Just listed" if age_days == 0 else f"Listed {age_days}d ago")
 
-    # ── Deposit-free bonus (5 pts) ───────────────────────────────────────
-    tags_lower_check = listing.tags.lower()
-    if 'no deposit' in tags_lower_check or 'no-deposit' in tags_lower_check:
-        pts += 5
-        max_pts += 5
+    # ── Bonus perks (up to 5 pts) ────────────────────────────────────────
+    if 'no deposit' in tags_lower or 'no-deposit' in tags_lower:
+        pts += 3
+        max_pts += 3
         reasons.append("No deposit")
+    if listing.featured:
+        pts += 2
+        max_pts += 2
 
-    pct = int(round(pts / max_pts * 100)) if max_pts else 70
+    if max_pts == 0:
+        return 70, reasons, tag_hits
+
+    pct = int(round(pts / max_pts * 100))
     return min(100, max(0, pct)), reasons, tag_hits
 
 
 def _fmm_explanation(listing, reasons, max_price_val, quality_tags,
                      accommodation_type='', property_type=''):
-    """Generate a one-sentence natural-language explanation of why a listing fits."""
+    """Generate a concrete, specific explanation of why a listing is a good fit."""
     from django.utils import timezone as _tz
     parts = []
 
-    # Accommodation + property type
+    # Property/accommodation type match
     accom = listing.get_accommodation_type_display() if listing.accommodation_type else ''
     prop  = listing.get_property_type_display() if listing.property_type else ''
-    if accommodation_type and listing.accommodation_type == accommodation_type:
-        if prop:
-            parts.append(f"it's a {prop.lower()} ({accom.lower()})")
-        else:
-            parts.append(f"it's a {accom.lower()}")
-    elif property_type and listing.property_type == property_type and prop:
-        parts.append(f"it's a {prop.lower()}")
+    if property_type and listing.property_type == property_type and prop:
+        parts.append(f"it's exactly the {prop.lower()} you're looking for")
+    elif accommodation_type and listing.accommodation_type == accommodation_type:
+        label = 'whole place' if accommodation_type == 'whole' else 'private room'
+        parts.append(f"it's a {label}{(' — ' + prop.lower()) if prop else ''}")
 
-    # Budget insight
-    if listing.bills_included and listing.price:
-        effective = int(float(listing.price) - 150)
-        parts.append(f"bills are included (effective cost ~${effective:,}/mo)")
-    elif listing.price and max_price_val:
-        headroom = int(float(max_price_val) - float(listing.price))
-        if headroom >= 200:
-            parts.append(f"it's ${headroom:,} under your budget")
+    # Budget insight — most important, be specific
+    if listing.price and max_price_val:
+        price = float(listing.price)
+        budget = float(max_price_val)
+        headroom = int(budget - price)
+        pct_savings = int((headroom / budget) * 100) if budget else 0
+        if listing.bills_included:
+            effective = int(price - 150)
+            parts.append(f"bills are included — effective cost is ~${effective:,}/mo, saving you ${int(budget - effective):,} vs your budget")
+        elif headroom >= 500:
+            parts.append(f"at ${int(price):,}/mo it's ${headroom:,} under your ${int(budget):,} budget — gives you room to save")
+        elif headroom >= 100:
+            parts.append(f"priced at ${int(price):,}/mo, ${headroom:,} under your budget")
         elif headroom >= 0:
-            parts.append("it fits your budget")
+            parts.append(f"right at your ${int(budget):,}/mo budget")
 
-    # Tag matches
+    # Tag/amenity matches — name them specifically
     matched = [t for t in quality_tags if t.lower() in listing.tags.lower()]
-    total   = len(quality_tags)
-    if total and len(matched) == total:
-        parts.append(f"it matches all {total} of your must-haves")
-    elif len(matched) == 2:
-        parts.append(f"it has {matched[0]} and {matched[1]}")
-    elif len(matched) == 1:
-        parts.append(f"it has {matched[0]}")
+    if matched:
+        if len(matched) >= 3:
+            parts.append(f"it has all your must-haves: {', '.join(matched)}")
+        elif len(matched) == 2:
+            parts.append(f"it includes {matched[0]} and {matched[1]}")
+        else:
+            parts.append(f"it has {matched[0]}")
+
+    # Extra perks from listing tags (even if not requested)
+    tags_lower = listing.tags.lower() if listing.tags else ''
+    perks = []
+    if 'pet-friendly' in tags_lower and 'pet-friendly' not in [t.lower() for t in quality_tags]:
+        perks.append('pet-friendly')
+    if 'no deposit' in tags_lower or 'no-deposit' in tags_lower:
+        perks.append('no deposit required')
+    if 'furnished' in tags_lower and 'furnished' not in [t.lower() for t in quality_tags]:
+        perks.append('fully furnished')
+    if perks:
+        parts.append(f"bonus: {', '.join(perks[:2])}")
 
     # Freshness
     age_days = (_tz.now() - listing.created_at).days
     if age_days == 0:
-        parts.append("it was just listed today")
-    elif age_days <= 2:
-        parts.append(f"listed {age_days} day{'s' if age_days > 1 else ''} ago — still fresh")
+        parts.append("just listed today — move fast")
+    elif age_days <= 3:
+        parts.append(f"listed {age_days}d ago, still fresh")
 
     if not parts:
+        # Fallback: generic but still specific to listing
+        if listing.city:
+            return f"Located in {listing.city} and within your search criteria."
         return None
 
     if len(parts) == 1:
-        sentence = f"This fits you because {parts[0]}."
+        sentence = f"Good fit: {parts[0]}."
     elif len(parts) == 2:
-        sentence = f"This fits you because {parts[0]} and {parts[1]}."
+        sentence = f"Good fit: {parts[0]}, and {parts[1]}."
     else:
-        sentence = f"This fits you because {', '.join(parts[:-1])}, and {parts[-1]}."
+        sentence = f"Good fit: {parts[0]}. Also — {', '.join(parts[1:])}."
 
     return sentence[0].upper() + sentence[1:]
 
@@ -175,7 +219,7 @@ def listing_list(request):
 
     q         = request.GET.get('q', '').strip()
     category  = request.GET.get('category', '').strip()
-    city      = request.GET.get('city', '').strip()
+    city      = request.GET.get('city', '').strip().split(',')[0].strip()
     sort      = request.GET.get('sort', 'latest').strip()
     tag       = request.GET.get('tag', '').strip()
     min_price         = request.GET.get('min_price', '').strip()
@@ -207,18 +251,11 @@ def listing_list(request):
 
     # Quality tags (multi-select from chips)
     quality_tags = [t.strip() for t in tags_raw.split(',') if t.strip()]
-    if quality_tags:
-        if fmm:
-            # FMM mode: OR — listing must match AT LEAST ONE tag (scored later)
-            from django.db.models import Q as _Q
-            tag_q = _Q()
-            for qt in quality_tags:
-                tag_q |= _Q(tags__icontains=qt)
-            listings = listings.filter(tag_q)
-        else:
-            # Regular mode: AND — listing must have ALL selected tags
-            for qt in quality_tags:
-                listings = listings.filter(tags__icontains=qt)
+    if quality_tags and not fmm:
+        # Regular mode only: hard-filter AND — listing must have ALL selected tags
+        for qt in quality_tags:
+            listings = listings.filter(tags__icontains=qt)
+    # FMM mode: tags are soft preferences — scoring handles them, no hard filter
 
     # Price range
     try:
@@ -306,9 +343,18 @@ def listing_list(request):
             scored.append((l, pct, reasons, tag_hits))
         scored.sort(key=lambda x: (-x[1], -x[0].featured, x[0].created_at))
 
-        # ── Split into exact matches (≥65%) vs near matches (<65%) ──
-        exact_scored  = [x for x in scored if x[1] >= 65]
-        near_scored   = [x for x in scored if x[1] < 65]
+        # ── Split into exact matches (≥50%) vs near matches (<50%) ──
+        # Lower threshold so partial matches (missing tags) still surface
+        exact_scored  = [x for x in scored if x[1] >= 50]
+        near_scored   = [x for x in scored if x[1] < 50]
+
+        # If nothing hits 50%, show everything as near matches so user is never left with 0
+        if not exact_scored and not near_scored:
+            near_scored = scored
+        elif not exact_scored:
+            # Promote top near matches to exact so the page isn't empty
+            exact_scored  = near_scored[:6]
+            near_scored   = near_scored[6:]
 
         listings             = [x[0] for x in exact_scored]
         near_match_listings  = [x[0] for x in near_scored[:4]]  # show up to 4
@@ -423,8 +469,10 @@ def guided_search(request):
         GuidedSearchEvent.objects.create(event_type=GuidedSearchEvent.COMPLETE)
     else:
         GuidedSearchEvent.objects.create(event_type=GuidedSearchEvent.START)
+    mode = request.GET.get('mode', '').strip()  # 'rent' | 'buy' | ''
     return render(request, 'listings/guided_search.html', {
         'category_choices': Listing.CATEGORY_CHOICES,
+        'gs_mode': mode,
     })
 
 

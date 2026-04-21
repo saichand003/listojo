@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'listings',
     'chatapp',
     'portal',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [

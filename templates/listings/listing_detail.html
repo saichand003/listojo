@@ -1,5 +1,24 @@
 {% extends 'base.html' %}
 {% block content %}
+
+{# ── Back to guided search results (shown when navigated from FMM results) ── #}
+<div id="fmm-back-bar" style="display:none;margin-bottom:1rem;">
+  <a id="fmm-back-link" href="#" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(42,126,242,.08);border:1px solid rgba(42,126,242,.18);transition:background .15s;">
+    ← Back to guided search results
+  </a>
+</div>
+<script>
+(function(){
+  var url = sessionStorage.getItem('fmm_results_url');
+  if (url) {
+    var bar  = document.getElementById('fmm-back-bar');
+    var link = document.getElementById('fmm-back-link');
+    link.href = url;
+    bar.style.display = 'block';
+  }
+})();
+</script>
+
 <div class="grid" style="grid-template-columns:2fr 1fr;align-items:start;gap:1.25rem;">
 
     <article class="card" style="padding:0;overflow:hidden;">

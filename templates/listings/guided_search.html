@@ -1,22 +1,53 @@
 {% extends 'base.html' %}
 {% block content %}
 <style>
-.gs-wrap{max-width:680px;margin:0 auto;padding:32px 16px 64px}
-.gs-header{text-align:center;margin-bottom:36px}
+.gs-wrap{max-width:800px;margin:0 auto;padding:32px 16px 64px}
+.gs-header{text-align:center;margin-bottom:32px}
 .gs-header h1{font-size:1.75rem;font-weight:800;color:#0f1c35;margin-bottom:8px}
 .gs-header p{color:#6B7280;font-size:15px}
-.gs-steps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:40px}
-.gs-step{display:flex;flex-direction:column;align-items:center;gap:6px}
-.gs-step-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid #E5E7EB;background:#fff;color:#9CA3AF;transition:all .25s}
+
+/* ── Stepper ── */
+.gs-steps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:36px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+.gs-step{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0}
+.gs-step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid #E5E7EB;background:#fff;color:#9CA3AF;transition:all .25s}
 .gs-step.active .gs-step-num{border-color:var(--primary,#2A7EF2);background:var(--primary,#2A7EF2);color:#fff}
-.gs-step.done .gs-step-num{border-color:var(--primary,#2A7EF2);background:#EAF5F0;color:#0A5C45}
-.gs-step-label{font-size:11px;font-weight:600;color:#9CA3AF;white-space:nowrap}
-.gs-step.active .gs-step-label,.gs-step.done .gs-step-label{color:var(--primary,#2A7EF2)}
-.gs-line{width:80px;height:2px;background:#E5E7EB;margin-bottom:18px;transition:background .25s}
-.gs-line.done{background:var(--primary,#2A7EF2)}
+.gs-step.done .gs-step-num{border-color:#3DB549;background:#F0FDF4;color:#16a34a}
+.gs-step-label{font-size:10.5px;font-weight:600;color:#9CA3AF;white-space:nowrap}
+.gs-step.active .gs-step-label{color:var(--primary,#2A7EF2)}
+.gs-step.done .gs-step-label{color:#16a34a}
+.gs-line{flex:1;min-width:32px;max-width:64px;height:2px;background:#E5E7EB;margin-bottom:17px;transition:background .25s}
+.gs-line.done{background:#3DB549}
+
+/* ── Cards ── */
 .gs-card{background:#fff;border:1px solid #E5E7EB;border-radius:20px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
-.gs-card h2{font-size:1.1rem;font-weight:700;color:#0f1c35;margin-bottom:6px}
+.gs-card h2{font-size:1.15rem;font-weight:700;color:#0f1c35;margin-bottom:6px}
 .gs-card .gs-sub{font-size:13px;color:#6B7280;margin-bottom:24px}
+
+/* ── Step 1: big choice cards ── */
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px}
+.choice-card{border:2px solid #E5E7EB;border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFAFA}
+.choice-card:hover{border-color:var(--primary,#2A7EF2);background:#EEF6FF}
+.choice-card.sel{border-color:var(--primary,#2A7EF2);background:#EEF6FF}
+.choice-card .cc-icon{font-size:2.4rem;margin-bottom:12px;display:block}
+.choice-card .cc-title{font-size:1rem;font-weight:700;color:#0f1c35;margin-bottom:4px}
+.choice-card .cc-sub{font-size:12.5px;color:#6B7280}
+
+/* ── Step 2: room type cards ── */
+.room-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.room-card{border:2px solid #E5E7EB;border-radius:14px;padding:20px 16px;cursor:pointer;transition:all .2s;background:#FAFAFA;display:flex;align-items:flex-start;gap:12px}
+.room-card:hover{border-color:var(--primary,#2A7EF2)}
+.room-card.sel{border-color:var(--primary,#2A7EF2);background:#EEF6FF}
+.room-card .rc-icon{font-size:1.6rem;flex-shrink:0}
+.room-card .rc-title{font-size:.9rem;font-weight:700;color:#0f1c35}
+.room-card .rc-sub{font-size:11.5px;color:#9CA3AF;margin-top:2px}
+
+/* ── Type chips ── */
+.type-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
+.type-chip{padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;border:2px solid #E5E7EB;background:#fff;color:#374151;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.type-chip:hover{border-color:var(--primary,#2A7EF2);color:var(--primary,#2A7EF2)}
+.type-chip.sel{border-color:var(--primary,#2A7EF2);background:rgba(42,126,242,.08);color:var(--primary,#2A7EF2)}
+
+/* ── Shared components ── */
 .gs-label{font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:block}
 .gs-group{margin-bottom:22px}
 .gs-input{width:100%;padding:10px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;font-family:inherit;color:#0f1c35;outline:none;transition:border-color .15s}
@@ -26,6 +57,11 @@
 .gs-sep{color:#9CA3AF;font-size:13px;flex-shrink:0}
 .gs-slider{width:100%;accent-color:var(--primary,#2A7EF2);height:4px;margin:6px 0}
 .tag-grid{display:flex;flex-wrap:wrap;gap:8px}
+.tag-custom-row{margin-top:10px}
+.tag-custom-input{padding:6px 14px;border-radius:999px;font-size:13px;font-weight:500;border:1.5px dashed #D1D5DB;background:#fff;color:#6B7280;cursor:text;outline:none;width:auto;min-width:180px;font-family:inherit;transition:border-color .15s,color .15s}
+.tag-custom-input:focus{border-color:var(--primary,#2A7EF2);color:#374151;border-style:solid}
+.tag-custom-input::placeholder{color:#9CA3AF}
+.custom-tag-remove{margin-left:4px;opacity:.6;font-style:normal;cursor:pointer}.custom-tag-remove:hover{opacity:1}
 .tag-pill{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:500;border:1.5px solid #E5E7EB;background:#fff;color:#374151;cursor:pointer;transition:all .15s;user-select:none}
 .tag-pill:hover{border-color:var(--primary,#2A7EF2);color:var(--primary,#2A7EF2)}
 .tag-pill.sel{border-color:var(--primary,#2A7EF2);background:rgba(42,126,242,.08);color:var(--primary,#2A7EF2);font-weight:600}
@@ -45,41 +81,183 @@
 .gs-btn-ghost{background:transparent;border:1.5px solid #E5E7EB;color:#374151}
 .gs-btn-ghost:hover{border-color:var(--primary,#2A7EF2);color:var(--primary,#2A7EF2)}
 .gs-btn-lg{padding:13px 28px;font-size:15px}
+
+@media(max-width:540px){
+  .choice-grid,.room-grid{grid-template-columns:1fr}
+  .gs-line{min-width:20px}
+}
 </style>
 
 <div class="gs-wrap">
   <div class="gs-header">
+    {% if gs_mode == 'buy' %}
+    <h1>Find the right property to buy.</h1>
+    <p>Answer a few questions and we'll score every match for you.</p>
+    {% elif gs_mode == 'rent' %}
+    <h1>Find the right rental, not just a listing.</h1>
+    <p>Answer a few questions and we'll score every match for you.</p>
+    {% else %}
     <h1>Find the right listing, not just a listing.</h1>
     <p>Answer a few questions and we'll score every match for you.</p>
+    {% endif %}
   </div>
 
+  {# ── Step indicator ── #}
   <div class="gs-steps">
-    <div class="gs-step active" id="s1"><div class="gs-step-num" id="sn1">1</div><div class="gs-step-label">Location & Budget</div></div>
+    <div class="gs-step active" id="s1"><div class="gs-step-num" id="sn1">1</div><div class="gs-step-label">Rent/Buy</div></div>
     <div class="gs-line" id="l1"></div>
-    <div class="gs-step" id="s2"><div class="gs-step-num" id="sn2">2</div><div class="gs-step-label">Preferences</div></div>
+    <div class="gs-step" id="s2"><div class="gs-step-num" id="sn2">2</div><div class="gs-step-label">Room?</div></div>
     <div class="gs-line" id="l2"></div>
-    <div class="gs-step" id="s3"><div class="gs-step-num" id="sn3">3</div><div class="gs-step-label">Timeline</div></div>
+    <div class="gs-step" id="s3"><div class="gs-step-num" id="sn3">3</div><div class="gs-step-label">Type</div></div>
+    <div class="gs-line" id="l3"></div>
+    <div class="gs-step" id="s4"><div class="gs-step-num" id="sn4">4</div><div class="gs-step-label">City</div></div>
+    <div class="gs-line" id="l4"></div>
+    <div class="gs-step" id="s5"><div class="gs-step-num" id="sn5">5</div><div class="gs-step-label">Budget</div></div>
+    <div class="gs-line" id="l5"></div>
+    <div class="gs-step" id="s6"><div class="gs-step-num" id="sn6">6</div><div class="gs-step-label">Must-haves</div></div>
+    <div class="gs-line" id="l6"></div>
+    <div class="gs-step" id="s7"><div class="gs-step-num" id="sn7">7</div><div class="gs-step-label">When</div></div>
   </div>
 
+  {# ── Step 1: Rent or Buy ── #}
   <div id="step1">
     <div class="gs-card">
+      <h2>Are you looking to rent or buy?</h2>
+      <p class="gs-sub">This helps us show the right types of listings for you.</p>
+      <div class="choice-grid">
+        <div class="choice-card" id="cc-rent" onclick="selectRentBuy('rent')">
+          <span class="cc-icon">🔑</span>
+          <div class="cc-title">Rent a Place</div>
+          <div class="cc-sub">Rooms, apartments, houses &amp; more</div>
+        </div>
+        <div class="choice-card" id="cc-buy" onclick="selectRentBuy('buy')">
+          <span class="cc-icon">🏡</span>
+          <div class="cc-title">Buy a Property</div>
+          <div class="cc-sub">Houses, land, ranches &amp; more</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Step 2: Room type ── #}
+  <div id="step2" style="display:none">
+    <div class="gs-card">
+      <div id="room-q-rent">
+        <h2>What type of space do you need?</h2>
+        <p class="gs-sub">We'll match you with listings that fit your living situation.</p>
+        <div class="room-grid">
+          <div class="room-card sel" id="rc-whole" onclick="selectRoom('whole')">
+            <span class="rc-icon">🏠</span>
+            <div><div class="rc-title">Entire place</div><div class="rc-sub">A whole apartment or house to yourself</div></div>
+          </div>
+          <div class="room-card" id="rc-room" onclick="selectRoom('room')">
+            <span class="rc-icon">🚪</span>
+            <div><div class="rc-title">Private room</div><div class="rc-sub">Your own room, share common areas</div></div>
+          </div>
+        </div>
+      </div>
+      <div id="room-q-buy" style="display:none">
+        <h2>What's your goal with this property?</h2>
+        <p class="gs-sub">Helps us surface the most relevant listings for your situation.</p>
+        <div class="room-grid">
+          <div class="room-card sel" id="rc-primary" onclick="selectBuyPurpose('primary')">
+            <span class="rc-icon">🏡</span>
+            <div><div class="rc-title">Primary home</div><div class="rc-sub">I'll be living here</div></div>
+          </div>
+          <div class="room-card" id="rc-invest" onclick="selectBuyPurpose('investment')">
+            <span class="rc-icon">📈</span>
+            <div><div class="rc-title">Investment / rental</div><div class="rc-sub">I plan to rent it out</div></div>
+          </div>
+          <div class="room-card" id="rc-browse" onclick="selectBuyPurpose('browse')">
+            <span class="rc-icon">👀</span>
+            <div><div class="rc-title">Just browsing</div><div class="rc-sub">Exploring what's available</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="gs-actions">
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(1)">← Back</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(3)">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  {# ── Step 3: Property type + bedrooms ── #}
+  <div id="step3" style="display:none">
+    <div class="gs-card">
+      <h2>What type of property?</h2>
+      <p class="gs-sub">Pick everything that works — we'll show all matching types.</p>
+      <div class="gs-group">
+        <div id="type-rent-options">
+          <label class="gs-label">Property type</label>
+          <div class="type-grid" id="type-group">
+            <div class="type-chip" data-val="apartment" onclick="toggleType(this)">🏢 Apartment</div>
+            <div class="type-chip" data-val="house" onclick="toggleType(this)">🏠 House</div>
+            <div class="type-chip" data-val="condo" onclick="toggleType(this)">🏙️ Condo</div>
+            <div class="type-chip" data-val="townhouse" onclick="toggleType(this)">🏘️ Townhouse</div>
+            <div class="type-chip" data-val="studio" onclick="toggleType(this)">🛏️ Studio</div>
+            <div class="type-chip" data-val="basement" onclick="toggleType(this)">🏚️ Basement</div>
+            <div class="type-chip" data-val="loft" onclick="toggleType(this)">🌃 Loft</div>
+            <div class="type-chip" data-val="trailer" onclick="toggleType(this)">🚐 Trailer</div>
+          </div>
+        </div>
+        <div id="type-buy-options" style="display:none">
+          <label class="gs-label">Property type</label>
+          <div class="type-grid" id="type-buy-group">
+            <div class="type-chip" data-val="single_family" onclick="toggleType(this)">🏡 Single-family home</div>
+            <div class="type-chip" data-val="ranch_house" onclick="toggleType(this)">🏠 Ranch house</div>
+            <div class="type-chip" data-val="condo" onclick="toggleType(this)">🏙️ Condo</div>
+            <div class="type-chip" data-val="land" onclick="toggleType(this)">🌿 Land</div>
+            <div class="type-chip" data-val="ranch" onclick="toggleType(this)">🐄 Ranch</div>
+          </div>
+        </div>
+      </div>
+      <div class="gs-group" id="bedrooms-group">
+        <label class="gs-label">Bedrooms</label>
+        <div class="tag-grid" id="beds-group">
+          <div class="tag-pill sel" data-val="">Any</div>
+          <div class="tag-pill" data-val="1">1 bed</div>
+          <div class="tag-pill" data-val="2">2 bed</div>
+          <div class="tag-pill" data-val="3">3 bed</div>
+          <div class="tag-pill" data-val="4">4+ bed</div>
+        </div>
+      </div>
+      <div class="gs-actions">
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(2)">← Back</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(4)">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  {# ── Step 4: City ── #}
+  <div id="step4" style="display:none">
+    <div class="gs-card">
       <h2>Where are you looking?</h2>
-      <p class="gs-sub">Set your location and budget so we can focus the results.</p>
+      <p class="gs-sub">Enter a city or neighborhood — we'll focus results there.</p>
       <div class="gs-group">
         <label class="gs-label">City / Area</label>
-        <input id="city" class="gs-input" placeholder="e.g. Irving, TX or Las Colinas">
+        <input id="city" class="gs-input" placeholder="e.g. Irving, TX or Las Colinas" autocomplete="off">
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px">
+          <span class="tag-pill" onclick="setCity('Irving, TX')">📍 Irving, TX</span>
+          <span class="tag-pill" onclick="setCity('Las Colinas, TX')">📍 Las Colinas, TX</span>
+          <span class="tag-pill" onclick="setCity('Dallas, TX')">📍 Dallas, TX</span>
+          <span class="tag-pill" onclick="setCity('Fort Worth, TX')">📍 Fort Worth, TX</span>
+          <span class="tag-pill" onclick="setCity('Frisco, TX')">📍 Frisco, TX</span>
+        </div>
       </div>
-      <div class="gs-group">
-        <label class="gs-label">Category</label>
-        <select id="category" class="gs-input">
-          <option value="">All categories</option>
-          {% for key, label in category_choices %}
-          <option value="{{ key }}">{{ label }}</option>
-          {% endfor %}
-        </select>
+      <div class="gs-actions">
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(3)">← Back</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(5)">Continue →</button>
       </div>
+    </div>
+  </div>
+
+  {# ── Step 5: Budget ── #}
+  <div id="step5" style="display:none">
+    <div class="gs-card">
+      <h2>What's your budget?</h2>
+      <p class="gs-sub" id="budget-sub">Set your monthly range — we'll filter listings that fit.</p>
       <div class="gs-group">
-        <label class="gs-label">Monthly budget</label>
+        <label class="gs-label" id="budget-label">Monthly budget</label>
         <div class="gs-row">
           <input id="min_price" class="gs-input" placeholder="Min $" type="number" min="0">
           <span class="gs-sep">to</span>
@@ -91,29 +269,21 @@
           <div style="font-size:12.5px;color:#6B7280;margin-top:4px">Max: <strong id="budget_disp">$3,000</strong></div>
         </div>
       </div>
-      <div class="gs-group">
-        <label class="gs-label">Bedrooms</label>
-        <div class="tag-grid" id="beds-group">
-          <div class="tag-pill sel" data-val="">Any</div>
-          <div class="tag-pill" data-val="1 bed">1 bed</div>
-          <div class="tag-pill" data-val="2 bed">2 bed</div>
-          <div class="tag-pill" data-val="3 bed">3 bed</div>
-          <div class="tag-pill" data-val="4+ bed">4+ bed</div>
-        </div>
-      </div>
       <div class="gs-actions">
-        <button class="gs-btn gs-btn-primary" onclick="goStep(2)">Continue →</button>
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(4)">← Back</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(6)">Continue →</button>
       </div>
     </div>
   </div>
 
-  <div id="step2" style="display:none">
+  {# ── Step 6: Must-haves ── #}
+  <div id="step6" style="display:none">
     <div class="gs-card">
       <h2>What matters most to you?</h2>
       <p class="gs-sub">Select everything that applies — we'll weight your results accordingly.</p>
       <div class="gs-group">
         <label class="gs-label">Must-have features</label>
-        <div class="tag-grid">
+        <div class="tag-grid" id="features-grid">
           <div class="tag-pill" data-group="features" data-val="pet friendly" onclick="toggleTag(this)">🐾 Pet friendly</div>
           <div class="tag-pill" data-group="features" data-val="washer dryer" onclick="toggleTag(this)">🚿 Washer/dryer</div>
           <div class="tag-pill" data-group="features" data-val="parking" onclick="toggleTag(this)">🅿️ Parking</div>
@@ -127,25 +297,32 @@
           <div class="tag-pill" data-group="features" data-val="furnished" onclick="toggleTag(this)">🛋️ Furnished</div>
           <div class="tag-pill" data-group="features" data-val="no deposit" onclick="toggleTag(this)">✅ No deposit</div>
         </div>
+        <div class="tag-custom-row">
+          <input type="text" class="tag-custom-input" id="features-custom-input" placeholder="+ Add your own feature…" autocomplete="off">
+        </div>
       </div>
       <div class="gs-group">
         <label class="gs-label">Neighborhood vibe</label>
-        <div class="tag-grid">
-          <div class="tag-pill" data-group="vibe" data-val="quiet" onclick="toggleTag(this)">🏘️ Quiet & residential</div>
-          <div class="tag-pill" data-group="vibe" data-val="walkable" onclick="toggleTag(this)">🌆 Urban & walkable</div>
+        <div class="tag-grid" id="vibe-grid">
+          <div class="tag-pill" data-group="vibe" data-val="quiet" onclick="toggleTag(this)">🏘️ Quiet &amp; residential</div>
+          <div class="tag-pill" data-group="vibe" data-val="walkable" onclick="toggleTag(this)">🌆 Urban &amp; walkable</div>
           <div class="tag-pill" data-group="vibe" data-val="schools" onclick="toggleTag(this)">🏫 Near good schools</div>
           <div class="tag-pill" data-group="vibe" data-val="indian community" onclick="toggleTag(this)">🕌 Indian community</div>
           <div class="tag-pill" data-group="vibe" data-val="indian grocery" onclick="toggleTag(this)">🛒 Near Indian grocery</div>
         </div>
+        <div class="tag-custom-row">
+          <input type="text" class="tag-custom-input" id="vibe-custom-input" placeholder="+ Add your own vibe…" autocomplete="off">
+        </div>
       </div>
       <div class="gs-actions">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(1)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(3)">Continue →</button>
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(5)">← Back</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(7)">Continue →</button>
       </div>
     </div>
   </div>
 
-  <div id="step3" style="display:none">
+  {# ── Step 7: When ── #}
+  <div id="step7" style="display:none">
     <div class="gs-card">
       <h2>When do you need to move?</h2>
       <p class="gs-sub">We'll filter by availability so you only see what's actually open.</p>
@@ -170,7 +347,7 @@
           </div>
         </div>
       </div>
-      <div class="gs-group">
+      <div class="gs-group" id="lease-group">
         <label class="gs-label">Lease preference</label>
         <div class="tag-grid">
           <div class="tag-pill" data-group="lease" data-val="12 month lease" onclick="toggleTag(this)">12 months</div>
@@ -179,7 +356,7 @@
         </div>
       </div>
       <div class="gs-actions">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(2)">← Back</button>
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(6)">← Back</button>
         <button class="gs-btn gs-btn-primary gs-btn-lg" onclick="submitSearch()">🔍 Find my matches →</button>
       </div>
     </div>
@@ -187,8 +364,14 @@
 </div>
 
 <script>
+var TOTAL_STEPS = 7;
+var rentBuy = 'rent';      // 'rent' | 'buy'
+var roomType = 'whole';    // 'whole' | 'room'
+var buyPurpose = 'primary';
+var GS_MODE = '{{ gs_mode|escapejs }}'; // pre-set from URL ?mode=rent|buy
+
 function goStep(n) {
-  [1,2,3].forEach(function(i) {
+  for (var i = 1; i <= TOTAL_STEPS; i++) {
     document.getElementById('step'+i).style.display = i===n ? 'block' : 'none';
     var s = document.getElementById('s'+i);
     s.className = 'gs-step' + (i===n ? ' active' : i<n ? ' done' : '');
@@ -196,46 +379,180 @@ function goStep(n) {
     sn.textContent = i<n ? '✓' : i;
     var l = document.getElementById('l'+i);
     if (l) l.className = 'gs-line' + (i<n ? ' done' : '');
-  });
+  }
   window.scrollTo({top:0,behavior:'smooth'});
 }
-function toggleTag(el) { el.classList.toggle('sel'); }
+
+function selectRentBuy(val) {
+  rentBuy = val;
+  document.getElementById('cc-rent').classList.toggle('sel', val==='rent');
+  document.getElementById('cc-buy').classList.toggle('sel', val==='buy');
+  // Show/hide room question variants
+  document.getElementById('room-q-rent').style.display = val==='rent' ? '' : 'none';
+  document.getElementById('room-q-buy').style.display  = val==='buy'  ? '' : 'none';
+  // Show/hide property type variants
+  document.getElementById('type-rent-options').style.display = val==='rent' ? '' : 'none';
+  document.getElementById('type-buy-options').style.display  = val==='buy'  ? '' : 'none';
+  document.getElementById('bedrooms-group').style.display    = val==='rent' ? '' : 'none';
+  // Adjust budget label for buy
+  document.getElementById('budget-label').textContent = val==='buy' ? 'Purchase budget' : 'Monthly budget';
+  document.getElementById('budget-sub').textContent   = val==='buy' ? 'Set your price range for the purchase.' : 'Set your monthly range — we\'ll filter listings that fit.';
+  if (val==='buy') {
+    document.getElementById('budget_slider').max = '2000000';
+    document.getElementById('budget_slider').step = '10000';
+    document.getElementById('budget_slider').value = '400000';
+    document.getElementById('budget_disp').textContent = '$400,000';
+    document.getElementById('max_price').value = '400000';
+    document.getElementById('lease-group').style.display = 'none';
+  } else {
+    document.getElementById('budget_slider').max = '10000';
+    document.getElementById('budget_slider').step = '50';
+    document.getElementById('budget_slider').value = '3000';
+    document.getElementById('budget_disp').textContent = '$3,000';
+    document.getElementById('max_price').value = '3000';
+    document.getElementById('lease-group').style.display = '';
+  }
+  goStep(2);
+}
+
+function selectRoom(val) {
+  roomType = val;
+  document.getElementById('rc-whole').classList.toggle('sel', val==='whole');
+  document.getElementById('rc-room').classList.toggle('sel', val==='room');
+}
+
+function selectBuyPurpose(val) {
+  buyPurpose = val;
+  ['primary','invest','browse'].forEach(function(k){
+    document.getElementById('rc-'+k).classList.remove('sel');
+  });
+  document.getElementById('rc-'+val).classList.add('sel');
+}
+
+function toggleType(el) { el.classList.toggle('sel'); }
+function toggleTag(el)  { el.classList.toggle('sel'); }
+
 document.getElementById('beds-group').addEventListener('click', function(e) {
   var pill = e.target.closest('.tag-pill');
   if (!pill) return;
   this.querySelectorAll('.tag-pill').forEach(function(p){p.classList.remove('sel');});
   pill.classList.add('sel');
 });
+
 function selectOption(el, group) {
-  document.querySelectorAll('[data-group="'+group+'"]').forEach(function(o){o.classList.remove('sel');});
+  document.querySelectorAll('#timeline-group .gs-option').forEach(function(o){o.classList.remove('sel');});
   el.classList.add('sel');
 }
+
+function setCity(val) {
+  document.getElementById('city').value = val;
+  document.querySelectorAll('.gs-group .tag-pill').forEach(function(p){
+    p.classList.toggle('sel', p.textContent.trim().replace('📍 ','')===val);
+  });
+}
+
 function submitSearch() {
   var params = new URLSearchParams();
-  var city = document.getElementById('city').value.trim();
+
+  // Category from rent/buy + room type
+  if (rentBuy === 'buy') {
+    params.set('category', 'properties');
+  } else if (roomType === 'room') {
+    params.set('category', 'roommates');
+  } else {
+    params.set('category', 'rentals');
+  }
+
+  // Property type
+  var typeGroup = rentBuy==='buy' ? '#type-buy-group' : '#type-group';
+  var types = [];
+  document.querySelectorAll(typeGroup+' .type-chip.sel').forEach(function(c){types.push(c.dataset.val);});
+  if (types.length === 1) params.set('property_type', types[0]);
+
+  // Bedrooms
+  var bedPill = document.querySelector('#beds-group .tag-pill.sel');
+  if (bedPill && bedPill.dataset.val) params.set('bedrooms', bedPill.dataset.val);
+
+  // City — strip state suffix e.g. "Irving, TX" → "Irving"
+  var city = document.getElementById('city').value.trim().split(',')[0].trim();
   if (city) params.set('city', city);
-  var category = document.getElementById('category').value;
-  if (category) params.set('category', category);
+
+  // Budget
   var minPrice = document.getElementById('min_price').value.trim();
   var maxPrice = document.getElementById('max_price').value.trim();
   if (minPrice) params.set('min_price', minPrice);
   if (maxPrice) params.set('max_price', maxPrice);
-  var bedPill = document.querySelector('#beds-group .tag-pill.sel');
+
+  // Tags (features + vibe + lease)
   var tagVals = [];
-  if (bedPill && bedPill.dataset.val) tagVals.push(bedPill.dataset.val);
   document.querySelectorAll('.tag-pill.sel[data-group="features"]').forEach(function(p){tagVals.push(p.dataset.val);});
   document.querySelectorAll('.tag-pill.sel[data-group="vibe"]').forEach(function(p){tagVals.push(p.dataset.val);});
   document.querySelectorAll('.tag-pill.sel[data-group="lease"]').forEach(function(p){tagVals.push(p.dataset.val);});
   if (tagVals.length) params.set('tags', tagVals.join(','));
-  var timelineOpt = document.querySelector('[data-group="timeline"].sel, #timeline-group .gs-option.sel');
-  if (!timelineOpt) timelineOpt = document.querySelector('#timeline-group .gs-option.sel');
+
+  // Timeline
+  var timelineOpt = document.querySelector('#timeline-group .gs-option.sel');
   if (timelineOpt && timelineOpt.dataset.days) {
     var d = new Date();
     d.setDate(d.getDate() + parseInt(timelineOpt.dataset.days));
     params.set('available_by', d.toISOString().slice(0,10));
   }
+
   params.set('fmm', '1');
   window.location.href = '{% url "listing_list" %}?' + params.toString();
+}
+
+// Custom tag input — press Enter or comma to add a tag pill
+(function() {
+  function setupCustomInput(inputId, gridId, group) {
+    var input = document.getElementById(inputId);
+    var grid  = document.getElementById(gridId);
+    if (!input || !grid) return;
+
+    function addCustomTag(val) {
+      val = val.trim().toLowerCase();
+      if (!val) return;
+      // Don't add duplicates
+      var existing = grid.querySelector('.tag-pill[data-val="' + val + '"]');
+      if (existing) { existing.classList.add('sel'); input.value = ''; return; }
+      // Create pill
+      var pill = document.createElement('div');
+      pill.className = 'tag-pill sel';
+      pill.dataset.group = group;
+      pill.dataset.val   = val;
+      pill.dataset.custom = '1';
+      pill.innerHTML = '✏️ ' + val + ' <span class="custom-tag-remove" title="Remove">×</span>';
+      pill.querySelector('.custom-tag-remove').addEventListener('click', function(e) {
+        e.stopPropagation();
+        pill.remove();
+      });
+      pill.addEventListener('click', function(e) {
+        if (e.target.classList.contains('custom-tag-remove')) return;
+        pill.classList.toggle('sel');
+      });
+      grid.appendChild(pill);
+      input.value = '';
+    }
+
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        addCustomTag(input.value);
+      }
+    });
+    // Also add on blur if there's text
+    input.addEventListener('blur', function() {
+      if (input.value.trim()) addCustomTag(input.value);
+    });
+  }
+
+  setupCustomInput('features-custom-input', 'features-grid', 'features');
+  setupCustomInput('vibe-custom-input',     'vibe-grid',     'vibe');
+})();
+
+// Auto-skip step 1 if mode was passed via URL
+if (GS_MODE === 'rent' || GS_MODE === 'buy') {
+  selectRentBuy(GS_MODE);
 }
 </script>
 {% endblock %}
