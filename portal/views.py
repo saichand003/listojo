@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from chatapp.models import ChatMessage
-from listings.models import Listing, ListingInquiry
+from listings.models import GuidedSearchEvent, Listing, ListingInquiry
 
 
 def portal_login_required(view_fn):
@@ -73,33 +73,81 @@ def dashboard(request):
         .distinct().count()
     )
 
-    # ── Conversion funnel (views → inquiries → messages) ───────
+    # ── Conversion funnel (5-step: visitors → agent) ───────────
+    guided_starts    = GuidedSearchEvent.objects.filter(event_type=GuidedSearchEvent.START).count()
+    guided_completes = GuidedSearchEvent.objects.filter(event_type=GuidedSearchEvent.COMPLETE).count()
+    contacted_listers = ListingInquiry.objects.values('email').distinct().count()
+    chat_conversations = ChatMessage.objects.values('listing').distinct().count()
+
     funnel_steps = [
-        {'label': 'Listing views',              'count': total_views},
-        {'label': 'Inquiries sent',             'count': total_inquiries},
-        {'label': 'Chat conversations started', 'count': ChatMessage.objects.values('listing').distinct().count()},
+        {'label': 'Visitors',              'count': total_views},
+        {'label': 'Started guided search', 'count': guided_starts},
+        {'label': 'Completed intake',      'count': guided_completes},
+        {'label': 'Contacted a lister',    'count': contacted_listers},
+        {'label': 'Connected to agent',    'count': chat_conversations},
     ]
     funnel_max = funnel_steps[0]['count'] or 1
     for s in funnel_steps:
         s['pct'] = round(s['count'] / funnel_max * 100) if funnel_max else 0
 
-    # ── Search intent — listing count by category ───────────────
-    cat_map = dict(Listing.CATEGORY_CHOICES)
-    by_category = list(
-        Listing.objects.filter(status='active')
-        .values('category')
-        .annotate(total=Count('id'))
-        .order_by('-total')
-    )
+    # ── Search intent — bedroom-level for rentals when data exists ──
     total_active = active_listings or 1
-    category_data = [
-        {
+    cat_map   = dict(Listing.CATEGORY_CHOICES)
+    cat_icons = {
+        'roommates': '🤝', 'rentals': '🏠', 'properties': '🏡',
+        'local_services': '🔧', 'jobs': '💼', 'buy_sell': '🛍️', 'events': '🎉',
+    }
+
+    rentals_with_beds = Listing.objects.filter(
+        status='active', category='rentals', bedrooms__isnull=False
+    ).count()
+
+    rental_rows = []
+    if rentals_with_beds:
+        # Show bedroom sub-breakdown
+        for beds, label in [(2, 'Rentals — 2 bed'), (1, 'Rentals — 1 bed'), (3, 'Rentals — 3+ bed')]:
+            q = (Listing.objects.filter(status='active', category='rentals', bedrooms__gte=3)
+                 if beds == 3 else
+                 Listing.objects.filter(status='active', category='rentals', bedrooms=beds))
+            c = q.count()
+            if c:
+                rental_rows.append({'label': label, 'count': c,
+                                     'pct': round(c / total_active * 100), 'icon': '🏠'})
+        studio_count = Listing.objects.filter(status='active', category='rentals').filter(
+            Q(property_type='studio') | Q(bedrooms=0)
+        ).count()
+        if studio_count:
+            rental_rows.append({'label': 'Studios', 'count': studio_count,
+                                 'pct': round(studio_count / total_active * 100), 'icon': '🏢'})
+        exclude_rentals = True
+    else:
+        exclude_rentals = False  # show rentals as a whole category below
+
+    # All categories (exclude rentals only when we have bedroom breakdown above)
+    other_rows = []
+    qs = Listing.objects.filter(status='active').values('category').annotate(total=Count('id')).order_by('-total')
+    if exclude_rentals:
+        qs = qs.exclude(category='rentals')
+    for r in qs:
+        other_rows.append({
             'label': cat_map.get(r['category'], r['category']),
             'count': r['total'],
             'pct':   round(r['total'] / total_active * 100),
-        }
-        for r in by_category
-    ]
+            'icon':  cat_icons.get(r['category'], '📋'),
+        })
+
+    category_data = sorted(rental_rows + other_rows, key=lambda x: -x['count'])[:6]
+
+    # ── Top city by listing views ───────────────────────────────
+    top_city_row = (
+        Listing.objects.filter(status='active')
+        .values('city')
+        .annotate(city_views=Sum('view_count'))
+        .order_by('-city_views')
+        .first()
+    )
+    top_city     = top_city_row['city'] if top_city_row else None
+    top_city_pct = round(top_city_row['city_views'] / (total_views or 1) * 100) if top_city_row and top_city_row['city_views'] else 0
 
     # ── Top listers ─────────────────────────────────────────────
     top_listers = list(
@@ -158,6 +206,8 @@ def dashboard(request):
         'funnel_steps':     funnel_steps,
         # Categories
         'category_data':    category_data,
+        'top_city':         top_city,
+        'top_city_pct':     top_city_pct,
         # Top listers
         'top_listers':      top_listers,
         # Review queue

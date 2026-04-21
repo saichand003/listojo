@@ -21,22 +21,26 @@
 .dash-row-2 { grid-template-columns:1fr 1fr; }
 .dash-row-3 { grid-template-columns:1.6fr 1fr; }
 
-/* ── Funnel ───────────────────────────────────────────────────── */
-.funnel-row { display:flex; align-items:center; gap:.85rem; padding:.65rem 0; border-bottom:1px solid var(--border); }
-.funnel-row:last-child { border-bottom:none; }
-.funnel-label { flex:0 0 210px; font-size:.85rem; color:var(--text); font-weight:500; }
-.funnel-track { flex:1; height:10px; background:var(--bg); border-radius:99px; overflow:hidden; }
-.funnel-fill  { height:100%; border-radius:99px; background:linear-gradient(90deg,#0f1c35,#2A7EF2); transition:width .4s ease; }
-.funnel-nums  { width:110px; text-align:right; font-size:.82rem; font-weight:700; color:var(--text); white-space:nowrap; }
-.funnel-pct   { color:var(--muted); font-weight:400; font-size:.75rem; }
+/* ── Funnel (stacked: label+count row, then bar below) ────────── */
+.funnel-step { padding:.7rem 0; border-bottom:1px solid var(--border); }
+.funnel-step:last-child { border-bottom:none; }
+.funnel-top  { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.42rem; }
+.funnel-lbl  { font-size:.875rem; color:var(--text); font-weight:400; }
+.funnel-right{ font-size:.875rem; white-space:nowrap; }
+.funnel-num  { font-weight:800; color:var(--text); font-size:.95rem; }
+.funnel-pct  { color:var(--muted); font-weight:400; font-size:.82rem; margin-left:.2rem; }
+.funnel-track{ height:8px; background:#e2e8e2; border-radius:99px; overflow:hidden; }
+.funnel-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#2A7EF2,#3DB549); transition:width .45s ease; }
+.funnel-fill.warn { background:#f59e0b; }
 
-/* ── Category / intent bars ───────────────────────────────────── */
-.intent-row { display:flex; align-items:center; gap:.85rem; padding:.55rem 0; border-bottom:1px solid var(--border); }
+/* ── Search intent (icon · label · bar · pct) ─────────────────── */
+.intent-row  { display:flex; align-items:center; gap:.7rem; padding:.62rem 0; border-bottom:1px solid var(--border); }
 .intent-row:last-child { border-bottom:none; }
-.intent-label { flex:0 0 160px; font-size:.82rem; color:var(--text); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.intent-track { flex:1; height:10px; background:var(--bg); border-radius:99px; overflow:hidden; }
-.intent-fill  { height:100%; border-radius:99px; background:linear-gradient(90deg,#3DB549,#2A7EF2); }
-.intent-pct   { width:38px; text-align:right; font-size:.82rem; font-weight:700; color:var(--text); }
+.intent-icon { font-size:1.15rem; flex-shrink:0; width:26px; text-align:center; }
+.intent-lbl  { flex:0 0 145px; font-size:.86rem; color:var(--text); font-weight:400; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.intent-track{ flex:1; height:8px; background:#e2e8e2; border-radius:99px; overflow:hidden; }
+.intent-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#2A7EF2,#3DB549); }
+.intent-pct  { width:44px; text-align:right; font-size:.9rem; font-weight:800; color:var(--text); }
 
 /* ── Review table ─────────────────────────────────────────────── */
 .review-table table { width:100%; border-collapse:collapse; font-size:.875rem; }
@@ -124,11 +128,11 @@
     </div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-icon" style="background:#FFF1F2;">🚩</div>
+    <div class="kpi-icon" style="background:#F5F3FF;">💬</div>
     <div class="kpi-body">
-      <div class="kpi-label">Flagged</div>
-      <div class="kpi-value" style="color:#dc2626;">{{ flagged_count }}</div>
-      <div class="kpi-delta danger"><a href="{% url 'portal_listings' %}?status=flagged">Investigate &rarr;</a></div>
+      <div class="kpi-label">Total Messages</div>
+      <div class="kpi-value">{{ total_messages }}</div>
+      <div class="kpi-delta up">Chat activity all time</div>
     </div>
   </div>
   <div class="kpi-card">
@@ -154,19 +158,19 @@
 
   {# Conversion funnel #}
   <div class="card">
-    <div class="card-head">
-      <h2>Conversion funnel</h2>
-      <span style="font-size:.75rem;color:var(--muted);">All time</span>
+    <div class="card-head" style="margin-bottom:.75rem;">
+      <h2 style="font-size:1.05rem;">Conversion funnel this week</h2>
     </div>
     {% for step in funnel_steps %}
-    <div class="funnel-row">
-      <div class="funnel-label">{{ step.label }}</div>
-      <div class="funnel-track">
-        <div class="funnel-fill" style="width:{{ step.pct }}%"></div>
+    <div class="funnel-step">
+      <div class="funnel-top">
+        <span class="funnel-lbl">{{ step.label }}</span>
+        <span class="funnel-right">
+          <span class="funnel-num">{{ step.count }}</span>{% if step.pct != 100 %}<span class="funnel-pct">({{ step.pct }}%)</span>{% endif %}
+        </span>
       </div>
-      <div class="funnel-nums">
-        {{ step.count }}
-        <span class="funnel-pct">({{ step.pct }}%)</span>
+      <div class="funnel-track">
+        <div class="funnel-fill {% if step.pct < 5 %}warn{% endif %}" style="width:{{ step.pct }}%"></div>
       </div>
     </div>
     {% empty %}
@@ -176,24 +180,24 @@
 
   {# Search intent #}
   <div class="card">
-    <div class="card-head">
-      <h2>Listing breakdown by type</h2>
-      <span style="font-size:.75rem;color:var(--muted);">Active only</span>
+    <div class="card-head" style="margin-bottom:.75rem;">
+      <h2 style="font-size:1.05rem;">Search intent breakdown</h2>
     </div>
     {% for row in category_data %}
     <div class="intent-row">
-      <div class="intent-label">{{ row.label }}</div>
+      <span class="intent-icon">{{ row.icon }}</span>
+      <span class="intent-lbl">{{ row.label }}</span>
       <div class="intent-track">
         <div class="intent-fill" style="width:{{ row.pct }}%"></div>
       </div>
-      <div class="intent-pct">{{ row.pct }}%</div>
+      <span class="intent-pct">{{ row.pct }}%</span>
     </div>
     {% empty %}
-    <p style="color:var(--muted);font-size:.85rem;">No active listings.</p>
+    <p style="color:var(--muted);font-size:.85rem;">No active listings yet.</p>
     {% endfor %}
-    {% if category_data %}
-    <div style="margin-top:.85rem;font-size:.75rem;color:var(--muted);">
-      Top category: <strong style="color:var(--text);">{{ category_data.0.label }}</strong> &middot; {{ category_data.0.count }} listings
+    {% if top_city %}
+    <div style="margin-top:1rem;font-size:.8rem;color:var(--muted);">
+      Top searched area: <strong style="color:var(--text);">{{ top_city }}</strong> &middot; {{ top_city_pct }}% of all views
     </div>
     {% endif %}
   </div>

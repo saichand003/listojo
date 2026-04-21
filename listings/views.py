@@ -11,7 +11,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
-from .models import CityWaitlist, Favourite, Listing, ListingImage
+from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage
 
 
 def _fmm_score(listing, max_price_val, requested_tags, avail_date,
@@ -419,6 +419,10 @@ def listing_list(request):
 
 
 def guided_search(request):
+    if request.method == 'POST':
+        GuidedSearchEvent.objects.create(event_type=GuidedSearchEvent.COMPLETE)
+    else:
+        GuidedSearchEvent.objects.create(event_type=GuidedSearchEvent.START)
     return render(request, 'listings/guided_search.html', {
         'category_choices': Listing.CATEGORY_CHOICES,
     })

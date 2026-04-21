@@ -76,6 +76,8 @@ class Listing(models.Model):
                             help_text='Comma-separated tags, e.g. pet-friendly, parking, furnished')
     created_at = models.DateTimeField(auto_now_add=True)
     view_count = models.PositiveIntegerField(default=0)
+    bedrooms   = models.PositiveSmallIntegerField(null=True, blank=True,
+                     help_text='Number of bedrooms (leave blank if not applicable)')
 
     INCOME_QUALIFIER_CATEGORIES = {'rentals', 'roommates'}
 
@@ -134,6 +136,21 @@ class CityWaitlist(models.Model):
 
     def __str__(self):
         return f'{self.email} — {self.city}'
+
+
+class GuidedSearchEvent(models.Model):
+    START    = 'start'
+    COMPLETE = 'complete'
+    TYPE_CHOICES = [(START, 'Start'), (COMPLETE, 'Complete')]
+
+    event_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'GuidedSearch {self.event_type} at {self.created_at}'
 
 
 class ListingInquiry(models.Model):
