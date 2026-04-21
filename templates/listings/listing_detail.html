@@ -2,8 +2,11 @@
 {% block content %}
 
 {# ── Back to guided search results (shown when navigated from FMM results) ── #}
+<style>
+#fmm-back-link:hover { background:rgba(42,126,242,.18) !important; color:var(--primary-dk,#1a5dd4) !important; }
+</style>
 <div id="fmm-back-bar" style="display:none;margin-bottom:1rem;">
-  <a id="fmm-back-link" href="#" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(42,126,242,.08);border:1px solid rgba(42,126,242,.18);transition:background .15s;">
+  <a id="fmm-back-link" href="#" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(42,126,242,.08);border:1px solid rgba(42,126,242,.18);transition:background .15s,color .15s;">
     ← Back to guided search results
   </a>
 </div>
@@ -65,9 +68,25 @@
         {% endwith %}
 
         <div style="padding:1.5rem;">
+
+            {# ── Status banners (sold / under contract) ── #}
+            {% if listing.status == 'sold' %}
+            <div style="background:#dc2626;color:#fff;font-weight:700;font-size:.95rem;padding:.6rem 1rem;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
+                🏷️ This property has been SOLD
+            </div>
+            {% elif listing.status == 'under_contract' %}
+            <div style="background:#d97706;color:#fff;font-weight:700;font-size:.95rem;padding:.6rem 1rem;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
+                📋 Under Contract — still accepting backup offers
+            </div>
+            {% endif %}
+
             <div class="chips" style="margin-bottom:.75rem;">
                 <span class="chip">{{ listing.get_category_display }}</span>
                 {% if listing.featured %}<span class="inline-featured-badge">★ Featured</span>{% endif %}
+                {# Price Reduced badge for properties #}
+                {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
+                <span style="background:#16a34a;color:#fff;font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;">Price Reduced</span>
+                {% endif %}
             </div>
 
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.5rem;">
@@ -77,9 +96,14 @@
                 {% endif %}
             </div>
 
-            <p class="price" style="font-size:1.4rem;margin-bottom:1rem;">
-                {% if listing.price %}${{ listing.price }}{% if listing.price_unit %}<span class="price-unit">{{ listing.get_price_unit_display }}</span>{% endif %}{% else %}Contact for price{% endif %}
-            </p>
+            <div style="margin-bottom:1rem;">
+                <p class="price" style="font-size:1.4rem;margin:0;">
+                    {% if listing.price %}${{ listing.price }}{% if listing.price_unit %}<span class="price-unit">{{ listing.get_price_unit_display }}</span>{% endif %}{% else %}Contact for price{% endif %}
+                </p>
+                {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
+                <p style="font-size:.85rem;color:var(--text-3);text-decoration:line-through;margin:.2rem 0 0;">${{ listing.original_price }}</p>
+                {% endif %}
+            </div>
 
             <p style="color:var(--text-2);line-height:1.7;">{{ listing.description }}</p>
 
@@ -93,12 +117,46 @@
                 {% endif %}
             {% endwith %}
 
+            {# ── Property-specific details ── #}
+            {% if listing.category == 'properties' %}
+            {% if listing.square_footage or listing.year_built or listing.hoa_fee or listing.bedrooms %}
+            <div style="margin-top:1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem;">
+                {% if listing.bedrooms %}
+                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.5rem .75rem;text-align:center;">
+                    <div style="font-size:1.3rem;font-weight:700;">{{ listing.bedrooms }}</div>
+                    <div style="font-size:.75rem;color:var(--text-3);">Bedrooms</div>
+                </div>
+                {% endif %}
+                {% if listing.square_footage %}
+                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.5rem .75rem;text-align:center;">
+                    <div style="font-size:1.3rem;font-weight:700;">{{ listing.square_footage|floatformat:0 }}</div>
+                    <div style="font-size:.75rem;color:var(--text-3);">Sq Ft</div>
+                </div>
+                {% endif %}
+                {% if listing.year_built %}
+                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.5rem .75rem;text-align:center;">
+                    <div style="font-size:1.3rem;font-weight:700;">{{ listing.year_built }}</div>
+                    <div style="font-size:.75rem;color:var(--text-3);">Year Built</div>
+                </div>
+                {% endif %}
+                {% if listing.hoa_fee %}
+                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.5rem .75rem;text-align:center;">
+                    <div style="font-size:1.3rem;font-weight:700;">${{ listing.hoa_fee|floatformat:0 }}</div>
+                    <div style="font-size:.75rem;color:var(--text-3);">HOA/mo</div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endif %}
+
             <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:.4rem;">
                 <p class="muted">📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %} &mdash; {{ listing.country }}</p>
-                {% if listing.available_from %}
-                <p class="muted">📅 Available from <strong style="color:var(--text-2);">{{ listing.available_from|date:"F j, Y" }}</strong></p>
-                {% else %}
-                <p class="muted">📅 <strong style="color:var(--accent);">Available now</strong></p>
+                {% if listing.category != 'properties' %}
+                    {% if listing.available_from %}
+                    <p class="muted">📅 Available from <strong style="color:var(--text-2);">{{ listing.available_from|date:"F j, Y" }}</strong></p>
+                    {% else %}
+                    <p class="muted">📅 <strong style="color:var(--accent);">Available now</strong></p>
+                    {% endif %}
                 {% endif %}
                 {% with listing.recommended_income as inc %}
                 {% if inc %}
@@ -108,7 +166,14 @@
                 </p>
                 {% endif %}
                 {% endwith %}
-                {% if listing.contact_phone %}<p class="muted">📞 {{ listing.contact_phone }}</p>{% endif %}
+                {# Phone gated behind login for privacy #}
+                {% if listing.contact_phone %}
+                    {% if user.is_authenticated %}
+                    <p class="muted">📞 {{ listing.contact_phone }}</p>
+                    {% else %}
+                    <p class="muted">📞 <a href="{% url 'login' %}?next={{ request.path }}" style="color:var(--primary);">Login to view phone number</a></p>
+                    {% endif %}
+                {% endif %}
                 <p class="muted">👤 Listed by <strong style="color:var(--text-2);">{{ listing.owner.username }}</strong></p>
             </div>
 
@@ -126,13 +191,27 @@
 
     {% if user != listing.owner %}
     <aside class="card" style="position:sticky;top:1.5rem;">
+
+        {# ── Agent help CTA for properties ── #}
+        {% if listing.category == 'properties' %}
+        <div style="background:linear-gradient(135deg,rgba(42,126,242,.08),rgba(98,194,255,.06));border:1px solid rgba(42,126,242,.2);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
+            <p style="font-weight:700;font-size:.95rem;margin-bottom:.3rem;">Want expert help with this property?</p>
+            <p class="muted" style="font-size:.8rem;margin-bottom:.75rem;">Connect with a Listojo agent who can guide you through the buying process — tours, offers, and closing.</p>
+            <a href="mailto:agents@listojo.com?subject=Agent help: {{ listing.title|urlencode }}&body=I am interested in: {{ listing.title }} — {{ request.build_absolute_uri }}" class="button" style="width:100%;text-align:center;display:block;">Connect with an Agent</a>
+        </div>
+        {% endif %}
+
         <h2 style="margin-bottom:.25rem;">Send an Inquiry</h2>
         <p class="muted" style="margin-bottom:1rem;font-size:.82rem;">The lister will be notified by email.</p>
+        {% if listing.status == 'sold' %}
+        <p style="color:#dc2626;font-size:.85rem;font-weight:600;">This listing is marked as sold. Inquiries are disabled.</p>
+        {% else %}
         <form method="post">
             {% csrf_token %}
             {{ inquiry_form.as_p }}
             <button type="submit" style="width:100%;margin-top:.25rem;">Send inquiry</button>
         </form>
+        {% endif %}
     </aside>
     {% endif %}
 </div>

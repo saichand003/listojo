@@ -1,0 +1,211 @@
+{% extends 'portal/agent_base.html' %}
+{% block page_title %}Lead — {{ lead.name }}{% endblock %}
+{% block content %}
+
+<style>
+.lead-grid { display:grid; grid-template-columns:1.5fr 1fr; gap:1.25rem; align-items:start; }
+.section-title { font-family:'Montserrat',sans-serif; font-weight:700; font-size:.92rem; color:var(--text); margin:0 0 .85rem; }
+.info-row { display:flex; justify-content:space-between; align-items:baseline; padding:.45rem 0; border-bottom:1px solid var(--border); font-size:.875rem; }
+.info-row:last-child { border-bottom:none; }
+.info-label { color:var(--muted); font-weight:600; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
+.info-value { font-weight:500; color:var(--text); text-align:right; }
+.stage-btn { display:block; width:100%; text-align:left; padding:.5rem .75rem; border-radius:8px; border:1px solid var(--border); background:var(--surface); font-size:.83rem; cursor:pointer; margin-bottom:.35rem; transition:background .12s; }
+.stage-btn:hover { background:var(--bg); }
+.stage-btn.active-stage { background:#dbeafe; border-color:#93c5fd; color:#1e40af; font-weight:700; }
+.shortlist-card { border:1px solid var(--border); border-radius:10px; padding:1rem; margin-bottom:.85rem; }
+.shortlist-item { display:flex; align-items:center; justify-content:space-between; padding:.45rem 0; border-bottom:1px solid var(--border); font-size:.84rem; }
+.shortlist-item:last-child { border-bottom:none; }
+.listing-check { display:flex; align-items:center; gap:.6rem; padding:.5rem .6rem; border:1px solid var(--border); border-radius:8px; margin-bottom:.4rem; cursor:pointer; font-size:.84rem; transition:background .12s; }
+.listing-check:hover { background:var(--bg); }
+.listing-check input[type=checkbox] { width:16px; height:16px; cursor:pointer; }
+</style>
+
+<div style="margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+  <a href="{% url 'agent_leads' %}" style="color:var(--muted);text-decoration:none;font-size:.85rem;">← Leads</a>
+  <span style="color:var(--border);">/</span>
+  <span style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.1rem;">{{ lead.name }}</span>
+  {% if lead.status == 'new' %}<span class="badge badge-orange">New</span>
+  {% elif lead.status == 'closed_won' %}<span class="badge badge-green">Won</span>
+  {% elif lead.status == 'closed_lost' %}<span class="badge badge-red">Lost</span>
+  {% else %}<span class="badge badge-blue">{{ lead.get_status_display }}</span>{% endif %}
+</div>
+
+<div class="lead-grid">
+
+  {# ── LEFT COLUMN ── #}
+  <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+    {# Lead Info #}
+    <div class="card">
+      <div class="section-title">Lead Information</div>
+      <div class="info-row"><span class="info-label">Name</span><span class="info-value">{{ lead.name }}</span></div>
+      <div class="info-row"><span class="info-label">Email</span><span class="info-value"><a href="mailto:{{ lead.email }}" style="color:var(--primary);">{{ lead.email }}</a></span></div>
+      {% if lead.phone %}<div class="info-row"><span class="info-label">Phone</span><span class="info-value">{{ lead.phone }}</span></div>{% endif %}
+      <div class="info-row"><span class="info-label">Source</span><span class="info-value">{{ lead.get_source_display }}</span></div>
+      <div class="info-row"><span class="info-label">Received</span><span class="info-value">{{ lead.created_at|date:"M d, Y H:i" }}</span></div>
+      {% if lead.listing %}
+      <div class="info-row">
+        <span class="info-label">Listing</span>
+        <span class="info-value"><a href="{% url 'listing_detail' lead.listing.pk %}" target="_blank" style="color:var(--primary);text-decoration:none;">{{ lead.listing.title|truncatechars:32 }} ↗</a></span>
+      </div>
+      {% endif %}
+      {% if lead.assigned_agent %}
+      <div class="info-row"><span class="info-label">Assigned to</span><span class="info-value">{{ lead.assigned_agent.username }}</span></div>
+      {% endif %}
+    </div>
+
+    {# Preferences #}
+    {% if preference %}
+    <div class="card">
+      <div class="section-title">Preferences</div>
+      {% if preference.city %}<div class="info-row"><span class="info-label">City</span><span class="info-value">{{ preference.city }}</span></div>{% endif %}
+      {% if preference.max_budget %}<div class="info-row"><span class="info-label">Max Budget</span><span class="info-value">${{ preference.max_budget|floatformat:0 }}</span></div>{% endif %}
+      {% if preference.bedrooms %}<div class="info-row"><span class="info-label">Bedrooms</span><span class="info-value">{{ preference.bedrooms }}</span></div>{% endif %}
+      {% if preference.property_type %}<div class="info-row"><span class="info-label">Type</span><span class="info-value">{{ preference.property_type|title }}</span></div>{% endif %}
+      {% if preference.move_in_date %}<div class="info-row"><span class="info-label">Move-in</span><span class="info-value">{{ preference.move_in_date|date:"M d, Y" }}</span></div>{% endif %}
+      {% if preference.amenities %}<div class="info-row"><span class="info-label">Amenities</span><span class="info-value">{{ preference.amenities }}</span></div>{% endif %}
+    </div>
+    {% endif %}
+
+    {# Notes #}
+    <div class="card">
+      <div class="section-title">Agent Notes</div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_note">
+        <textarea name="notes" rows="4" style="width:100%;padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.875rem;font-family:inherit;resize:vertical;margin-bottom:.75rem;">{{ lead.notes }}</textarea>
+        <button type="submit" class="btn btn-primary btn-sm">Save notes</button>
+      </form>
+    </div>
+
+    {# Shortlists #}
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <div class="section-title" style="margin:0;">Shortlists</div>
+        {% if matched_listings %}
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('shortlist-builder').style.display='block';this.style.display='none';">+ New Shortlist</button>
+        {% endif %}
+      </div>
+
+      {# Shortlist builder #}
+      {% if matched_listings %}
+      <div id="shortlist-builder" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+        <div style="font-weight:700;font-size:.88rem;margin-bottom:.75rem;">Select listings for shortlist</div>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create_shortlist">
+          {% for listing in matched_listings %}
+          <label class="listing-check">
+            <input type="checkbox" name="listing_ids" value="{{ listing.pk }}">
+            <div style="flex:1;">
+              <div style="font-weight:600;">{{ listing.title|truncatechars:40 }}</div>
+              <div style="font-size:.75rem;color:var(--muted);">{{ listing.city }} &middot; {% if listing.price %}${{ listing.price }}{% if listing.price_unit %}/{{ listing.price_unit }}{% endif %}{% else %}Price TBD{% endif %} {% if listing.bedrooms %}&middot; {{ listing.bedrooms }} bd{% endif %}</div>
+            </div>
+          </label>
+          {% endfor %}
+          <div style="display:flex;gap:.5rem;margin-top:.75rem;">
+            <button type="submit" class="btn btn-primary btn-sm">Create Shortlist</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('shortlist-builder').style.display='none';document.querySelector('[onclick*=shortlist-builder]').style.display='';">Cancel</button>
+          </div>
+        </form>
+      </div>
+      {% endif %}
+
+      {% if shortlists %}
+        {% for sl in shortlists %}
+        <div class="shortlist-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
+            <div>
+              <span style="font-weight:700;font-size:.88rem;">Shortlist #{{ forloop.counter }}</span>
+              <span style="margin-left:.5rem;">
+                {% if sl.status == 'sent' %}<span class="badge badge-green">Sent</span>
+                {% elif sl.status == 'viewed' %}<span class="badge badge-blue">Viewed</span>
+                {% elif sl.status == 'archived' %}<span class="badge" style="background:#e2e8f0;color:#475569;">Archived</span>
+                {% else %}<span class="badge badge-orange">Draft</span>{% endif %}
+              </span>
+            </div>
+            <div style="font-size:.72rem;color:var(--muted);">{{ sl.created_at|date:"M d, Y" }}</div>
+          </div>
+          {% for item in sl.items.all %}
+          <div class="shortlist-item">
+            <div>
+              <a href="{% url 'listing_detail' item.listing.pk %}" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;font-size:.84rem;">{{ item.listing.title|truncatechars:36 }}</a>
+              <div style="font-size:.72rem;color:var(--muted);">{{ item.listing.city }} &middot; {% if item.listing.price %}${{ item.listing.price }}{% endif %}</div>
+              {% if item.agent_note %}<div style="font-size:.75rem;color:var(--muted);font-style:italic;margin-top:.2rem;">{{ item.agent_note }}</div>{% endif %}
+            </div>
+            {% if item.client_response %}
+              {% if item.client_response == 'interested' %}<span class="badge badge-green">Interested</span>
+              {% else %}<span class="badge badge-red">Rejected</span>{% endif %}
+            {% endif %}
+          </div>
+          {% empty %}
+          <p style="color:var(--muted);font-size:.82rem;">No listings in this shortlist.</p>
+          {% endfor %}
+          {% if sl.status == 'draft' %}
+          <form method="post" style="margin-top:.75rem;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="mark_sent">
+            <input type="hidden" name="shortlist_id" value="{{ sl.pk }}">
+            <button type="submit" class="btn btn-primary btn-sm">Mark as Sent</button>
+          </form>
+          {% elif sl.sent_at %}
+          <div style="font-size:.72rem;color:var(--muted);margin-top:.5rem;">Sent {{ sl.sent_at|date:"M d, Y" }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+      <p style="color:var(--muted);font-size:.85rem;text-align:center;padding:1rem 0;">No shortlists yet.{% if matched_listings %} Use the button above to create one.{% endif %}</p>
+      {% endif %}
+    </div>
+
+  </div>
+
+  {# ── RIGHT COLUMN ── #}
+  <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+    {# Pipeline status #}
+    <div class="card">
+      <div class="section-title">Pipeline Stage</div>
+      {% for val, label in status_choices %}
+      <form method="post" style="margin:0;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_status">
+        <input type="hidden" name="status" value="{{ val }}">
+        <button type="submit" class="stage-btn {% if lead.status == val %}active-stage{% endif %}">
+          {% if val == 'new' %}🆕
+          {% elif val == 'contacted' %}📞
+          {% elif val == 'shortlist_ready' %}📋
+          {% elif val == 'shortlist_sent' %}📤
+          {% elif val == 'touring' %}🏠
+          {% elif val == 'application_in_progress' %}📝
+          {% elif val == 'closed_won' %}✅
+          {% elif val == 'closed_lost' %}❌
+          {% endif %}
+          {{ label }}
+        </button>
+      </form>
+      {% endfor %}
+    </div>
+
+    {# Assign agent (admin only) #}
+    {% if request.user.is_superuser and all_agents %}
+    <div class="card">
+      <div class="section-title">Assign Agent</div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="assign_agent">
+        <select name="agent_id" style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.875rem;margin-bottom:.75rem;">
+          <option value="">— Unassigned —</option>
+          {% for agent in all_agents %}
+          <option value="{{ agent.pk }}" {% if lead.assigned_agent_id == agent.pk %}selected{% endif %}>{{ agent.username }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm" style="width:100%;">Assign</button>
+      </form>
+    </div>
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock %}

@@ -44,10 +44,17 @@ class Listing(models.Model):
     ]
 
     STATUS_CHOICES = [
-        ('active',  'Active'),
-        ('draft',   'Draft'),
-        ('pending', 'Pending Review'),
-        ('flagged', 'Flagged'),
+        ('active',         'Active'),
+        ('draft',          'Draft'),
+        ('pending',        'Pending Review'),
+        ('flagged',        'Flagged'),
+        ('under_contract', 'Under Contract'),
+        ('sold',           'Sold'),
+    ]
+
+    SOURCE_CHOICES = [
+        ('native',     'Native'),
+        ('mls_ntreis', 'NTREIS MLS'),
     ]
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listings')
@@ -69,7 +76,7 @@ class Listing(models.Model):
     security_deposit   = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     available_from = models.DateField(blank=True, null=True,
                                       help_text='Date the listing becomes available (leave blank if available now)')
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     featured = models.BooleanField(default=False)
     image = models.ImageField(upload_to='listing_images/', blank=True, null=True)
     tags = models.CharField(max_length=1000, blank=True, default='',
@@ -78,6 +85,20 @@ class Listing(models.Model):
     view_count = models.PositiveIntegerField(default=0)
     bedrooms   = models.PositiveSmallIntegerField(null=True, blank=True,
                      help_text='Number of bedrooms (leave blank if not applicable)')
+
+    # ── Properties-for-sale fields ────────────────────────────────────────
+    square_footage = models.PositiveIntegerField(null=True, blank=True)
+    year_built     = models.PositiveSmallIntegerField(null=True, blank=True)
+    hoa_fee        = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
+                         help_text='Original asking price — used to show Price Reduced badge')
+
+    # ── Listing lifecycle ─────────────────────────────────────────────────
+    expires_at = models.DateField(null=True, blank=True,
+                     help_text='Listing auto-expires on this date (leave blank for no expiry)')
+
+    # ── Data source ───────────────────────────────────────────────────────
+    source_type = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='native')
 
     INCOME_QUALIFIER_CATEGORIES = {'rentals', 'roommates'}
 

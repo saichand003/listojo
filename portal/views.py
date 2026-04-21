@@ -4,16 +4,27 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from chatapp.models import ChatMessage
 from listings.models import GuidedSearchEvent, Listing, ListingInquiry
+from .models import Lead, LeadPreference, Shortlist, ShortlistItem
 
 
 def portal_login_required(view_fn):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated or not request.user.is_superuser:
+            return redirect('portal_login')
+        return view_fn(request, *args, **kwargs)
+    wrapper.__name__ = view_fn.__name__
+    return wrapper
+
+
+def agent_login_required(view_fn):
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
             return redirect('portal_login')
         return view_fn(request, *args, **kwargs)
     wrapper.__name__ = view_fn.__name__
@@ -309,3 +320,179 @@ def flag_listing(request, pk):
     return redirect(request.POST.get('next', 'portal_listings'))
 
 
+@portal_login_required
+def agents_view(request):
+    agents = (
+        User.objects.filter(is_staff=True)
+        .annotate(
+            listing_count=Count('listings', distinct=True),
+            lead_count=Count('assigned_leads', distinct=True),
+        )
+        .order_by('-date_joined')
+    )
+    return render(request, 'portal/agents.html', {'agents': agents})
+
+
+# ── AGENT PORTAL ─────────────────────────────────────────────────────────────
+
+def _build_leads_data(leads_qs):
+    """Enrich a lead queryset with matched listing count and preference summary."""
+    result = []
+    for lead in leads_qs.prefetch_related('shortlists'):
+        pref = getattr(lead, 'preference', None)
+        matched_count = 0
+        pref_summary_parts = []
+        if pref:
+            qs = Listing.objects.filter(status='active')
+            if pref.city:
+                qs = qs.filter(city__icontains=pref.city)
+                pref_summary_parts.append(pref.city)
+            if pref.bedrooms:
+                qs = qs.filter(bedrooms=pref.bedrooms)
+                pref_summary_parts.append(f'{pref.bedrooms} bed')
+            if pref.max_budget:
+                qs = qs.filter(price__lte=pref.max_budget)
+                pref_summary_parts.append(f'Under ${int(pref.max_budget):,}')
+            if pref.amenities:
+                pref_summary_parts.append(pref.amenities.split(',')[0].strip().title())
+            if pref.move_in_date:
+                pref_summary_parts.append(pref.move_in_date.strftime('%b %Y'))
+            matched_count = qs.count()
+        elif lead.listing:
+            pref_summary_parts.append(lead.listing.city)
+
+        # Simple match score: % of filled preference criteria
+        criteria = ['city', 'bedrooms', 'max_budget', 'amenities', 'move_in_date']
+        filled = sum(1 for c in criteria if pref and getattr(pref, c, None))
+        match_pct = max(70, min(98, 70 + filled * 6)) if filled else 0
+
+        result.append({
+            'lead':          lead,
+            'preference':    pref,
+            'pref_summary':  ' · '.join(pref_summary_parts),
+            'matched_count': matched_count,
+            'match_pct':     match_pct,
+        })
+    return result
+
+
+@agent_login_required
+def agent_dashboard(request):
+    agent        = request.user
+    status_filter = request.GET.get('status', '').strip()
+    my_leads     = Lead.objects.filter(assigned_agent=agent).select_related('listing', 'preference')
+
+    total         = my_leads.count()
+    new_count     = my_leads.filter(status='new').count()
+    active_count  = my_leads.filter(status__in=['contacted', 'shortlist_ready',
+                                                 'shortlist_sent', 'touring',
+                                                 'application_in_progress']).count()
+    won_count     = my_leads.filter(status='closed_won').count()
+    lost_count    = my_leads.filter(status='closed_lost').count()
+    shortlists_sent = Shortlist.objects.filter(agent=agent, status__in=['sent', 'viewed']).count()
+
+    display_qs = my_leads
+    if status_filter:
+        display_qs = display_qs.filter(status=status_filter)
+
+    leads_data = _build_leads_data(display_qs[:10])
+
+    return render(request, 'portal/agent_dashboard.html', {
+        'total':           total,
+        'new_count':       new_count,
+        'active_count':    active_count,
+        'won_count':       won_count,
+        'lost_count':      lost_count,
+        'shortlists_sent': shortlists_sent,
+        'leads_data':      leads_data,
+        'status_filter':   status_filter,
+    })
+
+
+@agent_login_required
+def agent_leads(request):
+    agent  = request.user
+    status = request.GET.get('status', '').strip()
+    q      = request.GET.get('q', '').strip()
+
+    if request.user.is_superuser:
+        qs = Lead.objects.select_related('assigned_agent', 'listing', 'preference')
+    else:
+        qs = Lead.objects.filter(assigned_agent=agent).select_related('assigned_agent', 'listing', 'preference')
+
+    if status:
+        qs = qs.filter(status=status)
+    if q:
+        qs = qs.filter(Q(name__icontains=q) | Q(email__icontains=q))
+
+    leads_data = _build_leads_data(qs)
+
+    return render(request, 'portal/agent_leads.html', {
+        'leads_data':     leads_data,
+        'status_filter':  status,
+        'q':              q,
+        'status_choices': Lead.STATUS_CHOICES,
+        'all_agents':     User.objects.filter(is_staff=True) if request.user.is_superuser else None,
+    })
+
+
+@agent_login_required
+def agent_lead_detail(request, pk):
+    if request.user.is_superuser:
+        lead = get_object_or_404(Lead.objects.select_related('assigned_agent', 'listing'), pk=pk)
+    else:
+        lead = get_object_or_404(Lead.objects.select_related('assigned_agent', 'listing'),
+                                  pk=pk, assigned_agent=request.user)
+
+    shortlists  = lead.shortlists.prefetch_related('items__listing').order_by('-created_at')
+    preference  = getattr(lead, 'preference', None)
+    matched_listings = []
+    if preference and preference.city:
+        matched_listings = (
+            Listing.objects.filter(status='active', city__icontains=preference.city)
+            .exclude(id__in=[i.listing_id for sl in shortlists for i in sl.items.all()])
+            [:12]
+        )
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'update_status':
+            new_status = request.POST.get('status')
+            valid = [s[0] for s in Lead.STATUS_CHOICES]
+            if new_status in valid:
+                lead.status = new_status
+                lead.save()
+        elif action == 'save_note':
+            lead.notes = request.POST.get('notes', '')
+            lead.save()
+        elif action == 'assign_agent' and request.user.is_superuser:
+            agent_id = request.POST.get('agent_id')
+            if agent_id:
+                lead.assigned_agent = get_object_or_404(User, pk=agent_id, is_staff=True)
+                lead.save()
+        elif action == 'create_shortlist':
+            listing_ids = request.POST.getlist('listing_ids')
+            if listing_ids:
+                sl = Shortlist.objects.create(lead=lead, agent=request.user)
+                for idx, lid in enumerate(listing_ids):
+                    try:
+                        listing = Listing.objects.get(pk=lid, status='active')
+                        ShortlistItem.objects.create(shortlist=sl, listing=listing, order_index=idx)
+                    except Listing.DoesNotExist:
+                        pass
+        elif action == 'mark_sent':
+            sl_id = request.POST.get('shortlist_id')
+            sl    = get_object_or_404(Shortlist, pk=sl_id, lead=lead)
+            sl.status  = 'sent'
+            sl.sent_at = timezone.now()
+            sl.save()
+        return redirect('agent_lead_detail', pk=lead.pk)
+
+    return render(request, 'portal/agent_lead_detail.html', {
+        'lead':             lead,
+        'shortlists':       shortlists,
+        'preference':       preference,
+        'matched_listings': matched_listings,
+        'status_choices':   Lead.STATUS_CHOICES,
+        'all_agents':       User.objects.filter(is_staff=True) if request.user.is_superuser else None,
+    })

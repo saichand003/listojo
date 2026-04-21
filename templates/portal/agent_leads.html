@@ -1,0 +1,115 @@
+{% extends 'portal/agent_base.html' %}
+{% block page_title %}Leads{% endblock %}
+{% block content %}
+<style>
+  .filter-tabs { display:flex; gap:.5rem; margin-bottom:1.25rem; flex-wrap:wrap; }
+  .filter-tab { padding:.4rem 1.1rem; border-radius:999px; font-size:.82rem; font-weight:600; text-decoration:none; border:1.5px solid #d4cfc6; color:#6b6258; background:#fff; transition:all .15s; }
+  .filter-tab:hover { border-color:#1a2e1e; color:#1a2e1e; }
+  .filter-tab.active { background:#1a2e1e; color:#fff; border-color:#1a2e1e; }
+
+  .lead-card { background:#fff; border:1px solid #e8e2d8; border-radius:14px; padding:1.1rem 1.3rem; margin-bottom:.85rem; display:flex; align-items:flex-start; gap:1rem; box-shadow:0 1px 4px rgba(0,0,0,.04); transition:box-shadow .15s; text-decoration:none; color:inherit; display:flex; }
+  .lead-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.09); }
+  .lead-avatar { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:800; color:#fff; flex-shrink:0; }
+  .lead-name { font-weight:700; font-size:.97rem; color:#1a1a1a; }
+  .lead-pref { font-size:.82rem; color:#7a7168; margin:.2rem 0 .55rem; }
+  .lead-tags { display:flex; gap:.4rem; flex-wrap:wrap; }
+  .tag-shortlist { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-size:.72rem; font-weight:600; padding:.18rem .55rem; border-radius:999px; }
+  .tag-match  { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-size:.72rem; font-weight:600; padding:.18rem .55rem; border-radius:999px; }
+  .tag-area   { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:.72rem; font-weight:600; padding:.18rem .55rem; border-radius:999px; }
+  .tag-tour   { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:.72rem; font-weight:600; padding:.18rem .55rem; border-radius:999px; }
+  .tag-awaiting { background:#fefce8; color:#854d0e; border:1px solid #fef08a; font-size:.72rem; font-weight:600; padding:.18rem .55rem; border-radius:999px; }
+  .status-new     { background:#fff3e0; color:#b45309; border:1px solid #fcd38a; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; }
+  .status-working { background:#dcfce7; color:#166534; border:1px solid #86efac; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; }
+  .status-pending { background:#fef9c3; color:#854d0e; border:1px solid #fde047; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; }
+  .status-other   { background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; }
+  .status-won     { background:#dcfce7; color:#166534; border:1px solid #86efac; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; }
+  .status-lost    { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; }
+  .lead-right { text-align:right; flex-shrink:0; min-width:130px; }
+  .lead-time  { font-size:.72rem; color:#9a9088; margin-bottom:.3rem; }
+  .lead-matched { font-size:.82rem; color:#1a2e1e; font-weight:700; }
+</style>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
+  <h1 style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.5rem;color:#1a1a1a;margin:0;">
+    {% if request.user.is_superuser %}All Leads{% else %}My Leads{% endif %}
+  </h1>
+</div>
+
+{# Search + filter row #}
+<form method="get" style="display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;">
+  <input name="q" value="{{ q }}" placeholder="Search name or email…"
+         style="flex:1;min-width:200px;padding:.45rem .85rem;border:1.5px solid #d4cfc6;border-radius:999px;font-size:.875rem;background:#fff;outline:none;">
+  {% if q %}<a href="{% url 'agent_leads' %}{% if status_filter %}?status={{ status_filter }}{% endif %}" class="filter-tab">Clear search</a>{% endif %}
+</form>
+
+{# Filter tabs #}
+<div class="filter-tabs">
+  <a href="{% url 'agent_leads' %}{% if q %}?q={{ q }}{% endif %}" class="filter-tab {% if not status_filter %}active{% endif %}">All</a>
+  <a href="?status=new{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'new' %}active{% endif %}">New</a>
+  <a href="?status=shortlist_sent{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'shortlist_sent' %}active{% endif %}">Working</a>
+  <a href="?status=application_in_progress{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'application_in_progress' %}active{% endif %}">Pending</a>
+  <a href="?status=closed_won{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'closed_won' %}active{% endif %}">Closed</a>
+</div>
+
+{# Lead cards #}
+{% for item in leads_data %}
+{% with item.lead as lead %}
+<a href="{% url 'agent_lead_detail' lead.pk %}" style="text-decoration:none;display:block;">
+<div class="lead-card">
+  <div class="lead-avatar" style="background:
+    {% if forloop.counter0|divisibleby:6 %}#2A7EF2
+    {% elif forloop.counter == 2 %}#16a34a
+    {% elif forloop.counter == 3 %}#d97706
+    {% elif forloop.counter == 4 %}#7c3aed
+    {% elif forloop.counter == 5 %}#0891b2
+    {% else %}#c2410c{% endif %};">{{ lead.name|first|upper }}</div>
+
+  <div style="flex:1;min-width:0;">
+    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.15rem;">
+      <span class="lead-name">{{ lead.name }}</span>
+      {% if lead.status == 'new' %}<span class="status-new">New</span>
+      {% elif lead.status in 'contacted,shortlist_ready,shortlist_sent' %}<span class="status-working">Working</span>
+      {% elif lead.status == 'touring' %}<span class="status-other">Touring</span>
+      {% elif lead.status == 'application_in_progress' %}<span class="status-pending">Pending</span>
+      {% elif lead.status == 'closed_won' %}<span class="status-won">Won</span>
+      {% elif lead.status == 'closed_lost' %}<span class="status-lost">Lost</span>
+      {% else %}<span class="status-other">{{ lead.get_status_display }}</span>{% endif %}
+      {% if request.user.is_superuser and lead.assigned_agent %}
+      <span style="font-size:.72rem;color:#9a9088;">→ {{ lead.assigned_agent.username }}</span>
+      {% endif %}
+    </div>
+
+    {% if item.pref_summary %}
+    <div class="lead-pref">{{ item.pref_summary }}</div>
+    {% elif lead.listing %}
+    <div class="lead-pref">{{ lead.listing.city }} &middot; {{ lead.listing.title|truncatechars:40 }}</div>
+    {% endif %}
+
+    <div class="lead-tags">
+      {% if lead.status == 'new' %}<span class="tag-shortlist">Shortlist ready</span>
+      {% elif lead.status == 'shortlist_sent' %}<span class="tag-shortlist">Shortlist sent</span>
+      {% elif lead.status == 'touring' %}<span class="tag-tour">Tour scheduled</span>
+      {% elif lead.status == 'application_in_progress' %}<span class="tag-awaiting">Awaiting response</span>{% endif %}
+      {% if item.match_pct %}<span class="tag-match">{{ item.match_pct }}% top match</span>{% endif %}
+      {% if item.preference and item.preference.city %}<span class="tag-area">{{ item.preference.city }} area</span>{% endif %}
+    </div>
+  </div>
+
+  <div class="lead-right">
+    <div class="lead-time">{{ lead.created_at|timesince }} ago</div>
+    {% if item.matched_count %}
+    <div class="lead-matched">Listojo matched<br>{{ item.matched_count }} listing{{ item.matched_count|pluralize }} &rarr;</div>
+    {% endif %}
+  </div>
+</div>
+</a>
+{% endwith %}
+{% empty %}
+<div style="background:#fff;border:1px solid #e8e2d8;border-radius:14px;padding:3rem 1rem;text-align:center;color:#9a9088;">
+  <div style="font-size:2.5rem;margin-bottom:.75rem;">📭</div>
+  <div style="font-weight:700;font-size:1rem;color:#3a3530;margin-bottom:.3rem;">No leads found</div>
+  <div style="font-size:.84rem;">Try a different filter or wait for new inquiries.</div>
+</div>
+{% endfor %}
+
+{% endblock %}

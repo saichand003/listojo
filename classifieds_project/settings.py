@@ -89,6 +89,18 @@ LOGOUT_REDIRECT_URL = 'listing_list'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ── Email ─────────────────────────────────────────────────────────────────────
+# In development, emails are printed to the console.
+# In production, set EMAIL_BACKEND to 'django.core.mail.backends.smtp.EmailBackend'
+# and configure EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD via .env
+EMAIL_BACKEND  = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST     = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT     = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS  = os.getenv('EMAIL_USE_TLS', 'true').lower() == 'true'
+EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Listojo <noreply@listojo.com>')
+
 # ── Google Maps ──────────────────────────────────────────────────────────────
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
 

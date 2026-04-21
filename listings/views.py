@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
 from django.db import connection
 from django.db.utils import OperationalError
 from django.db import models as django_models
@@ -8,10 +9,11 @@ from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, date
 
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage
+from portal.models import Lead, LeadPreference
 
 
 def _fmm_score(listing, max_price_val, requested_tags, avail_date,
@@ -215,7 +217,11 @@ def listing_list(request):
     if not _listings_table_ready():
         return _render_db_setup_page(request)
 
-    listings = Listing.objects.select_related('owner').prefetch_related('images').all()
+    listings = Listing.objects.select_related('owner').prefetch_related('images').filter(
+        status='active'
+    ).filter(
+        Q(expires_at__isnull=True) | Q(expires_at__gte=date.today())
+    )
 
     q         = request.GET.get('q', '').strip()
     category  = request.GET.get('category', '').strip()
@@ -228,6 +234,7 @@ def listing_list(request):
     available_by      = request.GET.get('available_by', '').strip()
     accommodation_type = request.GET.get('accommodation_type', '').strip()
     property_type      = request.GET.get('property_type', '').strip()
+    bedrooms          = request.GET.get('bedrooms', '').strip()
     fmm               = request.GET.get('fmm', '').strip() == '1'
 
     # ── Text search ──
@@ -248,6 +255,11 @@ def listing_list(request):
         listings = listings.filter(accommodation_type=accommodation_type)
     if property_type:
         listings = listings.filter(property_type=property_type)
+    if bedrooms:
+        try:
+            listings = listings.filter(bedrooms=int(bedrooms))
+        except ValueError:
+            pass
 
     # Quality tags (multi-select from chips)
     quality_tags = [t.strip() for t in tags_raw.split(',') if t.strip()]
@@ -493,6 +505,33 @@ def listing_detail(request, pk):
             inquiry = inquiry_form.save(commit=False)
             inquiry.listing = listing
             inquiry.save()
+            if listing.owner.email:
+                send_mail(
+                    subject=f'New inquiry for "{listing.title}"',
+                    message=(
+                        f'Hi {listing.owner.username},\n\n'
+                        f'{inquiry.name} sent an inquiry about your listing "{listing.title}".\n\n'
+                        f'Message:\n{inquiry.message}\n\n'
+                        f'Reply to: {inquiry.email}'
+                        + (f'\nPhone: {inquiry.phone}' if inquiry.phone else '')
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[listing.owner.email],
+                    fail_silently=True,
+                )
+            # Create a lead record for the agent portal
+            lead = Lead.objects.create(
+                name=inquiry.name,
+                email=inquiry.email,
+                phone=inquiry.phone or '',
+                source='inquiry',
+                listing=listing,
+            )
+            LeadPreference.objects.create(
+                lead=lead,
+                city=listing.city,
+                property_type=listing.category,
+            )
             messages.success(request, 'Your inquiry was sent to the lister.')
             return redirect('listing_detail', pk=listing.pk)
     else:

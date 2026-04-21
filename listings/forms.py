@@ -27,8 +27,12 @@ class ListingForm(forms.ModelForm):
             'bills_included',
             'security_deposit',
             'available_from',
-            'featured',
+            'bedrooms',
             'tags',
+            # Properties-for-sale fields
+            'square_footage',
+            'year_built',
+            'hoa_fee',
         ]
         widgets = {
             'tags': forms.TextInput(attrs={
@@ -46,6 +50,12 @@ class ListingForm(forms.ModelForm):
             c for c in self.fields['category'].choices if c[0] in self.ALLOWED_CATEGORIES
         ]
         self.fields['category'].required = True
+        # Make property-specific fields optional and clearly labelled
+        for f in ('square_footage', 'year_built', 'hoa_fee'):
+            self.fields[f].required = False
+
+
+ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
 
 
 def validate_uploaded_images(files, existing_count=0):
@@ -57,6 +67,9 @@ def validate_uploaded_images(files, existing_count=0):
     for f in files:
         if f.size > MAX_IMAGE_SIZE_BYTES:
             errors.append(f'"{f.name}" is {f.size / 1024 / 1024:.1f} MB — maximum per image is {MAX_IMAGE_SIZE_MB} MB.')
+        content_type = getattr(f, 'content_type', None)
+        if content_type and content_type not in ALLOWED_IMAGE_TYPES:
+            errors.append(f'"{f.name}" is not an allowed image type. Upload JPEG, PNG, WebP, or GIF only.')
     return errors
 
 
