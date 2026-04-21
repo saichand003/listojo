@@ -98,6 +98,42 @@
     {% endif %}
 </div>
 
+{# ── Agent CTA banner (shown after guided search completion) ── #}
+{% if show_agent_cta %}
+<div id="agent-cta-banner" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:14px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <span style="font-size:1.5rem;">🏡</span>
+    <div>
+      <div style="font-weight:700;font-size:.95rem;color:#1e3a5f;">Want a local agent to help you find the right home?</div>
+      <div style="font-size:.82rem;color:#4b7ab3;margin-top:.15rem;">Free, no obligation — your matches and preferences are already saved.</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:.6rem;flex-shrink:0;">
+    <button id="agent-cta-yes" onclick="requestAgent()" style="padding:.45rem 1.1rem;border-radius:999px;background:#2A7EF2;color:#fff;border:none;font-size:.82rem;font-weight:700;cursor:pointer;">Talk to an agent →</button>
+    <button onclick="dismissAgentCta()" style="padding:.45rem .85rem;border-radius:999px;background:transparent;border:1.5px solid #bfdbfe;color:#4b7ab3;font-size:.82rem;font-weight:600;cursor:pointer;">Browse on my own</button>
+  </div>
+</div>
+<div id="agent-cta-success" style="display:none;background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:1rem 1.25rem;margin-bottom:1.25rem;font-size:.9rem;color:#166534;font-weight:600;">
+  ✓ An agent will reach out to you shortly with personalized options.
+</div>
+<script>
+function requestAgent() {
+  fetch('{% url "request_agent" %}', {
+    method: 'POST',
+    headers: {'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || ''},
+  }).then(function(r){ return r.json(); }).then(function(data) {
+    document.getElementById('agent-cta-banner').style.display = 'none';
+    document.getElementById('agent-cta-success').style.display = 'block';
+  }).catch(function() {
+    document.getElementById('agent-cta-banner').style.display = 'none';
+  });
+}
+function dismissAgentCta() {
+  document.getElementById('agent-cta-banner').style.display = 'none';
+}
+</script>
+{% endif %}
+
 {# ── Section heading ── #}
 <div style="margin-bottom:1rem;">
     {% if fmm_mode %}

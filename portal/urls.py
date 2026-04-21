@@ -23,4 +23,5 @@ urlpatterns = [
     path('agent/',                              views.agent_dashboard,       name='agent_dashboard'),
     path('agent/leads/',                        views.agent_leads,           name='agent_leads'),
     path('agent/leads/<int:pk>/',               views.agent_lead_detail,     name='agent_lead_detail'),
+    path('agent/request/',                      views.request_agent,         name='request_agent'),
 ]

@@ -363,6 +363,9 @@
   </div>
 </div>
 
+{# Hidden POST form — populated and submitted by submitSearch() #}
+<form id="gs-submit-form" method="post" action="{% url 'guided_search' %}{% if gs_mode %}?mode={{ gs_mode }}{% endif %}" style="display:none"></form>
+
 <script>
 var TOTAL_STEPS = 7;
 var rentBuy = 'rent';      // 'rent' | 'buy'
@@ -452,54 +455,69 @@ function setCity(val) {
 }
 
 function submitSearch() {
-  var params = new URLSearchParams();
+  var form = document.getElementById('gs-submit-form');
+  var fields = {};
 
   // Category from rent/buy + room type
   if (rentBuy === 'buy') {
-    params.set('category', 'properties');
+    fields.category = 'properties';
   } else if (roomType === 'room') {
-    params.set('category', 'roommates');
+    fields.category = 'roommates';
   } else {
-    params.set('category', 'rentals');
+    fields.category = 'rentals';
   }
 
   // Property type
   var typeGroup = rentBuy==='buy' ? '#type-buy-group' : '#type-group';
   var types = [];
   document.querySelectorAll(typeGroup+' .type-chip.sel').forEach(function(c){types.push(c.dataset.val);});
-  if (types.length === 1) params.set('property_type', types[0]);
+  if (types.length === 1) fields.property_type = types[0];
 
   // Bedrooms
   var bedPill = document.querySelector('#beds-group .tag-pill.sel');
-  if (bedPill && bedPill.dataset.val) params.set('bedrooms', bedPill.dataset.val);
+  if (bedPill && bedPill.dataset.val) fields.bedrooms = bedPill.dataset.val;
 
   // City — strip state suffix e.g. "Irving, TX" → "Irving"
   var city = document.getElementById('city').value.trim().split(',')[0].trim();
-  if (city) params.set('city', city);
+  if (city) fields.city = city;
 
   // Budget
   var minPrice = document.getElementById('min_price').value.trim();
   var maxPrice = document.getElementById('max_price').value.trim();
-  if (minPrice) params.set('min_price', minPrice);
-  if (maxPrice) params.set('max_price', maxPrice);
+  if (minPrice) fields.min_price = minPrice;
+  if (maxPrice) fields.max_price = maxPrice;
 
   // Tags (features + vibe + lease)
   var tagVals = [];
   document.querySelectorAll('.tag-pill.sel[data-group="features"]').forEach(function(p){tagVals.push(p.dataset.val);});
   document.querySelectorAll('.tag-pill.sel[data-group="vibe"]').forEach(function(p){tagVals.push(p.dataset.val);});
   document.querySelectorAll('.tag-pill.sel[data-group="lease"]').forEach(function(p){tagVals.push(p.dataset.val);});
-  if (tagVals.length) params.set('tags', tagVals.join(','));
+  if (tagVals.length) fields.tags = tagVals.join(',');
 
   // Timeline
   var timelineOpt = document.querySelector('#timeline-group .gs-option.sel');
   if (timelineOpt && timelineOpt.dataset.days) {
     var d = new Date();
     d.setDate(d.getDate() + parseInt(timelineOpt.dataset.days));
-    params.set('available_by', d.toISOString().slice(0,10));
+    fields.available_by = d.toISOString().slice(0,10);
   }
 
-  params.set('fmm', '1');
-  window.location.href = '{% url "listing_list" %}?' + params.toString();
+  fields.fmm = '1';
+
+  // Populate hidden form and submit as POST
+  form.innerHTML = '';
+  var csrf = document.cookie.match(/csrftoken=([^;]+)/);
+  var csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden'; csrfInput.name = 'csrfmiddlewaretoken';
+  csrfInput.value = csrf ? csrf[1] : '';
+  form.appendChild(csrfInput);
+
+  Object.keys(fields).forEach(function(k) {
+    var inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = k; inp.value = fields[k];
+    form.appendChild(inp);
+  });
+  form.submit();
 }
 
 // Custom tag input — press Enter or comma to add a tag pill

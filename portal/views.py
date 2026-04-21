@@ -1,7 +1,10 @@
 from datetime import timedelta
+from datetime import date as _date
 
 from django.contrib.auth import authenticate, login, logout
+from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
+from django.db import models as django_models
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
 from django.http import JsonResponse
@@ -343,7 +346,10 @@ def _build_leads_data(leads_qs):
         matched_count = 0
         pref_summary_parts = []
         if pref:
-            qs = Listing.objects.filter(status='active')
+            today = _date.today()
+            qs = Listing.objects.filter(status='active').filter(
+                Q(expires_at__isnull=True) | Q(expires_at__gte=today)
+            )
             if pref.city:
                 qs = qs.filter(city__icontains=pref.city)
                 pref_summary_parts.append(pref.city)
@@ -448,8 +454,10 @@ def agent_lead_detail(request, pk):
     preference  = getattr(lead, 'preference', None)
     matched_listings = []
     if preference and preference.city:
+        today = _date.today()
         matched_listings = (
             Listing.objects.filter(status='active', city__icontains=preference.city)
+            .filter(Q(expires_at__isnull=True) | Q(expires_at__gte=today))
             .exclude(id__in=[i.listing_id for sl in shortlists for i in sl.items.all()])
             [:12]
         )
@@ -496,3 +504,40 @@ def agent_lead_detail(request, pk):
         'status_choices':   Lead.STATUS_CHOICES,
         'all_agents':       User.objects.filter(is_staff=True) if request.user.is_superuser else None,
     })
+
+
+@require_POST
+def request_agent(request):
+    """User opts in to agent help — assigns their unassigned guided-search lead."""
+    lead_id = request.session.get('gs_lead_id')
+    if not lead_id:
+        return JsonResponse({'error': 'No active search session.'}, status=400)
+
+    try:
+        lead = Lead.objects.get(pk=lead_id, assigned_agent__isnull=True)
+    except Lead.DoesNotExist:
+        # Already assigned or invalid — clear session and continue
+        request.session.pop('gs_lead_id', None)
+        return JsonResponse({'ok': True, 'already_assigned': True})
+
+    agent = (
+        User.objects.filter(is_staff=True, is_active=True)
+        .annotate(open_leads=django_models.Count(
+            'assigned_leads',
+            filter=django_models.Q(assigned_leads__status__in=[
+                'new', 'contacted', 'shortlist_ready', 'shortlist_sent',
+                'touring', 'application_in_progress',
+            ])
+        ))
+        .order_by('open_leads', 'id')
+        .first()
+    )
+
+    if not agent:
+        return JsonResponse({'error': 'No agents available right now.'}, status=503)
+
+    lead.assigned_agent = agent
+    lead.save()
+    request.session.pop('gs_lead_id', None)
+
+    return JsonResponse({'ok': True, 'agent': agent.get_full_name() or agent.username})

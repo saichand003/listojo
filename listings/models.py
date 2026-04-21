@@ -112,7 +112,22 @@ class Listing(models.Model):
         return None
 
     def clean(self):
-        pass
+        errors = {}
+        if self.original_price and self.price and self.original_price <= self.price:
+            errors['original_price'] = 'Original price must be greater than the current price to show a Price Reduced badge.'
+        if self.year_built:
+            import datetime
+            current_year = datetime.date.today().year
+            if self.year_built < 1800 or self.year_built > current_year + 2:
+                errors['year_built'] = f'Year built must be between 1800 and {current_year + 2}.'
+        if self.expires_at and self.category == 'properties' and self.status in ('under_contract', 'sold'):
+            errors['expires_at'] = 'Sold or under-contract listings should not have an expiry date.'
+        if self.hoa_fee is not None and self.hoa_fee < 0:
+            errors['hoa_fee'] = 'HOA fee cannot be negative.'
+        if self.square_footage is not None and self.square_footage == 0:
+            errors['square_footage'] = 'Square footage must be greater than zero.'
+        if errors:
+            raise ValidationError(errors)
 
     class Meta:
         ordering = ['-featured', '-created_at']

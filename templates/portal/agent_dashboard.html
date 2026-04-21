@@ -137,7 +137,7 @@
     <div class="lead-name-row">
       <span class="lead-name">{{ lead.name }}</span>
       {% if lead.status == 'new' %}<span class="status-new">New</span>
-      {% elif lead.status in 'contacted,shortlist_ready,shortlist_sent' %}<span class="status-working">Working</span>
+      {% elif lead.status == 'contacted' or lead.status == 'shortlist_ready' or lead.status == 'shortlist_sent' %}<span class="status-working">Working</span>
       {% elif lead.status == 'touring' %}<span class="status-tour" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:999px;text-transform:uppercase;">Touring</span>
       {% elif lead.status == 'application_in_progress' %}<span class="status-pending">Pending</span>
       {% elif lead.status == 'closed_won' %}<span class="status-won">Won</span>

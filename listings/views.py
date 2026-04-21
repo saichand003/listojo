@@ -14,6 +14,7 @@ from datetime import timedelta, date
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage
 from portal.models import Lead, LeadPreference
+from django.contrib.auth.models import User as _User
 
 
 def _fmm_score(listing, max_price_val, requested_tags, avail_date,
@@ -473,14 +474,97 @@ def listing_list(request):
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return render(request, 'listings/_listings_grid.html', context)
 
+    context['show_agent_cta'] = bool(request.session.get('gs_lead_id'))
     return render(request, 'listings/listing_list.html', context)
 
 
 def guided_search(request):
     if request.method == 'POST':
         GuidedSearchEvent.objects.create(event_type=GuidedSearchEvent.COMPLETE)
-    else:
-        GuidedSearchEvent.objects.create(event_type=GuidedSearchEvent.START)
+
+        # Collect search params from POST
+        category   = request.POST.get('category', '').strip()
+        city       = request.POST.get('city', '').strip()
+        bedrooms   = request.POST.get('bedrooms', '').strip()
+        max_budget = request.POST.get('max_price', '').strip()
+        amenities  = request.POST.get('tags', '').strip()
+        available_by = request.POST.get('available_by', '').strip()
+
+        # Resolve user identity
+        if request.user.is_authenticated:
+            lead_name  = request.user.get_full_name().strip() or request.user.username
+            lead_email = request.user.email
+            # Dedup: update existing unassigned guided_search lead for this user
+            existing = Lead.objects.filter(
+                email=lead_email, source='guided_search', assigned_agent__isnull=True
+            ).order_by('-created_at').first()
+        else:
+            lead_name  = 'Guest'
+            lead_email = ''
+            existing   = None
+
+        if existing:
+            lead = existing
+        else:
+            lead = Lead.objects.create(
+                name=lead_name,
+                email=lead_email,
+                source='guided_search',
+                assigned_agent=None,
+            )
+
+        # Upsert preference
+        move_in = None
+        if available_by:
+            from datetime import date as _date
+            try:
+                move_in = _date.fromisoformat(available_by)
+            except ValueError:
+                pass
+
+        beds_int = None
+        if bedrooms:
+            try:
+                beds_int = int(bedrooms)
+            except ValueError:
+                pass
+
+        budget_dec = None
+        if max_budget:
+            try:
+                from decimal import Decimal
+                budget_dec = Decimal(max_budget)
+            except Exception:
+                pass
+
+        LeadPreference.objects.update_or_create(
+            lead=lead,
+            defaults={
+                'city':          city,
+                'property_type': category,
+                'bedrooms':      beds_int,
+                'max_budget':    budget_dec,
+                'amenities':     amenities,
+                'move_in_date':  move_in,
+            }
+        )
+
+        # Store lead pk in session so listing list can show the CTA
+        request.session['gs_lead_id'] = lead.pk
+
+        # Build redirect to listing list preserving all search params
+        from urllib.parse import urlencode
+        qs_params = {}
+        for key in ('category', 'city', 'bedrooms', 'min_price', 'max_price',
+                    'tags', 'available_by', 'property_type', 'fmm'):
+            val = request.POST.get(key, '').strip()
+            if val:
+                qs_params[key] = val
+        qs_params.setdefault('fmm', '1')
+        from django.urls import reverse
+        return redirect(reverse('listing_list') + '?' + urlencode(qs_params))
+
+    GuidedSearchEvent.objects.create(event_type=GuidedSearchEvent.START)
     mode = request.GET.get('mode', '').strip()  # 'rent' | 'buy' | ''
     return render(request, 'listings/guided_search.html', {
         'category_choices': Listing.CATEGORY_CHOICES,
@@ -519,13 +603,26 @@ def listing_detail(request, pk):
                     recipient_list=[listing.owner.email],
                     fail_silently=True,
                 )
-            # Create a lead record for the agent portal
+            # Create a lead record and auto-assign to the least-loaded staff agent
+            least_loaded = (
+                _User.objects.filter(is_staff=True, is_active=True)
+                .annotate(open_leads=django_models.Count(
+                    'assigned_leads',
+                    filter=django_models.Q(assigned_leads__status__in=[
+                        'new', 'contacted', 'shortlist_ready', 'shortlist_sent',
+                        'touring', 'application_in_progress',
+                    ])
+                ))
+                .order_by('open_leads', 'id')
+                .first()
+            )
             lead = Lead.objects.create(
                 name=inquiry.name,
                 email=inquiry.email,
                 phone=inquiry.phone or '',
                 source='inquiry',
                 listing=listing,
+                assigned_agent=least_loaded,
             )
             LeadPreference.objects.create(
                 lead=lead,
