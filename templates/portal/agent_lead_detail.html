@@ -1,206 +1,385 @@
 {% extends 'portal/agent_base.html' %}
+{% load listing_extras %}
 {% block page_title %}Lead — {{ lead.name }}{% endblock %}
 {% block content %}
-
 <style>
-.lead-grid { display:grid; grid-template-columns:1.5fr 1fr; gap:1.25rem; align-items:start; }
-.section-title { font-family:'Montserrat',sans-serif; font-weight:700; font-size:.92rem; color:var(--text); margin:0 0 .85rem; }
-.info-row { display:flex; justify-content:space-between; align-items:baseline; padding:.45rem 0; border-bottom:1px solid var(--border); font-size:.875rem; }
-.info-row:last-child { border-bottom:none; }
-.info-label { color:var(--muted); font-weight:600; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
-.info-value { font-weight:500; color:var(--text); text-align:right; }
-.stage-btn { display:block; width:100%; text-align:left; padding:.5rem .75rem; border-radius:8px; border:1px solid var(--border); background:var(--surface); font-size:.83rem; cursor:pointer; margin-bottom:.35rem; transition:background .12s; }
-.stage-btn:hover { background:var(--bg); }
-.stage-btn.active-stage { background:#dbeafe; border-color:#93c5fd; color:#1e40af; font-weight:700; }
-.shortlist-card { border:1px solid var(--border); border-radius:10px; padding:1rem; margin-bottom:.85rem; }
-.shortlist-item { display:flex; align-items:center; justify-content:space-between; padding:.45rem 0; border-bottom:1px solid var(--border); font-size:.84rem; }
-.shortlist-item:last-child { border-bottom:none; }
-.listing-check { display:flex; align-items:center; gap:.6rem; padding:.5rem .6rem; border:1px solid var(--border); border-radius:8px; margin-bottom:.4rem; cursor:pointer; font-size:.84rem; transition:background .12s; }
-.listing-check:hover { background:var(--bg); }
-.listing-check input[type=checkbox] { width:16px; height:16px; cursor:pointer; }
+  /* ── Layout ── */
+  .ld-grid { display:grid; grid-template-columns:1fr 320px; gap:1.25rem; align-items:start; }
+
+  /* ── Lead header card ── */
+  .ld-header { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.5rem 1.75rem; margin-bottom:1.25rem; display:flex; align-items:flex-start; gap:1.25rem; box-shadow:0 2px 8px rgba(24,43,82,.07); }
+  .ld-avatar { width:54px; height:54px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:800; color:#fff; flex-shrink:0; }
+  .ld-name { font-family:'Montserrat',sans-serif; font-weight:800; font-size:1.4rem; color:#0f1c35; margin:0 0 .2rem; }
+  .ld-meta { font-size:.82rem; color:#64748b; }
+  .ld-badge { display:inline-block; padding:.2rem .65rem; border-radius:999px; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  .ld-badge-new    { background:#fff3e0; color:#b45309; border:1px solid #fcd38a; }
+  .ld-badge-working{ background:#dcfce7; color:#166534; border:1px solid #86efac; }
+  .ld-badge-pending{ background:#fef9c3; color:#854d0e; border:1px solid #fde047; }
+  .ld-badge-won    { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+  .ld-badge-lost   { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+  .ld-badge-other  { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
+
+  /* ── Preference grid ── */
+  .pref-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.4rem 1.75rem; margin-bottom:1.25rem; box-shadow:0 2px 8px rgba(24,43,82,.07); }
+  .pref-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+  .pref-cell { padding:.8rem 0; border-bottom:1px solid #f1f5f9; }
+  .pref-cell:nth-last-child(-n+2) { border-bottom:none; }
+  .pref-label { font-size:.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.2rem; }
+  .pref-value { font-size:.97rem; font-weight:700; color:#0f1c35; }
+  .must-haves { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1rem; padding-top:1rem; border-top:1px solid #f1f5f9; }
+  .must-chip { padding:.32rem .85rem; border-radius:999px; font-size:.77rem; font-weight:600; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+  .pref-section-label { font-size:.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.65rem; margin-top:.1rem; }
+
+  /* ── Curated shortlist ── */
+  .curated-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.4rem 1.75rem; margin-bottom:1.25rem; box-shadow:0 2px 8px rgba(24,43,82,.07); }
+  .curated-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.35rem; flex-wrap:wrap; gap:.75rem; }
+  .curated-title { font-family:'Montserrat',sans-serif; font-weight:800; font-size:1rem; color:#0f1c35; }
+  .curated-sub { font-size:.8rem; color:#64748b; margin-bottom:1.1rem; }
+  .send-btn { background:#0f1c35; color:#fff; padding:.5rem 1.2rem; border-radius:10px; font-size:.82rem; font-weight:700; border:none; cursor:pointer; white-space:nowrap; transition:opacity .15s; }
+  .send-btn:hover { opacity:.85; }
+
+  .listing-match-card { border:1px solid #e8eef5; border-radius:12px; padding:1rem 1.1rem; margin-bottom:.75rem; display:flex; align-items:flex-start; gap:1rem; transition:box-shadow .15s; }
+  .listing-match-card:hover { box-shadow:0 4px 16px rgba(24,43,82,.1); }
+  .listing-thumb { width:68px; height:68px; border-radius:10px; background:linear-gradient(135deg,#dbeafe,#bfdbfe); flex-shrink:0; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:1.6rem; }
+  .listing-thumb img { width:100%; height:100%; object-fit:cover; }
+  .listing-match-name { font-weight:700; font-size:.93rem; color:#0f1c35; margin:0 0 .2rem; }
+  .listing-match-meta { font-size:.78rem; color:#64748b; margin-bottom:.4rem; }
+  .match-reasons { display:flex; flex-wrap:wrap; gap:.35rem; }
+  .match-reason { font-size:.72rem; color:#166534; font-weight:600; }
+  .match-reason::before { content:'✓ '; }
+  .match-caveat { font-size:.72rem; color:#92400e; font-weight:600; }
+  .match-caveat::before { content:'~ '; }
+  .match-pct-badge { padding:.18rem .6rem; border-radius:999px; font-size:.72rem; font-weight:700; white-space:nowrap; flex-shrink:0; }
+  .match-high  { background:#dcfce7; color:#166534; }
+  .match-med   { background:#fef9c3; color:#854d0e; }
+  .match-low   { background:#fee2e2; color:#991b1b; }
+
+  .agent-note-box { background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:.85rem 1rem; margin-top:.25rem; font-size:.83rem; color:#92400e; }
+  .agent-note-label { font-weight:700; color:#b45309; margin-right:.4rem; }
+
+  /* ── Right panel ── */
+  .rp-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.25rem 1.4rem; margin-bottom:1rem; box-shadow:0 2px 8px rgba(24,43,82,.07); }
+  .rp-title { font-family:'Montserrat',sans-serif; font-weight:700; font-size:.88rem; color:#0f1c35; margin:0 0 .9rem; }
+  .qa-btn { display:flex; align-items:center; gap:.55rem; width:100%; padding:.6rem .9rem; border-radius:10px; font-size:.82rem; font-weight:600; cursor:pointer; border:1.5px solid #e2e8f0; background:#fff; color:#0f1c35; text-decoration:none; margin-bottom:.5rem; transition:all .15s; }
+  .qa-btn:hover { border-color:var(--primary); color:var(--primary); background:#f0f7ff; }
+  .qa-btn.qa-primary { background:#0f1c35; color:#fff; border-color:#0f1c35; }
+  .qa-btn.qa-primary:hover { background:#1a2e4a; border-color:#1a2e4a; color:#fff; }
+
+  /* Status radio buttons */
+  .status-radio { display:flex; align-items:center; gap:.75rem; padding:.55rem .85rem; border-radius:10px; border:1.5px solid #e2e8f0; margin-bottom:.45rem; cursor:pointer; font-size:.83rem; font-weight:600; color:#0f1c35; transition:all .15s; }
+  .status-radio.active { border-color:var(--primary); background:#eff6ff; }
+  .status-radio input[type=radio] { accent-color:var(--primary); width:16px; height:16px; }
+
+  /* Notes */
+  .notes-textarea { width:100%; padding:.6rem .75rem; border:1.5px solid #e2e8f0; border-radius:10px; font-size:.84rem; font-family:inherit; resize:vertical; transition:border-color .15s; }
+  .notes-textarea:focus { outline:none; border-color:var(--primary); }
+
+  /* Assign agent */
+  .assign-select { width:100%; padding:.5rem .75rem; border:1.5px solid #e2e8f0; border-radius:10px; font-size:.84rem; margin-bottom:.65rem; }
+
+  /* Existing shortlists history */
+  .sl-history-item { border:1px solid #e8eef5; border-radius:10px; padding:.85rem 1rem; margin-bottom:.65rem; }
+
+  /* Conversion tip */
+  .tip-card { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:14px; padding:1rem 1.1rem; }
+  .tip-icon { font-size:1.1rem; margin-right:.4rem; }
+  .tip-label { font-family:'Montserrat',sans-serif; font-weight:700; font-size:.82rem; color:#166534; margin-bottom:.4rem; }
+  .tip-text { font-size:.82rem; color:#14532d; line-height:1.5; }
+
+  @media(max-width:900px) {
+    .ld-grid { grid-template-columns:1fr; }
+    .pref-grid { grid-template-columns:1fr; }
+  }
 </style>
 
-<div style="margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
-  <a href="{% url 'agent_leads' %}" style="color:var(--muted);text-decoration:none;font-size:.85rem;">← Leads</a>
-  <span style="color:var(--border);">/</span>
-  <span style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.1rem;">{{ lead.name }}</span>
-  {% if lead.status == 'new' %}<span class="badge badge-orange">New</span>
-  {% elif lead.status == 'closed_won' %}<span class="badge badge-green">Won</span>
-  {% elif lead.status == 'closed_lost' %}<span class="badge badge-red">Lost</span>
-  {% else %}<span class="badge badge-blue">{{ lead.get_status_display }}</span>{% endif %}
+{# ── Breadcrumb ── #}
+<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.1rem;font-size:.84rem;">
+  <a href="{% url 'agent_leads' %}" style="color:var(--muted);text-decoration:none;">← All Leads</a>
+  <span style="color:#cbd5e1;">/</span>
+  <span style="color:#0f1c35;font-weight:600;">{{ lead.name }}</span>
 </div>
 
-<div class="lead-grid">
-
-  {# ── LEFT COLUMN ── #}
-  <div style="display:flex;flex-direction:column;gap:1.25rem;">
-
-    {# Lead Info #}
-    <div class="card">
-      <div class="section-title">Lead Information</div>
-      <div class="info-row"><span class="info-label">Name</span><span class="info-value">{{ lead.name }}</span></div>
-      <div class="info-row"><span class="info-label">Email</span><span class="info-value"><a href="mailto:{{ lead.email }}" style="color:var(--primary);">{{ lead.email }}</a></span></div>
-      {% if lead.phone %}<div class="info-row"><span class="info-label">Phone</span><span class="info-value">{{ lead.phone }}</span></div>{% endif %}
-      <div class="info-row"><span class="info-label">Source</span><span class="info-value">{{ lead.get_source_display }}</span></div>
-      <div class="info-row"><span class="info-label">Received</span><span class="info-value">{{ lead.created_at|date:"M d, Y H:i" }}</span></div>
-      {% if lead.listing %}
-      <div class="info-row">
-        <span class="info-label">Listing</span>
-        <span class="info-value"><a href="{% url 'listing_detail' lead.listing.pk %}" target="_blank" style="color:var(--primary);text-decoration:none;">{{ lead.listing.title|truncatechars:32 }} ↗</a></span>
-      </div>
-      {% endif %}
-      {% if lead.assigned_agent %}
-      <div class="info-row"><span class="info-label">Assigned to</span><span class="info-value">{{ lead.assigned_agent.username }}</span></div>
-      {% endif %}
+{# ── Lead header ── #}
+<div class="ld-header">
+  <div class="ld-avatar">{{ lead.name|first|upper }}</div>
+  <div style="flex:1;min-width:0;">
+    <div style="display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;margin-bottom:.3rem;">
+      <h1 class="ld-name">{{ lead.name }}</h1>
+      {% if lead.status == 'new' %}<span class="ld-badge ld-badge-new">New Lead</span>
+      {% elif lead.status == 'contacted' or lead.status == 'shortlist_ready' or lead.status == 'shortlist_sent' %}<span class="ld-badge ld-badge-working">Working</span>
+      {% elif lead.status == 'touring' %}<span class="ld-badge ld-badge-pending">Touring</span>
+      {% elif lead.status == 'application_in_progress' %}<span class="ld-badge ld-badge-pending">Pending</span>
+      {% elif lead.status == 'closed_won' %}<span class="ld-badge ld-badge-won">Won</span>
+      {% elif lead.status == 'closed_lost' %}<span class="ld-badge ld-badge-lost">Lost</span>
+      {% else %}<span class="ld-badge ld-badge-other">{{ lead.get_status_display }}</span>{% endif %}
     </div>
+    <div class="ld-meta">
+      {{ lead.get_source_display }} &middot; Received {{ lead.created_at|timesince }} ago
+      {% if preference and preference.city %} &middot; {{ preference.city }} area{% endif %}
+      {% if lead.email %} &middot; <a href="mailto:{{ lead.email }}" style="color:var(--primary);">{{ lead.email }}</a>{% endif %}
+    </div>
+  </div>
+</div>
 
-    {# Preferences #}
+<div class="ld-grid">
+
+  {# ══════════ LEFT COLUMN ══════════ #}
+  <div>
+
+    {# ── Preferences card ── #}
     {% if preference %}
-    <div class="card">
-      <div class="section-title">Preferences</div>
-      {% if preference.city %}<div class="info-row"><span class="info-label">City</span><span class="info-value">{{ preference.city }}</span></div>{% endif %}
-      {% if preference.max_budget %}<div class="info-row"><span class="info-label">Max Budget</span><span class="info-value">${{ preference.max_budget|floatformat:0 }}</span></div>{% endif %}
-      {% if preference.bedrooms %}<div class="info-row"><span class="info-label">Bedrooms</span><span class="info-value">{{ preference.bedrooms }}</span></div>{% endif %}
-      {% if preference.property_type %}<div class="info-row"><span class="info-label">Type</span><span class="info-value">{{ preference.property_type|title }}</span></div>{% endif %}
-      {% if preference.move_in_date %}<div class="info-row"><span class="info-label">Move-in</span><span class="info-value">{{ preference.move_in_date|date:"M d, Y" }}</span></div>{% endif %}
-      {% if preference.amenities %}<div class="info-row"><span class="info-label">Amenities</span><span class="info-value">{{ preference.amenities }}</span></div>{% endif %}
-    </div>
-    {% endif %}
-
-    {# Notes #}
-    <div class="card">
-      <div class="section-title">Agent Notes</div>
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="save_note">
-        <textarea name="notes" rows="4" style="width:100%;padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.875rem;font-family:inherit;resize:vertical;margin-bottom:.75rem;">{{ lead.notes }}</textarea>
-        <button type="submit" class="btn btn-primary btn-sm">Save notes</button>
-      </form>
-    </div>
-
-    {# Shortlists #}
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-        <div class="section-title" style="margin:0;">Shortlists</div>
-        {% if matched_listings %}
-        <button class="btn btn-primary btn-sm" onclick="document.getElementById('shortlist-builder').style.display='block';this.style.display='none';">+ New Shortlist</button>
+    <div class="pref-card">
+      <div style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:.92rem;color:#0f1c35;margin-bottom:1rem;">Client Requirements</div>
+      <div class="pref-grid">
+        {% if preference.max_budget %}
+        <div class="pref-cell">
+          <div class="pref-label">Budget</div>
+          <div class="pref-value">Up to ${{ preference.max_budget|floatformat:0 }}/mo</div>
+        </div>
+        {% endif %}
+        {% if preference.bedrooms %}
+        <div class="pref-cell">
+          <div class="pref-label">Bedrooms</div>
+          <div class="pref-value">{{ preference.bedrooms }} bedroom{{ preference.bedrooms|pluralize }}</div>
+        </div>
+        {% endif %}
+        {% if preference.move_in_date %}
+        <div class="pref-cell">
+          <div class="pref-label">Move-in</div>
+          <div class="pref-value">{{ preference.move_in_date|date:"M d, Y" }}</div>
+        </div>
+        {% endif %}
+        {% if preference.city %}
+        <div class="pref-cell">
+          <div class="pref-label">Location</div>
+          <div class="pref-value">{{ preference.city }} area</div>
+        </div>
+        {% endif %}
+        {% if preference.property_type %}
+        <div class="pref-cell">
+          <div class="pref-label">Property type</div>
+          <div class="pref-value">{{ preference.property_type|title }}</div>
+        </div>
+        {% endif %}
+        {% if lead.listing %}
+        <div class="pref-cell">
+          <div class="pref-label">Interested in</div>
+          <div class="pref-value"><a href="{% url 'listing_detail' lead.listing.pk %}" target="_blank" style="color:var(--primary);text-decoration:none;">{{ lead.listing.title|truncatechars:30 }} ↗</a></div>
+        </div>
         {% endif %}
       </div>
 
-      {# Shortlist builder #}
-      {% if matched_listings %}
-      <div id="shortlist-builder" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;">
-        <div style="font-weight:700;font-size:.88rem;margin-bottom:.75rem;">Select listings for shortlist</div>
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="create_shortlist">
-          {% for listing in matched_listings %}
-          <label class="listing-check">
-            <input type="checkbox" name="listing_ids" value="{{ listing.pk }}">
-            <div style="flex:1;">
-              <div style="font-weight:600;">{{ listing.title|truncatechars:40 }}</div>
-              <div style="font-size:.75rem;color:var(--muted);">{{ listing.city }} &middot; {% if listing.price %}${{ listing.price }}{% if listing.price_unit %}/{{ listing.price_unit }}{% endif %}{% else %}Price TBD{% endif %} {% if listing.bedrooms %}&middot; {{ listing.bedrooms }} bd{% endif %}</div>
-            </div>
-          </label>
-          {% endfor %}
-          <div style="display:flex;gap:.5rem;margin-top:.75rem;">
-            <button type="submit" class="btn btn-primary btn-sm">Create Shortlist</button>
-            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('shortlist-builder').style.display='none';document.querySelector('[onclick*=shortlist-builder]').style.display='';">Cancel</button>
-          </div>
-        </form>
+      {% if preference.amenities %}
+      <div class="must-haves">
+        <div style="width:100%;"><div class="pref-section-label">Must-have preferences</div></div>
+        {% for amenity in preference.amenities|split_csv %}
+        <span class="must-chip">{{ amenity|title }}</span>
+        {% endfor %}
       </div>
       {% endif %}
+    </div>
+    {% endif %}
 
-      {% if shortlists %}
-        {% for sl in shortlists %}
-        <div class="shortlist-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
-            <div>
-              <span style="font-weight:700;font-size:.88rem;">Shortlist #{{ forloop.counter }}</span>
-              <span style="margin-left:.5rem;">
-                {% if sl.status == 'sent' %}<span class="badge badge-green">Sent</span>
-                {% elif sl.status == 'viewed' %}<span class="badge badge-blue">Viewed</span>
-                {% elif sl.status == 'archived' %}<span class="badge" style="background:#e2e8f0;color:#475569;">Archived</span>
-                {% else %}<span class="badge badge-orange">Draft</span>{% endif %}
-              </span>
-            </div>
-            <div style="font-size:.72rem;color:var(--muted);">{{ sl.created_at|date:"M d, Y" }}</div>
+    {# ── Listojo Curated Shortlist ── #}
+    <div class="curated-card">
+      <div class="curated-header">
+        <div>
+          <div class="curated-title">✦ Listojo Curated Shortlist</div>
+          <div class="curated-sub">
+            {% if curated %}{{ curated|length }} listing{{ curated|length|pluralize }} automatically matched to {{ lead.name }}'s requirements{% else %}No matches found yet — check back as new listings are added{% endif %}
           </div>
-          {% for item in sl.items.all %}
-          <div class="shortlist-item">
-            <div>
-              <a href="{% url 'listing_detail' item.listing.pk %}" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;font-size:.84rem;">{{ item.listing.title|truncatechars:36 }}</a>
-              <div style="font-size:.72rem;color:var(--muted);">{{ item.listing.city }} &middot; {% if item.listing.price %}${{ item.listing.price }}{% endif %}</div>
-              {% if item.agent_note %}<div style="font-size:.75rem;color:var(--muted);font-style:italic;margin-top:.2rem;">{{ item.agent_note }}</div>{% endif %}
-            </div>
-            {% if item.client_response %}
-              {% if item.client_response == 'interested' %}<span class="badge badge-green">Interested</span>
-              {% else %}<span class="badge badge-red">Rejected</span>{% endif %}
-            {% endif %}
-          </div>
-          {% empty %}
-          <p style="color:var(--muted);font-size:.82rem;">No listings in this shortlist.</p>
+        </div>
+        {% if curated %}
+        <form method="post" id="send-shortlist-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="send_curated_shortlist">
+          {% for item in curated %}
+          <input type="hidden" name="curated_ids" value="{{ item.listing.pk }}">
           {% endfor %}
-          {% if sl.status == 'draft' %}
-          <form method="post" style="margin-top:.75rem;">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="mark_sent">
-            <input type="hidden" name="shortlist_id" value="{{ sl.pk }}">
-            <button type="submit" class="btn btn-primary btn-sm">Mark as Sent</button>
-          </form>
-          {% elif sl.sent_at %}
-          <div style="font-size:.72rem;color:var(--muted);margin-top:.5rem;">Sent {{ sl.sent_at|date:"M d, Y" }}</div>
-          {% endif %}
+          <button type="submit" class="send-btn">📋 Send shortlist to {{ lead.name|truncatechars:12 }}</button>
+        </form>
+        {% endif %}
+      </div>
+
+      {% if curated %}
+        {% for item in curated %}
+        <div class="listing-match-card">
+          <div class="listing-thumb">
+            {% with item.listing.images.first as img %}
+              {% if img %}<img src="{{ img.image.url }}" alt="">{% else %}🏠{% endif %}
+            {% endwith %}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.1rem;">
+              <a href="{% url 'listing_detail' item.listing.pk %}" target="_blank" class="listing-match-name" style="text-decoration:none;color:#0f1c35;">{{ item.listing.title|truncatechars:44 }}</a>
+              <span class="match-pct-badge {% if item.match_pct >= 88 %}match-high{% elif item.match_pct >= 78 %}match-med{% else %}match-low{% endif %}">{{ item.match_pct }}% match</span>
+            </div>
+            <div class="listing-match-meta">
+              {% if item.listing.price %}${{ item.listing.price|floatformat:0 }}/mo{% endif %}
+              {% if item.listing.bedrooms %} &middot; {{ item.listing.bedrooms }}bd{% endif %}
+              {% if item.listing.city %} &middot; {{ item.listing.city }}{% endif %}
+            </div>
+            <div class="match-reasons">
+              {% for r in item.reasons %}<span class="match-reason">{{ r }}</span>{% endfor %}
+              {% for c in item.caveats %}<span class="match-caveat">{{ c }}</span>{% endfor %}
+            </div>
+          </div>
         </div>
         {% endfor %}
+
+        {% if conversion_tip %}
+        <div class="agent-note-box">
+          <span class="agent-note-label">Agent note:</span>{{ conversion_tip }}
+        </div>
+        {% endif %}
+
       {% else %}
-      <p style="color:var(--muted);font-size:.85rem;text-align:center;padding:1rem 0;">No shortlists yet.{% if matched_listings %} Use the button above to create one.{% endif %}</p>
+        <div style="text-align:center;padding:2rem 1rem;color:#94a3b8;">
+          <div style="font-size:2rem;margin-bottom:.5rem;">🔍</div>
+          <div style="font-weight:600;font-size:.9rem;color:#64748b;margin-bottom:.3rem;">No matching listings yet</div>
+          <div style="font-size:.8rem;">Listings will appear here as they are added in {{ preference.city|default:"the target area" }}.</div>
+        </div>
       {% endif %}
+
+      {# ── Manual shortlist builder ── #}
+      <div style="margin-top:1.1rem;padding-top:1.1rem;border-top:1px solid #f1f5f9;">
+        <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:.75rem;">
+          <button type="button" onclick="toggleManualBuilder()" id="manual-toggle-btn"
+            style="font-size:.75rem;font-weight:600;color:var(--primary);background:none;border:none;cursor:pointer;padding:0;">✏️ Edit Shortlist</button>
+        </div>
+        <div id="manual-builder" style="display:none;background:#f8faff;border:1px solid #e2e8f0;border-radius:12px;padding:1rem;">
+
+          {# Search input #}
+          <div style="position:relative;margin-bottom:.75rem;">
+            <input type="text" id="sl-search" placeholder="Search by listing name or ID…" oninput="searchListings(this.value)"
+              style="width:100%;padding:.5rem .75rem .5rem 2rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.83rem;font-family:inherit;outline:none;background:#fff;">
+            <span style="position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:.85rem;pointer-events:none;">🔍</span>
+          </div>
+
+          {# Search results #}
+          <div id="sl-results" style="display:none;border:1px solid #e2e8f0;border-radius:10px;background:#fff;margin-bottom:.75rem;max-height:240px;overflow-y:auto;"></div>
+
+          {# Selected listings #}
+          <div id="sl-selected-wrap" style="display:none;margin-bottom:.75rem;">
+            <div style="font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.45rem;">Selected for shortlist</div>
+            <div id="sl-selected-list"></div>
+          </div>
+
+          <form method="post" id="manual-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_shortlist">
+            <div id="sl-hidden-inputs"></div>
+            <div style="display:flex;gap:.5rem;">
+              <button type="submit" id="sl-create-btn" class="btn btn-primary btn-sm" disabled style="opacity:.5;">Add listings to shortlist</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleManualBuilder()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {# ── Sent shortlist history ── #}
+      {% if shortlists %}
+      <div style="margin-top:1.25rem;padding-top:1.1rem;border-top:1px solid #f1f5f9;">
+        <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;">Shortlist History</div>
+        {% for sl in shortlists %}
+        <div class="sl-history-item">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem;">
+            <span style="font-weight:700;font-size:.85rem;">Shortlist #{{ forloop.counter }}</span>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              {% if sl.status == 'sent' or sl.status == 'viewed' %}
+              <span class="badge badge-green">Sent {% if sl.sent_at %}{{ sl.sent_at|date:"M d" }}{% endif %}</span>
+              {% elif sl.status == 'draft' %}
+              <span class="badge badge-orange">Draft</span>
+              <form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="mark_sent"><input type="hidden" name="shortlist_id" value="{{ sl.pk }}"><button type="submit" class="btn btn-primary btn-sm">Mark sent</button></form>
+              {% else %}
+              <span class="badge" style="background:#e2e8f0;color:#475569;">{{ sl.status|title }}</span>
+              {% endif %}
+            </div>
+          </div>
+          {% for item in sl.items.all %}
+          <div style="font-size:.8rem;padding:.25rem 0;color:#475569;">
+            <a href="{% url 'listing_detail' item.listing.pk %}" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ item.listing.title|truncatechars:38 }}</a>
+            {% if item.listing.price %} · ${{ item.listing.price|floatformat:0 }}{% endif %}
+            {% if item.client_response == 'interested' %}<span class="badge badge-green" style="margin-left:.4rem;">Interested</span>{% elif item.client_response == 'rejected' %}<span class="badge badge-red" style="margin-left:.4rem;">Rejected</span>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# ── Agent Notes ── #}
+    <div class="pref-card">
+      <div style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:.92rem;color:#0f1c35;margin-bottom:.85rem;">Agent Notes</div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_note">
+        <textarea name="notes" rows="3" class="notes-textarea" placeholder="Add notes about this lead…">{{ lead.notes }}</textarea>
+        <button type="submit" class="btn btn-primary btn-sm" style="margin-top:.65rem;">Save notes</button>
+      </form>
     </div>
 
   </div>
 
-  {# ── RIGHT COLUMN ── #}
-  <div style="display:flex;flex-direction:column;gap:1.25rem;">
+  {# ══════════ RIGHT COLUMN ══════════ #}
+  <div>
 
-    {# Pipeline status #}
-    <div class="card">
-      <div class="section-title">Pipeline Stage</div>
+    {# Quick actions #}
+    <div class="rp-card">
+      <div class="rp-title">Quick Actions</div>
+      {% if curated %}
+      <button class="qa-btn qa-primary" onclick="document.getElementById('send-shortlist-form').submit();">
+        📋 Send shortlist to {{ lead.name|truncatechars:14 }}
+      </button>
+      {% endif %}
+      {% if lead.email %}
+      <a href="mailto:{{ lead.email }}" class="qa-btn">💬 Message client</a>
+      {% endif %}
+      <a href="#" class="qa-btn" onclick="return false;">📅 Schedule tours</a>
+    </div>
+
+    {# Update lead status #}
+    <div class="rp-card">
+      <div class="rp-title">Update Lead Status</div>
       {% for val, label in status_choices %}
       <form method="post" style="margin:0;">
         {% csrf_token %}
         <input type="hidden" name="action" value="update_status">
         <input type="hidden" name="status" value="{{ val }}">
-        <button type="submit" class="stage-btn {% if lead.status == val %}active-stage{% endif %}">
-          {% if val == 'new' %}🆕
-          {% elif val == 'contacted' %}📞
-          {% elif val == 'shortlist_ready' %}📋
-          {% elif val == 'shortlist_sent' %}📤
-          {% elif val == 'touring' %}🏠
-          {% elif val == 'application_in_progress' %}📝
-          {% elif val == 'closed_won' %}✅
-          {% elif val == 'closed_lost' %}❌
-          {% endif %}
+        <label class="status-radio {% if lead.status == val %}active{% endif %}">
+          <input type="radio" name="_status_display" {% if lead.status == val %}checked{% endif %} onchange="this.closest('form').submit();">
+          {% if val == 'new' %}🆕{% elif val == 'contacted' %}📞{% elif val == 'shortlist_ready' %}📋{% elif val == 'shortlist_sent' %}📤{% elif val == 'touring' %}🏠{% elif val == 'application_in_progress' %}📝{% elif val == 'closed_won' %}✅{% elif val == 'closed_lost' %}❌{% endif %}
           {{ label }}
-        </button>
+        </label>
       </form>
       {% endfor %}
     </div>
 
+    {# Conversion tip #}
+    {% if conversion_tip %}
+    <div class="tip-card" style="margin-bottom:1rem;">
+      <div class="tip-label"><span class="tip-icon">💡</span>Conversion tip</div>
+      <div class="tip-text">{{ conversion_tip }}</div>
+    </div>
+    {% endif %}
+
     {# Assign agent (admin only) #}
     {% if request.user.is_superuser and all_agents %}
-    <div class="card">
-      <div class="section-title">Assign Agent</div>
-      <form method="post">
+    <div class="rp-card" id="assign-agent-card">
+      <div class="rp-title">Assign Agent</div>
+      <select id="assign-agent-select" class="assign-select" onchange="onAssignChange()">
+        <option value="">— Unassigned —</option>
+        {% for agent in all_agents %}
+        <option value="{{ agent.pk }}" {% if lead.assigned_agent_id == agent.pk %}selected{% endif %}>{{ agent.get_full_name|default:agent.username }}</option>
+        {% endfor %}
+      </select>
+      <button id="assign-save-btn" onclick="saveAssignment()" class="btn btn-primary btn-sm" style="width:100%;opacity:.45;pointer-events:none;">Save</button>
+      <div id="assign-success" style="margin-top:.6rem;font-size:.8rem;font-weight:600;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.45rem .75rem;display:flex;align-items:center;gap:.35rem;opacity:0;transition:opacity .35s ease;pointer-events:none;"></div>
+      <form id="assign-form" method="post" style="display:none;">
         {% csrf_token %}
         <input type="hidden" name="action" value="assign_agent">
-        <select name="agent_id" style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.875rem;margin-bottom:.75rem;">
-          <option value="">— Unassigned —</option>
-          {% for agent in all_agents %}
-          <option value="{{ agent.pk }}" {% if lead.assigned_agent_id == agent.pk %}selected{% endif %}>{{ agent.username }}</option>
-          {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-primary btn-sm" style="width:100%;">Assign</button>
+        <input type="hidden" name="agent_id" id="assign-hidden-id">
       </form>
     </div>
     {% endif %}
@@ -208,4 +387,144 @@
   </div>
 
 </div>
+
+<script>
+var LISTING_SEARCH_URL = '{% url "agent_listing_search" %}';
+var selectedListings = {};  // id → {id, title, city, price, price_unit, bedrooms}
+var searchTimer = null;
+
+function toggleManualBuilder() {
+  var el  = document.getElementById('manual-builder');
+  var btn = document.getElementById('manual-toggle-btn');
+  var open = el.style.display === 'none';
+  el.style.display = open ? 'block' : 'none';
+  btn.textContent  = open ? '− Close' : '✏️ Edit Shortlist';
+  if (open) document.getElementById('sl-search').focus();
+}
+
+function searchListings(q) {
+  clearTimeout(searchTimer);
+  var resultsEl = document.getElementById('sl-results');
+  if (!q || q.length < 2) { resultsEl.style.display = 'none'; return; }
+  searchTimer = setTimeout(function() {
+    fetch(LISTING_SEARCH_URL + '?q=' + encodeURIComponent(q))
+      .then(function(r) { return r.json(); })
+      .then(function(data) { renderResults(data.results); });
+  }, 280);
+}
+
+function renderResults(results) {
+  var el = document.getElementById('sl-results');
+  if (!results.length) {
+    el.innerHTML = '<div style="padding:.75rem 1rem;font-size:.82rem;color:#94a3b8;">No listings found.</div>';
+    el.style.display = 'block';
+    return;
+  }
+  el.innerHTML = results.map(function(r) {
+    var already = selectedListings[r.id] ? ' style="opacity:.45;pointer-events:none;"' : '';
+    var alreadyLabel = selectedListings[r.id] ? ' <span style="color:#2A7EF2;font-size:.7rem;">✓ Added</span>' : '';
+    var meta = [r.city];
+    if (r.price) meta.push('$' + Number(r.price).toLocaleString() + (r.price_unit ? '/' + r.price_unit : ''));
+    if (r.bedrooms) meta.push(r.bedrooms + ' bd');
+    return '<div class="sl-result-row"' + already + ' onclick="addListing(' + JSON.stringify(r).replace(/"/g, '&quot;') + ')" style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .9rem;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .12s;" onmouseover="this.style.background=\'#f0f7ff\'" onmouseout="this.style.background=\'\'">'+
+      '<div><div style="font-weight:600;font-size:.84rem;color:#0f1c35;">' + r.title + alreadyLabel + '</div>' +
+      '<div style="font-size:.74rem;color:#64748b;">' + meta.join(' · ') + ' &middot; ID #' + r.id + '</div></div>' +
+      '<span style="font-size:.72rem;font-weight:700;color:var(--primary);flex-shrink:0;"' + already + '>+ Add</span>' +
+      '</div>';
+  }).join('');
+  el.style.display = 'block';
+}
+
+function addListing(r) {
+  if (selectedListings[r.id]) return;
+  selectedListings[r.id] = r;
+  refreshSelected();
+  renderResults(Object.values(selectedListings).map(function() { return null; }));  // re-render to mark added
+  // Re-run search to refresh added state
+  var q = document.getElementById('sl-search').value;
+  if (q.length >= 2) searchListings(q);
+}
+
+function removeListing(id) {
+  delete selectedListings[id];
+  refreshSelected();
+  var q = document.getElementById('sl-search').value;
+  if (q.length >= 2) searchListings(q);
+}
+
+function refreshSelected() {
+  var ids = Object.keys(selectedListings);
+  var wrap = document.getElementById('sl-selected-wrap');
+  var list = document.getElementById('sl-selected-list');
+  var hiddenDiv = document.getElementById('sl-hidden-inputs');
+  var btn = document.getElementById('sl-create-btn');
+
+  wrap.style.display = ids.length ? 'block' : 'none';
+  btn.disabled = ids.length === 0;
+  btn.style.opacity = ids.length ? '1' : '.5';
+
+  list.innerHTML = ids.map(function(id) {
+    var r = selectedListings[id];
+    var meta = [r.city];
+    if (r.price) meta.push('$' + Number(r.price).toLocaleString());
+    if (r.bedrooms) meta.push(r.bedrooms + ' bd');
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:.42rem .6rem;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:.35rem;">' +
+      '<div><div style="font-weight:600;font-size:.83rem;color:#0f1c35;">' + r.title + '</div>' +
+      '<div style="font-size:.73rem;color:#64748b;">' + meta.join(' · ') + '</div></div>' +
+      '<button type="button" onclick="removeListing(' + id + ')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:1rem;line-height:1;padding:.1rem .3rem;" title="Remove">×</button>' +
+      '</div>';
+  }).join('');
+
+  hiddenDiv.innerHTML = ids.map(function(id) {
+    return '<input type="hidden" name="listing_ids" value="' + id + '">';
+  }).join('');
+}
+
+var originalAssignValue = (function() {
+  var sel = document.getElementById('assign-agent-select');
+  return sel ? sel.value : '';
+})();
+
+function onAssignChange() {
+  var sel = document.getElementById('assign-agent-select');
+  var btn = document.getElementById('assign-save-btn');
+  var changed = sel.value !== originalAssignValue;
+  btn.style.opacity = changed ? '1' : '.45';
+  btn.style.pointerEvents = changed ? 'auto' : 'none';
+}
+
+function saveAssignment() {
+  var select  = document.getElementById('assign-agent-select');
+  var btn     = document.getElementById('assign-save-btn');
+  var agentId = select.value;
+
+  document.getElementById('assign-hidden-id').value = agentId;
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  fetch(window.location.href, { method: 'POST', body: new FormData(document.getElementById('assign-form')) })
+    .then(function() {
+      originalAssignValue = agentId;
+      btn.disabled = false;
+      btn.textContent = 'Save';
+      btn.style.opacity = '.45';
+      btn.style.pointerEvents = 'none';
+
+      var label = agentId
+        ? '✓ Assigned to ' + select.options[select.selectedIndex].text
+        : '✓ Lead moved to unassigned';
+      var successEl = document.getElementById('assign-success');
+      successEl.textContent = label;
+      successEl.style.opacity = '1';
+      clearTimeout(successEl._timer);
+      successEl._timer = setTimeout(function() {
+        successEl.style.opacity = '0';
+      }, 2000);
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'Save';
+    });
+}
+</script>
 {% endblock %}

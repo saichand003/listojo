@@ -338,6 +338,69 @@ def agents_view(request):
 
 # ── AGENT PORTAL ─────────────────────────────────────────────────────────────
 
+def _compute_listing_match(listing, preference):
+    """Return (match_pct, reasons, caveats) for a listing vs a LeadPreference."""
+    reasons, caveats, score = [], [], 70
+
+    if preference.max_budget and listing.price:
+        budget = float(preference.max_budget)
+        price  = float(listing.price)
+        if price <= budget * 0.93:
+            reasons.append('Under budget')
+            score += 8
+        elif price <= budget:
+            caveats.append('At budget max')
+            score += 2
+        else:
+            score -= 8
+
+    if preference.bedrooms and listing.bedrooms:
+        if listing.bedrooms == preference.bedrooms:
+            reasons.append(f'{listing.bedrooms} bed match')
+            score += 6
+
+    if preference.amenities and listing.tags:
+        pref_set = {a.strip().lower() for a in preference.amenities.split(',') if a.strip()}
+        tags_lower = listing.tags.lower()
+        tag_labels = {
+            'pet friendly': 'Pet friendly', 'washer dryer': 'W/D in unit',
+            'washer/dryer': 'W/D in unit',  'parking': 'Parking',
+            'central ac': 'Central AC',     'gym': 'Gym',
+            'pool': 'Pool',                 'furnished': 'Furnished',
+            'bills included': 'Bills included', 'gated': 'Gated',
+            'balcony': 'Balcony',           'high-speed internet': 'High-speed internet',
+        }
+        for amenity in pref_set:
+            if amenity in tags_lower or any(w in tags_lower for w in amenity.split()):
+                label = tag_labels.get(amenity, amenity.replace('_', ' ').title())
+                if label not in reasons:
+                    reasons.append(label)
+                    score += 3
+
+    return max(65, min(98, score)), reasons[:4], caveats[:2]
+
+
+def _generate_conversion_tip(curated, preference):
+    """Generate a short agent tip based on top match and preferences."""
+    if not curated:
+        return None
+    top = curated[0]
+    listing = top['listing']
+    tips = []
+    if 'Under budget' in top['reasons'] and preference.max_budget and listing.price:
+        savings = int(float(preference.max_budget) - float(listing.price))
+        tips.append(f"Lead with the ${savings:,}/mo savings vs their budget")
+    if 'Pet friendly' in top['reasons']:
+        tips.append("pet-friendly angle is a strong differentiator")
+    if preference.amenities:
+        top_amenity = preference.amenities.split(',')[0].strip().title()
+        if top_amenity and top_amenity.lower() not in ['under budget', 'pet friendly']:
+            tips.append(f"{top_amenity} is a stated must-have — confirm it's available")
+    if not tips:
+        tips.append(f"{listing.city} area matches their target location")
+    return f"{listing.title[:28]}… is your strongest lead — {tips[0]}."
+
+
 def _build_leads_data(leads_qs):
     """Enrich a lead queryset with matched listing count and preference summary."""
     result = []
@@ -452,32 +515,62 @@ def agent_lead_detail(request, pk):
 
     shortlists  = lead.shortlists.prefetch_related('items__listing').order_by('-created_at')
     preference  = getattr(lead, 'preference', None)
-    matched_listings = []
+
+    # Build curated shortlist with match scores
+    today = _date.today()
+    already_shortlisted = {i.listing_id for sl in shortlists for i in sl.items.all()}
+    curated = []
     if preference and preference.city:
-        today = _date.today()
-        matched_listings = (
+        qs = (
             Listing.objects.filter(status='active', city__icontains=preference.city)
             .filter(Q(expires_at__isnull=True) | Q(expires_at__gte=today))
-            .exclude(id__in=[i.listing_id for sl in shortlists for i in sl.items.all()])
-            [:12]
+            .exclude(id__in=already_shortlisted)
+        )
+        if preference.bedrooms:
+            qs = qs.filter(bedrooms=preference.bedrooms)
+        if preference.max_budget:
+            qs = qs.filter(price__lte=float(preference.max_budget) * 1.1)
+        for listing in qs[:12]:
+            pct, reasons, caveats = _compute_listing_match(listing, preference)
+            curated.append({'listing': listing, 'match_pct': pct,
+                            'reasons': reasons, 'caveats': caveats})
+        curated.sort(key=lambda x: -x['match_pct'])
+        curated = curated[:6]
+
+    conversion_tip = _generate_conversion_tip(curated, preference) if curated else None
+
+    # Broader listing pool for manual selection (city only, no budget/bedroom filter)
+    curated_ids = {item['listing'].pk for item in curated}
+    manual_listings = []
+    if preference and preference.city:
+        manual_listings = list(
+            Listing.objects.filter(status='active', city__icontains=preference.city)
+            .filter(Q(expires_at__isnull=True) | Q(expires_at__gte=today))
+            .exclude(id__in=already_shortlisted)
+            .order_by('-featured', '-created_at')[:30]
+        )
+    elif lead.listing:
+        manual_listings = list(
+            Listing.objects.filter(status='active', city__icontains=lead.listing.city)
+            .filter(Q(expires_at__isnull=True) | Q(expires_at__gte=today))
+            .exclude(id__in=already_shortlisted)
+            .order_by('-featured', '-created_at')[:30]
         )
 
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'update_status':
             new_status = request.POST.get('status')
-            valid = [s[0] for s in Lead.STATUS_CHOICES]
-            if new_status in valid:
+            if new_status in [s[0] for s in Lead.STATUS_CHOICES]:
                 lead.status = new_status
                 lead.save()
         elif action == 'save_note':
             lead.notes = request.POST.get('notes', '')
             lead.save()
         elif action == 'assign_agent' and request.user.is_superuser:
-            agent_id = request.POST.get('agent_id')
-            if agent_id:
-                lead.assigned_agent = get_object_or_404(User, pk=agent_id, is_staff=True)
-                lead.save()
+            agent_id = request.POST.get('agent_id', '').strip()
+            lead.assigned_agent = get_object_or_404(User, pk=agent_id, is_staff=True) if agent_id else None
+            lead.save()
         elif action == 'create_shortlist':
             listing_ids = request.POST.getlist('listing_ids')
             if listing_ids:
@@ -488,6 +581,20 @@ def agent_lead_detail(request, pk):
                         ShortlistItem.objects.create(shortlist=sl, listing=listing, order_index=idx)
                     except Listing.DoesNotExist:
                         pass
+        elif action == 'send_curated_shortlist':
+            # Create shortlist from top curated matches and mark sent immediately
+            top_ids = request.POST.getlist('curated_ids')
+            if top_ids:
+                sl = Shortlist.objects.create(lead=lead, agent=request.user,
+                                              status='sent', sent_at=timezone.now())
+                for idx, lid in enumerate(top_ids):
+                    try:
+                        listing = Listing.objects.get(pk=lid, status='active')
+                        ShortlistItem.objects.create(shortlist=sl, listing=listing, order_index=idx)
+                    except Listing.DoesNotExist:
+                        pass
+                lead.status = 'shortlist_sent'
+                lead.save()
         elif action == 'mark_sent':
             sl_id = request.POST.get('shortlist_id')
             sl    = get_object_or_404(Shortlist, pk=sl_id, lead=lead)
@@ -497,13 +604,50 @@ def agent_lead_detail(request, pk):
         return redirect('agent_lead_detail', pk=lead.pk)
 
     return render(request, 'portal/agent_lead_detail.html', {
-        'lead':             lead,
-        'shortlists':       shortlists,
-        'preference':       preference,
-        'matched_listings': matched_listings,
+        'lead':            lead,
+        'shortlists':      shortlists,
+        'preference':      preference,
+        'curated':          curated,
+        'curated_ids':      curated_ids,
+        'manual_listings':  manual_listings,
+        'conversion_tip':   conversion_tip,
         'status_choices':   Lead.STATUS_CHOICES,
         'all_agents':       User.objects.filter(is_staff=True) if request.user.is_superuser else None,
     })
+
+
+@agent_login_required
+def listing_search_api(request):
+    """JSON search for active listings — used by the manual shortlist builder."""
+    q = request.GET.get('q', '').strip()
+    if not q or len(q) < 2:
+        return JsonResponse({'results': []})
+
+    today = _date.today()
+    qs = Listing.objects.filter(status='active').filter(
+        Q(expires_at__isnull=True) | Q(expires_at__gte=today)
+    )
+    if q.isdigit():
+        qs = qs.filter(pk=int(q))
+    else:
+        qs = qs.filter(Q(title__icontains=q) | Q(city__icontains=q))
+
+    results = []
+    for listing in qs.select_related('owner')[:12]:
+        thumb = None
+        first_img = listing.images.first()
+        if first_img:
+            thumb = first_img.image.url
+        results.append({
+            'id':         listing.pk,
+            'title':      listing.title,
+            'city':       listing.city,
+            'price':      str(listing.price) if listing.price else '',
+            'price_unit': listing.price_unit or '',
+            'bedrooms':   listing.bedrooms,
+            'thumb':      thumb,
+        })
+    return JsonResponse({'results': results})
 
 
 @require_POST
