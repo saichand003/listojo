@@ -13,8 +13,8 @@ from datetime import timedelta, date
 
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage
-from portal.models import Lead, LeadPreference
-from django.contrib.auth.models import User as _User
+from portal.services.lead_service import create_or_update_lead, parse_budget, parse_move_in
+from portal.services.routing import least_loaded_agent
 
 
 def _fmm_score(listing, max_price_val, requested_tags, avail_date,
@@ -490,37 +490,8 @@ def guided_search(request):
         amenities  = request.POST.get('tags', '').strip()
         available_by = request.POST.get('available_by', '').strip()
 
-        # Resolve user identity
-        if request.user.is_authenticated:
-            lead_name  = request.user.get_full_name().strip() or request.user.username
-            lead_email = request.user.email
-            # Dedup: update existing unassigned guided_search lead for this user
-            existing = Lead.objects.filter(
-                email=lead_email, source='guided_search', assigned_agent__isnull=True
-            ).order_by('-created_at').first()
-        else:
-            lead_name  = 'Guest'
-            lead_email = ''
-            existing   = None
-
-        if existing:
-            lead = existing
-        else:
-            lead = Lead.objects.create(
-                name=lead_name,
-                email=lead_email,
-                source='guided_search',
-                assigned_agent=None,
-            )
-
-        # Upsert preference
-        move_in = None
-        if available_by:
-            from datetime import date as _date
-            try:
-                move_in = _date.fromisoformat(available_by)
-            except ValueError:
-                pass
+        lead_name  = request.user.get_full_name().strip() or request.user.username if request.user.is_authenticated else 'Guest'
+        lead_email = request.user.email if request.user.is_authenticated else ''
 
         beds_int = None
         if bedrooms:
@@ -529,24 +500,16 @@ def guided_search(request):
             except ValueError:
                 pass
 
-        budget_dec = None
-        if max_budget:
-            try:
-                from decimal import Decimal
-                budget_dec = Decimal(max_budget)
-            except Exception:
-                pass
-
-        LeadPreference.objects.update_or_create(
-            lead=lead,
-            defaults={
-                'city':          city,
-                'property_type': category,
-                'bedrooms':      beds_int,
-                'max_budget':    budget_dec,
-                'amenities':     amenities,
-                'move_in_date':  move_in,
-            }
+        lead = create_or_update_lead(
+            name=lead_name,
+            email=lead_email,
+            source='guided_search',
+            city=city,
+            property_type=category,
+            bedrooms=beds_int,
+            max_budget=parse_budget(max_budget),
+            amenities=amenities,
+            move_in_date=parse_move_in(available_by),
         )
 
         # Store lead pk in session so listing list can show the CTA
