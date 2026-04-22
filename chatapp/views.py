@@ -9,35 +9,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
 from listings.models import Listing, ListingInquiry
-from portal.models import Lead, LeadPreference
+from chatapp.services.lead_service import maybe_create_chat_lead
 
 from .forms import GuestMessageForm, MessageForm
 from .models import ChatMessage, GuestChatMessage
-
-
-def _maybe_create_chat_lead(sender, listing):
-    """Create a lead on the first message a non-owner sends about a listing."""
-    # Skip if sender already has a lead for this listing
-    if Lead.objects.filter(email=sender.email, listing=listing).exists():
-        return
-
-    lister = listing.owner
-    # Assign lead to the lister if they're a staff agent; otherwise leave unassigned
-    assigned = lister if lister.is_staff else None
-
-    lead = Lead.objects.create(
-        name=sender.get_full_name().strip() or sender.username,
-        email=sender.email,
-        phone='',
-        source='chat',
-        listing=listing,
-        assigned_agent=assigned,
-    )
-    LeadPreference.objects.create(
-        lead=lead,
-        city=listing.city,
-        property_type=listing.category,
-    )
 
 
 @login_required
@@ -317,7 +292,7 @@ def listing_chat_send(request, listing_id, other_user_id=None):
 
     # Capture demand signal: create lead on visitor's first message
     if request.user != listing.owner:
-        _maybe_create_chat_lead(request.user, listing)
+        maybe_create_chat_lead(request.user, listing)
 
     return JsonResponse({
         'message': {
