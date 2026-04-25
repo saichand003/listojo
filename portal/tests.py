@@ -3,7 +3,9 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.urls import reverse
 
+from chatapp.models import ChatMessage
 from listings.models import Listing
 from listings.services.visibility import active_listings
 from portal.models import Lead, Shortlist
@@ -126,6 +128,7 @@ class PortalWorkflowTests(TestCase):
         self.owner = User.objects.create_user(username='owner', password='pw')
         self.agent = User.objects.create_user(username='agent', password='pw', is_staff=True)
         self.superuser = User.objects.create_superuser(username='admin', password='pw', email='admin@example.com')
+        self.lead_user = User.objects.create_user(username='rahul', password='pw', email='rahul@example.com')
         self.listing = Listing.objects.create(
             owner=self.owner,
             title='Portal Listing',
@@ -174,6 +177,89 @@ class PortalWorkflowTests(TestCase):
         response = self.client.get(f'/portal/agent/leads/{self.lead.pk}/')
         self.assertEqual(response.status_code, 200)
 
+    def test_agent_dashboard_shows_unread_message_badge(self):
+        self.lead.assigned_agent = self.agent
+        self.lead.save()
+        ChatMessage.objects.create(
+            listing=self.listing,
+            sender=self.owner,
+            recipient=self.agent,
+            message='New client update',
+        )
+
+        self.client.force_login(self.agent)
+        response = self.client.get(reverse('agent_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse('agent_messages'))
+        self.assertContains(response, '💬</span> Messages')
+        self.assertContains(response, '<span class="sidebar-badge">1</span>', html=True)
+
+    def test_agent_messages_uses_agent_portal_page(self):
+        self.lead.assigned_agent = self.agent
+        self.lead.save()
+        ChatMessage.objects.create(
+            listing=self.listing,
+            sender=self.owner,
+            recipient=self.agent,
+            message='Agent-specific inbox message',
+        )
+
+        self.client.force_login(self.agent)
+        response = self.client.get(reverse('agent_messages'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Agent Portal')
+        self.assertContains(response, 'Agent-specific inbox message')
+
+    def test_agent_clients_groups_working_records_by_person(self):
+        self.lead.assigned_agent = self.agent
+        self.lead.status = 'shortlist_sent'
+        self.lead.notes = 'Next step: confirm weekend tour availability'
+        self.lead.save()
+
+        create_or_update_lead(
+            name='Rahul',
+            email='rahul@example.com',
+            source='guided_search',
+            assigned_agent=self.agent,
+            city='Plano',
+        )
+
+        self.client.force_login(self.agent)
+        response = self.client.get(reverse('agent_clients'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Rahul')
+        self.assertContains(response, 'My Clients')
+        self.assertContains(response, 'Lead Records')
+        self.assertContains(response, 'Next step: confirm weekend tour availability')
+        self.assertContains(response, reverse('agent_client_detail', args=['rahul@example.com']))
+
+    def test_agent_client_detail_shows_timeline_shortlists_and_messages(self):
+        self.lead.assigned_agent = self.agent
+        self.lead.status = 'shortlist_sent'
+        self.lead.save()
+        shortlist = Shortlist.objects.create(lead=self.lead, agent=self.agent, status='sent')
+        shortlist.items.create(listing=self.listing, order_index=0)
+        ChatMessage.objects.create(
+            listing=self.listing,
+            sender=self.agent,
+            recipient=self.lead_user,
+            message='Following up on your shortlist',
+        )
+
+        self.client.force_login(self.agent)
+        response = self.client.get(reverse('agent_client_detail', args=['rahul@example.com']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Latest Note')
+        self.assertContains(response, 'Notes History')
+        self.assertContains(response, 'Timeline')
+        self.assertContains(response, 'Shortlist History')
+        self.assertContains(response, 'Messages')
+        self.assertContains(response, 'Following up on your shortlist')
+
     def test_superuser_can_approve_flag_and_toggle_featured_listing(self):
         self.client.force_login(self.superuser)
 
@@ -214,5 +300,36 @@ class PortalWorkflowTests(TestCase):
         shortlist = Shortlist.objects.get(lead=self.lead)
         self.assertEqual(shortlist.status, 'sent')
         self.assertEqual(shortlist.items.count(), 1)
+        self.assertTrue(ChatMessage.objects.filter(
+            sender=self.agent,
+            recipient=self.lead_user,
+            listing=active_listing,
+            message__icontains='curated Listojo shortlist',
+        ).exists())
+        self.client.force_login(self.lead_user)
+        thread_response = self.client.get(f'/chat/listing/{active_listing.pk}/with/{self.agent.pk}/thread/')
+        self.assertEqual(thread_response.status_code, 200)
+        self.assertEqual(len(thread_response.json()['messages']), 1)
         self.lead.refresh_from_db()
         self.assertEqual(self.lead.status, 'shortlist_sent')
+
+        extra_listing = Listing.objects.create(
+            owner=self.owner,
+            title='Second Match',
+            description='Should be appended to the same shortlist',
+            category='rentals',
+            city='Irving',
+            price=Decimal('1750.00'),
+            bedrooms=2,
+            status='active',
+        )
+        self.client.force_login(self.agent)
+        response = self.client.post(f'/portal/agent/leads/{self.lead.pk}/', {
+            'action': 'create_shortlist',
+            'listing_ids': [str(extra_listing.pk)],
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Shortlist.objects.filter(lead=self.lead).count(), 1)
+        shortlist.refresh_from_db()
+        self.assertEqual(shortlist.status, 'draft')
+        self.assertEqual(shortlist.items.count(), 2)

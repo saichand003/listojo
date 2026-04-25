@@ -33,6 +33,8 @@ def _parse_date(value: str) -> date | None:
 def build_listing_search_context(request) -> dict:
     """Shared search/listing context for the consumer discovery experience."""
     listings = active_listings(Listing.objects.select_related('owner').prefetch_related('images'))
+    if request.user.is_authenticated:
+        listings = listings.exclude(owner=request.user)
 
     q = request.GET.get('q', '').strip()
     category = request.GET.get('category', '').strip()

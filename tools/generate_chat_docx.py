@@ -20,11 +20,11 @@ TRANSCRIPT = [
     ),
     (
         "Assistant",
-        "I’ve confirmed this is a Django classifieds/listings platform with accounts, chat, and an admin/portal layer. Next I’m reading the product-facing docs and the core business entities to judge product-market value, monetization paths, and where the experience or business model breaks down.",
+        "I’ve confirmed this is a Django curated-list-engine/listings platform with accounts, chat, and an admin/portal layer. Next I’m reading the product-facing docs and the core business entities to judge product-market value, monetization paths, and where the experience or business model breaks down.",
     ),
     (
         "Assistant",
-        "The docs are clear about the intended business: a DFW-first rental/classifieds marketplace using free listings as the wedge. I’m now validating whether the implementation actually supports that strategy, because the business story only matters if the product behavior backs it up.",
+        "The docs are clear about the intended business: a DFW-first rental and curated-list-engine marketplace using free listings as the wedge. I’m now validating whether the implementation actually supports that strategy, because the business story only matters if the product behavior backs it up.",
     ),
     (
         "Assistant",
@@ -32,7 +32,7 @@ TRANSCRIPT = [
     ),
     (
         "Assistant",
-        "A few business-significant mismatches are already visible in code: the docs describe a moderated marketplace and broader classifieds scope, but the implementation appears narrower and looser than that. I’m checking the user-facing templates next to separate cosmetic polish from true product readiness.",
+        "A few business-significant mismatches are already visible in code: the docs describe a moderated marketplace and broader curated-list-engine scope, but the implementation appears narrower and looser than that. I’m checking the user-facing templates next to separate cosmetic polish from true product readiness.",
     ),
     (
         "Assistant",
@@ -77,7 +77,7 @@ These are the biggest business risks I found.
 1. Trust and moderation logic are not aligned with the product story.
 The docs describe a moderated marketplace with pending approval, but listings default to `active` in [listings/models.py](/Users/saichandc/Documents/Test/listings/models.py:72), and the main marketplace query pulls `all()` listings in [listings/views.py](/Users/saichandc/Documents/Test/listings/views.py:218) instead of limiting to active inventory. That weakens the “trusted marketplace” narrative immediately.
 
-2. The product pitch says “broad classifieds,” but the actual form restricts posting to only `rentals` and `properties`.
+2. The product pitch says “broad curated-list-engine,” but the actual form restricts posting to only `rentals` and `properties`.
 The data model supports roommates, jobs, services, events, and buy/sell in [listings/models.py](/Users/saichandc/Documents/Test/listings/models.py:7), but the form hard-restricts categories to `rentals` and `properties` in [listings/forms.py](/Users/saichandc/Documents/Test/listings/forms.py:41). Business-wise, this creates confusion in positioning and marketing.
 
 3. Your premium/featured monetization logic is currently broken.
@@ -114,7 +114,7 @@ Most likely monetization sequence for this product:
 4. Tenant screening / verification / background-check referral revenue.
 5. Agent lead routing in selected categories or cities.
 
-If executed well, this could become a useful local marketplace business. If executed poorly, it becomes a nice-looking but low-liquidity classifieds site with no pricing power.
+If executed well, this could become a useful local marketplace business. If executed poorly, it becomes a nice-looking but low-liquidity generic marketplace with no pricing power.
 
 **Business Assessment**
 
@@ -143,7 +143,7 @@ If you want, I can next give you a pure BA-style deliverable with:
         """**Top 5 Business Risks**
 
 1. The product positioning is broader than the product reality.  
-Right now the brand reads like a full classifieds marketplace, but the actual posting flow is effectively focused on rentals and properties. That mismatch can confuse users, weaken acquisition messaging, and make the product feel incomplete instead of focused.
+Right now the brand reads like a full broad marketplace, but the actual posting flow is effectively focused on rentals and properties. That mismatch can confuse users, weaken acquisition messaging, and make the product feel incomplete instead of focused.
 
 2. Trust is promised more strongly than it is enforced.  
 For a rental marketplace, trust is the product. If listing approval, spam control, identity confidence, and fast landlord response are inconsistent, renters will leave quickly and landlords will see low-quality leads. That creates a two-sided marketplace failure loop.
@@ -226,7 +226,7 @@ This is viable if the platform attracts demand that some small landlords cannot 
 
 If I were advising this as a BA, I would say:
 
-Do not try to be a broad classifieds company yet. Become a narrow, trustworthy DFW rental marketplace first. That is the shortest path to real user value and the only realistic path to monetization.
+Do not try to be a broad marketplace company yet. Become a narrow, trustworthy DFW rental curated-list-engine first. That is the shortest path to real user value and the only realistic path to monetization.
 
 The product is good enough to validate. It is not yet good enough to scale or monetize aggressively. The next value unlock will come from focus, trust, and liquidity, not from adding more feature surface area.
 
@@ -249,7 +249,7 @@ If you want, I can next turn this into one of these:
 **Strengths**
 - The product has a clear wedge: free local rental listings for small landlords who may be underserved by Zillow and dissatisfied with Craigslist or Facebook Marketplace.
 - The codebase already supports a meaningful end-to-end workflow: listing creation, search, favorites, inquiries, chat, and admin review.
-- Guided search and match scoring give the product a more differentiated experience than a basic classifieds board.
+- Guided search and match scoring give the product a more differentiated experience than a basic listings board.
 - The portal/dashboard shows early operational thinking, which is important in a marketplace business.
 - The DFW-first launch approach is focused enough to test real behavior instead of spreading too thin.
 
@@ -285,7 +285,7 @@ I’d score it on a 10-point scale.
 The problem is easy to understand. Small landlords want cheaper, simpler listing options; renters want a more trustworthy local experience.
 
 - Target user definition: `7/10`
-The likely best target is clear: small landlords and renters in DFW. The only weakness is that the broader classifieds framing muddies the message.
+The likely best target is clear: small landlords and renters in DFW. The only weakness is that the broader marketplace framing muddies the message.
 
 - Core product usefulness: `6.5/10`
 The product is already useful enough to test. It is not yet strong enough to create habitual usage or strong referral behavior.
@@ -334,7 +334,7 @@ Listojo is an early-stage local marketplace product currently focused on the Dal
 **What problem it solves**
 The product addresses two linked pain points:
 - small landlords need lower-cost, lower-friction distribution;
-- renters need cleaner local discovery and higher trust than generic classifieds or social platforms provide.
+- renters need cleaner local discovery and higher trust than generic marketplaces or social platforms provide.
 
 **What is already built**
 The platform is meaningfully beyond concept stage. It includes:
@@ -393,7 +393,7 @@ Focus messaging on:
 - better renter quality
 - safer and simpler than Craigslist/Facebook
 
-Do not market this as a full general classifieds platform yet. That creates unnecessary noise.
+Do not market this as a full general marketplace yet. That creates unnecessary noise.
 
 **Primary acquisition targets**
 - Small self-managed landlords
@@ -549,7 +549,7 @@ The biggest risk is not technology. It is liquidity. If there are not enough qua
 **Strengths**
 - Clear wedge market: small landlords and renters in DFW.
 - Real marketplace workflow already exists.
-- Guided search and match logic create a more differentiated experience than generic classifieds.
+- Guided search and match logic create a more differentiated experience than generic marketplaces.
 - Admin portal shows operational discipline and founder visibility into business metrics.
 - Geographic focus gives the launch strategy a practical shape.
 
@@ -572,7 +572,7 @@ The biggest risk is not technology. It is liquidity. If there are not enough qua
 - Incumbents already own user habit and inventory density.
 - Early spam, stale listings, or low response rates could damage trust permanently.
 - Premature monetization could choke supply.
-- Broader classifieds ambition could dilute execution.
+- Broader marketplace ambition could dilute execution.
 
 **Product-Market Fit Scorecard**
 
@@ -604,7 +604,7 @@ Signs that PMF is approaching:
 
 **Founder / Investor Style Summary**
 
-Listojo is a local rental and classifieds marketplace with an early but coherent wedge: free posting for small landlords, paired with a more guided and trusted renter experience. The product is meaningfully beyond concept stage and already supports core marketplace behavior.
+Listojo is a local rental and curated-list-engine marketplace with an early but coherent wedge: free posting for small landlords, paired with a more guided and trusted renter experience. The product is meaningfully beyond concept stage and already supports core marketplace behavior.
 
 The business opportunity is plausible because the pain point is real. Small landlords often lack a low-cost, trusted channel, and renters are used to fragmented, spam-prone discovery experiences. If Listojo can provide enough trustworthy local inventory, it can create real user value.
 
@@ -631,7 +631,7 @@ Best launch positioning:
 `Free DFW rental marketplace for small landlords and renters.`
 
 Do not lead with:
-- broad classifieds,
+- broad marketplace,
 - multi-category expansion,
 - or “competing with everyone.”
 
@@ -745,7 +745,7 @@ Do not charge early for simple participation.
 
 **Final Recommendation**
 
-Listojo is a promising early-stage local marketplace with real validation potential. It is best understood as a focused rental marketplace experiment, not yet as a broad classifieds business.
+Listojo is a promising early-stage local marketplace with real validation potential. It is best understood as a focused rental marketplace experiment, not yet as a broad generic marketplace business.
 
 The product can create value, but only if the next phase is handled with discipline. The priority should be:
 - build supply,

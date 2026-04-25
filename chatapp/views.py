@@ -9,7 +9,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
 from listings.models import Listing, ListingInquiry
+from chatapp.services.inbox_service import build_listing_conversations
 from chatapp.services.lead_service import maybe_create_chat_lead
+from chatapp.services.typing_state import is_user_typing, set_typing_state
 
 from .forms import GuestMessageForm, MessageForm
 from .models import ChatMessage, GuestChatMessage
@@ -17,41 +19,19 @@ from .models import ChatMessage, GuestChatMessage
 
 @login_required
 def inbox(request):
-    listing_inquiries = ListingInquiry.objects.filter(
-        listing__owner=request.user
-    ).select_related('listing').order_by('-created_at')
-
-    # All chat messages tied to listings where the user is a participant
-    # (either as owner or as the visitor who messaged). Deduplicate into
-    # one entry per (listing, other_user) pair.
-    seen = set()
-    listing_conversations = []
-    for msg in ChatMessage.objects.filter(
-        listing__isnull=False,
-    ).filter(
-        Q(sender=request.user) | Q(recipient=request.user)
-    ).select_related('listing', 'sender', 'recipient').order_by('-sent_at'):
-        other = msg.recipient if msg.sender == request.user else msg.sender
-        key = (msg.listing_id, other.pk)
-        if key not in seen:
-            seen.add(key)
-            unread_count = ChatMessage.objects.filter(
-                listing=msg.listing,
-                recipient=request.user,
-                is_read=False,
-            ).filter(
-                Q(sender=other)
-            ).count()
-            listing_conversations.append({
-                'listing': msg.listing,
-                'user': other,
-                'last_message': msg,
-                'is_owner': msg.listing.owner == request.user,
-                'unread_count': unread_count,
-            })
-
+    listing_conversations = build_listing_conversations(request.user)
     return render(request, 'chatapp/inbox.html', {
         'listing_conversations': listing_conversations,
+    })
+
+
+@login_required
+def unread_count(request):
+    return JsonResponse({
+        'unread_count': ChatMessage.objects.filter(
+            recipient=request.user,
+            is_read=False,
+        ).count(),
     })
 
 
@@ -226,9 +206,14 @@ def listing_chat_thread(request, listing_id, other_user_id=None):
     listing = get_object_or_404(Listing, pk=listing_id)
 
     if other_user_id is not None:
-        if request.user != listing.owner:
-            return JsonResponse({'error': 'Forbidden.'}, status=403)
         other_user = get_object_or_404(User, pk=other_user_id)
+        if request.user != listing.owner and not ChatMessage.objects.filter(
+            listing=listing,
+        ).filter(
+            Q(sender=request.user, recipient=other_user)
+            | Q(sender=other_user, recipient=request.user)
+        ).exists():
+            return JsonResponse({'error': 'Forbidden.'}, status=403)
     else:
         if request.user == listing.owner:
             return JsonResponse({'error': 'You own this listing.'}, status=400)
@@ -259,7 +244,10 @@ def listing_chat_thread(request, listing_id, other_user_id=None):
         }
         for msg in thread
     ]
-    return JsonResponse({'messages': payload})
+    return JsonResponse({
+        'messages': payload,
+        'other_user_typing': is_user_typing(listing.pk, other_user.pk, request.user.pk),
+    })
 
 
 @require_POST
@@ -271,9 +259,14 @@ def listing_chat_send(request, listing_id, other_user_id=None):
     listing = get_object_or_404(Listing, pk=listing_id)
 
     if other_user_id is not None:
-        if request.user != listing.owner:
-            return JsonResponse({'error': 'Forbidden.'}, status=403)
         other_user = get_object_or_404(User, pk=other_user_id)
+        if request.user != listing.owner and not ChatMessage.objects.filter(
+            listing=listing,
+        ).filter(
+            Q(sender=request.user, recipient=other_user)
+            | Q(sender=other_user, recipient=request.user)
+        ).exists():
+            return JsonResponse({'error': 'Forbidden.'}, status=403)
     else:
         if request.user == listing.owner:
             return JsonResponse({'error': 'You own this listing.'}, status=400)
@@ -289,6 +282,7 @@ def listing_chat_send(request, listing_id, other_user_id=None):
         recipient=other_user,
         message=message_text,
     )
+    set_typing_state(listing.pk, request.user.pk, other_user.pk, False)
 
     # Capture demand signal: create lead on visitor's first message
     if request.user != listing.owner:
@@ -302,6 +296,32 @@ def listing_chat_send(request, listing_id, other_user_id=None):
             'mine': True,
         }
     }, status=201)
+
+
+@require_POST
+def listing_chat_typing(request, listing_id, other_user_id=None):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Login required.'}, status=401)
+
+    listing = get_object_or_404(Listing, pk=listing_id)
+
+    if other_user_id is not None:
+        other_user = get_object_or_404(User, pk=other_user_id)
+        if request.user != listing.owner and not ChatMessage.objects.filter(
+            listing=listing,
+        ).filter(
+            Q(sender=request.user, recipient=other_user)
+            | Q(sender=other_user, recipient=request.user)
+        ).exists():
+            return JsonResponse({'error': 'Forbidden.'}, status=403)
+    else:
+        if request.user == listing.owner:
+            return JsonResponse({'error': 'You own this listing.'}, status=400)
+        other_user = listing.owner
+
+    is_typing = (request.POST.get('is_typing') or '').lower() == 'true'
+    set_typing_state(listing.pk, request.user.pk, other_user.pk, is_typing)
+    return JsonResponse({'ok': True, 'is_typing': is_typing})
 
 
 @login_required

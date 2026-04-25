@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
 <div style="max-width:800px;margin:0 auto;padding:24px 16px">
-  <div style="margin-bottom:20px">
+  <div style="margin-bottom:20px;display:flex;gap:16px;flex-wrap:wrap">
+    <a href="{% url 'inquiries_overview' %}" style="color:#6B7280;font-size:14px;text-decoration:none">&larr; Back to All Inquiries</a>
     <a href="{% url 'profile' %}" style="color:#6B7280;font-size:14px;text-decoration:none">&larr; Back to My Listings</a>
   </div>
 
@@ -26,7 +27,7 @@
       </thead>
       <tbody>
         {% for inq in inquiries %}
-        <tr style="border-bottom:1px solid #F3F4F6">
+        <tr id="inquiry-{{ inq.pk }}" style="border-bottom:1px solid #F3F4F6;scroll-margin-top:96px">
           <td style="padding:14px 16px">
             <div style="font-weight:600;font-size:14px">{{ inq.name }}</div>
           </td>

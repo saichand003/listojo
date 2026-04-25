@@ -1,0 +1,171 @@
+{% extends 'portal/agent_base.html' %}
+{% load listing_extras %}
+{% block page_title %}{{ client.name }}{% endblock %}
+{% block content %}
+<style>
+  .client-detail-grid { display:grid; grid-template-columns:1.6fr 1fr; gap:1.25rem; align-items:start; }
+  .detail-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.3rem 1.45rem; box-shadow:0 2px 10px rgba(24,43,82,.07); margin-bottom:1rem; }
+  .detail-title { font-family:'Montserrat',sans-serif; font-weight:800; font-size:1rem; color:#0f1c35; margin-bottom:.85rem; }
+  .client-hero { display:flex; gap:1rem; align-items:flex-start; }
+  .client-avatar { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#2A7EF2,#1A5DD4); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.3rem; }
+  .meta { color:#64748b; font-size:.85rem; line-height:1.7; }
+  .pill { display:inline-block; padding:.18rem .65rem; border-radius:999px; font-size:.72rem; font-weight:700; margin:.35rem .35rem 0 0; }
+  .pill-green { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+  .pill-blue { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+  .pill-slate { background:#f8fafc; color:#334155; border:1px solid #cbd5e1; }
+  .stat-grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:.75rem; }
+  .stat { background:#f8fbff; border:1px solid #e2e8f0; border-radius:12px; padding:.75rem .85rem; }
+  .stat-label { font-size:.68rem; color:#64748b; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.2rem; }
+  .stat-value { font-size:1rem; font-weight:800; color:#0f1c35; }
+  .timeline { display:grid; gap:.8rem; }
+  .timeline-item { border-left:3px solid #dbeafe; padding-left:.85rem; }
+  .timeline-title { font-weight:700; color:#0f1c35; margin-bottom:.15rem; }
+  .timeline-meta { font-size:.76rem; color:#64748b; margin-bottom:.15rem; }
+  .timeline-detail { font-size:.84rem; color:#475569; }
+  .list-rows { display:grid; gap:.75rem; }
+  .row { border:1px solid #e2e8f0; border-radius:12px; padding:.85rem 1rem; }
+  .row-title { font-weight:700; color:#0f1c35; }
+  .row-meta { font-size:.8rem; color:#64748b; margin-top:.2rem; }
+  .row-body { font-size:.84rem; color:#475569; margin-top:.35rem; white-space:pre-line; }
+  @media(max-width:900px){ .client-detail-grid { grid-template-columns:1fr; } .stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+</style>
+
+<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;font-size:.84rem;">
+  <a href="{% url 'agent_clients' %}" style="color:#64748b;text-decoration:none;">← My Clients</a>
+  <span style="color:#cbd5e1;">/</span>
+  <span style="font-weight:700;color:#0f1c35;">{{ client.name }}</span>
+</div>
+
+<div class="client-detail-grid">
+  <div>
+    <div class="detail-card">
+      <div class="client-hero">
+        <div class="client-avatar">{{ client.name|first|upper }}</div>
+        <div style="flex:1;min-width:0;">
+          <h1 style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.55rem;color:#0f1c35;margin:0 0 .2rem;">{{ client.name }}</h1>
+          <div class="meta">
+            {{ client.email }}
+            {% if client.phone %} · {{ client.phone }}{% endif %}
+            {% if client.assigned_agent %} · Assigned to {{ client.assigned_agent.get_full_name|default:client.assigned_agent.username }}{% endif %}
+          </div>
+          <div>
+            <span class="pill pill-green">{{ client.latest_status|title|cut:"_" }}</span>
+            {% for city in client.preferred_cities %}<span class="pill pill-blue">{{ city }}</span>{% endfor %}
+            {% if client.budget %}<span class="pill pill-slate">Budget ${{ client.budget|floatformat:0 }}</span>{% endif %}
+            {% if client.bedrooms %}<span class="pill pill-slate">{{ client.bedrooms }} bed</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-title">Client Summary</div>
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-label">Guided Searches</div><div class="stat-value">{{ client.guided_search_count }}</div></div>
+        <div class="stat"><div class="stat-label">Lead Records</div><div class="stat-value">{{ client.lead_count }}</div></div>
+        <div class="stat"><div class="stat-label">Shortlists Sent</div><div class="stat-value">{{ client.shortlists_sent_count }}</div></div>
+        <div class="stat"><div class="stat-label">Last Activity</div><div class="stat-value">{% if client.last_activity %}{{ client.last_activity|timesince }} ago{% else %}None{% endif %}</div></div>
+        <div class="stat"><div class="stat-label">Move In</div><div class="stat-value">{% if client.move_in_date %}{{ client.move_in_date|date:"M d, Y" }}{% else %}Unknown{% endif %}</div></div>
+        <div class="stat"><div class="stat-label">Outcome</div><div class="stat-value">{% if client.outcomes %}{{ client.outcomes.0 }}{% else %}In progress{% endif %}</div></div>
+      </div>
+      {% if client.amenities %}
+      <div style="margin-top:1rem;">
+        <div class="detail-title" style="font-size:.85rem;margin-bottom:.5rem;">Preferences</div>
+        {% for amenity in client.amenities|split_csv %}<span class="pill pill-blue">{{ amenity|title }}</span>{% endfor %}
+      </div>
+      {% endif %}
+      <div style="margin-top:1rem;">
+        <div class="detail-title" style="font-size:.85rem;margin-bottom:.5rem;">Latest Note</div>
+        {% if client.latest_note %}
+        <div class="row-body" style="margin-top:0;">{{ client.latest_note }}</div>
+        <div class="row-meta" style="margin-top:.35rem;">Updated {{ client.latest_note_updated_at|date:"M d, Y H:i" }}</div>
+        {% else %}
+        <div class="meta">No notes yet.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-title">Notes History</div>
+      <div class="list-rows">
+        {% for lead in notes_history %}
+        <div class="row">
+          <div class="row-title">{{ lead.get_source_display }} · {{ lead.get_status_display }}</div>
+          <div class="row-meta">{{ lead.updated_at|date:"M d, Y H:i" }}</div>
+          <div class="row-body">{{ lead.notes }}</div>
+        </div>
+        {% empty %}
+        <div class="meta">No note history yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-title">Timeline</div>
+      <div class="timeline">
+        {% for event in timeline %}
+        <div class="timeline-item">
+          <div class="timeline-title">{{ event.title }}</div>
+          <div class="timeline-meta">{{ event.when|date:"M d, Y H:i" }}</div>
+          <div class="timeline-detail">{{ event.detail }}</div>
+        </div>
+        {% empty %}
+        <div class="meta">No timeline activity yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="detail-card">
+      <div class="detail-title">Guided Searches & Leads</div>
+      <div class="list-rows">
+        {% for lead in leads %}
+        <div class="row">
+          <div class="row-title">{{ lead.get_source_display }} · {{ lead.get_status_display }}</div>
+          <div class="row-meta">{{ lead.created_at|date:"M d, Y H:i" }}{% if lead.listing %} · {{ lead.listing.title }}{% endif %}</div>
+          {% if lead.preference %}
+          <div class="row-body">
+            {% if lead.preference.city %}City: {{ lead.preference.city }}{% endif %}
+            {% if lead.preference.max_budget %}{% if lead.preference.city %} · {% endif %}Budget: ${{ lead.preference.max_budget|floatformat:0 }}{% endif %}
+            {% if lead.preference.bedrooms %} · {{ lead.preference.bedrooms }} bed{% endif %}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-title">Shortlist History</div>
+      <div class="list-rows">
+        {% for shortlist in shortlists %}
+        <div class="row">
+          <div class="row-title">Shortlist {{ shortlist.get_status_display }}</div>
+          <div class="row-meta">{% if shortlist.sent_at %}Sent {{ shortlist.sent_at|date:"M d, Y" }}{% else %}Updated {{ shortlist.updated_at|date:"M d, Y" }}{% endif %}</div>
+          <div class="row-body">{% for item in shortlist.items.all %}{{ forloop.counter }}. {{ item.listing.title }}{% if item.listing.price %} - ${{ item.listing.price|floatformat:0 }}{% endif %}{% if not forloop.last %}
+{% endif %}{% endfor %}</div>
+        </div>
+        {% empty %}
+        <div class="meta">No shortlist history yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-title">Messages</div>
+      <div class="list-rows">
+        {% for message in messages %}
+        <div class="row">
+          <div class="row-title">{{ message.sender.get_full_name|default:message.sender.username }}</div>
+          <div class="row-meta">{{ message.sent_at|date:"M d, Y H:i" }}{% if message.listing %} · {{ message.listing.title }}{% endif %}</div>
+          <div class="row-body">{{ message.message }}</div>
+        </div>
+        {% empty %}
+        <div class="meta">No messages with this client yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

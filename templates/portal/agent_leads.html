@@ -31,24 +31,41 @@
 
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
   <h1 style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.5rem;color:#1a1a1a;margin:0;">
-    {% if request.user.is_superuser %}All Leads{% else %}My Leads{% endif %}
+    {% if scope == 'clients' %}
+      My Clients
+    {% elif request.user.is_superuser %}
+      All Leads
+    {% else %}
+      My Leads
+    {% endif %}
   </h1>
 </div>
 
 {# Search + filter row #}
 <form method="get" style="display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;">
+  {% if scope %}<input type="hidden" name="scope" value="{{ scope }}">{% endif %}
   <input name="q" value="{{ q }}" placeholder="Search name or email…"
          style="flex:1;min-width:200px;padding:.45rem .85rem;border:1.5px solid #d4cfc6;border-radius:999px;font-size:.875rem;background:#fff;outline:none;">
-  {% if q %}<a href="{% url 'agent_leads' %}{% if status_filter %}?status={{ status_filter }}{% endif %}" class="filter-tab">Clear search</a>{% endif %}
+  {% if q %}
+  <a href="{% url 'agent_leads' %}{% if scope or status_filter %}?{% endif %}{% if scope %}scope={{ scope }}{% endif %}{% if scope and status_filter %}&{% endif %}{% if status_filter %}status={{ status_filter }}{% endif %}" class="filter-tab">Clear search</a>
+  {% endif %}
 </form>
 
 {# Filter tabs #}
 <div class="filter-tabs">
+  {% if scope == 'clients' %}
+  <a href="{% url 'agent_leads' %}?scope=clients{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if not status_filter %}active{% endif %}">All Clients</a>
+  <a href="?scope=clients&status=contacted{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'contacted' %}active{% endif %}">Contacted</a>
+  <a href="?scope=clients&status=shortlist_sent{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'shortlist_sent' %}active{% endif %}">Shortlisted</a>
+  <a href="?scope=clients&status=touring{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'touring' %}active{% endif %}">Touring</a>
+  <a href="?scope=clients&status=application_in_progress{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'application_in_progress' %}active{% endif %}">Pending</a>
+  {% else %}
   <a href="{% url 'agent_leads' %}{% if q %}?q={{ q }}{% endif %}" class="filter-tab {% if not status_filter %}active{% endif %}">All</a>
   <a href="?status=new{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'new' %}active{% endif %}">New</a>
   <a href="?status=shortlist_sent{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'shortlist_sent' %}active{% endif %}">Working</a>
   <a href="?status=application_in_progress{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'application_in_progress' %}active{% endif %}">Pending</a>
   <a href="?status=closed_won{% if q %}&q={{ q }}{% endif %}" class="filter-tab {% if status_filter == 'closed_won' %}active{% endif %}">Closed</a>
+  {% endif %}
 </div>
 
 {# Lead cards #}

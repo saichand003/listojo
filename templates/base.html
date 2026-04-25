@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listojo Classifieds</title>
+    <title>Listojo Curated-List-Engine</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,10 +36,10 @@
           </defs>
           <path d="M210 55 C130 55 85 115 85 175 C85 270 165 335 200 370 C205 375 210 378 215 378 C220 378 225 375 230 370 C265 335 345 270 345 175 C345 115 290 55 210 55Z" fill="url(#pinGradient)"/>
           <path d="M190 135 C190 110 205 95 225 95 L225 225 L280 225 C278 245 258 265 220 280 L175 280 L175 145 C175 120 182 105 190 100Z" fill="white"/>
-          <text x="400" y="243" class="mainText" font-size="162">
+          <text x="382" y="243" class="mainText" font-size="162">
             <tspan class="dark-text">Listo</tspan><tspan fill="url(#greenGradient)">jo</tspan>
           </text>
-          <text x="660" y="323" class="tagText" font-size="52" text-anchor="middle">
+          <text x="642" y="323" class="tagText" font-size="52" text-anchor="middle">
             <tspan class="dark-text">List It. Find It. </tspan>
             <tspan fill="url(#greenGradient)">Go.</tspan>
           </text>
@@ -51,11 +51,28 @@
     <div class="nav-tabs">
       <a href="{% url 'listing_list' %}?category=rentals"
          class="nav-tab {% if request.GET.category == 'rentals' or not request.GET.category and request.resolver_match.url_name == 'listing_list' %}nav-tab-active{% endif %}">
-        🔑 Rent
+        <span class="nav-tab-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" role="img" width="18" height="18"
+               stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="15.5" cy="8.5" r="3.5"></circle>
+            <path d="M13 11 4 20"></path>
+            <path d="M6.5 17.5 9 20"></path>
+            <path d="M8.8 15.2 11.3 17.7"></path>
+          </svg>
+        </span>
+        <span class="nav-tab-label">Rent</span>
       </a>
       <a href="{% url 'listing_list' %}?category=properties"
          class="nav-tab {% if request.GET.category == 'properties' %}nav-tab-active{% endif %}">
-        🏡 Buy
+        <span class="nav-tab-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" role="img" width="18" height="18"
+               stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 10.5 12 4l8 6.5"></path>
+            <path d="M6.5 9.5V20h11V9.5"></path>
+            <path d="M10 20v-5h4v5"></path>
+          </svg>
+        </span>
+        <span class="nav-tab-label">Buy</span>
       </a>
     </div>
 
@@ -102,6 +119,7 @@
       <a href="{% url 'inbox' %}"
          class="sb-link {% if request.resolver_match.url_name == 'inbox' %}sb-active{% endif %}">
         <span class="sb-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg></span> Messages
+        {% if sb_unread_message_count %}<span class="sb-badge">{{ sb_unread_message_count }}</span>{% endif %}
       </a>
       {% endif %}
     </div>
@@ -120,7 +138,7 @@
       </a>
       <a href="{% url 'inquiries_overview' %}"
          class="sb-link {% if request.resolver_match.url_name == 'inquiries_overview' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg></span>
+        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5M8 11h8v1.5H8V11zm0 4h8v1.5H8V15z"/></svg></span>
         Inquiries
         {% if sb_inquiry_count %}<span class="sb-badge">{{ sb_inquiry_count }}</span>{% endif %}
       </a>
@@ -195,7 +213,7 @@
     </a>
     <a href="{% url 'inbox' %}" class="mob-nav-item {% if request.resolver_match.url_name == 'inbox' %}mob-active{% endif %}">
         <span class="mob-nav-icon">💬</span>
-        <span>Messages</span>
+        <span>Messages{% if sb_unread_message_count %} ({{ sb_unread_message_count }}){% endif %}</span>
     </a>
     {% if user.is_authenticated %}
     <a href="{% url 'profile' %}" class="mob-nav-item {% if request.resolver_match.url_name == 'profile' %}mob-active{% endif %}">
@@ -230,6 +248,8 @@
         <span class="site-footer-copy">© 2026 Listojo. All rights reserved.</span>
     </div>
 </footer>
+
+{% include 'includes/message_notifier.html' %}
 
 {% if user.is_authenticated %}
 <div id="listing-chat-panel" class="live-chat-panel" hidden>

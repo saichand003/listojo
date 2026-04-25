@@ -43,6 +43,21 @@ class ListingWorkflowTests(TestCase):
             status='active',
             expires_at=date.today() - timedelta(days=1),
         )
+        self.other_owner = User.objects.create_user(
+            username='other-owner',
+            password='pw',
+            email='other-owner@example.com',
+        )
+        self.other_listing = Listing.objects.create(
+            owner=self.other_owner,
+            title='Other Rental',
+            description='Visible listing from another owner',
+            category='rentals',
+            city='Irving',
+            price=Decimal('1750.00'),
+            bedrooms=2,
+            status='active',
+        )
 
     def test_listing_list_hides_expired_listing(self):
         response = self.client.get('/')
@@ -50,6 +65,16 @@ class ListingWorkflowTests(TestCase):
         listings = response.context['listings']
         self.assertIn(self.active_listing, listings)
         self.assertNotIn(self.expired_listing, listings)
+
+    def test_listing_list_hides_authenticated_users_own_listings(self):
+        self.client.force_login(self.owner)
+
+        response = self.client.get('/')
+
+        self.assertEqual(response.status_code, 200)
+        listings = response.context['listings']
+        self.assertNotIn(self.active_listing, listings)
+        self.assertIn(self.other_listing, listings)
 
     def test_guided_search_post_creates_lead_preference_and_session(self):
         user = User.objects.create_user(

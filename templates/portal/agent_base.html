@@ -201,11 +201,12 @@
 
   <div class="sidebar-label">Clients</div>
   <nav>
-    <a href="{% url 'agent_leads' %}?status=contacted" class="{% if status_filter == 'contacted' %}active{% endif %}">
+    <a href="{% url 'agent_clients' %}" class="{% if request.resolver_match.url_name == 'agent_clients' or request.resolver_match.url_name == 'agent_client_detail' %}active{% endif %}">
       <span class="icon">👥</span> My Clients
     </a>
-    <a href="{% url 'agent_leads' %}?status=shortlist_sent">
+    <a href="{% url 'agent_messages' %}" class="{% if request.resolver_match.url_name == 'agent_messages' %}active{% endif %}">
       <span class="icon">💬</span> Messages
+      {% if sb_unread_message_count %}<span class="sidebar-badge">{{ sb_unread_message_count }}</span>{% endif %}
     </a>
   </nav>
 
@@ -227,6 +228,8 @@
     {% block content %}{% endblock %}
   </div>
 </div>
+
+{% include 'includes/message_notifier.html' %}
 
 </body>
 </html>

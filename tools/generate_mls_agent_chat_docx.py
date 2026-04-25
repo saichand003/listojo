@@ -16,7 +16,7 @@ TRANSCRIPT = [
     ),
     (
         "Assistant",
-        """Yes, this is the right direction, but it changes Listojo from a pure classifieds product into a hybrid marketplace + agent workflow platform.
+        """Yes, this is the right direction, but it changes Listojo from a simple listings product into a hybrid curated-list-engine + agent workflow platform.
 
 **Short answer**
 
@@ -40,7 +40,7 @@ Instead of only being a listing marketplace, Listojo can become:
 - a workflow system for shortlisting and client follow-up
 - a monetizable B2B layer on top of the consumer-facing experience
 
-That is a stronger business than “just classifieds,” if executed properly.
+That is a stronger business than a generic marketplace, if executed properly.
 
 **What the agent portal should do**
 
@@ -129,7 +129,7 @@ So from a business standpoint, this is viable, but operationally regulated.
 
 **Big product decisions you need to make first**
 
-1. Is Listojo becoming an `agent-assisted marketplace` or staying a `self-serve classifieds platform`?
+1. Is Listojo becoming an `agent-assisted marketplace` or staying a `self-serve curated-list-engine`?
 If you add MLS + agent portal, your identity shifts toward agent-assisted discovery.
 
 2. Who owns the lead?
@@ -208,7 +208,7 @@ If you pursue this, Listojo should be positioned more like:
 
 `A lead-driven home search and agent workflow platform powered by local marketplace demand + MLS inventory.`
 
-That is a stronger story than “classifieds site with agents.”
+That is a stronger story than a generic marketplace with agents.
 
 If you want, I can next give you one of these:
 - a `product architecture plan` for MLS + agent portal
@@ -450,7 +450,7 @@ Do not hard-code MLS assumptions into the consumer flow. Keep it abstracted in t
 
 **Business Model Recommendation**
 
-This should become a B2B2C model, not just a consumer classifieds business.
+This should become a B2B2C model, not just a consumer marketplace business.
 
 The strongest commercial model is:
 - consumers use the platform free
@@ -832,7 +832,7 @@ Build this first:
 All three together fit very well.
 
 - The `architecture` gives you a scalable separation between consumer search, listing supply, and agent operations.
-- The `business model` gives you a stronger B2B revenue path than relying on classifieds-style monetization alone.
+- The `business model` gives you a stronger B2B revenue path than relying on marketplace-style monetization alone.
 - The `agent dashboard PRD` gives you a product surface that agents could actually use daily.
 
 If I were prioritizing execution, I would do it in this order:
@@ -856,7 +856,7 @@ If you want, I can next turn this into a single polished deliverable as:
 Listojo MLS + Agent Portal Architecture
 
 **Objective**
-Extend Listojo from a marketplace/classifieds platform into a lead-driven search and agent workflow platform by introducing:
+Extend Listojo from a marketplace into a curated-list-engine and lead-driven search and agent workflow platform by introducing:
 - NTREIS MLS inventory ingestion
 - a separate agent portal
 - unified lead, shortlist, and matching workflows

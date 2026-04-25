@@ -12,5 +12,6 @@ urlpatterns = [
     path('coming-soon/waitlist/', views.waitlist_signup, name='waitlist_signup'),
     path('listing/<int:pk>/delete/', views.delete_listing, name='delete_listing'),
     path('listing/<int:pk>/inquiries/', views.listing_inquiries, name='listing_inquiries'),
+    path('inquiries/<int:inquiry_id>/', views.inquiry_detail, name='inquiry_detail'),
     path('search/guided/', views.guided_search, name='guided_search'),
 ]

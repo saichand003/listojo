@@ -1,0 +1,88 @@
+{% extends 'portal/agent_base.html' %}
+{% block page_title %}My Clients{% endblock %}
+{% block content %}
+<style>
+  .client-grid { display:grid; gap:1rem; }
+  .client-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.2rem 1.35rem; box-shadow:0 2px 10px rgba(24,43,82,.07); text-decoration:none; color:inherit; display:flex; gap:1rem; align-items:flex-start; }
+  .client-card:hover { box-shadow:0 6px 20px rgba(24,43,82,.12); border-color:#c7d9f5; }
+  .client-avatar { width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg,#2A7EF2,#1A5DD4); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .client-main { flex:1; min-width:0; }
+  .client-head { display:flex; align-items:center; gap:.55rem; flex-wrap:wrap; margin-bottom:.25rem; }
+  .client-name { font-family:'Montserrat',sans-serif; font-weight:800; font-size:1.1rem; color:#0f1c35; }
+  .client-meta { font-size:.84rem; color:#64748b; margin-bottom:.75rem; }
+  .client-tags { display:flex; flex-wrap:wrap; gap:.45rem; margin-bottom:.85rem; }
+  .client-tag { padding:.18rem .65rem; border-radius:999px; font-size:.72rem; font-weight:700; }
+  .tag-status { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+  .tag-city { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+  .tag-budget { background:#f8fafc; color:#334155; border:1px solid #cbd5e1; }
+  .client-stats { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.75rem; }
+  .client-stat { background:#f8fbff; border:1px solid #e2e8f0; border-radius:12px; padding:.7rem .8rem; }
+  .client-stat-label { font-size:.7rem; color:#64748b; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.15rem; }
+  .client-stat-value { font-size:.95rem; font-weight:800; color:#0f1c35; }
+  .client-right { text-align:right; min-width:140px; color:#64748b; font-size:.82rem; }
+  .client-right strong { display:block; font-size:1rem; color:#0f1c35; margin-top:.15rem; }
+  .client-note { margin-top:.9rem; background:#fffaf0; border:1px solid #f5d9a8; border-radius:12px; padding:.8rem .95rem; }
+  .client-note-label { font-size:.68rem; color:#9a3412; text-transform:uppercase; letter-spacing:.06em; font-weight:800; margin-bottom:.2rem; }
+  .client-note-text { font-size:.84rem; color:#7c2d12; line-height:1.45; }
+  .client-note-empty { display:inline-block; margin-top:.9rem; padding:.22rem .65rem; border-radius:999px; font-size:.72rem; font-weight:700; background:#f8fafc; color:#64748b; border:1px solid #cbd5e1; }
+  @media(max-width:900px){ .client-card{flex-direction:column;} .client-right{text-align:left;min-width:0;} .client-stats{grid-template-columns:repeat(2,minmax(0,1fr));}}
+</style>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;gap:.75rem;flex-wrap:wrap;">
+  <div>
+    <h1 style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.6rem;color:#0f1c35;margin:0 0 .25rem;">My Clients</h1>
+    <p style="color:#64748b;font-size:.9rem;margin:0;">One profile per client, with their guided searches, shortlists, messages, and outcome history.</p>
+  </div>
+</div>
+
+<div class="client-grid">
+  {% for client in clients %}
+  <a href="{% url 'agent_client_detail' client.slug %}" class="client-card">
+    <div class="client-avatar">{{ client.name|first|upper }}</div>
+    <div class="client-main">
+      <div class="client-head">
+        <div class="client-name">{{ client.name }}</div>
+      </div>
+      <div class="client-meta">
+        {{ client.email }}
+        {% if client.phone %} · {{ client.phone }}{% endif %}
+        {% if client.assigned_agent %} · Assigned to {{ client.assigned_agent.get_full_name|default:client.assigned_agent.username }}{% endif %}
+      </div>
+      <div class="client-tags">
+        <span class="client-tag tag-status">{{ client.latest_status|title|cut:"_" }}</span>
+        {% for city in client.preferred_cities %}<span class="client-tag tag-city">{{ city }}</span>{% endfor %}
+        {% if client.budget %}<span class="client-tag tag-budget">Up to ${{ client.budget|floatformat:0 }}</span>{% endif %}
+        {% if client.bedrooms %}<span class="client-tag tag-budget">{{ client.bedrooms }} bed</span>{% endif %}
+      </div>
+      <div class="client-stats">
+        <div class="client-stat"><div class="client-stat-label">Guided Searches</div><div class="client-stat-value">{{ client.guided_search_count }}</div></div>
+        <div class="client-stat"><div class="client-stat-label">Lead Records</div><div class="client-stat-value">{{ client.lead_count }}</div></div>
+        <div class="client-stat"><div class="client-stat-label">Shortlists Sent</div><div class="client-stat-value">{{ client.shortlists_sent_count }}</div></div>
+        <div class="client-stat"><div class="client-stat-label">Messages</div><div class="client-stat-value">{{ client.messages_count }}</div></div>
+      </div>
+      {% if client.latest_note %}
+      <div class="client-note">
+        <div class="client-note-label">Next step</div>
+        <div class="client-note-text">{{ client.latest_note|truncatechars:110 }}</div>
+      </div>
+      {% else %}
+      <span class="client-note-empty">No notes yet</span>
+      {% endif %}
+    </div>
+    <div class="client-right">
+      Last activity
+      <strong>{% if client.last_activity %}{{ client.last_activity|timesince }} ago{% else %}No activity{% endif %}</strong>
+      {% if client.outcomes %}
+      <div style="margin-top:.7rem;color:#166534;font-weight:700;">{{ client.outcomes.0 }}</div>
+      {% endif %}
+    </div>
+  </a>
+  {% empty %}
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:3rem 1.25rem;text-align:center;color:#64748b;">
+    <div style="font-size:2.5rem;margin-bottom:.75rem;">👥</div>
+    <div style="font-weight:800;font-size:1rem;color:#0f1c35;margin-bottom:.35rem;">No clients yet</div>
+    <div style="font-size:.88rem;">Clients will appear here once you start working their leads beyond the new stage.</div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

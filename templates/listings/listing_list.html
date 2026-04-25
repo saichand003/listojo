@@ -3,18 +3,19 @@
 {% block content %}
 
 <section class="hero">
-    {# Decorative accent circle #}
-    <div style="position:absolute;top:40px;right:80px;width:160px;height:160px;border-radius:50%;background:rgba(98,194,255,.1);pointer-events:none;z-index:0;"></div>
-
     <div style="position:relative;z-index:1;max-width:720px;">
+        {% if filters.category == 'properties' %}
+        <h1 class="hero-headline">Find a property<br>worth buying.</h1>
+        <p class="hero-sub">Trusted listings from real sellers, curated for serious buyers.<br>Smart match scoring highlights homes that fit your budget,<br>location, and must-have criteria so you know why they fit.</p>
+        {% else %}
         <h1 class="hero-headline">Find the right home,<br>not just a listing.</h1>
         <p class="hero-sub">Listojo understands what matters — budget, commute, neighborhood, lifestyle — and shows you exactly why each result fits.</p>
+        {% endif %}
 
         <div class="hero-ctas">
             <a href="{% url 'guided_search' %}?mode={% if filters.category == 'properties' %}buy{% else %}rent{% endif %}" class="fmm-cta-btn">Start guided search →</a>
             <a href="#listings-grid" class="hero-ghost-btn">Browse all listings</a>
         </div>
-
     </div>
 </section>
 
@@ -67,14 +68,8 @@
     <input type="hidden" name="tags" id="quality-tags-hidden" value="{{ filters.tags }}">
 </div>
 
-{# ── Sub-tab bar + sort ── #}
-<div class="sub-tab-bar">
-    <div class="sub-tabs">
-        <a href="?" class="sub-tab {% if not fmm_mode %}sub-tab-active{% endif %}">
-            {% if filters.category == 'properties' %}Trending Properties{% else %}Trending Rentals{% endif %}
-        </a>
-        <a href="{% url 'guided_search' %}?mode={% if filters.category == 'properties' %}buy{% else %}rent{% endif %}" class="sub-tab">Guided Search</a>
-    </div>
+{# ── Actions row ── #}
+<div class="sub-tab-bar" style="justify-content:flex-end;">
     {% if fmm_mode %}
     <a href="?" class="button secondary" style="font-size:.82rem;padding:.38rem .9rem;white-space:nowrap;flex-shrink:0;">✕ Clear matches</a>
     {% else %}
@@ -220,6 +215,99 @@ function dismissAgentCta() {
     {% endwith %}
 </div>
 {% endif %}
+
+{# ── CITY BROWSING ── #}
+<div class="city-browse-section">
+  <div class="city-browse-banner">
+    <div class="cbb-skyline" aria-hidden="true">
+      <svg class="cbb-skyline-svg" viewBox="0 0 1200 180" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+        <!-- Downtown skyline silhouette -->
+        <rect x="0" y="60" width="60" height="120" rx="2"/>
+        <rect x="30" y="40" width="20" height="140" rx="1"/>
+        <rect x="55" y="80" width="45" height="100" rx="2"/>
+        <rect x="90" y="30" width="30" height="150" rx="2"/>
+        <rect x="105" y="15" width="8" height="20"/>
+        <rect x="125" y="55" width="50" height="125" rx="1"/>
+        <rect x="145" y="35" width="25" height="145" rx="1"/>
+        <rect x="155" y="20" width="6" height="20"/>
+        <rect x="180" y="70" width="40" height="110" rx="2"/>
+        <rect x="225" y="45" width="55" height="135" rx="2"/>
+        <rect x="250" y="25" width="20" height="30" rx="1"/>
+        <rect x="285" y="75" width="35" height="105" rx="2"/>
+        <rect x="325" y="50" width="45" height="130" rx="2"/>
+        <rect x="342" y="30" width="12" height="25"/>
+        <rect x="375" y="85" width="55" height="95" rx="2"/>
+        <rect x="435" y="40" width="40" height="140" rx="2"/>
+        <rect x="452" y="20" width="8" height="25"/>
+        <rect x="480" y="65" width="30" height="115" rx="2"/>
+        <rect x="515" y="50" width="60" height="130" rx="1"/>
+        <rect x="540" y="30" width="18" height="25" rx="1"/>
+        <rect x="580" y="75" width="45" height="105" rx="2"/>
+        <rect x="630" y="45" width="35" height="135" rx="2"/>
+        <rect x="645" y="25" width="10" height="25"/>
+        <rect x="670" y="60" width="50" height="120" rx="2"/>
+        <rect x="725" y="80" width="40" height="100" rx="2"/>
+        <rect x="770" y="50" width="30" height="130" rx="2"/>
+        <rect x="805" y="35" width="55" height="145" rx="2"/>
+        <rect x="825" y="15" width="14" height="25"/>
+        <rect x="865" y="70" width="45" height="110" rx="2"/>
+        <rect x="915" y="55" width="35" height="125" rx="2"/>
+        <rect x="930" y="35" width="10" height="25"/>
+        <rect x="955" y="80" width="50" height="100" rx="2"/>
+        <rect x="1010" y="45" width="40" height="135" rx="2"/>
+        <rect x="1028" y="25" width="8" height="25"/>
+        <rect x="1055" y="65" width="55" height="115" rx="2"/>
+        <rect x="1115" y="50" width="35" height="130" rx="2"/>
+        <rect x="1155" y="75" width="45" height="105" rx="2"/>
+        <!-- Windows (light dots) -->
+        <rect x="95" y="50" width="4" height="4" rx="1" fill="rgba(255,230,100,.6)"/>
+        <rect x="103" y="50" width="4" height="4" rx="1" fill="rgba(255,230,100,.4)"/>
+        <rect x="95" y="60" width="4" height="4" rx="1" fill="rgba(255,230,100,.5)"/>
+        <rect x="130" y="65" width="4" height="3" rx="1" fill="rgba(255,230,100,.5)"/>
+        <rect x="140" y="65" width="4" height="3" rx="1" fill="rgba(255,230,100,.3)"/>
+        <rect x="130" y="75" width="4" height="3" rx="1" fill="rgba(255,230,100,.6)"/>
+        <rect x="230" y="60" width="5" height="4" rx="1" fill="rgba(255,230,100,.5)"/>
+        <rect x="242" y="60" width="5" height="4" rx="1" fill="rgba(255,230,100,.4)"/>
+        <rect x="230" y="72" width="5" height="4" rx="1" fill="rgba(255,230,100,.3)"/>
+        <rect x="330" y="65" width="5" height="4" rx="1" fill="rgba(255,230,100,.5)"/>
+        <rect x="342" y="65" width="5" height="4" rx="1" fill="rgba(255,230,100,.4)"/>
+        <rect x="440" y="55" width="5" height="4" rx="1" fill="rgba(255,230,100,.5)"/>
+        <rect x="452" y="55" width="5" height="4" rx="1" fill="rgba(255,230,100,.3)"/>
+        <rect x="520" y="65" width="5" height="4" rx="1" fill="rgba(255,230,100,.6)"/>
+        <rect x="532" y="65" width="5" height="4" rx="1" fill="rgba(255,230,100,.4)"/>
+        <rect x="635" y="60" width="5" height="4" rx="1" fill="rgba(255,230,100,.5)"/>
+        <rect x="647" y="60" width="5" height="4" rx="1" fill="rgba(255,230,100,.4)"/>
+        <rect x="810" y="50" width="5" height="4" rx="1" fill="rgba(255,230,100,.5)"/>
+        <rect x="822" y="50" width="5" height="4" rx="1" fill="rgba(255,230,100,.6)"/>
+        <rect x="810" y="62" width="5" height="4" rx="1" fill="rgba(255,230,100,.3)"/>
+        <rect x="920" y="68" width="5" height="4" rx="1" fill="rgba(255,230,100,.5)"/>
+        <rect x="932" y="68" width="5" height="4" rx="1" fill="rgba(255,230,100,.4)"/>
+        <rect x="1015" y="60" width="5" height="4" rx="1" fill="rgba(255,230,100,.5)"/>
+        <rect x="1027" y="60" width="5" height="4" rx="1" fill="rgba(255,230,100,.3)"/>
+        <rect x="1060" y="75" width="5" height="4" rx="1" fill="rgba(255,230,100,.6)"/>
+        <rect x="1072" y="75" width="5" height="4" rx="1" fill="rgba(255,230,100,.4)"/>
+      </svg>
+    </div>
+    <div class="cbb-content">
+      <div>
+        <h2 class="cbb-title">Browse Dallas–Fort Worth</h2>
+        <p class="cbb-sub">Find rentals across the DFW metroplex</p>
+      </div>
+      <div class="cbb-pills">
+        <a href="?city=Irving&category=rentals" class="cbb-pill">Irving</a>
+        <a href="?city=Las+Colinas&category=rentals" class="cbb-pill">Las Colinas</a>
+        <a href="?city=Dallas&category=rentals" class="cbb-pill">Dallas</a>
+        <a href="?city=Fort+Worth&category=rentals" class="cbb-pill">Fort Worth</a>
+        <a href="?city=Frisco&category=rentals" class="cbb-pill">Frisco</a>
+        <a href="?city=Plano&category=rentals" class="cbb-pill">Plano</a>
+        <a href="?city=Northlake&category=rentals" class="cbb-pill">Northlake</a>
+        <a href="?city=Arlington&category=rentals" class="cbb-pill">Arlington</a>
+        <a href="?city=McKinney&category=rentals" class="cbb-pill">McKinney</a>
+        <a href="?city=Carrollton&category=rentals" class="cbb-pill">Carrollton</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 {# ── TRUST STRIP ── #}
 <div class="trust-strip">

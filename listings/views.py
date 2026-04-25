@@ -12,7 +12,7 @@ from datetime import timedelta, date
 
 from classifieds_project.services.notifications import send_listing_inquiry_email
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
-from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage
+from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry
 from listings.services.search import build_listing_search_context
 from portal.services.routing import least_loaded_agent
 from portal.services.lead_service import create_or_update_lead, parse_budget, parse_move_in
@@ -47,12 +47,15 @@ def guided_search(request):
         GuidedSearchEvent.objects.create(event_type=GuidedSearchEvent.COMPLETE)
 
         # Collect search params from POST
-        category   = request.POST.get('category', '').strip()
-        city       = request.POST.get('city', '').strip()
-        bedrooms   = request.POST.get('bedrooms', '').strip()
-        max_budget = request.POST.get('max_price', '').strip()
-        amenities  = request.POST.get('tags', '').strip()
+        category     = request.POST.get('category', '').strip()
+        city         = request.POST.get('city', '').strip()
+        bedrooms     = request.POST.get('bedrooms', '').strip()
+        max_budget   = request.POST.get('max_price', '').strip()
+        amenities    = request.POST.get('tags', '').strip()
         available_by = request.POST.get('available_by', '').strip()
+        priority     = request.POST.get('priority', '').strip()
+        urgency      = request.POST.get('urgency', '').strip()
+        income_raw   = request.POST.get('monthly_income', '').strip()
 
         beds_int = None
         if bedrooms:
@@ -71,6 +74,9 @@ def guided_search(request):
             max_budget=parse_budget(max_budget),
             amenities=amenities,
             move_in_date=parse_move_in(available_by),
+            priority=priority,
+            urgency=urgency,
+            monthly_income=parse_budget(income_raw),
         )
 
         # Store lead pk in session so listing list can show the CTA
@@ -80,7 +86,7 @@ def guided_search(request):
         from urllib.parse import urlencode
         qs_params = {}
         for key in ('category', 'city', 'bedrooms', 'min_price', 'max_price',
-                    'tags', 'available_by', 'property_type', 'fmm'):
+                    'tags', 'available_by', 'property_type', 'fmm', 'priority', 'urgency'):
             val = request.POST.get(key, '').strip()
             if val:
                 qs_params[key] = val
@@ -277,7 +283,24 @@ def delete_listing(request, pk):
 def listing_inquiries(request, pk):
     listing = get_object_or_404(Listing, pk=pk, owner=request.user)
     inquiries = listing.inquiries.order_by('-created_at')
+    inquiries.filter(is_read=False).update(is_read=True)
     return render(request, 'listings/listing_inquiries.html', {
         'listing':   listing,
         'inquiries': inquiries,
+    })
+
+
+@login_required
+def inquiry_detail(request, inquiry_id):
+    inquiry = get_object_or_404(
+        ListingInquiry.objects.select_related('listing'),
+        pk=inquiry_id,
+        listing__owner=request.user,
+    )
+    if not inquiry.is_read:
+        ListingInquiry.objects.filter(pk=inquiry.pk, is_read=False).update(is_read=True)
+        inquiry.is_read = True
+    return render(request, 'listings/inquiry_detail.html', {
+        'inquiry': inquiry,
+        'listing': inquiry.listing,
     })

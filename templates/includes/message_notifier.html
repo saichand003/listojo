@@ -1,0 +1,119 @@
+{% if user.is_authenticated %}
+<script>
+(function () {
+  var unreadMessageUrl = '{% url "chat_unread_count" %}';
+  var unreadInquiryUrl = '{% url "inquiry_unread_count" %}';
+  var lastUnreadMessages = {{ sb_unread_message_count|default:0 }};
+  var lastUnreadInquiries = {{ sb_inquiry_count|default:0 }};
+  var audioReady = false;
+  var audioContext = null;
+  var pollTimer = null;
+
+  function ensureAudioContext() {
+    if (audioReady) return;
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    try {
+      audioContext = audioContext || new Ctx();
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      audioReady = true;
+    } catch (e) {}
+  }
+
+  function playNotificationSound() {
+    if (!audioReady || !audioContext) return;
+    try {
+      var osc = audioContext.createOscillator();
+      var gain = audioContext.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioContext.currentTime);
+      gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.07, audioContext.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.22);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start();
+      osc.stop(audioContext.currentTime + 0.24);
+    } catch (e) {}
+  }
+
+  function setBadgeText(el, unread, mobileLabel) {
+    if (!el) return;
+    if (el.classList.contains('mob-nav-item')) {
+      var label = el.querySelector('span:last-child');
+      if (label) {
+        label.textContent = unread > 0 ? mobileLabel + ' (' + unread + ')' : mobileLabel;
+      }
+      return;
+    }
+    var badge = el.querySelector('.sb-badge, .sidebar-badge');
+    if (!badge && unread > 0) {
+      badge = document.createElement('span');
+      badge.className = el.classList.contains('sb-link') ? 'sb-badge' : 'sidebar-badge';
+      el.appendChild(badge);
+    }
+    if (badge) {
+      if (unread > 0) {
+        badge.textContent = unread;
+      } else {
+        badge.remove();
+      }
+    }
+  }
+
+  function updateMessageBadges(unread) {
+    document.querySelectorAll('a[href$="/chat/"], a[href$="/portal/agent/messages/"]').forEach(function (el) {
+      setBadgeText(el, unread, 'Messages');
+    });
+  }
+
+  function updateInquiryBadges(unread) {
+    document.querySelectorAll('a[href$="/accounts/inquiries/"]').forEach(function (el) {
+      setBadgeText(el, unread, 'Inquiries');
+    });
+  }
+
+  function refreshJson(url) {
+    return fetch(url, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () { return null; });
+  }
+
+  function refreshUnreadCounts() {
+    Promise.all([
+      refreshJson(unreadMessageUrl),
+      refreshJson(unreadInquiryUrl)
+    ]).then(function (results) {
+      var messageData = results[0];
+      var inquiryData = results[1];
+      var unreadMessages = Number((messageData && messageData.unread_count) || 0);
+      var unreadInquiries = Number((inquiryData && inquiryData.unread_count) || 0);
+
+      updateMessageBadges(unreadMessages);
+      updateInquiryBadges(unreadInquiries);
+
+      if (unreadMessages > lastUnreadMessages || unreadInquiries > lastUnreadInquiries) {
+        playNotificationSound();
+      }
+
+      lastUnreadMessages = unreadMessages;
+      lastUnreadInquiries = unreadInquiries;
+    }).catch(function () {});
+  }
+
+  ['click', 'keydown', 'touchstart'].forEach(function (eventName) {
+    document.addEventListener(eventName, ensureAudioContext, { once: true, passive: true });
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    updateMessageBadges(lastUnreadMessages);
+    updateInquiryBadges(lastUnreadInquiries);
+    pollTimer = setInterval(refreshUnreadCounts, 5000);
+  });
+})();
+</script>
+{% endif %}

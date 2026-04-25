@@ -142,7 +142,7 @@ def score_listing(
 
 def score_for_preference(listing, preference) -> MatchResult:
     tags = [t.strip() for t in preference.amenities.split(',') if t.strip()] if preference.amenities else []
-    return score_listing(
+    base = score_listing(
         listing,
         max_price=float(preference.max_budget) if preference.max_budget else None,
         requested_tags=tags,
@@ -150,6 +150,20 @@ def score_for_preference(listing, preference) -> MatchResult:
         property_type=preference.property_type or '',
         bedrooms=preference.bedrooms,
     )
+
+    # Apply priority boost: nudge the score toward what the user said matters most
+    priority = getattr(preference, 'priority', '')
+    if priority and listing.price and preference.max_budget:
+        price = float(listing.price)
+        budget = float(preference.max_budget)
+        if priority == 'price' and price <= budget:
+            boosted = min(100, base.pct + 8)
+            return MatchResult(boosted, base.reasons, base.caveats, base.tag_hits)
+        if priority == 'features' and base.tag_hits >= 2:
+            boosted = min(100, base.pct + 6)
+            return MatchResult(boosted, base.reasons, base.caveats, base.tag_hits)
+
+    return base
 
 
 def explain_match(

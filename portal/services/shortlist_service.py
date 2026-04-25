@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from chatapp.models import ChatMessage
 from listings.services.matching import score_for_preference
 from listings.services.visibility import active_listings
 from portal.models import Lead, Shortlist, ShortlistItem
@@ -68,16 +69,70 @@ def create_shortlist(lead: Lead, agent: User, listing_ids: list[int]) -> Shortli
     if not valid:
         return None
 
-    shortlist = Shortlist.objects.create(lead=lead, agent=agent)
+    shortlist = (
+        Shortlist.objects
+        .filter(lead=lead, agent=agent)
+        .order_by('-created_at')
+        .first()
+    )
+    if shortlist is None:
+        shortlist = Shortlist.objects.create(lead=lead, agent=agent)
+
+    existing_ids = set(shortlist.items.values_list('listing_id', flat=True))
+    next_order = shortlist.items.count()
+    added = False
     for idx, listing in enumerate(valid):
-        ShortlistItem.objects.create(shortlist=shortlist, listing=listing, order_index=idx)
+        if listing.pk in existing_ids:
+            continue
+        ShortlistItem.objects.create(shortlist=shortlist, listing=listing, order_index=next_order + idx)
+        added = True
+
+    if added and shortlist.status != 'draft':
+        shortlist.status = 'draft'
+        shortlist.sent_at = None
+        shortlist.save(update_fields=['status', 'sent_at', 'updated_at'])
+
     return shortlist
 
 
+def _listing_line(item: ShortlistItem, index: int) -> str:
+    listing = item.listing
+    price = f' - ${listing.price:g}' if listing.price else ''
+    city = f' ({listing.city})' if listing.city else ''
+    return f'{index}. {listing.title}{city}{price}'
+
+
+def _shortlist_message(shortlist: Shortlist) -> tuple[User | None, object | None, str]:
+    recipient = User.objects.filter(email__iexact=shortlist.lead.email).first()
+    items = list(shortlist.items.select_related('listing').all())
+    listing = items[0].listing if items else shortlist.lead.listing
+
+    if items:
+        lines = [_listing_line(item, index) for index, item in enumerate(items, start=1)]
+        message = 'I sent you a curated Listojo shortlist:\n\n' + '\n'.join(lines)
+    else:
+        message = 'I sent you a curated Listojo shortlist.'
+
+    return recipient, listing, message
+
+
 def send_shortlist(shortlist: Shortlist) -> None:
+    was_sent = shortlist.status == 'sent'
     shortlist.status = 'sent'
     shortlist.sent_at = timezone.now()
     shortlist.save(update_fields=['status', 'sent_at', 'updated_at'])
+
+    if was_sent:
+        return
+
+    recipient, listing, message = _shortlist_message(shortlist)
+    if recipient and listing and recipient != shortlist.agent:
+        ChatMessage.objects.create(
+            listing=listing,
+            sender=shortlist.agent,
+            recipient=recipient,
+            message=message,
+        )
 
 
 def create_and_send(lead: Lead, agent: User, listing_ids: list[int]) -> Shortlist | None:

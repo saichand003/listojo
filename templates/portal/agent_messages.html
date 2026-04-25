@@ -1,0 +1,5 @@
+{% extends 'portal/agent_base.html' %}
+{% block page_title %}Messages{% endblock %}
+{% block content %}
+{% include 'chatapp/_inbox_content.html' with inbox_subtitle="Your conversations with clients" %}
+{% endblock %}

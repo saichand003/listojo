@@ -52,6 +52,11 @@ class LeadPreference(models.Model):
     move_in_date  = models.DateField(null=True, blank=True)
     amenities     = models.CharField(max_length=500, blank=True,
                                      help_text='Comma-separated preferred amenities')
+    priority      = models.CharField(max_length=20, blank=True,
+                                     help_text='price | location | features')
+    urgency       = models.CharField(max_length=20, blank=True,
+                                     help_text='just_looking | no_hurry | flexible | asap')
+    monthly_income = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
         return f'Preferences for {self.lead.name}'

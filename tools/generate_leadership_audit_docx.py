@@ -28,7 +28,7 @@ Business Analyst
 CEO
 - Green
   - Strategy is stronger than before
-  - The new agent portal direction is commercially more serious than a pure classifieds play
+  - The new agent portal direction is commercially more serious than a generic marketplace play
 - Yellow
   - Product scope is expanding quickly
   - Strong risk of building adjacent systems before finishing one profitable loop

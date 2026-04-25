@@ -463,7 +463,7 @@ Yes, this is the right model.
 It makes Listojo:
 - useful even without agents
 - more scalable than pure concierge
-- more monetizable than pure classifieds
+- more monetizable than a generic marketplace
 - and better suited to referral revenue because agent help becomes an opt-in escalation point, not a forced first step"""
 
 

@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from chatapp.models import ChatMessage
+from chatapp.services.inbox_service import build_listing_conversations
 from listings.models import Listing
 from listings.services.lifecycle import approve as approve_listing_service
 from listings.services.lifecycle import flag as flag_listing_service
@@ -14,6 +15,7 @@ from listings.services.lifecycle import toggle_featured as toggle_featured_servi
 from listings.services.visibility import active_listings as visible_listings
 from .models import Lead, Shortlist
 from .services.dashboard import build_admin_dashboard_context
+from .services.clients import build_client_profile, build_client_summaries
 from .services.routing import assign_to_agent, least_loaded_agent
 from .services.shortlist_service import (
     build_curated,
@@ -177,7 +179,6 @@ def _build_leads_data(leads_qs):
         matched_count = 0
         pref_summary_parts = []
         if pref:
-            today = _date.today()
             qs = visible_listings()
             if pref.city:
                 qs = qs.filter(city__icontains=pref.city)
@@ -249,13 +250,24 @@ def agent_leads(request):
     agent  = request.user
     status = request.GET.get('status', '').strip()
     q      = request.GET.get('q', '').strip()
+    scope  = request.GET.get('scope', '').strip()
 
     if request.user.is_superuser:
         qs = Lead.objects.select_related('assigned_agent', 'listing', 'preference')
     else:
         qs = Lead.objects.filter(assigned_agent=agent).select_related('assigned_agent', 'listing', 'preference')
 
-    if status:
+    if scope == 'clients':
+        qs = qs.filter(status__in=[
+            'contacted',
+            'shortlist_ready',
+            'shortlist_sent',
+            'touring',
+            'application_in_progress',
+        ])
+        if status:
+            qs = qs.filter(status=status)
+    elif status:
         qs = qs.filter(status=status)
     if q:
         qs = qs.filter(Q(name__icontains=q) | Q(email__icontains=q))
@@ -265,10 +277,33 @@ def agent_leads(request):
     return render(request, 'portal/agent_leads.html', {
         'leads_data':     leads_data,
         'status_filter':  status,
+        'scope':          scope,
         'q':              q,
         'status_choices': Lead.STATUS_CHOICES,
         'all_agents':     User.objects.filter(is_staff=True) if request.user.is_superuser else None,
     })
+
+
+@agent_login_required
+def agent_messages(request):
+    return render(request, 'portal/agent_messages.html', {
+        'listing_conversations': build_listing_conversations(request.user),
+    })
+
+
+@agent_login_required
+def agent_clients(request):
+    return render(request, 'portal/agent_clients.html', {
+        'clients': build_client_summaries(request.user),
+    })
+
+
+@agent_login_required
+def agent_client_detail(request, email):
+    profile = build_client_profile(request.user, email)
+    if profile is None:
+        return redirect('agent_clients')
+    return render(request, 'portal/agent_client_detail.html', profile)
 
 
 @agent_login_required

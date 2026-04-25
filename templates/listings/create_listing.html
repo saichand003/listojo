@@ -29,20 +29,12 @@
         <div class="cl-section-num">1</div>
         <div>
           <div class="cl-section-title">What are you listing?</div>
-          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Pick the category that best fits</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Choose the listing type you want to publish</div>
         </div>
       </div>
       <input type="hidden" name="category" id="f-category" value="{{ form.category.value|default:'' }}">
       {% if form.category.errors %}<p class="cl-field-error">{{ form.category.errors.0 }}</p>{% endif %}
       <div class="cl-cat-grid">
-
-        <div class="cl-cat-card {% if form.category.value == 'roommates' %}selected{% endif %}" data-val="roommates">
-          <span class="cl-cat-icon">
-            {# Two people / roommates #}
-            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-          </span>
-          <span class="cl-cat-label">Roommates</span>
-        </div>
 
         <div class="cl-cat-card {% if form.category.value == 'rentals' %}selected{% endif %}" data-val="rentals">
           <span class="cl-cat-icon">
@@ -60,42 +52,10 @@
           <span class="cl-cat-label">Properties</span>
         </div>
 
-        <div class="cl-cat-card {% if form.category.value == 'local_services' %}selected{% endif %}" data-val="local_services">
-          <span class="cl-cat-icon">
-            {# Wrench / local services #}
-            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M15.5 2.1 13 4.6l1.4 1.4 1.1-1.1 1.5 1.5-1.1 1.1 1.4 1.4 2.5-2.5C20.3 7.8 20.5 9.4 20 11l-3.7 3.7C15 15.6 13.5 16 12 16c-.6 0-1.2-.1-1.8-.2L4 22H2v-2l6.2-6.2C8.1 13.2 8 12.6 8 12c0-1.5.4-3 1.3-4.3L13 4.1c-1.6.5-3.2.3-4.4-.8L6 5.9l1.4 1.4L6.3 8.4 4.9 7 2.4 9.5l-1.4-1.4 5-5C7.9.2 12.3.5 15.5 2.1z"/></svg>
-          </span>
-          <span class="cl-cat-label">Local Services</span>
-        </div>
-
-        <div class="cl-cat-card {% if form.category.value == 'jobs' %}selected{% endif %}" data-val="jobs">
-          <span class="cl-cat-icon">
-            {# Briefcase / jobs #}
-            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M20 6h-2.18c.07-.44.18-.86.18-1 0-2.21-1.79-4-4-4s-4 1.79-4 4c0 .14.11.56.18 1H8c-1.11 0-1.99.89-1.99 2L6 19c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6-3c1.1 0 2 .9 2 2 0 .14-.11.56-.18 1h-3.64C12.11 5.56 12 5.14 12 5c0-1.1.9-2 2-2zm0 10c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
-          </span>
-          <span class="cl-cat-label">Jobs</span>
-        </div>
-
-        <div class="cl-cat-card {% if form.category.value == 'buy_sell' %}selected{% endif %}" data-val="buy_sell">
-          <span class="cl-cat-icon">
-            {# Shopping cart / buy & sell #}
-            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-1.45-5c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 20 4H5.21L4.27 2H1v2h2l3.6 7.59L5.25 14c-.16.28-.25.61-.25.96C5 16.1 5.9 17 7 17h12v-2H7.42c-.13 0-.25-.11-.25-.25l.03-.12.9-1.63H15.55z"/></svg>
-          </span>
-          <span class="cl-cat-label">Buy &amp; Sell</span>
-        </div>
-
-        <div class="cl-cat-card {% if form.category.value == 'events' %}selected{% endif %}" data-val="events">
-          <span class="cl-cat-icon">
-            {# Star / event / celebration #}
-            <svg viewBox="0 0 24 24" fill="currentColor" width="34" height="34"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z"/></svg>
-          </span>
-          <span class="cl-cat-label">Events</span>
-        </div>
-
       </div>
     </div>
 
-    {# ══ DYNAMIC — Property / Room details (shown for rentals/roommates/properties) ══ #}
+    {# ══ DYNAMIC — Property details (shown for rentals/properties) ══ #}
     <div class="cl-section cl-detail-panel" id="cl-detail-panel" style="display:none;opacity:0;">
       <div class="cl-section-head">
         <div class="cl-section-num" style="background:var(--accent);" id="cl-detail-icon">🏠</div>
@@ -105,7 +65,7 @@
         </div>
       </div>
 
-      {# Accommodation type — rentals & roommates only #}
+      {# Accommodation type — rentals only #}
       <div id="cl-accom-wrap" style="display:none;">
         <p class="cl-subsection-label">Accommodation type</p>
         <input type="hidden" name="accommodation_type" id="f-accommodation-type" value="{{ form.accommodation_type.value|default:'' }}">
@@ -129,7 +89,7 @@
         </div>
       </div>
 
-      {# Property type — rentals / roommates / properties #}
+      {# Property type — rentals / properties #}
       <div id="cl-proptype-wrap" style="display:none;margin-top:1.1rem;">
         <p class="cl-subsection-label">Property type</p>
         <input type="hidden" name="property_type" id="f-property-type" value="{{ form.property_type.value|default:'' }}">
@@ -210,7 +170,7 @@
         </div>
       </div>
 
-      {# Bills included — rentals & roommates only #}
+      {# Bills included — rentals only #}
       <div id="cl-bills-wrap" style="display:none;margin-top:1.1rem;">
         <label class="cl-bills-label">
           <input type="checkbox" name="bills_included" id="f-bills-included" {% if form.bills_included.value %}checked{% endif %}>
@@ -516,7 +476,7 @@
     });
   });
 
-  /* ── Dynamic detail panel (rental / roommate / property) ── */
+  /* ── Dynamic detail panel (rental / property) ── */
   function updateDetailPanel() {
     var cat        = document.getElementById('f-category').value;
     var panel      = document.getElementById('cl-detail-panel');
@@ -526,9 +486,8 @@
     var depositWrap= document.getElementById('cl-deposit-wrap');
     var title      = document.getElementById('cl-detail-title');
     var isRental   = cat === 'rentals';
-    var isRoommate = cat === 'roommates';
     var isProp     = cat === 'properties';
-    var showPanel  = isRental || isRoommate || isProp;
+    var showPanel  = isRental || isProp;
 
     if (showPanel) {
       panel.style.display = '';
@@ -538,13 +497,12 @@
       setTimeout(function(){ if (document.getElementById('f-category').value !== cat) return; panel.style.display = 'none'; }, 200);
     }
 
-    accomWrap.style.display   = (isRental || isRoommate) ? '' : 'none';
+    accomWrap.style.display   = isRental ? '' : 'none';
     proptWrap.style.display   = showPanel ? '' : 'none';
-    billsWrap.style.display   = (isRental || isRoommate) ? '' : 'none';
+    billsWrap.style.display   = isRental ? '' : 'none';
     depositWrap.style.display = isRental ? '' : 'none';
 
     if (isRental)   title.textContent = 'Rental details';
-    else if (isRoommate) title.textContent = 'Room details';
     else if (isProp)title.textContent = 'Property details';
   }
 
