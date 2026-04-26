@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uvx code-review-graph update --skip-flows",
+            "command": "code-review-graph update --skip-flows",
             "timeout": 30
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uvx code-review-graph status",
+            "command": "code-review-graph status",
             "timeout": 10
           }
         ]

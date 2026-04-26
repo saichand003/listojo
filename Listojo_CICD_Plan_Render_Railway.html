@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Listojo CI/CD Plan for Render and Railway</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.45;
+      margin: 40px;
+      color: #1f2937;
+    }
+    h1, h2, h3 {
+      color: #173b7a;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 26px;
+      border-bottom: 2px solid #dbe5f1;
+      padding-bottom: 10px;
+    }
+    h2 {
+      font-size: 19px;
+      margin-top: 26px;
+    }
+    h3 {
+      font-size: 15px;
+      margin-top: 18px;
+    }
+    p {
+      margin: 8px 0;
+    }
+    ul {
+      margin: 8px 0 8px 22px;
+    }
+    li {
+      margin: 4px 0;
+    }
+    pre {
+      background: #f3f6fb;
+      border: 1px solid #d9e2f0;
+      padding: 12px;
+      white-space: pre-wrap;
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+    .note {
+      background: #eef6ff;
+      border-left: 4px solid #2a7ef2;
+      padding: 10px 12px;
+      margin: 12px 0;
+    }
+    .warn {
+      background: #fff5e8;
+      border-left: 4px solid #d97706;
+      padding: 10px 12px;
+      margin: 12px 0;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #eef2ff;
+      color: #173b7a;
+    }
+  </style>
+</head>
+<body>
+  <h1>Listojo CI/CD Plan for Render and Railway</h1>
+  <p><strong>Date:</strong> April 21, 2026</p>
+  <p><strong>Prepared for:</strong> Listojo</p>
+
+  <h2>1. Executive Summary</h2>
+  <p>
+    Listojo can support a clean CI/CD pipeline on either Render or Railway. Based on the current repository structure,
+    Render is the better first production target because it provides a simpler deployment path for a Django monolith and
+    supports automatic deployment only after GitHub Actions checks pass.
+  </p>
+  <p>
+    Railway is also a valid option, especially if Listojo later expands into a multi-service architecture with workers,
+    cron jobs, preview environments, or more infrastructure flexibility.
+  </p>
+
+  <div class="note">
+    <strong>Recommendation:</strong> Deploy the current Django monolith to <strong>Render first</strong>, with GitHub Actions for CI and
+    Render auto-deploy configured to run <strong>after CI checks pass</strong>.
+  </div>
+
+  <h2>2. Current State of the Application</h2>
+  <p>The current repository is not fully production-ready for CI/CD deployment yet. The main issues identified are:</p>
+  <ul>
+    <li>The app currently uses <strong>SQLite</strong> in Django settings.</li>
+    <li>There is no production WSGI app server dependency such as <strong>gunicorn</strong>.</li>
+    <li>There is no <strong>STATIC_ROOT</strong> configured for collected static files.</li>
+    <li>There is no production static-file serving setup such as <strong>WhiteNoise</strong>.</li>
+    <li>There is no deploy configuration file such as <strong>render.yaml</strong>, <strong>railway.toml</strong>, <strong>Dockerfile</strong>, or <strong>build.sh</strong>.</li>
+    <li>The app has not yet been wired for <strong>DATABASE_URL</strong>-based deployment.</li>
+  </ul>
+
+  <h2>3. Target CI/CD Model</h2>
+  <h3>CI Layer</h3>
+  <p>CI should run on every pull request and every push to the main branch.</p>
+  <ul>
+    <li>Install Python dependencies</li>
+    <li>Run Django migrations in CI database</li>
+    <li>Run <strong>python manage.py check --deploy</strong></li>
+    <li>Run automated tests</li>
+    <li>Add linting and formatting later if needed</li>
+  </ul>
+
+  <h3>CD Layer</h3>
+  <p>CD should only run after CI succeeds on the main branch.</p>
+  <ul>
+    <li>Deploy the latest commit</li>
+    <li>Run database migrations before cutover</li>
+    <li>Collect static files</li>
+    <li>Start the application with gunicorn</li>
+    <li>Validate health through a health-check endpoint</li>
+  </ul>
+
+  <h2>4. Production Hardening Required Before Deployment</h2>
+  <h3>Dependencies to Add</h3>
+  <ul>
+    <li><strong>gunicorn</strong> for production application serving</li>
+    <li><strong>whitenoise</strong> for static-file serving</li>
+    <li><strong>dj-database-url</strong> for environment-based database config</li>
+    <li><strong>psycopg</strong> or <strong>psycopg[binary]</strong> for PostgreSQL connectivity</li>
+  </ul>
+
+  <h3>Django Settings Changes</h3>
+  <ul>
+    <li>Replace SQLite-only config with <strong>DATABASE_URL</strong> support</li>
+    <li>Add <strong>STATIC_ROOT = BASE_DIR / "staticfiles"</strong></li>
+    <li>Add <strong>WhiteNoiseMiddleware</strong> immediately after SecurityMiddleware</li>
+    <li>Add <strong>SECURE_PROXY_SSL_HEADER</strong></li>
+    <li>Ensure production-safe <strong>ALLOWED_HOSTS</strong> and <strong>CSRF_TRUSTED_ORIGINS</strong></li>
+    <li>Add a lightweight <strong>/health</strong> endpoint returning HTTP 200</li>
+  </ul>
+
+  <div class="warn">
+    <strong>Important:</strong> Without these changes, the app may still build successfully on a platform, but fail at runtime,
+    fail to serve static files correctly, or fail health checks.
+  </div>
+
+  <h2>5. Render Deployment Plan</h2>
+  <p>Render is the recommended first platform for Listojo’s current architecture.</p>
+
+  <h3>Recommended Render Service Setup</h3>
+  <ul>
+    <li>One Render <strong>Web Service</strong> for the Django application</li>
+    <li>One Render <strong>PostgreSQL database</strong></li>
+    <li>GitHub repository linked to the service</li>
+    <li>Auto-deploy set to <strong>After CI Checks Pass</strong></li>
+  </ul>
+
+  <h3>Render Build and Start Commands</h3>
+  <p><strong>Build command</strong></p>
+  <pre>pip install -r requirements.txt &amp;&amp; python manage.py collectstatic --noinput</pre>
+
+  <p><strong>Pre-deploy command</strong></p>
+  <pre>python manage.py migrate --noinput</pre>
+
+  <p><strong>Start command</strong></p>
+  <pre>gunicorn classifieds_project.wsgi:application --bind 0.0.0.0:$PORT</pre>
+
+  <h3>Render Advantages for Listojo</h3>
+  <ul>
+    <li>Simple Django-friendly deployment workflow</li>
+    <li>Clean GitHub integration</li>
+    <li>Native support for deploying only after CI checks pass</li>
+    <li>Good fit for a modular monolith</li>
+  </ul>
+
+  <h2>6. Railway Deployment Plan</h2>
+  <p>Railway is a good second option if Listojo later grows into a more service-oriented platform.</p>
+
+  <h3>Recommended Railway Service Setup</h3>
+  <ul>
+    <li>One Railway service for the Django web app</li>
+    <li>One Railway PostgreSQL service</li>
+    <li>GitHub autodeploy enabled</li>
+    <li><strong>Wait for CI</strong> enabled so deployment only proceeds after successful GitHub checks</li>
+    <li>Health check path configured to <strong>/health</strong></li>
+  </ul>
+
+  <h3>Railway Build and Start Commands</h3>
+  <p><strong>Build command</strong></p>
+  <pre>pip install -r requirements.txt &amp;&amp; python manage.py collectstatic --noinput</pre>
+
+  <p><strong>Pre-deploy command</strong></p>
+  <pre>python manage.py migrate --noinput</pre>
+
+  <p><strong>Start command</strong></p>
+  <pre>gunicorn classifieds_project.wsgi:application --bind 0.0.0.0:$PORT</pre>
+
+  <h3>Railway Advantages for Listojo</h3>
+  <ul>
+    <li>Better flexibility for future multi-service growth</li>
+    <li>Good support for workers, cron jobs, and preview environments</li>
+    <li>Works well if the platform later adds ingestion jobs or async workflows</li>
+  </ul>
+
+  <h2>7. Recommended GitHub Actions CI Workflow</h2>
+  <p>The following GitHub Actions workflow is an appropriate starting point:</p>
+  <pre>name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: app_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: &gt;-
+          --health-cmd="pg_isready -U postgres -d app_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DJANGO_SECRET_KEY: test-secret-key
+      DJANGO_DEBUG: "false"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/app_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run migrations
+        run: python manage.py migrate --noinput
+
+      - name: Run checks
+        run: python manage.py check --deploy
+
+      - name: Run tests
+        run: python manage.py test</pre>
+
+  <h2>8. Required Environment Variables</h2>
+  <p>The production deployment should use environment variables rather than local file defaults.</p>
+
+  <table>
+    <tr>
+      <th>Variable</th>
+      <th>Purpose</th>
+    </tr>
+    <tr>
+      <td>DJANGO_SECRET_KEY</td>
+      <td>Django application secret</td>
+    </tr>
+    <tr>
+      <td>DJANGO_DEBUG</td>
+      <td>Must be false in production</td>
+    </tr>
+    <tr>
+      <td>DJANGO_ALLOWED_HOSTS</td>
+      <td>Allowed domains and platform URLs</td>
+    </tr>
+    <tr>
+      <td>DJANGO_CSRF_TRUSTED_ORIGINS</td>
+      <td>Trusted HTTPS origins</td>
+    </tr>
+    <tr>
+      <td>DATABASE_URL</td>
+      <td>PostgreSQL connection string</td>
+    </tr>
+    <tr>
+      <td>DEFAULT_FROM_EMAIL</td>
+      <td>Outbound email identity</td>
+    </tr>
+    <tr>
+      <td>EMAIL_BACKEND</td>
+      <td>Email transport backend</td>
+    </tr>
+    <tr>
+      <td>EMAIL_HOST</td>
+      <td>SMTP host</td>
+    </tr>
+    <tr>
+      <td>EMAIL_PORT</td>
+      <td>SMTP port</td>
+    </tr>
+    <tr>
+      <td>EMAIL_HOST_USER</td>
+      <td>SMTP username</td>
+    </tr>
+    <tr>
+      <td>EMAIL_HOST_PASSWORD</td>
+      <td>SMTP password</td>
+    </tr>
+    <tr>
+      <td>GOOGLE_MAPS_API_KEY</td>
+      <td>Maps integration key</td>
+    </tr>
+  </table>
+
+  <h2>9. Phased Rollout Plan</h2>
+  <h3>Phase 1: Production Readiness</h3>
+  <ul>
+    <li>Update dependencies</li>
+    <li>Switch to PostgreSQL-ready settings</li>
+    <li>Add static-file production support</li>
+    <li>Add a health endpoint</li>
+  </ul>
+
+  <h3>Phase 2: Continuous Integration</h3>
+  <ul>
+    <li>Add GitHub Actions CI workflow</li>
+    <li>Run tests on every pull request and push</li>
+    <li>Run Django deployment checks</li>
+  </ul>
+
+  <h3>Phase 3: Continuous Deployment</h3>
+  <ul>
+    <li>Connect the repository to Render or Railway</li>
+    <li>Configure build, migration, and start commands</li>
+    <li>Gate deployment on successful CI</li>
+  </ul>
+
+  <h3>Phase 4: Operational Maturity</h3>
+  <ul>
+    <li>Add a staging environment</li>
+    <li>Move media storage off local filesystem if required</li>
+    <li>Add monitoring and alerting</li>
+    <li>Add error tracking such as Sentry</li>
+    <li>Document rollback and recovery runbooks</li>
+  </ul>
+
+  <h2>10. Final Recommendation</h2>
+  <p>
+    For Listojo’s current state as a Django monolith, the best immediate path is:
+  </p>
+  <ul>
+    <li>Prepare the app for production</li>
+    <li>Add GitHub Actions CI</li>
+    <li>Deploy to <strong>Render</strong> with auto-deploy only after CI passes</li>
+  </ul>
+  <p>
+    Railway should remain a strong future option if the platform grows into multiple services, background workers,
+    ingestion pipelines, or preview-environment-heavy workflows.
+  </p>
+
+  <h2>11. Source References</h2>
+  <ul>
+    <li>Render deploy behavior and CI-gated auto deploy: https://render.com/docs/deploys/</li>
+    <li>Render Django deployment guide: https://render.com/docs/deploy-django</li>
+    <li>Render deploy hooks: https://render.com/docs/deploy-hooks</li>
+    <li>Railway Django guide: https://docs.railway.com/guides/django</li>
+    <li>Railway GitHub autodeploys and Wait for CI: https://docs.railway.com/deployments/github-autodeploys</li>
+    <li>Railway CLI deploys and CI tokens: https://docs.railway.com/cli/deploying</li>
+    <li>Railway healthchecks: https://docs.railway.com/reference/healthchecks</li>
+  </ul>
+</body>
+</html>

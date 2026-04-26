@@ -8,7 +8,7 @@
 
 ## What Listojo Is
 
-Listojo is a classifieds and rental marketplace built for DFW — initially Irving/Las Colinas — that competes with Zillow and Craigslist by being free for small landlords, trusted for renters, and smarter than Facebook Marketplace. The core insight: small DFW landlords (1-5 self-managed units) can't afford Zillow's $300/month listing fees and don't trust Craigslist's spam and no-shows. Listojo is free, local, and adds trust through profiles, chat, and match scoring.
+Listojo is a curated-list-engine and rental marketplace built for DFW — initially Irving/Las Colinas — that competes with Zillow and Craigslist by being free for small landlords, trusted for renters, and smarter than Facebook Marketplace. The core insight: small DFW landlords (1-5 self-managed units) can't afford Zillow's $300/month listing fees and don't trust Craigslist's spam and no-shows. Listojo is free, local, and adds trust through profiles, chat, and match scoring.
 
 The platform covers rentals, roommates, properties for sale, local services, jobs, events, and buy/sell. Rentals and roommates are the launch wedge.
 

@@ -5,7 +5,7 @@ Repo: saichand003-listojo
 
 ## Problem Statement
 
-Listojo is a classifieds/rental marketplace targeting DFW renters and roommate-seekers. The codebase is ~80% launch-ready with a smart matching engine (FMM), guest chat, inquiry system, Google Maps integration, city waitlist, and admin portal. The gap is zero supply: no landlord listings, no tenant traffic, no demand validation.
+Listojo is a curated-list-engine and rental marketplace targeting DFW renters and roommate-seekers. The codebase is ~80% launch-ready with a smart matching engine (FMM), guest chat, inquiry system, Google Maps integration, city waitlist, and admin portal. The gap is zero supply: no landlord listings, no tenant traffic, no demand validation.
 
 ## YC Diagnostic Summary
 
