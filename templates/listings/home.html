@@ -21,9 +21,125 @@
   color: #fff;
   text-decoration: none;
 }
+
+/* ── Home page mobile overrides ─────────────────────────── */
+@media (max-width: 600px) {
+
+  /* Hero */
+  #home-hero {
+    padding: 1.5rem 1.1rem 1.25rem !important;
+    min-height: auto !important;
+    margin-bottom: 1.25rem !important;
+  }
+  #home-hero .hero-headline {
+    font-size: 1.5rem !important;
+    line-height: 1.25 !important;
+  }
+  #home-hero .hero-sub {
+    font-size: .84rem !important;
+    line-height: 1.55 !important;
+  }
+  #home-hero .hero-sub br { display: none; }
+
+  /* CTA buttons: guided search full-width, browse two side-by-side */
+  .home-hero-ctas {
+    flex-wrap: wrap !important;
+    gap: .55rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+  .home-hero-ctas .fmm-cta-btn {
+    flex: 1 1 100% !important;
+    min-height: 46px !important;
+    padding: .75rem 1rem !important;
+    font-size: .88rem !important;
+  }
+  .home-hero-ctas .hero-ghost-btn {
+    flex: 1 1 calc(50% - .3rem) !important;
+    min-height: 46px !important;
+    padding: .65rem .5rem !important;
+    font-size: .78rem !important;
+    justify-content: center !important;
+  }
+
+  /* Stats row: 2×2 grid */
+  .hero-stats-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: .6rem !important;
+  }
+  .hero-stat-num { font-size: 1.25rem !important; }
+  .hero-stat-lbl { font-size: .68rem !important; }
+
+  /* How It Works: single column */
+  .home-how-grid {
+    grid-template-columns: 1fr !important;
+    gap: .75rem !important;
+  }
+
+  /* Section headers: stack vertically */
+  .home-sec-hdr {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: .5rem !important;
+  }
+
+  /* Trending scroll cards: slightly narrower so next card peeks */
+  .home-scroll-row {
+    gap: .75rem !important;
+    padding-bottom: .5rem !important;
+  }
+  .home-scroll-row article {
+    min-width: 220px !important;
+    max-width: 220px !important;
+  }
+  .home-scroll-row article div[style*="height:190px"],
+  .home-scroll-row article img[style*="height:190px"] {
+    height: 145px !important;
+  }
+  .home-scroll-row article img {
+    height: 145px !important;
+  }
+
+  /* Testimonials: single column */
+  .home-testimonials-grid {
+    grid-template-columns: 1fr !important;
+    gap: .75rem !important;
+  }
+
+  /* City pills: tighter */
+  .home-cities-row { gap: .4rem !important; }
+  .home-cities-row a { font-size: .78rem !important; padding: .35rem .85rem !important; }
+
+  /* Bottom landlord CTA hero */
+  #home-landlord-cta {
+    padding: 1.75rem 1.1rem 7rem !important;
+    flex-direction: column !important;
+    gap: 1.25rem !important;
+  }
+  #home-landlord-cta h2 { font-size: 1.3rem !important; }
+  #home-landlord-cta .fmm-cta-btn,
+  #home-landlord-cta .hero-ghost-btn {
+    width: 100% !important;
+    text-align: center !important;
+  }
+}
+
+@media (max-width: 860px) and (min-width: 601px) {
+  /* Tablet: 2-col how-it-works, keep trending scroll */
+  .home-how-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .home-testimonials-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  #home-hero {
+    padding: 2.5rem 2rem 2rem !important;
+    min-height: 340px !important;
+  }
+}
 </style>
 
-<section class="hero" style="margin-bottom:2rem;min-height:420px;overflow:hidden;align-items:center;padding:3.5rem 3.5rem 3rem;">
+<section id="home-hero" class="hero" style="margin-bottom:2rem;min-height:420px;overflow:hidden;align-items:center;padding:3.5rem 3.5rem 3rem;">
   <div aria-hidden="true" style="position:absolute;bottom:0;right:-20px;width:65%;max-width:700px;opacity:.13;pointer-events:none;line-height:0;">
     <svg viewBox="0 0 1200 180" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" fill="white" width="100%">
       <path d="M 0 180 L 0 158 L 30 158 L 30 148 L 50 148 L 50 155 L 66 155 L 66 122 L 86 122 L 86 110 L 105 110 L 105 122 L 148 122 L 148 130 L 162 130 L 162 108 L 190 108 L 190 118 L 208 118 L 208 95 L 240 95 L 240 108 L 258 108 L 258 85 L 266 85 L 266 38 L 274 38 L 274 25 L 284 25 L 284 16 L 294 16 L 294 11 L 300 11 L 300 16 L 308 16 L 308 25 L 318 25 L 318 38 L 326 38 L 326 85 L 338 85 L 338 96 L 354 96 L 354 72 L 402 72 L 402 90 L 410 90 L 410 12 L 420 12 L 423 4 L 429 4 L 429 12 L 468 12 L 468 65 L 482 65 L 482 50 L 516 50 L 516 65 L 524 65 L 544 28 L 564 65 L 578 65 L 578 55 L 618 55 L 618 70 L 636 70 L 636 44 L 678 44 L 678 60 L 698 60 L 698 74 L 722 74 L 722 90 L 760 90 L 760 102 L 792 102 L 792 84 L 830 84 L 830 98 L 860 98 L 860 112 L 896 112 L 896 124 L 930 124 L 930 110 L 964 110 L 964 122 L 999 122 L 999 134 L 1033 134 L 1033 120 L 1068 120 L 1068 136 L 1103 136 L 1103 146 L 1138 146 L 1138 134 L 1172 134 L 1172 152 L 1200 152 L 1200 180 Z"/>
@@ -33,12 +149,12 @@
     </svg>
   </div>
 
-  <div style="position:relative;z-index:1;max-width:620px;">
+  <div style="position:relative;z-index:1;max-width:620px;width:100%;">
     <p style="font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#62C2FF;margin:0 0 .6rem;">Dallas-Fort Worth's Smartest Home Search</p>
     <h1 class="hero-headline" style="font-size:clamp(2rem,3.8vw,2.9rem);">Find your next home<br>with confidence.</h1>
     <p class="hero-sub">Real listings. Smart match scoring. No noise.<br>We show you why each home fits — so you decide fast.</p>
 
-    <div class="hero-ctas" style="flex-wrap:nowrap;max-width:660px;align-items:stretch;margin-bottom:2rem;">
+    <div class="hero-ctas home-hero-ctas" style="flex-wrap:nowrap;max-width:660px;align-items:stretch;margin-bottom:2rem;">
       <a href="{% url 'guided_search' %}" class="fmm-cta-btn" style="flex:1;justify-content:center;padding:.85rem 1.25rem;min-height:52px;box-sizing:border-box;">
         Start guided search &rarr;
       </a>
@@ -78,7 +194,7 @@
     <h2 style="font-size:1.25rem;font-weight:800;margin:0;font-family:'Montserrat',sans-serif;">How Listojo Works</h2>
     <span style="font-size:.8rem;color:var(--text-3);font-weight:500;">Takes 2 minutes</span>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem;">
+  <div class="home-how-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem;">
 
     <div class="card" style="padding:1.5rem 1.25rem;border-top:3px solid #2A7EF2;">
       <div style="width:36px;height:36px;border-radius:50%;background:rgba(42,126,242,.12);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">
@@ -112,14 +228,14 @@
 
 {% if trending_rentals %}
 <section style="margin-bottom:2.5rem;">
-  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem;">
+  <div class="home-sec-hdr" style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem;">
     <div>
       <h2 style="font-size:1.2rem;font-weight:800;margin:0 0 .2rem;font-family:'Montserrat',sans-serif;">Trending Rentals</h2>
       <p style="font-size:.8rem;color:var(--text-3);margin:0;">Most-viewed rentals in DFW right now</p>
     </div>
-    <a href="{% url 'listing_list' %}?category=rentals" style="font-size:.82rem;font-weight:700;color:var(--primary);text-decoration:none;padding:.35rem .85rem;border:1.5px solid var(--primary);border-radius:999px;">See all &rarr;</a>
+    <a href="{% url 'listing_list' %}?category=rentals" style="font-size:.82rem;font-weight:700;color:var(--primary);text-decoration:none;padding:.35rem .85rem;border:1.5px solid var(--primary);border-radius:999px;white-space:nowrap;">See all &rarr;</a>
   </div>
-  <div style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
+  <div class="home-scroll-row" style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
     {% for listing in trending_rentals %}
     {% with listing.images.all as imgs %}
     <article class="card listing-card" style="min-width:275px;max-width:275px;flex-shrink:0;">
@@ -157,14 +273,14 @@
 
 {% if trending_properties %}
 <section style="margin-bottom:2.5rem;">
-  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem;">
+  <div class="home-sec-hdr" style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem;">
     <div>
       <h2 style="font-size:1.2rem;font-weight:800;margin:0 0 .2rem;font-family:'Montserrat',sans-serif;">Trending Properties for Sale</h2>
       <p style="font-size:.8rem;color:var(--text-3);margin:0;">Top-viewed homes on the DFW market</p>
     </div>
-    <a href="{% url 'listing_list' %}?category=properties" style="font-size:.82rem;font-weight:700;color:#1e8a5c;text-decoration:none;padding:.35rem .85rem;border:1.5px solid #1e8a5c;border-radius:999px;">See all &rarr;</a>
+    <a href="{% url 'listing_list' %}?category=properties" style="font-size:.82rem;font-weight:700;color:#1e8a5c;text-decoration:none;padding:.35rem .85rem;border:1.5px solid #1e8a5c;border-radius:999px;white-space:nowrap;">See all &rarr;</a>
   </div>
-  <div style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
+  <div class="home-scroll-row" style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
     {% for listing in trending_properties %}
     {% with listing.images.all as imgs %}
     <article class="card listing-card" style="min-width:275px;max-width:275px;flex-shrink:0;">
@@ -205,7 +321,7 @@
     <h2 style="font-size:1.2rem;font-weight:800;margin:0 0 .2rem;font-family:'Montserrat',sans-serif;">What people are saying</h2>
     <p style="font-size:.8rem;color:var(--text-3);margin:0;">From tenants and landlords across DFW</p>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
+  <div class="home-testimonials-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
 
     <div class="card" style="padding:1.4rem 1.25rem;display:flex;flex-direction:column;gap:.85rem;">
       <div style="display:flex;gap:.25rem;">
@@ -266,13 +382,11 @@
 
 {% if cities %}
 <section style="margin-bottom:2.5rem;">
-  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem;">
-    <div>
-      <h2 style="font-size:1.2rem;font-weight:800;margin:0 0 .2rem;font-family:'Montserrat',sans-serif;">Explore by City</h2>
-      <p style="font-size:.8rem;color:var(--text-3);margin:0;">Listings across the DFW metroplex</p>
-    </div>
+  <div style="margin-bottom:1rem;">
+    <h2 style="font-size:1.2rem;font-weight:800;margin:0 0 .2rem;font-family:'Montserrat',sans-serif;">Explore by City</h2>
+    <p style="font-size:.8rem;color:var(--text-3);margin:0;">Listings across the DFW metroplex</p>
   </div>
-  <div style="display:flex;flex-wrap:wrap;gap:.6rem;">
+  <div class="home-cities-row" style="display:flex;flex-wrap:wrap;gap:.6rem;">
     {% for city in cities %}
     <a href="{% url 'listing_list' %}?city={{ city|urlencode }}"
        style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1.1rem;border-radius:999px;background:var(--surface-2);border:1.5px solid var(--border);color:var(--text-2);font-size:.84rem;font-weight:600;text-decoration:none;transition:all .15s;"
@@ -286,7 +400,7 @@
 </section>
 {% endif %}
 
-<section class="hero" style="padding:2.75rem 3rem 160px;margin-bottom:0;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:2rem;display:flex;">
+<section id="home-landlord-cta" class="hero" style="padding:2.75rem 3rem 160px;margin-bottom:0;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:2rem;display:flex;">
   <div aria-hidden="true" style="position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;pointer-events:none;">
     <svg viewBox="0 0 1200 180" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" fill="rgba(255,255,255,.05)" style="position:absolute;bottom:0;left:0;width:100%;">
       <path d="M 0 180 L 0 158 L 30 158 L 30 148 L 50 148 L 50 155 L 66 155 L 66 122 L 86 122 L 86 110 L 105 110 L 105 122 L 148 122 L 148 130 L 162 130 L 162 108 L 190 108 L 190 118 L 208 118 L 208 95 L 240 95 L 240 108 L 258 108 L 258 85 L 266 85 L 266 38 L 274 38 L 274 25 L 284 25 L 284 16 L 294 16 L 294 11 L 300 11 L 300 16 L 308 16 L 308 25 L 318 25 L 318 38 L 326 38 L 326 85 L 338 85 L 338 96 L 354 96 L 354 72 L 402 72 L 402 90 L 410 90 L 410 12 L 420 12 L 423 4 L 429 4 L 429 12 L 468 12 L 468 65 L 482 65 L 482 50 L 516 50 L 516 65 L 524 65 L 544 28 L 564 65 L 578 65 L 578 55 L 618 55 L 618 70 L 636 70 L 636 44 L 678 44 L 678 60 L 698 60 L 698 74 L 722 74 L 722 90 L 760 90 L 760 102 L 792 102 L 792 84 L 830 84 L 830 98 L 860 98 L 860 112 L 896 112 L 896 124 L 930 124 L 930 110 L 964 110 L 964 122 L 999 122 L 999 134 L 1033 134 L 1033 120 L 1068 120 L 1068 136 L 1103 136 L 1103 146 L 1138 146 L 1138 134 L 1172 134 L 1172 152 L 1200 152 L 1200 180 Z"/>
@@ -298,7 +412,7 @@
     <h2 style="font-size:1.6rem;font-weight:800;margin:0 0 .75rem;line-height:1.2;color:#fff;font-family:'Montserrat',sans-serif;">Have a property to rent or sell?</h2>
     <p style="font-size:.92rem;color:rgba(255,255,255,.75);margin:0;line-height:1.6;">Search freely. Connect directly. Reach serious tenants and buyers in your city — no agency headaches, no gatekeeping.</p>
   </div>
-  <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:.75rem;flex-shrink:0;">
+  <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:.75rem;flex-shrink:0;width:100%;max-width:220px;">
     <a href="{% url 'create_listing' %}" class="fmm-cta-btn" style="text-align:center;">List a Property &rarr;</a>
     <a href="{% url 'create_community' %}" class="hero-ghost-btn" style="text-align:center;">List a Community &rarr;</a>
   </div>
