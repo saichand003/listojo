@@ -158,6 +158,10 @@ LAUNCH_CITIES = {
 
 # Security hardening: enabled when DEBUG is False (production mode).
 if not DEBUG:
+    # Railway (and most proxies) terminate SSL externally and forward plain HTTP
+    # internally. Trust the X-Forwarded-Proto header so Django knows the real
+    # protocol is HTTPS and won't redirect-loop.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
