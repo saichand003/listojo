@@ -46,6 +46,8 @@ class Listing(models.Model):
     STATUS_CHOICES = [
         ('active',         'Active'),
         ('draft',          'Draft'),
+        ('on_hold',        'On Hold'),
+        ('closed',         'Closed'),
         ('pending',        'Pending Review'),
         ('flagged',        'Flagged'),
         ('under_contract', 'Under Contract'),

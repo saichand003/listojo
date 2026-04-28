@@ -3,8 +3,36 @@
 {% block content %}
 
 <style>
-.back-nav-link { display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(42,126,242,.08);border:1px solid rgba(42,126,242,.18);transition:background .15s,color .15s;margin-bottom:1rem; }
+.back-nav-link { display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(42,126,242,.08);border:1px solid rgba(42,126,242,.18);transition:background .15s,color .15s;margin-bottom:.75rem; }
 .back-nav-link:hover { background:rgba(42,126,242,.18); }
+
+/* ── Owner management bar ── */
+.ld-mgmt { background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
+.ld-mgmt-left { display:flex;align-items:center;gap:10px; }
+.ld-mgmt-label { font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em; }
+.ld-spill { display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .85rem;border-radius:999px;font-size:.8rem;font-weight:700;letter-spacing:.01em; }
+.ld-spill-active  { background:#EBF3FF;color:var(--primary); }
+.ld-spill-on_hold { background:#FFF7ED;color:#C2410C;border:1px solid rgba(194,65,12,.2); }
+.ld-spill-closed  { background:#F3F4F6;color:#6B7280;border:1px solid rgba(107,114,128,.2); }
+.ld-spill-draft   { background:#F3F4F6;color:#374151; }
+.ld-mgmt-actions  { display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+.ld-act { display:inline-flex;align-items:center;gap:5px;padding:7px 15px;border-radius:9px;font-size:.8rem;font-weight:600;cursor:pointer;border:none;background:none;white-space:nowrap;transition:opacity .15s; }
+.ld-act:hover { opacity:.8; }
+.ld-act-amber { border:1.5px solid #D97706;color:#B45309; }
+.ld-act-green { background:#ECFDF5;color:#065F46;border:1.5px solid #6EE7B7; }
+.ld-act-red   { border:1.5px solid #EF4444;color:#DC2626; }
+.ld-act-ghost { border:1.5px solid var(--border);color:var(--muted); }
+
+/* ── Inline confirm inside the bar ── */
+.ld-confirm { display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px 18px;margin-bottom:.9rem; animation:ldSlide .15s ease; }
+.ld-confirm.open { display:block; }
+@keyframes ldSlide { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+.ld-confirm-title { font-weight:700;font-size:.88rem;color:var(--text);margin-bottom:4px; }
+.ld-confirm-body  { font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:12px; }
+.ld-confirm-row   { display:flex;gap:8px;flex-wrap:wrap; }
+.ld-confirm-ok    { padding:8px 18px;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;border:none;transition:opacity .15s; }
+.ld-confirm-ok:hover { opacity:.85; }
+.ld-confirm-cancel{ padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:600;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer; }
 
 /* Community view: stack sidebar on tablet/mobile */
 @media (max-width: 860px) {
@@ -21,6 +49,100 @@
 </style>
 {% if user == listing.owner %}
 <a href="{% url 'my_listings' %}" class="back-nav-link">← Back to My Listings</a>
+
+{# ── Inline confirm panels ── #}
+{% if listing.status == 'active' %}
+<div class="ld-confirm" id="ld-confirm-hold">
+  <div class="ld-confirm-title">Place this listing on hold?</div>
+  <div class="ld-confirm-body">Your listing will be temporarily hidden from public search. All your inquiry history and stats stay intact. You can reactivate it at any time.</div>
+  <div class="ld-confirm-row">
+    <button class="ld-confirm-ok" style="background:#FFF7ED;color:#C2410C;border:1px solid rgba(194,65,12,.25)" onclick="ldSetStatus('on_hold')">Yes, place on hold</button>
+    <button class="ld-confirm-cancel" onclick="ldCloseConfirm()">Cancel</button>
+  </div>
+</div>
+<div class="ld-confirm" id="ld-confirm-close">
+  <div class="ld-confirm-title">Close this listing?</div>
+  <div class="ld-confirm-body">This listing will be permanently removed from public search. Your full inquiry history, view stats, and all data remain preserved in My Listings.</div>
+  <div class="ld-confirm-row">
+    <button class="ld-confirm-ok" style="background:#FEF2F2;color:#DC2626;border:1px solid rgba(220,38,38,.25)" onclick="ldSetStatus('closed')">Yes, close listing</button>
+    <button class="ld-confirm-cancel" onclick="ldCloseConfirm()">Cancel</button>
+  </div>
+</div>
+{% elif listing.status == 'on_hold' %}
+<div class="ld-confirm" id="ld-confirm-reactivate">
+  <div class="ld-confirm-title">Reactivate this listing?</div>
+  <div class="ld-confirm-body">Your listing will go live again and appear in public search immediately.</div>
+  <div class="ld-confirm-row">
+    <button class="ld-confirm-ok" style="background:#ECFDF5;color:#065F46;border:1px solid #6EE7B7" onclick="ldSetStatus('active')">Yes, reactivate</button>
+    <button class="ld-confirm-cancel" onclick="ldCloseConfirm()">Cancel</button>
+  </div>
+</div>
+<div class="ld-confirm" id="ld-confirm-close">
+  <div class="ld-confirm-title">Close this listing?</div>
+  <div class="ld-confirm-body">This listing will be permanently removed from public search. Your full inquiry history, view stats, and all data remain preserved in My Listings.</div>
+  <div class="ld-confirm-row">
+    <button class="ld-confirm-ok" style="background:#FEF2F2;color:#DC2626;border:1px solid rgba(220,38,38,.25)" onclick="ldSetStatus('closed')">Yes, close listing</button>
+    <button class="ld-confirm-cancel" onclick="ldCloseConfirm()">Cancel</button>
+  </div>
+</div>
+{% endif %}
+
+{# ── Management bar ── #}
+<div class="ld-mgmt">
+  <div class="ld-mgmt-left">
+    <span class="ld-mgmt-label">Listing status</span>
+    {% if listing.status == 'active' %}
+      <span class="ld-spill ld-spill-active">● Active</span>
+    {% elif listing.status == 'on_hold' %}
+      <span class="ld-spill ld-spill-on_hold">⏸ On Hold</span>
+      <span style="font-size:.78rem;color:var(--muted);">Hidden from public search</span>
+    {% elif listing.status == 'closed' %}
+      <span class="ld-spill ld-spill-closed">Closed</span>
+      <span style="font-size:.78rem;color:var(--muted);">History preserved</span>
+    {% elif listing.status == 'draft' %}
+      <span class="ld-spill ld-spill-draft">Draft</span>
+    {% else %}
+      <span class="ld-spill ld-spill-draft">{{ listing.get_status_display }}</span>
+    {% endif %}
+  </div>
+  <div class="ld-mgmt-actions">
+    {% if listing.status == 'active' %}
+      <button class="ld-act ld-act-amber" onclick="ldOpenConfirm('hold')">⏸ Place on Hold</button>
+      <button class="ld-act ld-act-red"   onclick="ldOpenConfirm('close')">Close Listing</button>
+    {% elif listing.status == 'on_hold' %}
+      <button class="ld-act ld-act-green" onclick="ldOpenConfirm('reactivate')">▶ Reactivate</button>
+      <button class="ld-act ld-act-red"   onclick="ldOpenConfirm('close')">Close Listing</button>
+    {% elif listing.status == 'closed' %}
+      <span style="font-size:.8rem;color:var(--muted);font-style:italic;">No further actions available</span>
+    {% endif %}
+    <a href="{% url 'edit_listing' listing.pk %}" class="ld-act ld-act-ghost">✏️ Edit</a>
+  </div>
+</div>
+
+<script>
+var _ldCsrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+var _ldPk   = {{ listing.pk }};
+
+function ldOpenConfirm(type) {
+  document.querySelectorAll('.ld-confirm.open').forEach(function(el){ el.classList.remove('open'); });
+  var el = document.getElementById('ld-confirm-' + type);
+  if (el) el.classList.add('open');
+}
+function ldCloseConfirm() {
+  document.querySelectorAll('.ld-confirm.open').forEach(function(el){ el.classList.remove('open'); });
+}
+function ldSetStatus(status) {
+  fetch('/listing/' + _ldPk + '/set-status/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': _ldCsrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'status=' + encodeURIComponent(status),
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){ if (d.ok) location.reload(); else alert('Something went wrong.'); })
+  .catch(function(){ alert('Something went wrong.'); });
+}
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldCloseConfirm(); });
+</script>
 {% endif %}
 
 {% if render_as_community %}

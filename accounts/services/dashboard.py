@@ -22,6 +22,8 @@ def owner_listing_overview(user) -> dict:
         'my_listings': listings,
         'active_count': listings.filter(status='active').count(),
         'draft_count': listings.filter(status='draft').count(),
+        'on_hold_count': listings.filter(status='on_hold').count(),
+        'closed_count': listings.filter(status='closed').count(),
         'total_views': listings.aggregate(t=Sum('view_count'))['t'] or 0,
     }
 

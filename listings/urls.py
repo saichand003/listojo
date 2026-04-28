@@ -19,6 +19,7 @@ urlpatterns = [
     path('listing/<int:pk>/estimate/', views.listing_estimate, name='listing_estimate'),
     path('listing/impressions/', views.log_impressions, name='log_impressions'),
     path('listing/estimate-range/', views.listing_estimate_range, name='listing_estimate_range'),
+    path('listing/<int:pk>/set-status/', views.set_listing_status, name='set_listing_status'),
 
     # ── Community routes ──────────────────────────────────────────────────
     path('communities/', community_views.my_communities, name='my_communities'),

@@ -6,7 +6,6 @@ Predict: valuation.predict_price(listing) → {estimate, low, high, confidence, 
 """
 import logging
 import pickle
-import numpy as np
 from pathlib import Path
 from django.conf import settings
 
@@ -51,6 +50,8 @@ def predict_price(listing):
         {estimate: int, low: int, high: int,
          confidence: str, n_samples: int}
     """
+    import numpy as np
+
     model_data = _load_model()
     if model_data is None:
         return None

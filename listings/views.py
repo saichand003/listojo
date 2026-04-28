@@ -181,6 +181,11 @@ def listing_detail(request, pk):
         pk=pk,
     )
 
+    # Non-owners can't view On Hold or Closed listings
+    if listing.status in ('on_hold', 'closed') and (not request.user.is_authenticated or request.user != listing.owner):
+        from django.http import Http404
+        raise Http404
+
     # Increment view count (skip owner's own visits)
     if not request.user.is_authenticated or request.user != listing.owner:
         Listing.objects.filter(pk=pk).update(view_count=django_models.F('view_count') + 1)
@@ -345,6 +350,25 @@ def waitlist_signup(request):
             'email':   email,
         })
     return redirect('listing_list')
+
+
+@login_required
+def set_listing_status(request, pk):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method not allowed'}, status=405)
+    listing = get_object_or_404(Listing, pk=pk, owner=request.user)
+    new_status = request.POST.get('status', '')
+    allowed_transitions = {
+        'active':  {'on_hold', 'closed'},
+        'on_hold': {'active', 'closed'},
+        'closed':  set(),
+        'draft':   {'closed'},
+    }
+    if new_status not in allowed_transitions.get(listing.status, set()):
+        return JsonResponse({'error': 'transition not allowed'}, status=400)
+    listing.status = new_status
+    listing.save(update_fields=['status'])
+    return JsonResponse({'ok': True, 'status': listing.status})
 
 
 @login_required
