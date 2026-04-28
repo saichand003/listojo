@@ -103,8 +103,8 @@
     {# Discover section #}
     <div class="sb-section">
       <span class="sb-label">Discover</span>
-      <a href="{% url 'listing_list' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'listing_list' or request.resolver_match.url_name == 'home' %}sb-active{% endif %}">
+      <a href="{% url 'home' %}"
+         class="sb-link {% if request.resolver_match.url_name == 'home' %}sb-active{% endif %}">
         <span class="sb-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span> Home
       </a>
       <a href="{% url 'guided_search' %}"
@@ -207,7 +207,7 @@
 
 {# ── MOBILE BOTTOM TAB BAR ── #}
 <nav class="mob-nav" aria-label="Mobile navigation">
-    <a href="{% url 'listing_list' %}" class="mob-nav-item {% if request.resolver_match.url_name == 'listing_list' %}mob-active{% endif %}">
+    <a href="{% url 'home' %}" class="mob-nav-item {% if request.resolver_match.url_name == 'home' %}mob-active{% endif %}">
         <span class="mob-nav-icon">🏠</span>
         <span>Home</span>
     </a>
