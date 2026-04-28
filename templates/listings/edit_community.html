@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width:800px;margin:0 auto;">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap;">
+    <div>
+      <h1 style="font-size:1.6rem;margin-bottom:.2rem;">{{ community.name }}</h1>
+      <p class="muted">{{ community.city }}{% if community.state %}, {{ community.state }}{% endif %}</p>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <a href="{% url 'community_detail' community.pk %}" class="button secondary">View Public Page</a>
+    </div>
+  </div>
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.3);border-radius:8px;padding:.65rem 1rem;margin-bottom:1rem;font-size:.88rem;color:#15803d;">{{ msg }}</div>
+  {% endfor %}
+  {% endif %}
+
+  {# ══ SECTION 1: Community Info ══ #}
+  <details class="card" style="padding:0;margin-bottom:1rem;" open>
+    <summary style="padding:1rem 1.25rem;font-weight:700;font-size:1rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;">
+      Community Info &amp; Policies <span style="font-size:.8rem;font-weight:400;color:var(--text-3);">▾ expand</span>
+    </summary>
+    <div style="padding:0 1.25rem 1.25rem;">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="save_community" value="1">
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+          <div style="grid-column:1/-1;">
+            <label class="cl-label">Community Name</label>
+            <input type="text" name="name" value="{{ form.name.value|default:'' }}" required style="width:100%;">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="cl-label">Description</label>
+            <textarea name="description" rows="3" style="width:100%;resize:vertical;">{{ form.description.value|default:'' }}</textarea>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="cl-label">Street Address</label>
+            <input type="text" name="address_line" value="{{ form.address_line.value|default:'' }}" style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">City</label>
+            <input type="text" name="city" value="{{ form.city.value|default:'' }}" required style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">State</label>
+            <input type="text" name="state" value="{{ form.state.value|default:'' }}" style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">ZIP</label>
+            <input type="text" name="zip_code" value="{{ form.zip_code.value|default:'' }}" style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">Country</label>
+            <input type="text" name="country" value="{{ form.country.value|default:'USA' }}" style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">Phone</label>
+            <input type="tel" name="contact_phone" value="{{ form.contact_phone.value|default:'' }}" style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">Email</label>
+            <input type="email" name="contact_email" value="{{ form.contact_email.value|default:'' }}" style="width:100%;">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="cl-label">Website</label>
+            <input type="url" name="website" value="{{ form.website.value|default:'' }}" style="width:100%;">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="cl-label">Community Amenities <span class="muted" style="font-weight:400;font-size:.78rem;">(comma-separated)</span></label>
+            <input type="text" name="community_amenities" value="{{ form.community_amenities.value|default:'' }}" placeholder="Pool, Gym, Dog Park, Rooftop" style="width:100%;">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="cl-label">In-Unit Amenities <span class="muted" style="font-weight:400;font-size:.78rem;">(comma-separated)</span></label>
+            <input type="text" name="in_unit_amenities" value="{{ form.in_unit_amenities.value|default:'' }}" placeholder="Washer/Dryer, Dishwasher, Balcony" style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">Pet Policy</label>
+            <input type="text" name="pet_policy" value="{{ form.pet_policy.value|default:'' }}" placeholder="Dogs allowed, $300 deposit" style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">Parking</label>
+            <input type="text" name="parking_info" value="{{ form.parking_info.value|default:'' }}" placeholder="Garage $75/mo" style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">Utilities Included</label>
+            <input type="text" name="utilities_included" value="{{ form.utilities_included.value|default:'' }}" placeholder="Water, trash included" style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">Lease Terms</label>
+            <input type="text" name="lease_terms" value="{{ form.lease_terms.value|default:'' }}" placeholder="12 months" style="width:100%;">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="cl-label">Special Offer <span class="muted" style="font-weight:400;font-size:.78rem;">(optional)</span></label>
+            <input type="text" name="special_offer" value="{{ form.special_offer.value|default:'' }}" placeholder="1 month free on select units" style="width:100%;">
+          </div>
+        </div>
+
+        {# ── Photos ── #}
+        <div>
+          <p style="font-weight:600;margin-bottom:.5rem;">Photos</p>
+          {% if existing_images %}
+          <div class="existing-images-grid" style="margin-bottom:.75rem;">
+            {% for img in existing_images %}
+            <div class="existing-img-item" id="cimg-{{ img.pk }}">
+              <img src="{{ img.image.url }}" alt="Photo {{ forloop.counter }}">
+              <input type="checkbox" name="delete_images" value="{{ img.pk }}" id="cdel-{{ img.pk }}">
+              <label class="existing-img-delete" for="cdel-{{ img.pk }}"></label>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+          <div class="img-upload-zone" id="img-upload-zone">
+            <input type="file" name="images" id="img-file-input" multiple accept="image/*">
+            <div class="img-upload-icon">📷</div>
+            <div class="img-upload-label">Add more photos</div>
+            <div class="img-upload-hint">JPEG, PNG, WEBP · Max 5 MB each</div>
+            <div class="img-upload-count" id="img-count-label">0 new photos</div>
+          </div>
+          <div id="img-preview-grid" class="img-preview-grid" style="margin-top:.5rem;"></div>
+        </div>
+
+        <button type="submit" class="button accent" style="align-self:flex-start;padding:.6rem 1.5rem;">Save Changes</button>
+      </div>
+    </form>
+    </div>
+  </details>
+
+  {# ══ SECTION 2: Floor Plans & Units ══ #}
+  <div class="card" style="padding:1.25rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+      <h2 style="font-size:1.05rem;margin:0;">Floor Plans &amp; Units</h2>
+      <span class="muted" style="font-size:.8rem;">{{ floor_plans|length }} floor plan{{ floor_plans|length|pluralize }}</span>
+    </div>
+
+    {% for fp in floor_plans %}
+    <div style="border:1px solid var(--border);border-radius:10px;margin-bottom:1rem;overflow:hidden;">
+
+      {# Floor plan header #}
+      <div style="background:var(--card-bg);padding:.85rem 1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        {% if fp.floor_plan_image %}
+        <img src="{{ fp.floor_plan_image.url }}" alt="{{ fp.name }}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0;">
+        {% else %}
+        <div style="width:64px;height:64px;background:var(--bg);border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.5rem;">🏠</div>
+        {% endif %}
+        <div style="flex:1;min-width:0;">
+          <p style="font-weight:700;font-size:.95rem;margin:0;">{{ fp.name }}</p>
+          <p class="muted" style="font-size:.8rem;margin:.1rem 0 0;">
+            {{ fp.bedrooms }}BR &middot; {{ fp.bathrooms }}BA{% if fp.square_footage %} &middot; {{ fp.square_footage }} sqft{% endif %}
+            {% with fp.price_range as pr %}
+            {% if pr.0 %} &middot; ${{ pr.0|floatformat:0 }}{% if pr.1 and pr.1 != pr.0 %}–${{ pr.1|floatformat:0 }}{% endif %}/mo{% endif %}
+            {% endwith %}
+            &middot; <strong style="color:#16a34a;">{{ fp.available_units.count }} available</strong>
+          </p>
+        </div>
+        <form method="post" action="{% url 'delete_floor_plan' fp.pk %}" style="flex-shrink:0;" onsubmit="return confirm('Delete this floor plan and all its units?');">
+          {% csrf_token %}
+          <button type="submit" class="nav-text-btn" style="color:#ef4444;font-size:.78rem;">Delete Plan</button>
+        </form>
+      </div>
+
+      {# Units table #}
+      <div style="padding:.75rem 1rem;">
+        {% if fp.units.all %}
+        <table style="width:100%;border-collapse:collapse;font-size:.83rem;margin-bottom:.75rem;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+              <th style="padding:.35rem .5rem;text-align:left;color:var(--text-3);font-weight:600;">Unit</th>
+              <th style="padding:.35rem .5rem;text-align:left;color:var(--text-3);font-weight:600;">Floor</th>
+              <th style="padding:.35rem .5rem;text-align:left;color:var(--text-3);font-weight:600;">Price</th>
+              <th style="padding:.35rem .5rem;text-align:left;color:var(--text-3);font-weight:600;">Available</th>
+              <th style="padding:.35rem .5rem;text-align:left;color:var(--text-3);font-weight:600;">Status</th>
+              <th style="padding:.35rem .5rem;"></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for unit in fp.units.all %}
+            {# Summary row #}
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:.5rem .5rem;font-weight:600;">#{{ unit.unit_number }}</td>
+              <td style="padding:.5rem .5rem;">{{ unit.floor|default:"—" }}</td>
+              <td style="padding:.5rem .5rem;">{% if unit.price %}${{ unit.price|floatformat:0 }}/mo{% else %}—{% endif %}</td>
+              <td style="padding:.5rem .5rem;">{% if unit.available_from %}{{ unit.available_from|date:"M j, Y" }}{% else %}<span style="color:#16a34a;font-weight:600;">Now</span>{% endif %}</td>
+              <td style="padding:.5rem .5rem;">
+                <span style="font-size:.73rem;padding:.15rem .5rem;border-radius:999px;{% if unit.status == 'available' %}background:rgba(22,163,74,.12);color:#15803d;{% elif unit.status == 'coming_soon' %}background:rgba(245,158,11,.12);color:#b45309;{% else %}background:var(--bg);color:var(--text-3);{% endif %}">
+                  {{ unit.get_status_display }}
+                </span>
+              </td>
+              <td style="padding:.5rem .5rem;white-space:nowrap;">
+                <button type="button"
+                        onclick="toggleUnitEdit({{ unit.pk }})"
+                        id="unit-edit-btn-{{ unit.pk }}"
+                        style="font-size:.75rem;color:var(--primary);background:none;border:none;cursor:pointer;padding:0;font-weight:600;">
+                  Edit
+                </button>
+              </td>
+            </tr>
+            {# Inline edit row — hidden by default #}
+            <tr id="unit-edit-{{ unit.pk }}" style="display:none;background:rgba(42,126,242,.03);">
+              <td colspan="6" style="padding:.85rem 1rem;border-bottom:2px solid var(--primary);">
+                <form method="post" action="{% url 'edit_unit' unit.pk %}">
+                  {% csrf_token %}
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.65rem;margin-bottom:.75rem;">
+                    <div>
+                      <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Unit # <span style="color:#ef4444;">*</span></label>
+                      <input name="unit_number" value="{{ unit.unit_number }}" required style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                    </div>
+                    <div>
+                      <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Floor</label>
+                      <input name="floor" type="number" min="1" value="{{ unit.floor|default:'' }}" placeholder="e.g. 4" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                    </div>
+                    <div>
+                      <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Price / mo</label>
+                      <input name="price" type="number" step="0.01" min="0" value="{{ unit.price|default:'' }}" placeholder="e.g. 1400" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                    </div>
+                    <div>
+                      <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Available from</label>
+                      <input name="available_from" type="date" value="{{ unit.available_from|date:'Y-m-d'|default:'' }}" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                    </div>
+                    <div>
+                      <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Status</label>
+                      <select name="status" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                        <option value="available"   {% if unit.status == 'available'   %}selected{% endif %}>Available</option>
+                        <option value="coming_soon" {% if unit.status == 'coming_soon' %}selected{% endif %}>Coming Soon</option>
+                        <option value="occupied"    {% if unit.status == 'occupied'    %}selected{% endif %}>Occupied</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Notes <span style="font-weight:400;">(optional)</span></label>
+                      <input name="notes" value="{{ unit.notes }}" placeholder="e.g. Corner unit, great views" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
+                    <button type="submit" class="button accent" style="font-size:.83rem;padding:.4rem 1.1rem;">Save changes</button>
+                    <button type="button" onclick="toggleUnitEdit({{ unit.pk }})" style="font-size:.83rem;color:var(--muted);background:none;border:none;cursor:pointer;padding:.4rem .5rem;">Cancel</button>
+                  </div>
+                </form>
+                <form method="post" action="{% url 'delete_unit' unit.pk %}" style="margin-top:.65rem;padding-top:.65rem;border-top:1px solid var(--border);" onsubmit="return confirm('Delete unit #{{ unit.unit_number }}? This cannot be undone.');">
+                  {% csrf_token %}
+                  <button type="submit" style="font-size:.78rem;color:#ef4444;background:none;border:1px solid #fca5a5;border-radius:6px;padding:.3rem .75rem;cursor:pointer;">Delete this unit</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="muted" style="font-size:.82rem;margin:.25rem 0 .75rem;">No units added yet.</p>
+        {% endif %}
+
+        {# Add unit form #}
+        <details>
+          <summary style="font-size:.82rem;font-weight:600;color:var(--primary);cursor:pointer;list-style:none;">+ Add Unit</summary>
+          <div style="margin-top:.75rem;background:rgba(42,126,242,.03);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.85rem 1rem;">
+            <form method="post" action="{% url 'add_unit' fp.pk %}">
+              {% csrf_token %}
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.65rem;margin-bottom:.75rem;">
+                <div>
+                  <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Unit # <span style="color:#ef4444;">*</span></label>
+                  <input name="unit_number" placeholder="e.g. 201" required style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                </div>
+                <div>
+                  <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Floor</label>
+                  <input name="floor" type="number" min="1" placeholder="e.g. 2" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                </div>
+                <div>
+                  <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Price / mo</label>
+                  <input name="price" type="number" step="0.01" min="0" placeholder="e.g. 1400" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                </div>
+                <div>
+                  <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Available from</label>
+                  <input name="available_from" type="date" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                </div>
+                <div>
+                  <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Status</label>
+                  <select name="status" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                    <option value="available">Available</option>
+                    <option value="coming_soon">Coming Soon</option>
+                    <option value="occupied">Occupied</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Notes <span style="font-weight:400;">(optional)</span></label>
+                  <input name="notes" placeholder="e.g. Corner unit" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
+                </div>
+              </div>
+              <button type="submit" class="button accent" style="font-size:.83rem;padding:.4rem 1.1rem;">Add Unit</button>
+            </form>
+          </div>
+        </details>
+      </div>
+    </div>
+    {% empty %}
+    <p class="muted" style="text-align:center;padding:1.5rem 0;">No floor plans yet. Add your first one below.</p>
+    {% endfor %}
+
+    {# ── Add Floor Plan form ── #}
+    <details style="margin-top:.5rem;">
+      <summary style="font-weight:700;font-size:.9rem;cursor:pointer;list-style:none;color:var(--primary);">+ Add Floor Plan</summary>
+      <form method="post" action="{% url 'add_floor_plan' community.pk %}" enctype="multipart/form-data" style="margin-top:.85rem;border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        {% csrf_token %}
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.65rem;margin-bottom:.75rem;">
+          <div style="grid-column:1/-1;">
+            <label class="cl-label">Plan Name <span style="color:#ef4444;">*</span></label>
+            <input name="name" placeholder="e.g. The Magnolia, 2BR Classic" required style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">Bedrooms</label>
+            <input name="bedrooms" type="number" min="0" value="1" required style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">Bathrooms</label>
+            <input name="bathrooms" type="number" step="0.5" min="1" value="1.0" required style="width:100%;">
+          </div>
+          <div>
+            <label class="cl-label">Sq Ft</label>
+            <input name="square_footage" type="number" placeholder="850" style="width:100%;">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="cl-label">Floor Plan Image <span class="muted" style="font-weight:400;font-size:.75rem;">(layout diagram)</span></label>
+            <input type="file" name="floor_plan_image" accept="image/*" style="width:100%;font-size:.82rem;">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="cl-label">Description <span class="muted" style="font-weight:400;font-size:.75rem;">(optional)</span></label>
+            <textarea name="description" rows="2" placeholder="Open-plan kitchen, floor-to-ceiling windows..." style="width:100%;resize:vertical;font-size:.85rem;"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="button accent" style="padding:.45rem 1.1rem;font-size:.88rem;">Add Floor Plan</button>
+      </form>
+    </details>
+  </div>
+
+</div>
+
+<script>
+function toggleUnitEdit(pk) {
+  var row = document.getElementById('unit-edit-' + pk);
+  var btn = document.getElementById('unit-edit-btn-' + pk);
+  var open = row.style.display !== 'none';
+  row.style.display = open ? 'none' : 'table-row';
+  btn.textContent   = open ? 'Edit' : 'Cancel';
+  btn.style.color   = open ? 'var(--primary)' : 'var(--muted)';
+}
+
+(function () {
+  var MAX_BYTES = 5 * 1024 * 1024;
+  var files = [];
+  var zone = document.getElementById('img-upload-zone');
+  var input = document.getElementById('img-file-input');
+  var grid = document.getElementById('img-preview-grid');
+  var countLbl = document.getElementById('img-count-label');
+  if (!zone) return;
+
+  document.querySelectorAll('.existing-img-item input[type="checkbox"]').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      var item = document.getElementById('cimg-' + cb.value);
+      if (item) item.classList.toggle('marked-delete', cb.checked);
+    });
+  });
+
+  function render() {
+    grid.innerHTML = '';
+    files.forEach(function(item, idx) {
+      var wrap = document.createElement('div'); wrap.className = 'img-preview-item' + (item.error ? ' img-preview-error' : '');
+      var img = document.createElement('img'); img.src = item.url; wrap.appendChild(img);
+      if (item.error) { var lbl = document.createElement('div'); lbl.className = 'img-preview-error-label'; lbl.textContent = item.error; wrap.appendChild(lbl); }
+      var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'img-preview-remove'; btn.innerHTML = '✕';
+      btn.addEventListener('click', function() { URL.revokeObjectURL(item.url); files.splice(idx, 1); render(); sync(); });
+      wrap.appendChild(btn); grid.appendChild(wrap);
+    });
+    var ok = files.filter(function(f){ return !f.error; }).length;
+    if (countLbl) countLbl.textContent = ok + ' new photo' + (ok !== 1 ? 's' : '');
+  }
+
+  function sync() { var dt = new DataTransfer(); files.forEach(function(f){ if (!f.error) dt.items.add(f.file); }); input.files = dt.files; }
+  function add(newFiles) { Array.from(newFiles).forEach(function(file) { files.push({ file: file, url: URL.createObjectURL(file), error: file.size > MAX_BYTES ? (file.size/1024/1024).toFixed(1)+' MB — too large' : null }); }); render(); sync(); }
+
+  input.addEventListener('change', function() { var sel = Array.from(input.files); input.value = ''; add(sel); });
+  zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', function(){ zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', function(e){ e.preventDefault(); zone.classList.remove('drag-over'); add(e.dataTransfer.files); });
+})();
+</script>
+{% endblock %}

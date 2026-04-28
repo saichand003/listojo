@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.contrib.auth import login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum
 from django.http import HttpResponseForbidden, JsonResponse
@@ -8,6 +8,36 @@ from django.shortcuts import redirect, render
 
 from accounts.services.dashboard import owner_inquiries, owner_listing_overview, owner_performance, staff_agent_dashboard
 from .forms import RegistrationForm
+
+REMEMBER_ME_AGE = 60 * 60 * 24 * 90  # 90 days
+
+
+def user_login(request):
+    if request.user.is_authenticated:
+        return redirect('listing_list')
+
+    error = None
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        remember = request.POST.get('remember_me') == 'on'
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            request.session.set_expiry(REMEMBER_ME_AGE if remember else 0)
+            return redirect(request.POST.get('next') or request.GET.get('next') or 'listing_list')
+        error = 'Invalid username or password.'
+
+    return render(request, 'registration/login.html', {
+        'error': error,
+        'next': request.GET.get('next', ''),
+    })
+
+
+def user_logout(request):
+    logout(request)
+    return redirect('listing_list')
 from listings.models import ListingInquiry
 
 

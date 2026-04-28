@@ -16,7 +16,7 @@
 <div class="site-topbar">
   <nav class="navbar">
     <div class="nav-left">
-      <a class="brand" href="{% url 'listing_list' %}">
+      <a class="brand" href="{% url 'home' %}">
         <svg class="brand-logo" width="1000" height="350" viewBox="0 30 1000 350" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Listojo">
           <defs>
             <linearGradient id="pinGradient" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse">
@@ -104,7 +104,7 @@
     <div class="sb-section">
       <span class="sb-label">Discover</span>
       <a href="{% url 'listing_list' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'listing_list' %}sb-active{% endif %}">
+         class="sb-link {% if request.resolver_match.url_name == 'listing_list' or request.resolver_match.url_name == 'home' %}sb-active{% endif %}">
         <span class="sb-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span> Home
       </a>
       <a href="{% url 'guided_search' %}"
@@ -134,7 +134,15 @@
       </a>
       <a href="{% url 'create_listing' %}"
          class="sb-link {% if request.resolver_match.url_name == 'create_listing' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></span> Post New Listing
+        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></span> Post a Listing
+      </a>
+      <a href="{% url 'create_community' %}"
+         class="sb-link {% if request.resolver_match.url_name == 'create_community' or request.resolver_match.url_name == 'edit_community' %}sb-active{% endif %}">
+        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M17 11V3H7v4H3v14h8v-4h2v4h8V11h-4zm-6 4H9v-2h2v2zm0-4H9V9h2v2zm0-4H9V5h2v2zm4 8h-2v-2h2v2zm0-4h-2V9h2v2zm4 4h-2v-2h2v2zm0-4h-2V9h2v2z"/></svg></span> List a Community
+      </a>
+      <a href="{% url 'my_communities' %}"
+         class="sb-link {% if request.resolver_match.url_name == 'my_communities' %}sb-active{% endif %}">
+        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span> My Communities
       </a>
       <a href="{% url 'inquiries_overview' %}"
          class="sb-link {% if request.resolver_match.url_name == 'inquiries_overview' %}sb-active{% endif %}">

@@ -13,6 +13,7 @@ def create_or_update_lead(
     phone: str = '',
     source: str,
     listing=None,
+    community=None,
     assigned_agent=None,
     city: str = '',
     property_type: str = '',
@@ -42,6 +43,7 @@ def create_or_update_lead(
             phone=phone,
             source=source,
             listing=listing,
+            community=community,
             assigned_agent=assigned_agent,
         )
     else:
@@ -54,6 +56,9 @@ def create_or_update_lead(
             updated = True
         if assigned_agent and not lead.assigned_agent:
             lead.assigned_agent = assigned_agent
+            updated = True
+        if community and not lead.community:
+            lead.community = community
             updated = True
         if updated:
             lead.save()

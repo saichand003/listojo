@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+
+{# ── Move-in special banner ── #}
+{% if community.special_offer %}
+<div id="special-banner" style="background:linear-gradient(135deg,#f59e0b 0%,#ef4444 100%);color:#fff;border-radius:10px;padding:.65rem 1.1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;box-shadow:0 2px 10px rgba(239,68,68,.25);">
+  <span style="font-size:.9rem;font-weight:700;display:flex;align-items:center;gap:.5rem;">
+    🔥 <span>{{ community.special_offer }}</span>
+  </span>
+  <button onclick="document.getElementById('special-banner').style.display='none'" style="background:rgba(255,255,255,.2);border:none;color:#fff;cursor:pointer;font-size:.9rem;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1;flex-shrink:0;">&times;</button>
+</div>
+{% endif %}
+
+<div style="max-width:900px;margin:0 auto;padding-bottom:5rem;">
+
+  {# ── Hero ── #}
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;">
+    {% with community.images.all as imgs %}
+    {% if imgs %}
+      <div style="position:relative;height:340px;overflow:hidden;background:#111;">
+        {% for img in imgs %}
+          <img src="{{ img.image.url }}" alt="{{ community.name }}"
+               style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:{% if forloop.first %}1{% else %}0{% endif %};transition:opacity .4s;"
+               class="community-hero-img" data-idx="{{ forloop.counter0 }}">
+        {% endfor %}
+        {# Photo count badge #}
+        <span style="position:absolute;bottom:.85rem;right:1rem;background:rgba(0,0,0,.6);color:#fff;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;">
+          📷 {{ imgs|length }} photo{{ imgs|length|pluralize }}
+        </span>
+        {% if imgs|length > 1 %}
+        <button type="button" id="hero-prev" style="position:absolute;top:50%;left:1rem;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:2.2rem;height:2.2rem;font-size:1.1rem;cursor:pointer;z-index:2;">&#8249;</button>
+        <button type="button" id="hero-next" style="position:absolute;top:50%;right:1rem;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:2.2rem;height:2.2rem;font-size:1.1rem;cursor:pointer;z-index:2;">&#8250;</button>
+        <div style="position:absolute;bottom:.75rem;left:50%;transform:translateX(-50%);display:flex;gap:.4rem;" id="hero-dots">
+          {% for img in imgs %}<span style="width:.5rem;height:.5rem;border-radius:50%;background:{% if forloop.first %}#fff{% else %}rgba(255,255,255,.45){% endif %};display:block;cursor:pointer;" class="hero-dot" data-idx="{{ forloop.counter0 }}"></span>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div style="height:220px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);font-size:4rem;">🏢</div>
+    {% endif %}
+    {% endwith %}
+
+    <div style="padding:1.5rem;" id="hero-sentinel">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+        <div>
+          {% if community.featured %}<span style="font-size:.75rem;font-weight:700;color:#b45309;background:#fef3c7;padding:.15rem .5rem;border-radius:999px;letter-spacing:.04em;">★ Featured</span>{% endif %}
+          <h1 style="font-size:1.7rem;margin:.35rem 0 .25rem;">{{ community.name }}</h1>
+          <p style="color:var(--text-3);font-size:.9rem;margin:0;">📍 {% if community.address_line %}{{ community.address_line }}, {% endif %}{{ community.city }}{% if community.state %}, {{ community.state }}{% endif %}{% if community.zip_code %} {{ community.zip_code }}{% endif %}</p>
+        </div>
+        <div style="text-align:right;">
+          {% with community.price_range as pr %}
+          {% if pr.0 %}
+          <p style="font-size:1.5rem;font-weight:800;background:var(--price-gradient,linear-gradient(135deg,#2a7ef2,#8b5cf6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">From ${{ pr.0|floatformat:0|intcomma }}<span style="font-size:.85rem;font-weight:500;-webkit-text-fill-color:var(--text-3);background:none;">/mo</span></p>
+          {% else %}
+          <p style="font-size:1rem;font-weight:600;color:var(--text-3);margin:0;">Contact for pricing</p>
+          {% endif %}
+          {% endwith %}
+          {% with community.available_unit_count as uc %}
+          {% if uc %}<p style="font-size:.82rem;color:#16a34a;font-weight:600;margin:.15rem 0 0;">{{ uc }} unit{{ uc|pluralize }} available</p>{% endif %}
+          {% endwith %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:2fr 1fr;gap:1.25rem;align-items:start;">
+
+    {# ── Left column ── #}
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+      {# Description #}
+      <div class="card">
+        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">About This Community</h2>
+        <p style="line-height:1.65;color:var(--text-2);">{{ community.description }}</p>
+      </div>
+
+      {# Floor Plans & Units #}
+      {% if floor_plans %}
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;">
+          <h2 style="font-size:1rem;font-weight:700;margin:0;">Floor Plans &amp; Available Units</h2>
+          {# Bedroom filter tabs — populated by JS #}
+          <div id="fp-filter-tabs" style="display:flex;gap:.35rem;flex-wrap:wrap;"></div>
+        </div>
+
+        {% for fp in floor_plans %}
+        <div class="fp-card" data-bedrooms="{{ fp.bedrooms }}"
+             style="border:1px solid var(--border);border-radius:10px;padding:1rem;{% if not forloop.last %}margin-bottom:.85rem;{% endif %}">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;flex-wrap:wrap;margin-bottom:.65rem;">
+            <div style="display:flex;gap:.85rem;align-items:flex-start;">
+              {% if fp.floor_plan_image %}
+              <img src="{{ fp.floor_plan_image.url }}" alt="{{ fp.name }} blueprint"
+                   style="width:64px;height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0;">
+              {% endif %}
+              <div>
+                <h3 style="font-size:.95rem;font-weight:700;margin:0 0 .15rem;">{{ fp.name }}</h3>
+                <p style="font-size:.8rem;color:var(--text-3);margin:0;">
+                  {% if fp.bedrooms == 0 %}Studio{% else %}{{ fp.bedrooms }}BR{% endif %} &middot; {{ fp.bathrooms }}BA{% if fp.square_footage %} &middot; {{ fp.square_footage|intcomma }} sqft{% endif %}
+                </p>
+                {% with fp.available_units.count as avc %}
+                {% if avc %}
+                <span style="font-size:.72rem;color:#16a34a;font-weight:700;background:rgba(22,163,74,.1);border-radius:999px;padding:.1rem .5rem;margin-top:.25rem;display:inline-block;">{{ avc }} available</span>
+                {% else %}
+                <span style="font-size:.72rem;color:var(--text-3);background:var(--surface-2);border-radius:999px;padding:.1rem .5rem;margin-top:.25rem;display:inline-block;">No units available</span>
+                {% endif %}
+                {% endwith %}
+              </div>
+            </div>
+            {% with fp.price_range as fpr %}
+            {% if fpr.0 %}
+            <div style="text-align:right;flex-shrink:0;">
+              <p style="font-size:1rem;font-weight:700;margin:0;color:var(--primary);">${{ fpr.0|floatformat:0|intcomma }}{% if fpr.1 and fpr.1 != fpr.0 %}&ndash;${{ fpr.1|floatformat:0|intcomma }}{% endif %}<span style="font-size:.78rem;color:var(--text-3);font-weight:500;">/mo</span></p>
+            </div>
+            {% endif %}
+            {% endwith %}
+          </div>
+          {% if fp.description %}
+          <p style="font-size:.82rem;color:var(--text-3);margin:.3rem 0 .65rem;">{{ fp.description }}</p>
+          {% endif %}
+          {# Available units table #}
+          {% with fp.available_units as avail %}
+          {% if avail %}
+          <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+            <thead>
+              <tr style="text-align:left;color:var(--text-3);font-weight:600;border-bottom:1px solid var(--border);">
+                <th style="padding:.35rem .5rem;">Unit</th>
+                <th style="padding:.35rem .5rem;">Floor</th>
+                <th style="padding:.35rem .5rem;">Rent</th>
+                <th style="padding:.35rem .5rem;">Available</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for unit in avail %}
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:.4rem .5rem;font-weight:600;">{{ unit.unit_number }}</td>
+                <td style="padding:.4rem .5rem;color:var(--text-3);">{% if unit.floor %}{{ unit.floor }}{% else %}—{% endif %}</td>
+                <td style="padding:.4rem .5rem;">{% if unit.price %}${{ unit.price|floatformat:0|intcomma }}/mo{% else %}TBD{% endif %}</td>
+                <td style="padding:.4rem .5rem;color:{% if unit.available_from %}var(--text-2){% else %}#16a34a{% endif %};">
+                  {% if unit.available_from %}{{ unit.available_from|date:"M j, Y" }}{% else %}Now{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p style="font-size:.82rem;color:var(--text-3);margin:.5rem 0 0;">No units currently listed as available.</p>
+          {% endif %}
+          {% endwith %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {# Amenities #}
+      {% with community.community_amenities_list as camp %}
+      {% if camp %}
+      <div class="card">
+        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">Community Amenities</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:.45rem;">
+          {% for a in camp %}<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;">{{ a }}</span>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      {% with community.in_unit_amenities_list as icamp %}
+      {% if icamp %}
+      <div class="card">
+        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">In-Unit Features</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:.45rem;">
+          {% for a in icamp %}<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;">{{ a }}</span>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% endwith %}
+
+    </div>{# /left #}
+
+    {# ── Right sidebar ── #}
+    <div style="display:flex;flex-direction:column;gap:1rem;position:sticky;top:1rem;">
+
+      {# Schedule a Tour card #}
+      <div class="card" style="border:2px solid var(--primary);">
+        <h2 style="font-size:.95rem;font-weight:700;margin-bottom:.5rem;">Schedule a Tour</h2>
+        <p style="font-size:.78rem;color:var(--text-3);margin:0 0 .85rem;">Choose how you'd like to visit</p>
+        <div style="display:flex;gap:.4rem;margin-bottom:1rem;">
+          <button onclick="selectTourType(this,'in_person')" class="tour-type-btn" style="flex:1;padding:.45rem .3rem;border:1.5px solid var(--border);border-radius:8px;font-size:.72rem;font-weight:600;cursor:pointer;background:var(--card-bg);color:var(--text-2);transition:all .15s;">
+            🏠 In-Person
+          </button>
+          <button onclick="selectTourType(this,'virtual')" class="tour-type-btn" style="flex:1;padding:.45rem .3rem;border:1.5px solid var(--border);border-radius:8px;font-size:.72rem;font-weight:600;cursor:pointer;background:var(--card-bg);color:var(--text-2);transition:all .15s;">
+            💻 Virtual
+          </button>
+          <button onclick="selectTourType(this,'self_guided')" class="tour-type-btn" style="flex:1;padding:.45rem .3rem;border:1.5px solid var(--border);border-radius:8px;font-size:.72rem;font-weight:600;cursor:pointer;background:var(--card-bg);color:var(--text-2);transition:all .15s;">
+            🗝 Self-Guided
+          </button>
+        </div>
+        <form method="post" style="display:flex;flex-direction:column;gap:.55rem;">
+          {% csrf_token %}
+          <input type="hidden" name="tour_type" id="tour-type-input" value="">
+          <input type="text" name="name" placeholder="Your name" required style="width:100%;font-size:.85rem;padding:.4rem .6rem;">
+          <input type="email" name="email" placeholder="Email address" required style="width:100%;font-size:.85rem;padding:.4rem .6rem;">
+          <input type="tel" name="phone" placeholder="Phone (optional)" style="width:100%;font-size:.85rem;padding:.4rem .6rem;">
+          <textarea name="message" rows="2" placeholder="Any questions or preferred move-in date?" style="width:100%;font-size:.85rem;padding:.4rem .6rem;resize:vertical;"></textarea>
+          <button type="submit" class="button accent" style="width:100%;padding:.55rem;font-size:.9rem;font-weight:700;">Request a Tour</button>
+        </form>
+      </div>
+
+      {# Contact card #}
+      <div class="card">
+        <h2 style="font-size:.95rem;font-weight:700;margin-bottom:.85rem;">Contact &amp; Info</h2>
+        {% if community.contact_phone %}
+        <a href="tel:{{ community.contact_phone }}" style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;background:var(--surface-2);border-radius:8px;text-decoration:none;color:var(--text-1);font-size:.85rem;font-weight:600;margin-bottom:.5rem;">
+          <span>📞</span> {{ community.contact_phone }}
+        </a>
+        {% endif %}
+        {% if community.contact_email %}
+        <a href="mailto:{{ community.contact_email }}" style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;background:var(--surface-2);border-radius:8px;text-decoration:none;color:var(--text-1);font-size:.85rem;font-weight:600;margin-bottom:.5rem;">
+          <span>✉️</span> {{ community.contact_email }}
+        </a>
+        {% endif %}
+        {% if community.website %}
+        <a href="{{ community.website }}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;background:var(--surface-2);border-radius:8px;text-decoration:none;color:var(--primary);font-size:.85rem;font-weight:600;">
+          <span>🌐</span> Visit website ↗
+        </a>
+        {% endif %}
+        {% if not community.contact_phone and not community.contact_email and not community.website %}
+        <p style="font-size:.85rem;color:var(--text-3);">No contact info listed.</p>
+        {% endif %}
+      </div>
+
+      {# Policies #}
+      {% if community.pet_policy or community.parking_info or community.utilities_included or community.lease_terms %}
+      <div class="card">
+        <h2 style="font-size:.95rem;font-weight:700;margin-bottom:.85rem;">Policies &amp; Details</h2>
+        {% if community.lease_terms %}
+        <div style="margin-bottom:.6rem;">
+          <p style="font-size:.75rem;font-weight:700;color:var(--text-3);margin:0 0 .15rem;text-transform:uppercase;letter-spacing:.06em;">Lease Terms</p>
+          <p style="font-size:.85rem;margin:0;">{{ community.lease_terms }}</p>
+        </div>
+        {% endif %}
+        {% if community.pet_policy %}
+        <div style="margin-bottom:.6rem;">
+          <p style="font-size:.75rem;font-weight:700;color:var(--text-3);margin:0 0 .15rem;text-transform:uppercase;letter-spacing:.06em;">Pet Policy</p>
+          <p style="font-size:.85rem;margin:0;">{{ community.pet_policy }}</p>
+        </div>
+        {% endif %}
+        {% if community.parking_info %}
+        <div style="margin-bottom:.6rem;">
+          <p style="font-size:.75rem;font-weight:700;color:var(--text-3);margin:0 0 .15rem;text-transform:uppercase;letter-spacing:.06em;">Parking</p>
+          <p style="font-size:.85rem;margin:0;">{{ community.parking_info }}</p>
+        </div>
+        {% endif %}
+        {% if community.utilities_included %}
+        <div>
+          <p style="font-size:.75rem;font-weight:700;color:var(--text-3);margin:0 0 .15rem;text-transform:uppercase;letter-spacing:.06em;">Utilities</p>
+          <p style="font-size:.85rem;margin:0;">{{ community.utilities_included }}</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {# Owner manage link #}
+      {% if request.user == community.owner %}
+      <a href="{% url 'edit_community' community.pk %}" class="button accent" style="text-align:center;display:block;">Manage Community</a>
+      {% endif %}
+
+    </div>{# /sidebar #}
+  </div>
+</div>
+
+{# ── Sticky bottom bar ── #}
+<div id="sticky-bar" style="position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--card-bg);border-top:1px solid var(--border);box-shadow:0 -4px 20px rgba(0,0,0,.1);padding:.75rem 1.25rem;display:none;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;">
+  <div style="min-width:0;">
+    <p style="font-weight:700;font-size:.95rem;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ community.name }}</p>
+    {% with community.price_range as pr %}
+    {% if pr.0 %}
+    <p style="font-size:.82rem;color:var(--primary);font-weight:600;margin:0;">From ${{ pr.0|floatformat:0|intcomma }}/mo</p>
+    {% endif %}
+    {% endwith %}
+  </div>
+  <div style="display:flex;gap:.5rem;flex-shrink:0;align-items:center;">
+    {% if community.contact_phone %}
+    <a href="tel:{{ community.contact_phone }}" style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;font-weight:600;text-decoration:none;color:var(--text-1);">
+      📞 Call
+    </a>
+    {% endif %}
+    <a href="#" onclick="document.querySelector('.card').scrollIntoView({behavior:'smooth'});return false;"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;background:var(--primary);color:#fff;border-radius:8px;font-size:.82rem;font-weight:700;text-decoration:none;">
+      Schedule a Tour
+    </a>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ── Photo carousel ── */
+  var imgs = document.querySelectorAll('.community-hero-img');
+  var dots = document.querySelectorAll('.hero-dot');
+  if (imgs.length) {
+    var cur = 0;
+    function go(n) {
+      imgs[cur].style.opacity = '0';
+      dots[cur] && (dots[cur].style.background = 'rgba(255,255,255,.45)');
+      cur = (n + imgs.length) % imgs.length;
+      imgs[cur].style.opacity = '1';
+      dots[cur] && (dots[cur].style.background = '#fff');
+    }
+    var prev = document.getElementById('hero-prev');
+    var next = document.getElementById('hero-next');
+    if (prev) prev.addEventListener('click', function(){ go(cur - 1); });
+    if (next) next.addEventListener('click', function(){ go(cur + 1); });
+    dots.forEach(function(d){ d.addEventListener('click', function(){ go(+d.dataset.idx); }); });
+  }
+
+  /* ── Floor plan bedroom filter tabs ── */
+  var cards = document.querySelectorAll('.fp-card');
+  var tabContainer = document.getElementById('fp-filter-tabs');
+  if (cards.length > 1 && tabContainer) {
+    var seen = [];
+    cards.forEach(function(c) {
+      var b = c.dataset.bedrooms;
+      if (seen.indexOf(b) === -1) seen.push(b);
+    });
+    seen.sort(function(a,b){ return +a - +b; });
+    if (seen.length > 1) {
+      var active = 'all';
+      function label(b) {
+        return b === '0' ? 'Studio' : b + ' BR';
+      }
+      function makeTab(val, text) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = text;
+        btn.dataset.val = val;
+        btn.style.cssText = 'padding:.3rem .75rem;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid var(--border);background:var(--card-bg);color:var(--text-2);';
+        btn.addEventListener('click', function() {
+          active = val;
+          tabContainer.querySelectorAll('button').forEach(function(b) {
+            var on = b.dataset.val === active;
+            b.style.background = on ? 'var(--primary)' : 'var(--card-bg)';
+            b.style.color      = on ? '#fff'           : 'var(--text-2)';
+            b.style.borderColor= on ? 'var(--primary)' : 'var(--border)';
+          });
+          cards.forEach(function(c) {
+            c.style.display = (active === 'all' || c.dataset.bedrooms === active) ? '' : 'none';
+          });
+        });
+        return btn;
+      }
+      tabContainer.appendChild(makeTab('all', 'All'));
+      seen.forEach(function(b){ tabContainer.appendChild(makeTab(b, label(b))); });
+      /* Activate "All" by default */
+      tabContainer.querySelector('button').click();
+    }
+  }
+
+  /* ── Tour type picker ── */
+  window.selectTourType = function(btn, val) {
+    document.querySelectorAll('.tour-type-btn').forEach(function(b) {
+      b.style.background   = 'var(--card-bg)';
+      b.style.color        = 'var(--text-2)';
+      b.style.borderColor  = 'var(--border)';
+    });
+    btn.style.background  = 'rgba(42,126,242,.1)';
+    btn.style.color       = 'var(--primary)';
+    btn.style.borderColor = 'var(--primary)';
+    document.getElementById('tour-type-input').value = val;
+  };
+
+  /* ── Sticky bar — show after scrolling past hero ── */
+  var stickyBar = document.getElementById('sticky-bar');
+  var sentinel  = document.getElementById('hero-sentinel');
+  if (stickyBar && sentinel) {
+    var observer = new IntersectionObserver(function(entries) {
+      stickyBar.style.display = entries[0].isIntersecting ? 'none' : 'flex';
+    }, { threshold: 0 });
+    observer.observe(sentinel);
+  }
+})();
+</script>
+{% endblock %}

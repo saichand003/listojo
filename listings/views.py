@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.db import connection
 from django.db.utils import OperationalError
 from django.db import models as django_models
@@ -8,12 +9,15 @@ from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_protect
 from datetime import timedelta, date
 
 from classifieds_project.services.notifications import send_listing_inquiry_email
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
-from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry
+from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry, SavedSearch
 from listings.services.search import build_listing_search_context
+from listings.services.valuation import predict_price
+from listings.services.event_tracker import log_event, log_impression_batch
 from portal.services.routing import least_loaded_agent
 from portal.services.lead_service import create_or_update_lead, parse_budget, parse_move_in
 
@@ -29,16 +33,61 @@ def _listings_table_ready():
         return False
 
 
+def home(request):
+    if not _listings_table_ready():
+        return _render_db_setup_page(request)
+    trending_rentals = (
+        Listing.objects.filter(category='rentals', status='active')
+        .select_related('owner').prefetch_related('images')
+        .order_by('-view_count', '-created_at')[:5]
+    )
+    trending_properties = (
+        Listing.objects.filter(category='properties', status='active')
+        .select_related('owner').prefetch_related('images')
+        .order_by('-view_count', '-created_at')[:5]
+    )
+    cities = list(
+        Listing.objects.filter(status='active')
+        .exclude(city='').values_list('city', flat=True)
+        .distinct().order_by('city')[:12]
+    )
+    listing_count = Listing.objects.filter(status='active').count()
+    city_count = Listing.objects.filter(status='active').exclude(city='').values('city').distinct().count()
+    landlord_count = Listing.objects.filter(status='active').values('owner').distinct().count()
+    return render(request, 'listings/home.html', {
+        'trending_rentals': trending_rentals,
+        'trending_properties': trending_properties,
+        'cities': cities,
+        'stats': {
+            'listing_count': listing_count,
+            'city_count': city_count,
+            'landlord_count': landlord_count,
+        },
+    })
+
+
 def listing_list(request):
     if not _listings_table_ready():
         return _render_db_setup_page(request)
+    import uuid
     context = build_listing_search_context(request)
     context['new_threshold'] = timezone.now() - timedelta(hours=48)
+    context['search_id'] = str(uuid.uuid4())
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return render(request, 'listings/_listings_grid.html', context)
 
     context['show_agent_cta'] = bool(request.session.get('gs_lead_id'))
+
+    # Resume banner: only on the first page load after a fresh login
+    just_logged_in = request.session.pop('show_saved_search_banner', False)
+    if request.user.is_authenticated and just_logged_in and not request.GET.get('fmm'):
+        context['saved_searches'] = list(
+            SavedSearch.objects.filter(user=request.user).order_by('search_type')
+        )
+    else:
+        context['saved_searches'] = []
+
     return render(request, 'listings/listing_list.html', context)
 
 
@@ -47,15 +96,16 @@ def guided_search(request):
         GuidedSearchEvent.objects.create(event_type=GuidedSearchEvent.COMPLETE)
 
         # Collect search params from POST
-        category     = request.POST.get('category', '').strip()
-        city         = request.POST.get('city', '').strip()
-        bedrooms     = request.POST.get('bedrooms', '').strip()
-        max_budget   = request.POST.get('max_price', '').strip()
-        amenities    = request.POST.get('tags', '').strip()
-        available_by = request.POST.get('available_by', '').strip()
-        priority     = request.POST.get('priority', '').strip()
-        urgency      = request.POST.get('urgency', '').strip()
-        income_raw   = request.POST.get('monthly_income', '').strip()
+        category      = request.POST.get('category', '').strip()
+        city          = request.POST.get('city', '').strip()
+        bedrooms      = request.POST.get('bedrooms', '').strip()
+        max_budget    = request.POST.get('max_price', '').strip()
+        amenities     = request.POST.get('tags', '').strip()
+        available_by  = request.POST.get('available_by', '').strip()
+        priority      = request.POST.get('priority', '').strip()
+        urgency       = request.POST.get('urgency', '').strip()
+        income_raw    = request.POST.get('monthly_income', '').strip()
+        property_type = request.POST.get('property_type', '').strip()
 
         beds_int = None
         if bedrooms:
@@ -69,7 +119,7 @@ def guided_search(request):
             email=request.user.email if request.user.is_authenticated else '',
             source='guided_search',
             city=city,
-            property_type=category,
+            property_type=property_type or category,
             bedrooms=beds_int,
             max_budget=parse_budget(max_budget),
             amenities=amenities,
@@ -81,6 +131,26 @@ def guided_search(request):
 
         # Store lead pk in session so listing list can show the CTA
         request.session['gs_lead_id'] = lead.pk
+
+        # Persist guided search so returning users can resume it
+        if request.user.is_authenticated:
+            search_type = 'buy' if category == 'properties' else 'rent'
+            SavedSearch.objects.update_or_create(
+                user=request.user,
+                search_type=search_type,
+                defaults={
+                    'city': city,
+                    'max_budget': parse_budget(max_budget),
+                    'bedrooms': beds_int,
+                    'property_type': property_type,
+                    'accommodation_type': request.POST.get('accommodation_type', '').strip(),
+                    'amenities': amenities,
+                    'available_by': available_by,
+                    'priority': priority,
+                    'urgency': urgency,
+                    'monthly_income': parse_budget(income_raw),
+                },
+            )
 
         # Build redirect to listing list preserving all search params
         from urllib.parse import urlencode
@@ -106,12 +176,16 @@ def listing_detail(request, pk):
     if not _listings_table_ready():
         return _render_db_setup_page(request)
 
-    listing = get_object_or_404(Listing.objects.select_related('owner').prefetch_related('images'), pk=pk)
+    listing = get_object_or_404(
+        Listing.objects.select_related('owner').prefetch_related('images', 'units__images'),
+        pk=pk,
+    )
 
     # Increment view count (skip owner's own visits)
     if not request.user.is_authenticated or request.user != listing.owner:
         Listing.objects.filter(pk=pk).update(view_count=django_models.F('view_count') + 1)
         listing.view_count += 1
+        log_event(request, listing, 'click')
 
     if request.method == 'POST':
         inquiry_form = ListingInquiryForm(request.POST)
@@ -129,6 +203,7 @@ def listing_detail(request, pk):
                 listing=listing,
                 assigned_agent=least_loaded_agent(),
             )
+            log_event(request, listing, 'contact')
             messages.success(request, 'Your inquiry was sent to the lister.')
             return redirect('listing_detail', pk=listing.pk)
     else:
@@ -137,7 +212,7 @@ def listing_detail(request, pk):
     return render(
         request,
         'listings/listing_detail.html',
-        {'listing': listing, 'inquiry_form': inquiry_form},
+        {'listing': listing, 'inquiry_form': inquiry_form, 'render_as_community': False},
     )
 
 
@@ -190,8 +265,10 @@ def toggle_favourite(request, pk):
         if not created:
             fav.delete()
             is_fav = False
+            log_event(request, listing, 'unsave')
         else:
             is_fav = True
+            log_event(request, listing, 'save')
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'is_favourite': is_fav})
     return redirect(request.POST.get('next', 'listing_list'))
@@ -304,3 +381,59 @@ def inquiry_detail(request, inquiry_id):
         'inquiry': inquiry,
         'listing': inquiry.listing,
     })
+
+
+def listing_estimate(request, pk):
+    """Return a LightGBM price estimate for a listing as JSON."""
+    listing = get_object_or_404(Listing, pk=pk)
+    result  = predict_price(listing)
+    if result is None:
+        return JsonResponse({'error': 'model_not_ready'}, status=404)
+    return JsonResponse(result)
+
+
+def listing_estimate_range(request):
+    """Return a comparable price range for a not-yet-saved listing (used on create form)."""
+    import types
+    fl = types.SimpleNamespace(
+        square_footage=request.GET.get('square_footage') or None,
+        bedrooms=request.GET.get('bedrooms') or None,
+        year_built=None,
+        hoa_fee=None,
+        bills_included=False,
+        zip_code=request.GET.get('zip_code', ''),
+        city=request.GET.get('city', ''),
+        property_type=request.GET.get('property_type', ''),
+        category=request.GET.get('category', ''),
+        accommodation_type='',
+        price_unit=request.GET.get('price_unit', 'mo'),
+    )
+    result = predict_price(fl)
+    if result is None:
+        return JsonResponse({'error': 'model_not_ready'}, status=404)
+    return JsonResponse(result)
+
+@csrf_protect
+def log_impressions(request):
+    """
+    Batch impression endpoint called by the listing-list JS.
+    Body: {search_id: str, impressions: [{pk, rank, fmm_score}, ...]}
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method not allowed'}, status=405)
+    rate_key = f'listing-impressions:{request.session.session_key or request.META.get("REMOTE_ADDR", "")}'
+    hits = cache.get(rate_key, 0)
+    if hits >= 120:
+        return JsonResponse({'error': 'rate limited'}, status=429)
+    import json
+    from uuid import UUID
+    try:
+        data      = json.loads(request.body)
+        sid_str   = data.get('search_id', '')
+        search_id = UUID(sid_str) if sid_str else None
+        items     = data.get('impressions', [])[:60]
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'ok': False}, status=400)
+    cache.set(rate_key, hits + 1, 60)
+    logged = log_impression_batch(request, items, search_id=search_id)
+    return JsonResponse({'ok': True, 'logged': logged})

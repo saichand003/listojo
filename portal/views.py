@@ -1,3 +1,5 @@
+import functools
+
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
@@ -12,6 +14,7 @@ from listings.services.lifecycle import approve as approve_listing_service
 from listings.services.lifecycle import flag as flag_listing_service
 from listings.services.lifecycle import reject as reject_listing_service
 from listings.services.lifecycle import toggle_featured as toggle_featured_service
+from listings.services.matching import score_listing
 from listings.services.visibility import active_listings as visible_listings
 from .models import Lead, Shortlist
 from .services.dashboard import build_admin_dashboard_context
@@ -28,20 +31,20 @@ from .services.shortlist_service import (
 
 
 def portal_login_required(view_fn):
+    @functools.wraps(view_fn)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated or not request.user.is_superuser:
             return redirect('portal_login')
         return view_fn(request, *args, **kwargs)
-    wrapper.__name__ = view_fn.__name__
     return wrapper
 
 
 def agent_login_required(view_fn):
+    @functools.wraps(view_fn)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
             return redirect('portal_login')
         return view_fn(request, *args, **kwargs)
-    wrapper.__name__ = view_fn.__name__
     return wrapper
 
 
@@ -196,11 +199,27 @@ def _build_leads_data(leads_qs):
             matched_count = qs.count()
         elif lead.listing:
             pref_summary_parts.append(lead.listing.city)
+        elif lead.community:
+            pref_summary_parts.append(lead.community.city)
 
-        # Simple match score: % of filled preference criteria
-        criteria = ['city', 'bedrooms', 'max_budget', 'amenities', 'move_in_date']
-        filled = sum(1 for c in criteria if pref and getattr(pref, c, None))
-        match_pct = max(70, min(98, 70 + filled * 6)) if filled else 0
+        # Real match score: use score_listing when a specific listing is linked
+        if lead.listing and pref:
+            quality_tags = [t.strip() for t in pref.amenities.split(',') if t.strip()] if pref.amenities else []
+            result_score = score_listing(
+                lead.listing,
+                max_price=float(pref.max_budget) if pref.max_budget else None,
+                requested_tags=quality_tags,
+                avail_date=pref.move_in_date,
+                property_type=pref.property_type or '',
+                bedrooms=pref.bedrooms,
+            )
+            match_pct = result_score.pct
+        elif pref:
+            criteria = ['city', 'bedrooms', 'max_budget', 'amenities', 'move_in_date']
+            filled = sum(1 for c in criteria if getattr(pref, c, None))
+            match_pct = max(60, min(95, 60 + filled * 7)) if filled else 0
+        else:
+            match_pct = 0
 
         result.append({
             'lead':          lead,
@@ -216,7 +235,7 @@ def _build_leads_data(leads_qs):
 def agent_dashboard(request):
     agent        = request.user
     status_filter = request.GET.get('status', '').strip()
-    my_leads     = Lead.objects.filter(assigned_agent=agent).select_related('listing', 'preference')
+    my_leads     = Lead.objects.filter(assigned_agent=agent).select_related('listing', 'community', 'preference')
 
     total         = my_leads.count()
     new_count     = my_leads.filter(status='new').count()
@@ -253,9 +272,9 @@ def agent_leads(request):
     scope  = request.GET.get('scope', '').strip()
 
     if request.user.is_superuser:
-        qs = Lead.objects.select_related('assigned_agent', 'listing', 'preference')
+        qs = Lead.objects.select_related('assigned_agent', 'listing', 'community', 'preference')
     else:
-        qs = Lead.objects.filter(assigned_agent=agent).select_related('assigned_agent', 'listing', 'preference')
+        qs = Lead.objects.filter(assigned_agent=agent).select_related('assigned_agent', 'listing', 'community', 'preference')
 
     if scope == 'clients':
         qs = qs.filter(status__in=[
@@ -309,9 +328,9 @@ def agent_client_detail(request, email):
 @agent_login_required
 def agent_lead_detail(request, pk):
     if request.user.is_superuser:
-        lead = get_object_or_404(Lead.objects.select_related('assigned_agent', 'listing'), pk=pk)
+        lead = get_object_or_404(Lead.objects.select_related('assigned_agent', 'listing', 'community'), pk=pk)
     else:
-        lead = get_object_or_404(Lead.objects.select_related('assigned_agent', 'listing'),
+        lead = get_object_or_404(Lead.objects.select_related('assigned_agent', 'listing', 'community'),
                                   pk=pk, assigned_agent=request.user)
 
     shortlists = lead.shortlists.prefetch_related('items__listing').order_by('-created_at')

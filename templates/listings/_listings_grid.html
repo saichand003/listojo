@@ -1,8 +1,86 @@
 {% load listing_extras humanize %}
 {# listing_explanations is only present in FMM mode — dict_get returns '' otherwise #}
 <section class="grid grid-listings" id="listings-grid">
+
+{# ── Community cards ── #}
+{% for community in communities %}
+{% with community.get_first_image as hero %}
+{% with community.price_range as pr %}
+{% with community.available_unit_count as unit_count %}
+    <article class="card listing-card community-card" data-kind="community" data-pk="{{ community.pk }}" data-rank="0" data-fmm="">
+        <div class="listing-thumb-wrap">
+            {% if hero %}
+                <div class="listing-thumb-track">
+                    <img class="listing-thumb" src="{{ hero.image.url }}" alt="{{ community.name }}">
+                </div>
+            {% else %}
+                <div class="listing-thumb listing-thumb-placeholder">🏢</div>
+            {% endif %}
+            {% if community.featured %}<span class="featured-badge">★ Featured</span>{% endif %}
+            <span class="category-badge" style="background:rgba(22,163,74,.85);">Community</span>
+            {% if community.special_offer %}
+            <span class="new-badge" style="background:#f59e0b;">Special Offer</span>
+            {% endif %}
+        </div>
+        <div class="listing-body">
+            <div class="card-title-row">
+                <h3><a href="{% url 'community_detail' community.pk %}">{{ community.name }}</a></h3>
+                {% with community_scores|dict_get:community.pk as score %}
+                {% if score %}
+                <span class="match-score-badge match-score-{{ community_score_classes|dict_get:community.pk }}">{{ score }}% match</span>
+                {% endif %}
+                {% endwith %}
+            </div>
+            <p class="card-location-time">
+                📍 {{ community.city }}{% if community.state %}, {{ community.state }}{% endif %}
+                &nbsp;·&nbsp; {{ community.created_at|timesince }} ago
+            </p>
+            {% if unit_count %}
+            <p style="font-size:.8rem;color:#16a34a;font-weight:600;margin:.2rem 0;">
+                {{ unit_count }} unit{{ unit_count|pluralize }} available
+            </p>
+            {% endif %}
+            {% with community.bedroom_types as btypes %}
+            {% if btypes %}
+            <p style="font-size:.78rem;color:var(--text-3);margin:.15rem 0;">
+                {% for b in btypes %}{% if b == 0 %}Studio{% else %}{{ b }}BR{% endif %}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
+            </p>
+            {% endif %}
+            {% endwith %}
+            <p class="price">
+                {% if pr.0 %}
+                    From ${{ pr.0|floatformat:0|intcomma }}<span class="price-unit">/mo</span>
+                {% else %}
+                    <span style="font-size:1rem;font-weight:600;-webkit-text-fill-color:var(--muted);background:none;">Contact for pricing</span>
+                {% endif %}
+            </p>
+            {% with community_explanations|dict_get:community.pk as explanation %}
+            {% if explanation %}
+            <p class="match-explanation">{{ explanation }}</p>
+            {% endif %}
+            {% endwith %}
+            {% with community_reasons|dict_get:community.pk as reasons %}
+            {% if reasons %}
+            <div class="match-reason-pills">
+                {% for r in reasons %}<span class="match-reason-pill">{{ r }}</span>{% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            <div class="card-actions">
+                <a href="{% url 'community_detail' community.pk %}" class="card-btn-primary">View Community</a>
+            </div>
+        </div>
+    </article>
+{% endwith %}{% endwith %}{% endwith %}
+{% endfor %}
+
+{# ── Individual listing cards ── #}
 {% for listing in listings %}
-    <article class="card listing-card {% if listing.featured %}listing-featured{% endif %}">
+    <article class="card listing-card {% if listing.featured %}listing-featured{% endif %}"
+             data-kind="listing"
+             data-pk="{{ listing.pk }}"
+             data-rank="{{ forloop.counter0 }}"
+             data-fmm="{% with listing_scores|dict_get:listing.pk as s %}{{ s|default:'' }}{% endwith %}">
         <div class="listing-thumb-wrap">
             {% with listing.images.all as imgs %}
             {% if imgs %}
@@ -108,6 +186,8 @@
         </div>
     </article>
 {% empty %}
+    {% if not communities %}
     <p class="muted" style="grid-column:1/-1;text-align:center;padding:2rem 0;">No listings found. Try different filters.</p>
+    {% endif %}
 {% endfor %}
 </section>

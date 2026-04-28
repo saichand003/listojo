@@ -21,7 +21,7 @@
 
 <div style="max-width:860px;margin:0 auto;padding:24px 16px">
   <h1 style="font-size:1.5rem;font-weight:800;color:var(--text);margin:0 0 4px">Performance</h1>
-  <p style="color:var(--muted);font-size:.875rem;margin:0 0 1.5rem">Analytics across all your active listings</p>
+  <p style="color:var(--muted);font-size:.875rem;margin:0 0 1.5rem">Analytics across all your active listings and communities</p>
 
   {# Summary cards #}
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.75rem">
@@ -39,30 +39,30 @@
     </div>
   </div>
 
-  {% if listings %}
+  {% if has_inventory %}
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.5rem">
     <div class="perf-table" style="padding:.9rem 1.25rem;border-bottom:1px solid var(--border);font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">
-      <span>Listing</span>
+      <span>Inventory</span>
       <span style="text-align:center">Views</span>
       <span style="text-align:center">Inquiries</span>
-      <span style="text-align:center">Saves</span>
+      <span style="text-align:center">Leads/Saves</span>
       <span style="text-align:center">Views trend</span>
     </div>
-    {% with max_views=listings.0.view_count %}
-    {% for listing in listings %}
+    {% with max_views=items.0.view_count %}
+    {% for item in items %}
     <div class="perf-row perf-table">
       <div style="min-width:0">
-        <a href="{% url 'listing_detail' listing.pk %}" style="font-weight:700;font-size:.875rem;color:var(--text);text-decoration:none;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ listing.title|truncatechars:45 }}</a>
-        <div style="font-size:.75rem;color:var(--muted);margin-top:2px">{{ listing.city }}{% if listing.price %} &middot; ${{ listing.price }}/{{ listing.price_unit }}{% endif %}</div>
+        <a href="{% url item.url_name item.pk %}" style="font-weight:700;font-size:.875rem;color:var(--text);text-decoration:none;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ item.title|truncatechars:45 }}</a>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:2px">{% if item.kind == 'community' %}Community &middot; {% endif %}{{ item.city }}{% if item.price %} &middot; ${{ item.price }}/{{ item.price_unit }}{% endif %}</div>
       </div>
-      <div style="text-align:center;font-weight:700;font-size:.9rem;color:var(--text)">{{ listing.view_count }}</div>
-      <div style="text-align:center;font-weight:700;font-size:.9rem;color:var(--text)">{{ listing.inquiry_count }}</div>
-      <div style="text-align:center;font-weight:700;font-size:.9rem;color:var(--text)">{{ listing.save_count }}</div>
+      <div style="text-align:center;font-weight:700;font-size:.9rem;color:var(--text)">{{ item.view_count }}</div>
+      <div style="text-align:center;font-weight:700;font-size:.9rem;color:var(--text)">{{ item.inquiry_count }}</div>
+      <div style="text-align:center;font-weight:700;font-size:.9rem;color:var(--text)">{{ item.save_count }}</div>
       <div style="display:flex;align-items:center;justify-content:center">
         <div class="perf-bar-wrap">
           {% if max_views > 0 %}
-          <div class="perf-bar" style="width:{{ listing.view_count|floatformat:0 }}%"
-               data-pct="{% widthratio listing.view_count max_views 100 %}"></div>
+          <div class="perf-bar" style="width:{{ item.view_count|floatformat:0 }}%"
+               data-pct="{% widthratio item.view_count max_views 100 %}"></div>
           {% endif %}
         </div>
       </div>
@@ -84,8 +84,8 @@
   {% else %}
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:56px 24px;text-align:center">
     <div style="font-size:2.5rem;margin-bottom:12px">📊</div>
-    <div style="font-weight:700;font-size:1rem;margin-bottom:6px;color:var(--text)">No active listings</div>
-    <div style="color:var(--muted);font-size:.875rem;margin-bottom:20px">Post a listing to start tracking views, inquiries, and saves.</div>
+    <div style="font-weight:700;font-size:1rem;margin-bottom:6px;color:var(--text)">No active inventory</div>
+    <div style="color:var(--muted);font-size:.875rem;margin-bottom:20px">Post a listing or create a community to start tracking views, inquiries, and leads.</div>
     <a href="{% url 'create_listing' %}" style="display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--primary);color:#fff;border-radius:10px;font-weight:700;font-size:.875rem;text-decoration:none">+ Post a listing</a>
   </div>
   {% endif %}

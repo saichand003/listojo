@@ -47,6 +47,8 @@ def build_manual_listing_pool(lead: Lead, curated_ids: set[int], limit: int = 30
         city = preference.city
     elif lead.listing:
         city = lead.listing.city
+    elif lead.community:
+        city = lead.community.city
     if not city:
         return []
 

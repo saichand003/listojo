@@ -125,10 +125,35 @@ function dismissAgentCta() {
 </script>
 {% endif %}
 
+{# ── Resume saved search banner ── #}
+{% if saved_searches %}
+<div style="margin-bottom:1.25rem;display:flex;flex-direction:column;gap:.65rem;">
+  {% for ss in saved_searches %}
+  <div style="background:{% if ss.search_type == 'rent' %}#f0fdf4{% else %}#eff6ff{% endif %};border:1.5px solid {% if ss.search_type == 'rent' %}#86efac{% else %}#bfdbfe{% endif %};border-radius:14px;padding:.9rem 1.2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:.75rem;">
+      <span style="font-size:1.4rem;">{% if ss.search_type == 'rent' %}🔑{% else %}🏠{% endif %}</span>
+      <div>
+        <div style="font-weight:700;font-size:.92rem;color:{% if ss.search_type == 'rent' %}#166534{% else %}#1e3a5f{% endif %};">
+          Welcome back! Your {{ ss.get_search_type_display }} search is saved.
+        </div>
+        <div style="font-size:.8rem;color:{% if ss.search_type == 'rent' %}#4ade80{% else %}#4b7ab3{% endif %};margin-top:.1rem;color:{% if ss.search_type == 'rent' %}#15803d{% else %}#2563eb{% endif %};">
+          {{ ss.summary_label }}
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:.6rem;flex-shrink:0;align-items:center;">
+      <a href="{% url 'listing_list' %}?{{ ss.as_url_params }}" style="padding:.4rem 1.1rem;border-radius:999px;background:{% if ss.search_type == 'rent' %}#16a34a{% else %}#2A7EF2{% endif %};color:#fff;font-size:.82rem;font-weight:700;text-decoration:none;white-space:nowrap;">Resume search →</a>
+      <a href="{% url 'guided_search' %}" style="padding:.4rem .85rem;border-radius:999px;border:1.5px solid {% if ss.search_type == 'rent' %}#86efac{% else %}#bfdbfe{% endif %};color:{% if ss.search_type == 'rent' %}#15803d{% else %}#2563eb{% endif %};font-size:.82rem;font-weight:600;text-decoration:none;white-space:nowrap;">Update</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 {# ── Section heading ── #}
 <div style="margin-bottom:1rem;">
     {% if fmm_mode %}
-    <h2 class="listings-header-title">{{ listings|length }} match{{ listings|length|pluralize:"es" }} for you</h2>
+    <h2 class="listings-header-title">{{ total_matches }} match{{ total_matches|pluralize:"es" }} for you</h2>
     <p class="listings-header-sub">Ranked by how well each listing fits your stated preferences.</p>
     {% elif filters.category == 'properties' %}
     <h2 class="listings-header-title">Trending Properties for Sale</h2>
@@ -838,6 +863,55 @@ bindSavePills();
 
   initCityAC('fmm-city',    'fmm-city-dropdown',    'fmm-city-wrap');
   initCityAC('filter-city', 'filter-city-dropdown', 'filter-city-wrap');
+})();
+</script>
+
+<script>
+/* ── Impression tracking ──────────────────────────────────────────
+   IntersectionObserver collects visible listing cards, batches them,
+   and fires one POST to /listing/impressions/ (even on page unload
+   via sendBeacon).
+──────────────────────────────────────────────────────────────── */
+(function () {
+  var SEARCH_ID = '{{ search_id }}';
+  var ENDPOINT  = '{% url "log_impressions" %}';
+  var pending   = [];
+  var timer     = null;
+  var CSRF_TOKEN = '{{ csrf_token }}';
+
+  function flush() {
+    if (!pending.length) return;
+    var batch = pending.splice(0);
+    var body  = JSON.stringify({ search_id: SEARCH_ID, impressions: batch });
+    fetch(ENDPOINT, {
+      method: 'POST',
+      body: body,
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+      keepalive: true
+    }).catch(function () {});
+  }
+
+  if (!window.IntersectionObserver) return;
+
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      var el  = entry.target;
+      var kind = el.dataset.kind || 'listing';
+      var pk  = parseInt(el.dataset.pk, 10);
+      var fmm = el.dataset.fmm ? parseFloat(el.dataset.fmm) : null;
+      if (pk) pending.push({ kind: kind, pk: pk, rank: parseInt(el.dataset.rank, 10) || 0, fmm_score: fmm });
+      observer.unobserve(el);
+      clearTimeout(timer);
+      timer = setTimeout(flush, 1000);
+    });
+  }, { threshold: 0.25 });
+
+  document.querySelectorAll('.listing-card[data-pk]').forEach(function (el) {
+    observer.observe(el);
+  });
+
+  window.addEventListener('pagehide', flush);
 })();
 </script>
 {% endblock %}

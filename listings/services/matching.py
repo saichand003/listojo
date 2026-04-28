@@ -41,6 +41,38 @@ _TAG_LABELS: dict[str, str] = {
 }
 
 
+def _score_tags(requested_tags: list[str], text_blob: str) -> tuple[int, int, int, list[str]]:
+    """Score tag matches against a text blob. Returns (pts, max_pts, tag_hits, reasons)."""
+    pts, max_pts, tag_hits = 0, 0, 0
+    reasons: list[str] = []
+    for tag in requested_tags:
+        max_pts += 15
+        tag_l = tag.lower().strip()
+        if tag_l in text_blob:
+            pts += 15
+            tag_hits += 1
+            reasons.append(_TAG_LABELS.get(tag_l, tag.title()))
+        else:
+            close = _TAG_RELATED.get(tag_l, [])
+            if any(r in text_blob for r in close):
+                pts += 5
+                reasons.append(f"Similar to {tag}")
+    return pts, max_pts, tag_hits, reasons
+
+
+def _format_explanation(parts: list[str], fallback_location: str | None = None) -> str | None:
+    """Build the 'Good fit: …' sentence from a list of reason fragments."""
+    if not parts:
+        return f"Good fit: located in {fallback_location} and aligned with your search criteria." if fallback_location else None
+    if len(parts) == 1:
+        sentence = f"Good fit: {parts[0]}."
+    elif len(parts) == 2:
+        sentence = f"Good fit: {parts[0]}, and {parts[1]}."
+    else:
+        sentence = f"Good fit: {parts[0]}. Also — {', '.join(parts[1:])}."
+    return sentence[0].upper() + sentence[1:]
+
+
 def score_listing(
     listing,
     *,
@@ -66,7 +98,9 @@ def score_listing(
             headroom = float(max_price) - effective
             if headroom >= 0:
                 ratio = headroom / float(max_price)
-                pts += 30 + min(10, int(ratio * 20))
+                # Linear from 28 (at budget) to 40 (100% under budget).
+                # Old formula capped at ratio=0.5, making cheap listings indistinguishable.
+                pts += 28 + min(12, int(ratio * 12))
                 if listing.bills_included:
                     reasons.append(f"Bills included (effective ~${int(effective):,}/mo)")
                 elif headroom >= 100:
@@ -100,18 +134,10 @@ def score_listing(
             reasons.append(listing.get_property_type_display())
 
     if requested_tags:
-        for tag in requested_tags:
-            max_pts += 15
-            tag_l = tag.lower().strip()
-            if tag_l in tags_lower:
-                pts += 15
-                tag_hits += 1
-                reasons.append(_TAG_LABELS.get(tag_l, tag.title()))
-            else:
-                close = _TAG_RELATED.get(tag_l, [])
-                if any(r in tags_lower for r in close):
-                    pts += 5
-                    reasons.append(f"Similar to {tag}")
+        t_pts, t_max, tag_hits, tag_reasons = _score_tags(requested_tags, tags_lower)
+        pts += t_pts
+        max_pts += t_max
+        reasons.extend(tag_reasons)
 
     if avail_date:
         max_pts += 10
@@ -228,14 +254,143 @@ def explain_match(
     elif age_days <= 3:
         parts.append(f"listed {age_days}d ago, still fresh")
 
-    if not parts:
-        if listing.city:
-            return f"Located in {listing.city} and within your search criteria."
-        return None
-    if len(parts) == 1:
-        sentence = f"Good fit: {parts[0]}."
-    elif len(parts) == 2:
-        sentence = f"Good fit: {parts[0]}, and {parts[1]}."
-    else:
-        sentence = f"Good fit: {parts[0]}. Also — {', '.join(parts[1:])}."
-    return sentence[0].upper() + sentence[1:]
+    return _format_explanation(parts, listing.city or None)
+
+
+def score_community(
+    community,
+    *,
+    max_price: float | None = None,
+    requested_tags: list[str] | None = None,
+    property_type: str = '',
+    bedrooms: int | None = None,
+) -> MatchResult:
+    pts, max_pts = 0, 0
+    reasons: list[str] = []
+    caveats: list[str] = []
+    tag_hits = 0
+
+    amenity_blob = ' '.join([
+        community.community_amenities or '',
+        community.in_unit_amenities or '',
+        community.description or '',
+        community.special_offer or '',
+        community.pet_policy or '',
+        community.parking_info or '',
+        community.utilities_included or '',
+    ]).lower()
+
+    min_price, _ = community.price_range
+    available_bedrooms = set(community.bedroom_types)
+
+    if max_price and max_price > 0:
+        max_pts += 40
+        if min_price is not None:
+            starting_price = float(min_price)
+            headroom = float(max_price) - starting_price
+            if headroom >= 0:
+                ratio = headroom / float(max_price)
+                pts += 28 + min(12, int(ratio * 12))
+                if headroom >= 100:
+                    reasons.append(f"From ${int(starting_price):,}/mo")
+                else:
+                    reasons.append("Within budget")
+            elif headroom >= -float(max_price) * 0.10:
+                pts += 12
+                caveats.append("Slightly over budget")
+            else:
+                caveats.append("Over budget")
+        else:
+            pts += 20
+
+    if bedrooms is not None:
+        max_pts += 10
+        if bedrooms in available_bedrooms:
+            pts += 10
+            reasons.append("Has your bedroom count")
+
+    community_type_label = community.get_community_type_display() if community.community_type else ''
+    if property_type:
+        max_pts += 10
+        expected_label = {
+            'apartment': 'Apartment Complex',
+            'condo': 'Condo Building',
+            'townhouse': 'Townhouse Complex',
+        }.get(property_type)
+        if expected_label and community_type_label == expected_label:
+            pts += 10
+            reasons.append(community_type_label)
+
+    if requested_tags:
+        t_pts, t_max, tag_hits, tag_reasons = _score_tags(requested_tags, amenity_blob)
+        pts += t_pts
+        max_pts += t_max
+        reasons.extend(tag_reasons)
+
+    age_days = (timezone.now() - community.created_at).days
+    if age_days <= 7:
+        pts += 5
+        max_pts += 5
+        reasons.append("Recently added" if age_days else "Just added")
+
+    if community.featured:
+        pts += 2
+        max_pts += 2
+
+    if max_pts == 0:
+        return MatchResult(70, reasons[:5], caveats[:2], tag_hits)
+
+    pct = int(round(pts / max_pts * 100))
+    return MatchResult(min(100, max(0, pct)), reasons[:5], caveats[:2], tag_hits)
+
+
+def explain_community_match(
+    community,
+    reasons: list[str],
+    *,
+    max_price: float | None = None,
+    quality_tags: list[str] | None = None,
+    property_type: str = '',
+) -> str | None:
+    parts: list[str] = []
+    quality_tags = quality_tags or []
+
+    community_type_label = community.get_community_type_display() if community.community_type else ''
+    if property_type == 'apartment' and community.community_type == 'apartment_complex':
+        parts.append("it's an apartment complex, which matches the apartment search you selected")
+    elif property_type == 'condo' and community.community_type == 'condo_building':
+        parts.append("it's a condo building that matches your selected property type")
+    elif property_type == 'townhouse' and community.community_type == 'townhouse_complex':
+        parts.append("it's a townhouse complex that matches your selected property type")
+    elif community_type_label:
+        parts.append(f"it offers {community_type_label.lower()} inventory")
+
+    min_price, _ = community.price_range
+    if min_price is not None and max_price:
+        starting_price = float(min_price)
+        budget = float(max_price)
+        headroom = int(budget - starting_price)
+        if headroom >= 300:
+            parts.append(f"units start at ${int(starting_price):,}/mo, well under your ${int(budget):,} budget")
+        elif headroom >= 0:
+            parts.append(f"units start at ${int(starting_price):,}/mo, within your budget")
+
+    amenity_blob = ' '.join([
+        community.community_amenities or '',
+        community.in_unit_amenities or '',
+        community.description or '',
+        community.special_offer or '',
+    ]).lower()
+    matched = [t for t in quality_tags if t.lower() in amenity_blob]
+    if matched:
+        if len(matched) >= 3:
+            parts.append(f"it covers several of your must-haves: {', '.join(matched[:3])}")
+        elif len(matched) == 2:
+            parts.append(f"it includes {matched[0]} and {matched[1]}")
+        else:
+            parts.append(f"it includes {matched[0]}")
+
+    if community.available_unit_count:
+        parts.append(f"{community.available_unit_count} unit{'s' if community.available_unit_count != 1 else ''} available")
+
+    return _format_explanation(parts, community.city or None)

@@ -32,6 +32,9 @@ class Lead(models.Model):
     listing        = models.ForeignKey(Listing, on_delete=models.SET_NULL, null=True, blank=True,
                                        related_name='leads',
                                        help_text='Listing that triggered this lead')
+    community      = models.ForeignKey('listings.Community', on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='leads',
+                                       help_text='Community that triggered this lead')
     notes          = models.TextField(blank=True)
     created_at     = models.DateTimeField(auto_now_add=True)
     updated_at     = models.DateTimeField(auto_now=True)

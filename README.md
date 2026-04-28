@@ -22,6 +22,15 @@ Brand/domain: **listojo.com**
 - Featured listings.
 - Inquiry form on listing detail.
 - Direct user-to-user chat.
+- Dedicated community inventory using `Community`, `FloorPlan`, and `Unit`.
+
+## Community Model Policy
+
+- New communities must use the dedicated `Community` flow.
+- Legacy `Listing.is_community` records are deprecated and treated as legacy-only.
+- Release scope and product rules are documented in:
+  - `docs/community_release_scope.md`
+  - `docs/community_product_rules.md`
 
 ## Run locally
 

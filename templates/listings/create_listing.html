@@ -289,6 +289,7 @@
           <button type="button" class="cl-unit-tab {% if form.price_unit.value == 'hr' %}selected{% endif %}" data-val="hr">/Hour</button>
         </div>
       </div>
+      <p id="price-market-hint" style="display:none;font-size:.78rem;color:var(--text-3);margin-top:.5rem;"></p>
     </div>
 
     {# ══ SECTION 5 — Availability & Contact ══ #}
@@ -528,8 +529,34 @@
       document.querySelectorAll('.cl-unit-tab').forEach(function(t){ t.classList.remove('selected'); });
       tab.classList.add('selected');
       document.getElementById('f-price-unit').value = tab.dataset.val;
+      fetchPriceHint();
     });
   });
+
+  /* ── Market price hint (lister-facing comparable range) ── */
+  var _hintTimer = null;
+  function fetchPriceHint() {
+    var city     = (document.getElementById('f-city')      || {}).value || '';
+    var category = (document.getElementById('f-category')  || {}).value || '';
+    var unit     = (document.getElementById('f-price-unit') || {}).value || 'mo';
+    var hint     = document.getElementById('price-market-hint');
+    if (!hint) return;
+    if (!city || !category) { hint.style.display = 'none'; return; }
+    clearTimeout(_hintTimer);
+    _hintTimer = setTimeout(function() {
+      var qs = '?city=' + encodeURIComponent(city) + '&category=' + encodeURIComponent(category) + '&price_unit=' + encodeURIComponent(unit);
+      fetch('{% url "listing_estimate_range" %}' + qs)
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+        .then(function(d) {
+          hint.textContent = 'Similar listings in ' + city + ': $' + d.low.toLocaleString() + ' – $' + d.high.toLocaleString() + (unit === 'mo' ? '/mo' : unit === 'wk' ? '/wk' : '');
+          hint.style.display = '';
+        })
+        .catch(function() { hint.style.display = 'none'; });
+    }, 600);
+  }
+  document.getElementById('f-city').addEventListener('input', fetchPriceHint);
+  document.querySelectorAll('.cl-cat-card').forEach(function(c) { c.addEventListener('click', fetchPriceHint); });
+  fetchPriceHint();
 
   /* ── Amenity chips ── */
 

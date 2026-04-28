@@ -1,41 +1,263 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block content %}
 
-{# ── Back to guided search results (shown when navigated from FMM results) ── #}
 <style>
-#fmm-back-link:hover { background:rgba(42,126,242,.18) !important; color:var(--primary-dk,#1a5dd4) !important; }
+.back-nav-link { display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(42,126,242,.08);border:1px solid rgba(42,126,242,.18);transition:background .15s,color .15s;margin-bottom:1rem; }
+.back-nav-link:hover { background:rgba(42,126,242,.18); }
 </style>
-<div id="fmm-back-bar" style="display:none;margin-bottom:1rem;">
-  <a id="fmm-back-link" href="#" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(42,126,242,.08);border:1px solid rgba(42,126,242,.18);transition:background .15s,color .15s;">
-    ← Back to guided search results
-  </a>
-</div>
-<script>
-(function(){
-  var url = sessionStorage.getItem('fmm_results_url');
-  if (url) {
-    var bar  = document.getElementById('fmm-back-bar');
-    var link = document.getElementById('fmm-back-link');
-    link.href = url;
-    bar.style.display = 'block';
-  }
-})();
-</script>
+{% if user == listing.owner %}
+<a href="{% url 'my_listings' %}" class="back-nav-link">← Back to My Listings</a>
+{% endif %}
 
+{% if render_as_community %}
+<div style="max-width:1000px;margin:0 auto;">
+
+  {# ── Hero gallery ── #}
+  {% with listing.images.all as imgs %}
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;border-radius:14px;">
+    {% if imgs %}
+    <div style="position:relative;height:360px;background:#111;overflow:hidden;" id="comm-gallery">
+      <div style="display:flex;width:100%;height:100%;overflow:hidden;" id="comm-track">
+        {% for img in imgs %}
+        <img src="{{ img.image.url }}" alt="{{ listing.title }}"
+             style="min-width:100%;height:100%;object-fit:cover;flex-shrink:0;transition:transform .4s;">
+        {% endfor %}
+      </div>
+      {% if imgs|length > 1 %}
+      <button id="comm-prev" type="button" style="position:absolute;top:50%;left:1rem;transform:translateY(-50%);background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:2.4rem;height:2.4rem;font-size:1.2rem;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;">&#8249;</button>
+      <button id="comm-next" type="button" style="position:absolute;top:50%;right:1rem;transform:translateY(-50%);background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:2.4rem;height:2.4rem;font-size:1.2rem;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;">&#8250;</button>
+      <div style="position:absolute;bottom:.85rem;right:1rem;background:rgba(0,0,0,.55);color:#fff;font-size:.78rem;padding:.25rem .65rem;border-radius:999px;" id="comm-counter">1 / {{ imgs|length }}</div>
+      {% endif %}
+    </div>
+    {% else %}
+    <div style="height:260px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);font-size:4rem;">🏢</div>
+    {% endif %}
+  </div>
+  {% endwith %}
+
+  {# ── Community header ── #}
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1.25rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+    <div>
+      {% if listing.featured %}<span style="font-size:.75rem;font-weight:700;color:#b45309;background:#fef3c7;padding:.15rem .55rem;border-radius:999px;">★ Featured</span>{% endif %}
+      <h1 style="font-size:1.8rem;margin:.3rem 0 .25rem;">{{ listing.title }}</h1>
+      <p style="color:var(--text-3);font-size:.92rem;margin:0;">
+        📍 {% if listing.address_line %}{{ listing.address_line }}, {% endif %}{{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}{% if listing.zip_code %} {{ listing.zip_code }}{% endif %}
+      </p>
+    </div>
+    <div style="text-align:right;flex-shrink:0;">
+      {% with listing.units.all as all_units %}
+      {% if listing.price %}
+      <p style="font-size:1.6rem;font-weight:800;background:var(--price-gradient,linear-gradient(135deg,#2a7ef2,#8b5cf6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">
+        ${{ listing.price|floatformat:0|intcomma }}<span style="font-size:.9rem;font-weight:500;-webkit-text-fill-color:var(--text-3);background:none;">/mo</span>
+      </p>
+      {% endif %}
+      {% if all_units %}
+      <p style="font-size:.85rem;color:#16a34a;font-weight:600;margin:.15rem 0 0;">
+        {{ all_units|length }} unit{{ all_units|length|pluralize }} listed
+      </p>
+      {% endif %}
+      {% if user == listing.owner %}
+      <div style="display:flex;gap:.5rem;margin-top:.65rem;justify-content:flex-end;flex-wrap:wrap;">
+        <a href="{% url 'edit_listing' listing.pk %}" class="button secondary" style="font-size:.82rem;padding:.4rem .9rem;">✏️ Edit</a>
+        <a href="{% url 'create_listing' %}?parent={{ listing.pk }}" class="button accent" style="font-size:.82rem;padding:.4rem .9rem;">+ Add Unit</a>
+      </div>
+      {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+
+  {# ── Two-column body ── #}
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:1.25rem;align-items:start;">
+
+    {# ── Left column ── #}
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+      {# Description + amenity tags #}
+      <div class="card">
+        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">About This Community</h2>
+        <p style="line-height:1.7;color:var(--text-2);">{{ listing.description }}</p>
+        {% with listing.get_tags_list as tags %}
+        {% if tags %}
+        <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.45rem;">
+          {% for t in tags %}
+          <span style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;">{{ t }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+
+      {# ── Available Units — Apartments.com style ── #}
+      {% with listing.units.all as units %}
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;gap:1rem;">
+          <h2 style="font-size:1.15rem;font-weight:700;margin:0;">
+            Available Units
+            {% if units %}<span style="font-size:.85rem;font-weight:400;color:var(--text-3);">({{ units|length }})</span>{% endif %}
+          </h2>
+          {% if user == listing.owner %}
+          <a href="{% url 'create_listing' %}?parent={{ listing.pk }}" class="button accent" style="font-size:.82rem;padding:.4rem 1rem;">+ Add Unit</a>
+          {% endif %}
+        </div>
+
+        {% if units %}
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+        {% for unit in units %}
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div style="display:flex;gap:0;flex-wrap:wrap;">
+
+            {# Unit photos / floor plan ── left strip #}
+            <div style="width:260px;flex-shrink:0;background:var(--surface-2);min-height:200px;position:relative;overflow:hidden;">
+              {% with unit.images.all as uimgs %}
+              {% if uimgs %}
+                <img src="{{ uimgs.0.image.url }}" alt="{{ unit.title }}"
+                     style="width:100%;height:100%;object-fit:cover;min-height:200px;display:block;">
+                {% if uimgs|length > 1 %}
+                <span style="position:absolute;bottom:.5rem;right:.5rem;background:rgba(0,0,0,.6);color:#fff;font-size:.72rem;padding:.18rem .55rem;border-radius:999px;">+{{ uimgs|length|add:"-1" }} more</span>
+                {% endif %}
+              {% elif unit.floor_plan_image %}
+                <img src="{{ unit.floor_plan_image.url }}" alt="{{ unit.title }} floor plan"
+                     style="width:100%;height:100%;object-fit:contain;background:#f8f8f8;min-height:200px;padding:.75rem;display:block;">
+              {% else %}
+                <div style="display:flex;align-items:center;justify-content:center;height:200px;font-size:2.5rem;">🏠</div>
+              {% endif %}
+              {% endwith %}
+            </div>
+
+            {# Unit details ── right body #}
+            <div style="flex:1;min-width:220px;padding:1.25rem;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;flex-wrap:wrap;">
+                <div>
+                  <h3 style="font-size:1rem;font-weight:700;margin:0 0 .3rem;">{{ unit.title }}</h3>
+                  <p style="font-size:.82rem;color:var(--text-3);margin:0;">
+                    {% if unit.bedrooms is not None %}{% if unit.bedrooms == 0 %}Studio{% else %}{{ unit.bedrooms }} Bed{% endif %}{% endif %}
+                    {% if unit.bathrooms %} · {{ unit.bathrooms }} Bath{% endif %}
+                    {% if unit.square_footage %} · {{ unit.square_footage|intcomma }} sq ft{% endif %}
+                  </p>
+                </div>
+                <div style="text-align:right;">
+                  {% if unit.price %}
+                  <p style="font-size:1.15rem;font-weight:800;color:var(--primary);margin:0;">${{ unit.price|floatformat:0|intcomma }}<span style="font-size:.8rem;font-weight:400;color:var(--text-3);">/mo</span></p>
+                  {% else %}
+                  <p style="font-size:.9rem;font-weight:600;color:var(--text-3);margin:0;">Contact for price</p>
+                  {% endif %}
+                  <p style="font-size:.78rem;color:{% if unit.available_from %}var(--text-2){% else %}#16a34a{% endif %};margin:.15rem 0 0;font-weight:600;">
+                    {% if unit.available_from %}Avail. {{ unit.available_from|date:"M j, Y" }}{% else %}Available Now{% endif %}
+                  </p>
+                </div>
+              </div>
+
+              {% if unit.get_tags_list %}
+              <div style="display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.75rem;">
+                {% for t in unit.get_tags_list|slice:":5" %}
+                <span style="background:rgba(42,126,242,.07);border:1px solid rgba(42,126,242,.15);border-radius:999px;padding:.2rem .65rem;font-size:.75rem;color:var(--primary);">{{ t }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+              {# Floor plan image (blueprint) if available #}
+              {% if unit.floor_plan_image and unit.images.all %}
+              <div style="margin-top:.85rem;">
+                <p style="font-size:.75rem;font-weight:700;color:var(--text-3);margin:0 0 .35rem;text-transform:uppercase;letter-spacing:.06em;">Floor Plan</p>
+                <img src="{{ unit.floor_plan_image.url }}" alt="{{ unit.title }} floor plan"
+                     style="max-height:120px;border-radius:6px;border:1px solid var(--border);">
+              </div>
+              {% endif %}
+
+              {# Action buttons #}
+              <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap;align-items:center;">
+                <a href="{% url 'listing_detail' unit.pk %}" class="button accent" style="font-size:.82rem;padding:.45rem 1rem;">View Unit</a>
+                {% if unit.virtual_tour_url %}
+                <a href="{{ unit.virtual_tour_url }}" target="_blank" rel="noopener" class="button secondary" style="font-size:.82rem;padding:.45rem 1rem;">🏠 3D Tour</a>
+                {% endif %}
+                {% if user.is_authenticated and user != listing.owner %}
+                <button type="button" class="card-btn-secondary open-chat-btn"
+                    data-listing-id="{{ listing.pk }}"
+                    data-listing-title="{{ listing.title|truncatechars:40 }}"
+                    data-owner="{{ listing.owner.username }}"
+                    style="font-size:.82rem;padding:.45rem 1rem;">💬 Chat</button>
+                {% elif not user.is_authenticated %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="button secondary" style="font-size:.82rem;padding:.45rem 1rem;">💬 Chat</a>
+                {% endif %}
+                {% if user == listing.owner %}
+                <a href="{% url 'edit_listing' unit.pk %}" class="nav-text-btn" style="font-size:.8rem;">✏️ Edit</a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="card" style="text-align:center;padding:2.5rem 1rem;color:var(--text-3);">
+          <div style="font-size:2.5rem;margin-bottom:.75rem;">🏠</div>
+          <p style="font-weight:600;margin-bottom:.35rem;">No units listed yet</p>
+          {% if user == listing.owner %}
+          <p style="font-size:.85rem;margin-bottom:1rem;">Add your first unit to start attracting renters.</p>
+          <a href="{% url 'create_listing' %}?parent={{ listing.pk }}" class="button accent">+ Add First Unit</a>
+          {% else %}
+          <p style="font-size:.85rem;">Check back soon or contact the property for availability.</p>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+
+    </div>{# /left column #}
+
+    {# ── Right sidebar ── #}
+    <div style="display:flex;flex-direction:column;gap:1rem;position:sticky;top:1rem;">
+
+      {# Contact card #}
+      <div class="card">
+        <h2 style="font-size:.95rem;font-weight:700;margin-bottom:.85rem;">Contact</h2>
+        {% if listing.contact_phone %}
+        <p style="font-size:.85rem;margin:.3rem 0;">
+          📞 {% if user.is_authenticated %}<a href="tel:{{ listing.contact_phone }}" style="color:var(--primary);">{{ listing.contact_phone }}</a>{% else %}<a href="{% url 'login' %}?next={{ request.path }}" style="color:var(--primary);">Login to view</a>{% endif %}
+        </p>
+        {% endif %}
+        <p style="font-size:.85rem;margin:.3rem 0;">👤 {{ listing.owner.username }}</p>
+        {% if listing.available_from %}
+        <p style="font-size:.85rem;margin:.3rem 0;">📅 Available {{ listing.available_from|date:"M j, Y" }}</p>
+        {% endif %}
+      </div>
+
+      {# Inquiry form (non-owner) #}
+      {% if user != listing.owner %}
+      <div class="card">
+        <h2 style="font-size:.95rem;font-weight:700;margin-bottom:.35rem;">Send an Inquiry</h2>
+        <p class="muted" style="font-size:.8rem;margin-bottom:.85rem;">The lister will be notified by email.</p>
+        {% if listing.status == 'sold' %}
+        <p style="color:#dc2626;font-size:.85rem;font-weight:600;">This listing is sold.</p>
+        {% else %}
+        <form method="post">
+          {% csrf_token %}
+          {{ inquiry_form.as_p }}
+          <button type="submit" style="width:100%;margin-top:.25rem;">Send inquiry</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>{# /sidebar #}
+  </div>
+</div>
+
+{% else %}
 <div class="grid" style="grid-template-columns:2fr 1fr;align-items:start;gap:1.25rem;">
 
     <article class="card" style="padding:0;overflow:hidden;">
         {% with listing.images.all as imgs %}
         {% if imgs %}
             {% if imgs|length == 1 %}
-            {# ── Single image ── #}
             <div class="detail-gallery solo" style="padding:.75rem .75rem 0;">
                 <div class="detail-main-wrap" id="detail-main-wrap">
                     <img class="detail-main-img" id="detail-main-img" src="{{ imgs.0.image.url }}" alt="{{ listing.title }}" data-idx="0">
                 </div>
             </div>
             {% else %}
-            {# ── Multiple images: vertical thumbs + main ── #}
             <div class="detail-gallery" style="padding:.75rem .75rem 0;">
                 <div class="detail-thumbs" id="detail-thumbs">
                     {% for img in imgs %}
@@ -51,7 +273,6 @@
                 </div>
             </div>
             {% endif %}
-            {# Hidden data for lightbox #}
             <div id="gallery-data" style="display:none;">
                 {% for img in imgs %}<span data-src="{{ img.image.url }}"></span>{% endfor %}
             </div>
@@ -68,22 +289,15 @@
         {% endwith %}
 
         <div style="padding:1.5rem;">
-
-            {# ── Status banners (sold / under contract) ── #}
             {% if listing.status == 'sold' %}
-            <div style="background:#dc2626;color:#fff;font-weight:700;font-size:.95rem;padding:.6rem 1rem;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
-                🏷️ This property has been SOLD
-            </div>
+            <div style="background:#dc2626;color:#fff;font-weight:700;font-size:.95rem;padding:.6rem 1rem;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">🏷️ This property has been SOLD</div>
             {% elif listing.status == 'under_contract' %}
-            <div style="background:#d97706;color:#fff;font-weight:700;font-size:.95rem;padding:.6rem 1rem;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
-                📋 Under Contract — still accepting backup offers
-            </div>
+            <div style="background:#d97706;color:#fff;font-weight:700;font-size:.95rem;padding:.6rem 1rem;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">📋 Under Contract — still accepting backup offers</div>
             {% endif %}
 
             <div class="chips" style="margin-bottom:.75rem;">
                 <span class="chip">{{ listing.get_category_display }}</span>
                 {% if listing.featured %}<span class="inline-featured-badge">★ Featured</span>{% endif %}
-                {# Price Reduced badge for properties #}
                 {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
                 <span style="background:#16a34a;color:#fff;font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;">Price Reduced</span>
                 {% endif %}
@@ -92,62 +306,86 @@
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.5rem;">
                 <h1 style="font-size:1.6rem;margin:0;">{{ listing.title }}</h1>
                 {% if user == listing.owner %}
-                    <a href="{% url 'edit_listing' listing.pk %}" class="nav-text-btn" style="flex-shrink:0;white-space:nowrap;">✏️ Edit Listing</a>
+                <div style="display:flex;gap:.5rem;flex-shrink:0;">
+                    <a href="{% url 'edit_listing' listing.pk %}" class="nav-text-btn" style="white-space:nowrap;">✏️ Edit</a>
+                </div>
                 {% endif %}
             </div>
 
+            {# Parent community breadcrumb #}
+            {% if listing.parent %}
+            <div style="margin-bottom:.75rem;padding:.45rem .75rem;background:var(--surface-2);border-radius:8px;font-size:.82rem;">
+                Part of: <a href="{% url 'listing_detail' listing.parent.pk %}" style="color:var(--primary);font-weight:600;">{{ listing.parent.title }}</a>
+            </div>
+            {% endif %}
+
             <div style="margin-bottom:1rem;">
                 <p class="price" style="font-size:1.4rem;margin:0;">
-                    {% if listing.price %}${{ listing.price }}{% if listing.price_unit %}<span class="price-unit">{{ listing.get_price_unit_display }}</span>{% endif %}{% else %}Contact for price{% endif %}
+                    {% if listing.price %}${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span class="price-unit">{{ listing.get_price_unit_display }}</span>{% endif %}{% else %}Contact for price{% endif %}
                 </p>
                 {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
-                <p style="font-size:.85rem;color:var(--text-3);text-decoration:line-through;margin:.2rem 0 0;">${{ listing.original_price }}</p>
+                <p style="font-size:.85rem;color:var(--text-3);text-decoration:line-through;margin:.2rem 0 0;">${{ listing.original_price|floatformat:0|intcomma }}</p>
                 {% endif %}
             </div>
+
+            {# Floor plan + tour details for unit listings #}
+            {% if listing.bedrooms is not None or listing.bathrooms or listing.square_footage %}
+            <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem;">
+                {% if listing.bedrooms is not None %}
+                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
+                    <div style="font-size:1.2rem;font-weight:700;">{% if listing.bedrooms == 0 %}Studio{% else %}{{ listing.bedrooms }}{% endif %}</div>
+                    <div style="font-size:.72rem;color:var(--text-3);">Bed{% if listing.bedrooms != 1 and listing.bedrooms != 0 %}s{% endif %}</div>
+                </div>
+                {% endif %}
+                {% if listing.bathrooms %}
+                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
+                    <div style="font-size:1.2rem;font-weight:700;">{{ listing.bathrooms }}</div>
+                    <div style="font-size:.72rem;color:var(--text-3);">Bath{% if listing.bathrooms > 1 %}s{% endif %}</div>
+                </div>
+                {% endif %}
+                {% if listing.square_footage %}
+                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
+                    <div style="font-size:1.2rem;font-weight:700;">{{ listing.square_footage|intcomma }}</div>
+                    <div style="font-size:.72rem;color:var(--text-3);">Sq Ft</div>
+                </div>
+                {% endif %}
+                {% if listing.year_built %}
+                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
+                    <div style="font-size:1.2rem;font-weight:700;">{{ listing.year_built }}</div>
+                    <div style="font-size:.72rem;color:var(--text-3);">Built</div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {# Floor plan image #}
+            {% if listing.floor_plan_image %}
+            <div style="margin-bottom:1rem;">
+                <p style="font-size:.78rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Floor Plan</p>
+                <img src="{{ listing.floor_plan_image.url }}" alt="{{ listing.title }} floor plan"
+                     style="max-width:100%;border-radius:8px;border:1px solid var(--border);max-height:260px;object-fit:contain;">
+            </div>
+            {% endif %}
+
+            {# 3D Tour link #}
+            {% if listing.virtual_tour_url %}
+            <a href="{{ listing.virtual_tour_url }}" target="_blank" rel="noopener"
+               class="button secondary" style="margin-bottom:1rem;display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;">
+                🏠 View 3D Tour
+            </a>
+            {% endif %}
 
             <p style="color:var(--text-2);line-height:1.7;">{{ listing.description }}</p>
 
             {% with listing.get_tags_list as tags %}
-                {% if tags %}
-                <div class="listing-tags" style="margin-top:1rem;">
-                    {% for tag in tags %}
-                        <a href="{% url 'listing_list' %}?tag={{ tag }}" class="tag-chip">{{ tag }}</a>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            {% endwith %}
-
-            {# ── Property-specific details ── #}
-            {% if listing.category == 'properties' %}
-            {% if listing.square_footage or listing.year_built or listing.hoa_fee or listing.bedrooms %}
-            <div style="margin-top:1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem;">
-                {% if listing.bedrooms %}
-                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.5rem .75rem;text-align:center;">
-                    <div style="font-size:1.3rem;font-weight:700;">{{ listing.bedrooms }}</div>
-                    <div style="font-size:.75rem;color:var(--text-3);">Bedrooms</div>
-                </div>
-                {% endif %}
-                {% if listing.square_footage %}
-                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.5rem .75rem;text-align:center;">
-                    <div style="font-size:1.3rem;font-weight:700;">{{ listing.square_footage|floatformat:0 }}</div>
-                    <div style="font-size:.75rem;color:var(--text-3);">Sq Ft</div>
-                </div>
-                {% endif %}
-                {% if listing.year_built %}
-                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.5rem .75rem;text-align:center;">
-                    <div style="font-size:1.3rem;font-weight:700;">{{ listing.year_built }}</div>
-                    <div style="font-size:.75rem;color:var(--text-3);">Year Built</div>
-                </div>
-                {% endif %}
-                {% if listing.hoa_fee %}
-                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.5rem .75rem;text-align:center;">
-                    <div style="font-size:1.3rem;font-weight:700;">${{ listing.hoa_fee|floatformat:0 }}</div>
-                    <div style="font-size:.75rem;color:var(--text-3);">HOA/mo</div>
-                </div>
-                {% endif %}
+            {% if tags %}
+            <div class="listing-tags" style="margin-top:1rem;">
+                {% for tag in tags %}
+                <a href="{% url 'listing_list' %}?tag={{ tag }}" class="tag-chip">{{ tag }}</a>
+                {% endfor %}
             </div>
             {% endif %}
-            {% endif %}
+            {% endwith %}
 
             <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:.4rem;">
                 <p class="muted">📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %} &mdash; {{ listing.country }}</p>
@@ -166,7 +404,6 @@
                 </p>
                 {% endif %}
                 {% endwith %}
-                {# Phone gated behind login for privacy #}
                 {% if listing.contact_phone %}
                     {% if user.is_authenticated %}
                     <p class="muted">📞 {{ listing.contact_phone }}</p>
@@ -178,29 +415,27 @@
             </div>
 
             {% if user != listing.owner %}
-                <div style="margin-top:1.5rem;">
-                    {% if user.is_authenticated %}
-                        <button type="button" class="button" id="open-chat-btn">💬 Open Live Chat</button>
-                    {% else %}
-                        <a href="{% url 'login' %}?next={{ request.path }}" class="button">💬 Login to Chat</a>
-                    {% endif %}
-                </div>
+            <div style="margin-top:1.5rem;">
+                {% if user.is_authenticated %}
+                <button type="button" class="button" id="open-chat-btn">💬 Open Live Chat</button>
+                {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="button">💬 Login to Chat</a>
+                {% endif %}
+            </div>
             {% endif %}
+
         </div>
     </article>
 
     {% if user != listing.owner %}
     <aside class="card" style="position:sticky;top:1.5rem;">
-
-        {# ── Agent help CTA for properties ── #}
         {% if listing.category == 'properties' %}
         <div style="background:linear-gradient(135deg,rgba(42,126,242,.08),rgba(98,194,255,.06));border:1px solid rgba(42,126,242,.2);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
             <p style="font-weight:700;font-size:.95rem;margin-bottom:.3rem;">Want expert help with this property?</p>
-            <p class="muted" style="font-size:.8rem;margin-bottom:.75rem;">Connect with a Listojo agent who can guide you through the buying process — tours, offers, and closing.</p>
+            <p class="muted" style="font-size:.8rem;margin-bottom:.75rem;">Connect with a Listojo agent who can guide you through the buying process.</p>
             <a href="mailto:agents@listojo.com?subject=Agent help: {{ listing.title|urlencode }}&body=I am interested in: {{ listing.title }} — {{ request.build_absolute_uri }}" class="button" style="width:100%;text-align:center;display:block;">Connect with an Agent</a>
         </div>
         {% endif %}
-
         <h2 style="margin-bottom:.25rem;">Send an Inquiry</h2>
         <p class="muted" style="margin-bottom:1rem;font-size:.82rem;">The lister will be notified by email.</p>
         {% if listing.status == 'sold' %}
@@ -215,6 +450,7 @@
     </aside>
     {% endif %}
 </div>
+{% endif %}{# end community / regular split #}
 
 {# ── LIVE CHAT PANEL ── #}
 {% if user.is_authenticated and user != listing.owner %}
@@ -226,18 +462,15 @@
         </div>
         <button type="button" class="button secondary" id="close-chat-btn" onclick="document.getElementById('live-chat-panel').hidden=true;" style="padding:.3rem .65rem;font-size:.8rem;">✕</button>
     </div>
-
     <div class="live-chat-messages" id="chat-messages">
         <p class="muted" style="text-align:center;font-size:.82rem;padding:.5rem 0;margin:auto;">Loading…</p>
     </div>
-
     <form class="live-chat-form" id="chat-form">
         {% csrf_token %}
         <textarea name="message" rows="2" placeholder="Type a message…" required style="resize:none;"></textarea>
         <button type="submit">Send</button>
     </form>
 </div>
-
 <script>
 (function () {
   const panel    = document.getElementById('live-chat-panel');
@@ -248,107 +481,90 @@
   const threadUrl = "{% url 'listing_chat_thread' listing.pk %}";
   const sendUrl   = "{% url 'listing_chat_send'   listing.pk %}";
   const csrf      = document.querySelector('#chat-form [name="csrfmiddlewaretoken"]').value;
-
   function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
   function render(msgs) {
-    if (!msgs.length) {
-      msgBox.innerHTML = '<p class="muted" style="text-align:center;font-size:.82rem;padding:.5rem 0;margin:auto;">No messages yet. Say hello!</p>';
-      return;
-    }
-    msgBox.innerHTML = msgs.map(m => `
-      <div class="live-chat-bubble ${m.mine?'mine':'other'}">
-        <div class="bubble-text">${esc(m.message)}</div>
-        <div class="bubble-time">${m.sent_at}</div>
-      </div>`).join('');
+    if (!msgs.length) { msgBox.innerHTML = '<p class="muted" style="text-align:center;font-size:.82rem;padding:.5rem 0;margin:auto;">No messages yet. Say hello!</p>'; return; }
+    msgBox.innerHTML = msgs.map(m => `<div class="live-chat-bubble ${m.mine?'mine':'other'}"><div class="bubble-text">${esc(m.message)}</div><div class="bubble-time">${m.sent_at}</div></div>`).join('');
     msgBox.scrollTop = msgBox.scrollHeight;
   }
-
   async function load() {
-    try {
-      const r = await fetch(threadUrl, {headers:{'X-Requested-With':'XMLHttpRequest'}});
-      if (r.ok) { const d = await r.json(); render(d.messages || []); }
-    } catch (_) {}
+    try { const r = await fetch(threadUrl, {headers:{'X-Requested-With':'XMLHttpRequest'}}); if (r.ok) { const d = await r.json(); render(d.messages || []); } } catch (_) {}
   }
-
-  openBtn.addEventListener('click', () => { panel.hidden = false; load(); });
-  closeBtn.addEventListener('click', () => { panel.hidden = true; });
-
+  if (openBtn) openBtn.addEventListener('click', () => { panel.hidden = false; load(); });
+  if (closeBtn) closeBtn.addEventListener('click', () => { panel.hidden = true; });
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const fd = new FormData(form);
-    try {
-      const r = await fetch(sendUrl, {method:'POST', body:fd, headers:{'X-CSRFToken':csrf}});
-      if (r.ok) { form.querySelector('textarea').value = ''; load(); }
-    } catch (_) {}
+    try { const r = await fetch(sendUrl, {method:'POST', body:fd, headers:{'X-CSRFToken':csrf}}); if (r.ok) { form.querySelector('textarea').value = ''; load(); } } catch (_) {}
   });
-
   setInterval(() => { if (!panel.hidden) load(); }, 3000);
 })();
 </script>
 {% endif %}
 
-{# ── LIGHTBOX ── #}
+{# ── LIGHTBOX (regular listings only) ── #}
+{% if not render_as_community %}
 <div id="lightbox" class="lightbox">
     <button class="lightbox-close" id="lb-close">✕</button>
     <button class="lightbox-prev" id="lb-prev">‹</button>
     <img id="lb-img" src="" alt="">
     <button class="lightbox-next" id="lb-next">›</button>
 </div>
-
 <script>
 (function () {
-  /* ── Thumbnail switcher ── */
   var mainImg  = document.getElementById('detail-main-img');
   var thumbs   = document.querySelectorAll('.detail-thumb');
-
   thumbs.forEach(function(th) {
     th.addEventListener('click', function() {
       if (!mainImg) return;
       mainImg.classList.add('fading');
-      setTimeout(function() {
-        mainImg.src = th.dataset.src;
-        mainImg.dataset.idx = th.dataset.idx;
-        mainImg.classList.remove('fading');
-      }, 150);
+      setTimeout(function() { mainImg.src = th.dataset.src; mainImg.dataset.idx = th.dataset.idx; mainImg.classList.remove('fading'); }, 150);
       thumbs.forEach(function(t) { t.classList.remove('active'); });
       th.classList.add('active');
     });
   });
-
-  /* ── Lightbox ── */
   var data = document.getElementById('gallery-data');
   if (!data) return;
   var srcs = Array.from(data.querySelectorAll('[data-src]')).map(function(el){ return el.dataset.src; });
   if (!srcs.length) return;
-
   var lb    = document.getElementById('lightbox');
   var lbImg = document.getElementById('lb-img');
   var idx   = 0;
-
   function open(i) { idx = i; lbImg.src = srcs[idx]; lb.classList.add('open'); }
   function close()  { lb.classList.remove('open'); lbImg.src = ''; }
   function prev()   { idx = (idx - 1 + srcs.length) % srcs.length; lbImg.src = srcs[idx]; }
   function next()   { idx = (idx + 1) % srcs.length; lbImg.src = srcs[idx]; }
-
-  /* Click main image to open lightbox at current slide */
   var mainWrap = document.getElementById('detail-main-wrap');
-  if (mainWrap) {
-    mainWrap.addEventListener('click', function() {
-      open(mainImg ? parseInt(mainImg.dataset.idx || '0', 10) : 0);
-    });
-  }
-
+  if (mainWrap) mainWrap.addEventListener('click', function() { open(mainImg ? parseInt(mainImg.dataset.idx || '0', 10) : 0); });
   document.getElementById('lb-close').addEventListener('click', close);
   document.getElementById('lb-prev').addEventListener('click', prev);
   document.getElementById('lb-next').addEventListener('click', next);
   lb.addEventListener('click', function(e){ if (e.target === lb) close(); });
-  document.addEventListener('keydown', function(e){
-    if (!lb.classList.contains('open')) return;
-    if (e.key === 'Escape') close();
-    if (e.key === 'ArrowLeft') prev();
-    if (e.key === 'ArrowRight') next();
-  });
+  document.addEventListener('keydown', function(e){ if (!lb.classList.contains('open')) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowLeft') prev(); if (e.key === 'ArrowRight') next(); });
 })();
 </script>
+{% endif %}
+
+{# ── Community gallery carousel JS ── #}
+{% if render_as_community %}
+<script>
+(function(){
+  var track   = document.getElementById('comm-track');
+  var counter = document.getElementById('comm-counter');
+  if (!track) return;
+  var imgs = track.querySelectorAll('img');
+  if (imgs.length <= 1) return;
+  var cur = 0;
+  function go(n) {
+    cur = (n + imgs.length) % imgs.length;
+    track.style.transform = 'translateX(-' + (cur * 100) + '%)';
+    if (counter) counter.textContent = (cur + 1) + ' / ' + imgs.length;
+  }
+  track.style.transition = 'transform .4s ease';
+  document.getElementById('comm-prev').addEventListener('click', function(){ go(cur - 1); });
+  document.getElementById('comm-next').addEventListener('click', function(){ go(cur + 1); });
+})();
+</script>
+{% endif %}
+
 {% endblock %}

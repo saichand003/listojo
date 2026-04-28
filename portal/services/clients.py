@@ -88,6 +88,8 @@ def _closed_outcomes(leads: list[Lead]) -> list[str]:
     for lead in leads:
         if lead.status == 'closed_won' and lead.listing:
             outcomes.append(f'Closed on {lead.listing.title}')
+        elif lead.status == 'closed_won' and lead.community:
+            outcomes.append(f'Closed on {lead.community.name}')
         elif lead.status == 'closed_lost':
             outcomes.append('Closed lost')
     return outcomes[:3]
@@ -103,7 +105,7 @@ def _latest_note(leads: list[Lead]) -> tuple[str, object | None]:
 def build_client_summaries(agent: User) -> list[dict]:
     leads = list(
         Lead.objects.filter(assigned_agent=agent, status__in=CLIENT_STATUSES)
-        .select_related('listing', 'preference', 'assigned_agent')
+        .select_related('listing', 'community', 'preference', 'assigned_agent')
         .prefetch_related('shortlists__items__listing')
         .order_by('-updated_at', '-created_at')
     )
@@ -168,7 +170,7 @@ def build_client_summaries(agent: User) -> list[dict]:
 def build_client_profile(agent: User, email: str) -> dict | None:
     leads = list(
         Lead.objects.filter(assigned_agent=agent, email__iexact=email)
-        .select_related('listing', 'preference', 'assigned_agent')
+        .select_related('listing', 'community', 'preference', 'assigned_agent')
         .prefetch_related('shortlists__items__listing')
         .order_by('-updated_at', '-created_at')
     )
@@ -203,7 +205,7 @@ def build_client_profile(agent: User, email: str) -> dict | None:
             'when': lead.created_at,
             'type': 'lead',
             'title': f"{lead.get_source_display()} lead created",
-            'detail': lead.listing.title if lead.listing else lead.get_status_display(),
+                'detail': lead.listing.title if lead.listing else (lead.community.name if lead.community else lead.get_status_display()),
         })
         if lead.updated_at != lead.created_at:
             timeline.append({

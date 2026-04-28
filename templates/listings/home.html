@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+
+{# ── HERO ── #}
+<section class="hero" style="margin-bottom:2rem;">
+  <div style="position:relative;z-index:1;max-width:720px;">
+    <p style="font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#62C2FF;margin:0 0 .5rem;">DFW's smartest rental &amp; property search</p>
+    <h1 class="hero-headline">Find your next home<br>with confidence.</h1>
+    <p class="hero-sub">Real listings. Smart match scoring. No noise.<br>Listojo shows you why each home fits — so you can decide fast.</p>
+    <div class="hero-ctas" style="flex-wrap:nowrap;max-width:680px;align-items:stretch;">
+      <a href="{% url 'guided_search' %}" class="fmm-cta-btn" style="flex:1;justify-content:center;padding:.85rem 1.25rem;min-height:52px;box-sizing:border-box;">✦ Start guided search →</a>
+      <a href="{% url 'listing_list' %}?category=rentals" class="hero-ghost-btn" style="flex:1;justify-content:center;padding:.85rem 1.25rem;min-height:52px;box-sizing:border-box;">
+        <svg viewBox="0 0 24 24" fill="none" width="20" height="20" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="15.5" cy="8.5" r="3.5"></circle>
+          <path d="M13 11 4 20"></path>
+          <path d="M6.5 17.5 9 20"></path>
+          <path d="M8.8 15.2 11.3 17.7"></path>
+        </svg>
+        Browse Rentals
+      </a>
+      <a href="{% url 'listing_list' %}?category=properties" class="hero-ghost-btn" style="flex:1;justify-content:center;padding:.85rem 1.25rem;min-height:52px;box-sizing:border-box;">
+        <svg viewBox="0 0 24 24" fill="none" width="20" height="20" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 10.5 12 4l8 6.5"></path>
+          <path d="M6.5 9.5V20h11V9.5"></path>
+          <path d="M10 20v-5h4v5"></path>
+        </svg>
+        Browse Homes for Sale
+      </a>
+    </div>
+  </div>
+</section>
+
+{# ── TRUST STRIP ── #}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:2.5rem;">
+  <div class="card" style="text-align:center;padding:1.25rem 1rem;">
+    <div style="font-size:1.8rem;font-weight:800;color:var(--primary);font-family:'Montserrat',sans-serif;">{{ stats.listing_count|default:0 }}+</div>
+    <div style="font-size:.8rem;color:var(--text-3);margin-top:.3rem;font-weight:600;">Active Listings</div>
+  </div>
+  <div class="card" style="text-align:center;padding:1.25rem 1rem;">
+    <div style="font-size:1.8rem;font-weight:800;color:#16a34a;font-family:'Montserrat',sans-serif;">{{ stats.city_count|default:0 }}</div>
+    <div style="font-size:.8rem;color:var(--text-3);margin-top:.3rem;font-weight:600;">Cities</div>
+  </div>
+  <div class="card" style="text-align:center;padding:1.25rem 1rem;">
+    <div style="font-size:1.8rem;font-weight:800;color:#7c3aed;font-family:'Montserrat',sans-serif;">{{ stats.landlord_count|default:0 }}+</div>
+    <div style="font-size:.8rem;color:var(--text-3);margin-top:.3rem;font-weight:600;">Verified Owners</div>
+  </div>
+  <div class="card" style="text-align:center;padding:1.25rem 1rem;">
+    <div style="font-size:1.8rem;font-weight:800;color:#f59e0b;font-family:'Montserrat',sans-serif;">Free</div>
+    <div style="font-size:.8rem;color:var(--text-3);margin-top:.3rem;font-weight:600;">Always &amp; Forever</div>
+  </div>
+</div>
+
+{# ── HOW IT WORKS ── #}
+<section style="margin-bottom:2.5rem;">
+  <h2 style="font-size:1.3rem;font-weight:800;margin:0 0 1.25rem;font-family:'Montserrat',sans-serif;">How Listojo Works</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+
+    <div class="card" style="padding:1.5rem 1.25rem;position:relative;overflow:hidden;">
+      <div style="font-size:2rem;margin-bottom:.75rem;">🎯</div>
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin-bottom:.4rem;">Step 1</div>
+      <div style="font-weight:700;font-size:.98rem;margin-bottom:.5rem;">Tell us what you need</div>
+      <div style="font-size:.83rem;color:var(--text-3);line-height:1.5;">Budget, city, bedrooms, must-haves. Our guided search takes 2 minutes.</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#2A7EF2,#62C2FF);"></div>
+    </div>
+
+    <div class="card" style="padding:1.5rem 1.25rem;position:relative;overflow:hidden;">
+      <div style="font-size:2rem;margin-bottom:.75rem;">✦</div>
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7c3aed;margin-bottom:.4rem;">Step 2</div>
+      <div style="font-weight:700;font-size:.98rem;margin-bottom:.5rem;">We rank and score matches</div>
+      <div style="font-size:.83rem;color:var(--text-3);line-height:1.5;">Every result gets a match % so you know exactly why it fits — price, location, amenities.</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#7c3aed,#a78bfa);"></div>
+    </div>
+
+    <div class="card" style="padding:1.5rem 1.25rem;position:relative;overflow:hidden;">
+      <div style="font-size:2rem;margin-bottom:.75rem;">📬</div>
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#16a34a;margin-bottom:.4rem;">Step 3</div>
+      <div style="font-weight:700;font-size:.98rem;margin-bottom:.5rem;">Connect with the owner</div>
+      <div style="font-size:.83rem;color:var(--text-3);line-height:1.5;">Message directly or request a tour. No middlemen, no extra fees.</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#16a34a,#4ade80);"></div>
+    </div>
+
+  </div>
+</section>
+
+{# ── TRENDING RENTALS ── #}
+{% if trending_rentals %}
+<section style="margin-bottom:2.5rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <div>
+      <h2 style="font-size:1.2rem;font-weight:800;margin:0 0 .2rem;font-family:'Montserrat',sans-serif;">Trending Rentals</h2>
+      <p style="font-size:.82rem;color:var(--text-3);margin:0;">Most-viewed rental listings right now</p>
+    </div>
+    <a href="{% url 'listing_list' %}?category=rentals"
+       style="font-size:.82rem;font-weight:700;color:var(--primary);text-decoration:none;white-space:nowrap;flex-shrink:0;">
+      See all →
+    </a>
+  </div>
+
+  <div style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.5rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
+    {% for listing in trending_rentals %}
+    {% with listing.images.all as imgs %}
+    <article class="card listing-card" style="min-width:265px;max-width:265px;flex-shrink:0;">
+      <div class="listing-thumb-wrap" style="height:160px;overflow:hidden;flex-shrink:0;">
+        {% if imgs %}
+          <div class="listing-thumb-track">
+            <img class="listing-thumb" src="{{ imgs.0.image.url }}" alt="{{ listing.title }}" style="height:160px;object-fit:cover;">
+          </div>
+        {% elif listing.image %}
+          <img class="listing-thumb" src="{{ listing.image.url }}" alt="{{ listing.title }}" style="height:160px;object-fit:cover;width:100%;">
+        {% else %}
+          <div class="listing-thumb listing-thumb-placeholder" style="height:160px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;background:var(--surface-2);">🏷️</div>
+        {% endif %}
+      </div>
+      <div class="listing-body" style="padding:1rem;flex:1;display:flex;flex-direction:column;gap:.3rem;">
+        <h3 style="font-size:.92rem;font-weight:700;margin:0;line-height:1.3;font-family:'Montserrat',sans-serif;">
+          <a href="{% url 'listing_detail' listing.pk %}" style="color:var(--text);text-decoration:none;">{{ listing.title|truncatechars:48 }}</a>
+        </h3>
+        <p style="font-size:.78rem;color:var(--text-3);margin:0;">📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}</p>
+        <p class="price" style="font-size:1.05rem;margin:.2rem 0 0;">
+          ${{ listing.price|floatformat:0|intcomma }}<span class="price-unit">/mo</span>
+        </p>
+        <div class="card-actions" style="margin-top:auto;padding-top:.5rem;">
+          <a href="{% url 'listing_detail' listing.pk %}" class="card-btn-primary" style="flex:1;text-align:center;">View →</a>
+        </div>
+      </div>
+    </article>
+    {% endwith %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ── TRENDING PROPERTIES ── #}
+{% if trending_properties %}
+<section style="margin-bottom:2.5rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <div>
+      <h2 style="font-size:1.2rem;font-weight:800;margin:0 0 .2rem;font-family:'Montserrat',sans-serif;">Trending Properties for Sale</h2>
+      <p style="font-size:.82rem;color:var(--text-3);margin:0;">Top-viewed homes on the market</p>
+    </div>
+    <a href="{% url 'listing_list' %}?category=properties"
+       style="font-size:.82rem;font-weight:700;color:#16a34a;text-decoration:none;white-space:nowrap;flex-shrink:0;">
+      See all →
+    </a>
+  </div>
+
+  <div style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.5rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
+    {% for listing in trending_properties %}
+    {% with listing.images.all as imgs %}
+    <article class="card listing-card" style="min-width:265px;max-width:265px;flex-shrink:0;border-top:3px solid #16a34a;">
+      <div class="listing-thumb-wrap" style="height:160px;overflow:hidden;flex-shrink:0;">
+        {% if imgs %}
+          <div class="listing-thumb-track">
+            <img class="listing-thumb" src="{{ imgs.0.image.url }}" alt="{{ listing.title }}" style="height:160px;object-fit:cover;">
+          </div>
+        {% elif listing.image %}
+          <img class="listing-thumb" src="{{ listing.image.url }}" alt="{{ listing.title }}" style="height:160px;object-fit:cover;width:100%;">
+        {% else %}
+          <div class="listing-thumb listing-thumb-placeholder" style="height:160px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;background:var(--surface-2);">🏠</div>
+        {% endif %}
+      </div>
+      <div class="listing-body" style="padding:1rem;flex:1;display:flex;flex-direction:column;gap:.3rem;">
+        <h3 style="font-size:.92rem;font-weight:700;margin:0;line-height:1.3;font-family:'Montserrat',sans-serif;">
+          <a href="{% url 'listing_detail' listing.pk %}" style="color:var(--text);text-decoration:none;">{{ listing.title|truncatechars:48 }}</a>
+        </h3>
+        <p style="font-size:.78rem;color:var(--text-3);margin:0;">📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}</p>
+        <p class="price" style="font-size:1.05rem;margin:.2rem 0 0;-webkit-text-fill-color:#16a34a;background:none;color:#16a34a;">
+          ${{ listing.price|floatformat:0|intcomma }}
+        </p>
+        <div class="card-actions" style="margin-top:auto;padding-top:.5rem;">
+          <a href="{% url 'listing_detail' listing.pk %}" class="card-btn-primary" style="flex:1;text-align:center;background:#16a34a;">View →</a>
+        </div>
+      </div>
+    </article>
+    {% endwith %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ── CITY DISCOVERY ── #}
+{% if cities %}
+<section style="margin-bottom:2.5rem;">
+  <h2 style="font-size:1.2rem;font-weight:800;margin:0 0 .2rem;font-family:'Montserrat',sans-serif;">Explore by City</h2>
+  <p style="font-size:.82rem;color:var(--text-3);margin:0 0 1rem;">Find listings in your area</p>
+  <div style="display:flex;flex-wrap:wrap;gap:.6rem;">
+    {% for city in cities %}
+    <a href="{% url 'listing_list' %}?city={{ city|urlencode }}"
+       style="display:inline-block;padding:.45rem 1.1rem;border-radius:999px;background:var(--surface-2);border:1.5px solid var(--border);color:var(--text-2);font-size:.85rem;font-weight:600;text-decoration:none;transition:border-color .18s,color .18s;"
+       onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'"
+       onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+      📍 {{ city }}
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ── LANDLORD CTA ── #}
+<section class="hero" style="padding:2.5rem 2rem;margin-bottom:0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem;">
+  <div style="position:relative;z-index:1;max-width:500px;">
+    <p style="font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#62C2FF;margin:0 0 .6rem;">For landlords &amp; sellers</p>
+    <h2 style="font-size:1.55rem;font-weight:800;margin:0 0 .75rem;line-height:1.25;color:#fff;font-family:'Montserrat',sans-serif;">
+      Have a property to rent or sell?
+    </h2>
+    <p style="font-size:.92rem;color:rgba(255,255,255,.75);margin:0;">
+      Post on Listojo for free. Reach serious tenants and buyers in your city — no agency fees, no paywalls.
+    </p>
+  </div>
+  <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:.7rem;flex-shrink:0;">
+    <a href="{% url 'create_listing' %}"
+       style="display:inline-flex;align-items:center;gap:.45rem;padding:.75rem 1.75rem;border-radius:999px;background:#fff;color:#182B52;font-weight:700;font-size:.95rem;text-decoration:none;">
+      Post a Listing — Free →
+    </a>
+    <a href="{% url 'create_community' %}"
+       style="display:inline-flex;align-items:center;gap:.45rem;padding:.7rem 1.75rem;border-radius:999px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.3);color:#fff;font-weight:600;font-size:.88rem;text-decoration:none;">
+      List an Apartment Community
+    </a>
+  </div>
+</section>
+
+{% endblock %}

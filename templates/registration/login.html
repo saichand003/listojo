@@ -1,9 +1,60 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Login</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Login</button>
-</form>
+
+<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:2rem 1rem;background:var(--bg, #f1f5f9);z-index:50;">
+  <div class="card" style="width:100%;max-width:420px;padding:2.5rem 2rem;">
+
+    <div style="text-align:center;margin-bottom:2rem;">
+      <h1 style="font-size:1.6rem;font-weight:800;margin:0 0 .4rem;">Welcome back</h1>
+      <p class="muted" style="font-size:.9rem;margin:0;">Sign in to your Listojo account</p>
+    </div>
+
+    {% if error %}
+    <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.88rem;color:#b91c1c;">
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+      <div style="margin-bottom:1.1rem;">
+        <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem;">Username</label>
+        <input type="text" name="username" autofocus autocomplete="username"
+               style="width:100%;padding:.6rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;background:var(--surface-1);color:var(--text-1);box-sizing:border-box;"
+               placeholder="Your username">
+      </div>
+
+      <div style="margin-bottom:1.1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+          <label style="font-size:.85rem;font-weight:600;">Password</label>
+          <a href="{% url 'password_reset' %}" style="font-size:.8rem;color:var(--primary);text-decoration:none;">Forgot password?</a>
+        </div>
+        <input type="password" name="password" autocomplete="current-password"
+               style="width:100%;padding:.6rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;background:var(--surface-1);color:var(--text-1);box-sizing:border-box;"
+               placeholder="••••••••">
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:center;gap:.55rem;margin-bottom:1.5rem;">
+        <input type="checkbox" name="remember_me" id="remember_me"
+               style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;flex-shrink:0;">
+        <label for="remember_me" style="font-size:.88rem;color:var(--text-2);cursor:pointer;user-select:none;">
+          Keep me signed in for 90 days
+        </label>
+      </div>
+
+      <button type="submit" class="button accent" style="width:100%;padding:.7rem;font-size:1rem;font-weight:700;">
+        Sign in
+      </button>
+    </form>
+
+    <p style="text-align:center;font-size:.85rem;color:var(--text-3);margin-top:1.5rem;margin-bottom:0;">
+      Don't have an account?
+      <a href="{% url 'register' %}" style="color:var(--primary);font-weight:600;text-decoration:none;">Sign up</a>
+    </p>
+
+  </div>
+</div>
+
 {% endblock %}
