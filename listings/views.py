@@ -37,23 +37,23 @@ def home(request):
     if not _listings_table_ready():
         return _render_db_setup_page(request)
     trending_rentals = (
-        Listing.objects.filter(category='rentals', status='active')
+        Listing.objects.filter(category='rentals', status='active', parent__isnull=True)
         .select_related('owner').prefetch_related('images')
         .order_by('-view_count', '-created_at')[:5]
     )
     trending_properties = (
-        Listing.objects.filter(category='properties', status='active')
+        Listing.objects.filter(category='properties', status='active', parent__isnull=True)
         .select_related('owner').prefetch_related('images')
         .order_by('-view_count', '-created_at')[:5]
     )
     cities = list(
-        Listing.objects.filter(status='active')
+        Listing.objects.filter(status='active', parent__isnull=True)
         .exclude(city='').values_list('city', flat=True)
         .distinct().order_by('city')[:12]
     )
-    listing_count = Listing.objects.filter(status='active').count()
-    city_count = Listing.objects.filter(status='active').exclude(city='').values('city').distinct().count()
-    landlord_count = Listing.objects.filter(status='active').values('owner').distinct().count()
+    listing_count = Listing.objects.filter(status='active', parent__isnull=True).count()
+    city_count = Listing.objects.filter(status='active', parent__isnull=True).exclude(city='').values('city').distinct().count()
+    landlord_count = Listing.objects.filter(status='active', parent__isnull=True).values('owner').distinct().count()
     return render(request, 'listings/home.html', {
         'trending_rentals': trending_rentals,
         'trending_properties': trending_properties,
