@@ -5,6 +5,19 @@
 <style>
 .back-nav-link { display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(42,126,242,.08);border:1px solid rgba(42,126,242,.18);transition:background .15s,color .15s;margin-bottom:1rem; }
 .back-nav-link:hover { background:rgba(42,126,242,.18); }
+
+/* Community view: stack sidebar on tablet/mobile */
+@media (max-width: 860px) {
+  .ld-comm-grid   { grid-template-columns: 1fr !important; }
+  .ld-comm-header { flex-direction: column !important; align-items: flex-start !important; }
+  .ld-comm-header > div:last-child { text-align: left !important; }
+}
+/* Unit cards: image strip goes full-width on mobile */
+@media (max-width: 600px) {
+  .ld-unit-img { width: 100% !important; min-width: 0 !important; max-height: 190px !important; }
+  .ld-unit-img img { min-height: 0 !important; max-height: 190px !important; }
+  .ld-comm-gallery { height: 230px !important; }
+}
 </style>
 {% if user == listing.owner %}
 <a href="{% url 'my_listings' %}" class="back-nav-link">← Back to My Listings</a>
@@ -17,7 +30,7 @@
   {% with listing.images.all as imgs %}
   <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.25rem;border-radius:14px;">
     {% if imgs %}
-    <div style="position:relative;height:360px;background:#111;overflow:hidden;" id="comm-gallery">
+    <div class="ld-comm-gallery" style="position:relative;height:360px;background:#111;overflow:hidden;" id="comm-gallery">
       <div style="display:flex;width:100%;height:100%;overflow:hidden;" id="comm-track">
         {% for img in imgs %}
         <img src="{{ img.image.url }}" alt="{{ listing.title }}"
@@ -37,7 +50,7 @@
   {% endwith %}
 
   {# ── Community header ── #}
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1.25rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+  <div class="ld-comm-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:1.25rem;flex-wrap:wrap;margin-bottom:1.25rem;">
     <div>
       {% if listing.featured %}<span style="font-size:.75rem;font-weight:700;color:#b45309;background:#fef3c7;padding:.15rem .55rem;border-radius:999px;">★ Featured</span>{% endif %}
       <h1 style="font-size:1.8rem;margin:.3rem 0 .25rem;">{{ listing.title }}</h1>
@@ -68,7 +81,7 @@
   </div>
 
   {# ── Two-column body ── #}
-  <div style="display:grid;grid-template-columns:1fr 340px;gap:1.25rem;align-items:start;">
+  <div class="ld-comm-grid" style="display:grid;grid-template-columns:1fr 340px;gap:1.25rem;align-items:start;">
 
     {# ── Left column ── #}
     <div style="display:flex;flex-direction:column;gap:1.25rem;">
@@ -108,7 +121,7 @@
           <div style="display:flex;gap:0;flex-wrap:wrap;">
 
             {# Unit photos / floor plan ── left strip #}
-            <div style="width:260px;flex-shrink:0;background:var(--surface-2);min-height:200px;position:relative;overflow:hidden;">
+            <div class="ld-unit-img" style="width:260px;flex-shrink:0;background:var(--surface-2);min-height:200px;position:relative;overflow:hidden;">
               {% with unit.images.all as uimgs %}
               {% if uimgs %}
                 <img src="{{ uimgs.0.image.url }}" alt="{{ unit.title }}"

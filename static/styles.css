@@ -2585,6 +2585,20 @@ footer {
     bottom: var(--mob-nav-h, 64px);
     border-radius: 16px 16px 0 0;
   }
+
+  /* ── app-content: pad bottom so content clears the mobile nav ── */
+  .app-content { padding: .75rem .75rem calc(var(--mob-nav-h, 62px) + 1.25rem) !important; }
+
+  /* ── listing_list: hero text + CTAs ── */
+  .hero-headline { font-size: 1.4rem !important; letter-spacing: -.015em; margin-bottom: .5rem !important; }
+  .hero-sub { font-size: .85rem !important; line-height: 1.55 !important; margin-bottom: .9rem !important; }
+  .hero-sub br { display: none; }
+  .hero-ctas { flex-direction: column !important; gap: .45rem !important; }
+  .fmm-cta-btn  { padding: .7rem 1.2rem !important; font-size: .9rem !important; width: 100%; text-align: center; }
+  .hero-ghost-btn { padding: .7rem 1.2rem !important; font-size: .9rem !important; width: 100%; justify-content: center; text-align: center; }
+
+  /* ── search card: tighter padding on mobile ── */
+  .search-card { padding: .75rem .85rem !important; margin-bottom: .85rem !important; }
 }
 
 /* ════════════════════════════════════════════════════════════════
