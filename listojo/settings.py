@@ -89,8 +89,25 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+# ── Media / File Storage ──────────────────────────────────────────────────────
+# In production, upload media to Cloudflare R2 (S3-compatible, no egress fees).
+# Set R2_* env vars in Railway to activate. Falls back to local media/ in dev.
+_R2_BUCKET = os.getenv('R2_BUCKET_NAME', '')
+if _R2_BUCKET:
+    DEFAULT_FILE_STORAGE  = 'storages.backends.s3boto3.S3Boto3Storage'
+    AWS_STORAGE_BUCKET_NAME = _R2_BUCKET
+    AWS_ACCESS_KEY_ID       = os.getenv('R2_ACCESS_KEY_ID', '')
+    AWS_SECRET_ACCESS_KEY   = os.getenv('R2_SECRET_ACCESS_KEY', '')
+    AWS_S3_ENDPOINT_URL     = os.getenv('R2_ENDPOINT_URL', '')  # e.g. https://<account_id>.r2.cloudflarestorage.com
+    AWS_S3_CUSTOM_DOMAIN    = os.getenv('R2_PUBLIC_DOMAIN', '')  # e.g. media.listojo.com or pub-xxx.r2.dev
+    AWS_DEFAULT_ACL         = None
+    AWS_S3_FILE_OVERWRITE   = False
+    AWS_QUERYSTRING_AUTH    = False
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+else:
+    MEDIA_URL  = 'media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'listing_list'
