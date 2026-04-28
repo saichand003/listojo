@@ -11,7 +11,7 @@
   --primary:    #2A7EF2;
   --primary-2:  #62C2FF;
   --primary-dk: #1A5DD4;
-  --accent:     #3DB549;
+  --accent:     #1e8a5c;
   --accent-2:   #5DC228;
   --border:     #DDE4F2;
   --border-2:   #C8D4EC;
@@ -269,7 +269,7 @@ p { line-height: 1.65; }
   position: absolute;
   top: 0; left: 12%; right: 12%;
   height: 2px;
-  background: linear-gradient(90deg, #1A5DD4 0%, #2A7EF2 28%, #62C2FF 52%, #3DB549 76%, #5DC228 100%);
+  background: linear-gradient(90deg, #1A5DD4 0%, #2A7EF2 28%, #62C2FF 52%, #1e8a5c 76%, #5DC228 100%);
   border-radius: 0 0 4px 4px;
   opacity: .55;
 }
@@ -1232,8 +1232,8 @@ footer {
 }
 .fmm-prog-step.active .fmm-prog-num   { background: var(--primary); color: #fff; }
 .fmm-prog-step.active .fmm-prog-lbl   { color: var(--primary); }
-.fmm-prog-step.completed .fmm-prog-num { background: rgba(61,181,73,.15); color: #3DB549; }
-.fmm-prog-step.completed .fmm-prog-lbl { color: #3DB549; }
+.fmm-prog-step.completed .fmm-prog-num { background: rgba(61,181,73,.15); color: #1e8a5c; }
+.fmm-prog-step.completed .fmm-prog-lbl { color: #1e8a5c; }
 .fmm-prog-line {
   flex: 1;
   height: 2px;
@@ -1770,14 +1770,14 @@ footer {
 .cat-dot-local_services { background: #0F6E56; }
 .cat-dot-jobs       { background: #f59e0b; }
 .cat-dot-buy_sell   { background: #ef4444; }
-.cat-dot-events     { background: #3DB549; }
+.cat-dot-events     { background: #1e8a5c; }
 .cat-chip-roommates.chip-active,  .cat-chip-roommates:hover  { background: #ede9fe; color: #5b21b6; border-color: #8b5cf6; }
 .cat-chip-rentals.chip-active,    .cat-chip-rentals:hover    { background: #dbeafe; color: #1e40af; border-color: #2A7EF2; }
 .cat-chip-properties.chip-active, .cat-chip-properties:hover { background: #cffafe; color: #164e63; border-color: #0891b2; }
 .cat-chip-local_services.chip-active, .cat-chip-local_services:hover { background: #d1fae5; color: #065f46; border-color: #0F6E56; }
 .cat-chip-jobs.chip-active,       .cat-chip-jobs:hover       { background: #fef3c7; color: #78350f; border-color: #f59e0b; }
 .cat-chip-buy_sell.chip-active,   .cat-chip-buy_sell:hover   { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
-.cat-chip-events.chip-active,     .cat-chip-events:hover     { background: #dcfce7; color: #14532d; border-color: #3DB549; }
+.cat-chip-events.chip-active,     .cat-chip-events:hover     { background: #e4f5ee; color: #0c3d27; border-color: #1e8a5c; }
 
 /* ── NEW BADGE ──────────────────────────────────────────────── */
 .new-badge {
@@ -2013,7 +2013,7 @@ footer {
 }
 .site-footer-brand { display: flex; align-items: center; gap: .45rem; }
 .site-footer-logo { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.1rem; color: var(--text); }
-.site-footer-logo em { color: #3DB549; font-style: normal; }
+.site-footer-logo em { color: #1e8a5c; font-style: normal; }
 .site-footer-links { display: flex; gap: 1.25rem; flex-wrap: wrap; }
 .site-footer-links a { font-size: .82rem; color: var(--muted); text-decoration: none; transition: color .15s; }
 .site-footer-links a:hover { color: var(--primary); }

@@ -11,7 +11,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --primary: #2A7EF2; --primary-dk: #1A5DD4; --green: #3DB549;
+      --primary: #2A7EF2; --primary-dk: #1A5DD4; --green: #28b87c;
       --bg: #F0F4FB; --surface: #fff; --border: #e2e8f0;
       --text: #0f1c35; --muted: #64748b;
       --r: 14px; --r-sm: 8px;
@@ -70,7 +70,7 @@
 
     /* ── Badges ── */
     .badge { display: inline-block; padding: .18rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; }
-    .badge-green  { background: #dcfce7; color: #166534; }
+    .badge-green  { background: #e4f5ee; color: #1a6645; }
     .badge-red    { background: #fee2e2; color: #991b1b; }
     .badge-blue   { background: #dbeafe; color: #1e40af; }
     .badge-orange { background: #ffedd5; color: #9a3412; }
@@ -91,7 +91,7 @@
     .kpi-label { font-size: .72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .2rem; }
     .kpi-value { font-family: 'Montserrat', sans-serif; font-size: 1.9rem; font-weight: 800; color: var(--text); line-height: 1.1; }
     .kpi-delta { font-size: .75rem; font-weight: 600; margin-top: .25rem; }
-    .kpi-delta.up   { color: #16a34a; }
+    .kpi-delta.up   { color: #28b87c; }
     .kpi-delta.warn { color: #d97706; }
 
     /* ── Filter tabs ── */
@@ -127,16 +127,16 @@
 
     /* Status pills */
     .s-new      { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; font-size: .68rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
-    .s-working  { background: #dcfce7; color: #166534; border: 1px solid #86efac; font-size: .68rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
+    .s-working  { background: #e4f5ee; color: #1a6645; border: 1px solid #8dcbb5; font-size: .68rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
     .s-pending  { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; font-size: .68rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
     .s-touring  { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; font-size: .68rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
-    .s-won      { background: #dcfce7; color: #166534; border: 1px solid #86efac; font-size: .68rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
+    .s-won      { background: #e4f5ee; color: #1a6645; border: 1px solid #8dcbb5; font-size: .68rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
     .s-lost     { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-size: .68rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
 
     /* Tag chips */
     .lead-tags { display: flex; gap: .4rem; flex-wrap: wrap; }
-    .t-shortlist { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: .72rem; font-weight: 600; padding: .18rem .6rem; border-radius: 999px; }
-    .t-match     { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: .72rem; font-weight: 600; padding: .18rem .6rem; border-radius: 999px; }
+    .t-shortlist { background: #e4f5ee; color: #1a6645; border: 1px solid #bbf7d0; font-size: .72rem; font-weight: 600; padding: .18rem .6rem; border-radius: 999px; }
+    .t-match     { background: #e4f5ee; color: #1a6645; border: 1px solid #bbf7d0; font-size: .72rem; font-weight: 600; padding: .18rem .6rem; border-radius: 999px; }
     .t-area      { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: .72rem; font-weight: 600; padding: .18rem .6rem; border-radius: 999px; }
     .t-tour      { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; font-size: .72rem; font-weight: 600; padding: .18rem .6rem; border-radius: 999px; }
     .t-awaiting  { background: #fefce8; color: #854d0e; border: 1px solid #fef08a; font-size: .72rem; font-weight: 600; padding: .18rem .6rem; border-radius: 999px; }

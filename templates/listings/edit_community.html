@@ -14,7 +14,7 @@
 
   {% if messages %}
   {% for msg in messages %}
-  <div style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.3);border-radius:8px;padding:.65rem 1rem;margin-bottom:1rem;font-size:.88rem;color:#15803d;">{{ msg }}</div>
+  <div style="background:rgba(30,138,92,.1);border:1px solid rgba(30,138,92,.3);border-radius:8px;padding:.65rem 1rem;margin-bottom:1rem;font-size:.88rem;color:#155e40;">{{ msg }}</div>
   {% endfor %}
   {% endif %}
 
@@ -154,7 +154,7 @@
             {% with fp.price_range as pr %}
             {% if pr.0 %} &middot; ${{ pr.0|floatformat:0 }}{% if pr.1 and pr.1 != pr.0 %}–${{ pr.1|floatformat:0 }}{% endif %}/mo{% endif %}
             {% endwith %}
-            &middot; <strong style="color:#16a34a;">{{ fp.available_units.count }} available</strong>
+            &middot; <strong style="color:#1e8a5c;">{{ fp.available_units.count }} available</strong>
           </p>
         </div>
         <form method="post" action="{% url 'delete_floor_plan' fp.pk %}" style="flex-shrink:0;" onsubmit="return confirm('Delete this floor plan and all its units?');">
@@ -184,9 +184,9 @@
               <td style="padding:.5rem .5rem;font-weight:600;">#{{ unit.unit_number }}</td>
               <td style="padding:.5rem .5rem;">{{ unit.floor|default:"—" }}</td>
               <td style="padding:.5rem .5rem;">{% if unit.price %}${{ unit.price|floatformat:0 }}/mo{% else %}—{% endif %}</td>
-              <td style="padding:.5rem .5rem;">{% if unit.available_from %}{{ unit.available_from|date:"M j, Y" }}{% else %}<span style="color:#16a34a;font-weight:600;">Now</span>{% endif %}</td>
+              <td style="padding:.5rem .5rem;">{% if unit.available_from %}{{ unit.available_from|date:"M j, Y" }}{% else %}<span style="color:#1e8a5c;font-weight:600;">Now</span>{% endif %}</td>
               <td style="padding:.5rem .5rem;">
-                <span style="font-size:.73rem;padding:.15rem .5rem;border-radius:999px;{% if unit.status == 'available' %}background:rgba(22,163,74,.12);color:#15803d;{% elif unit.status == 'coming_soon' %}background:rgba(245,158,11,.12);color:#b45309;{% else %}background:var(--bg);color:var(--text-3);{% endif %}">
+                <span style="font-size:.73rem;padding:.15rem .5rem;border-radius:999px;{% if unit.status == 'available' %}background:rgba(30,138,92,.12);color:#155e40;{% elif unit.status == 'coming_soon' %}background:rgba(245,158,11,.12);color:#b45309;{% else %}background:var(--bg);color:var(--text-3);{% endif %}">
                   {{ unit.get_status_display }}
                 </span>
               </td>

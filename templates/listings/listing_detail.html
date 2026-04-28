@@ -53,7 +53,7 @@
       </p>
       {% endif %}
       {% if all_units %}
-      <p style="font-size:.85rem;color:#16a34a;font-weight:600;margin:.15rem 0 0;">
+      <p style="font-size:.85rem;color:#1e8a5c;font-weight:600;margin:.15rem 0 0;">
         {{ all_units|length }} unit{{ all_units|length|pluralize }} listed
       </p>
       {% endif %}
@@ -142,7 +142,7 @@
                   {% else %}
                   <p style="font-size:.9rem;font-weight:600;color:var(--text-3);margin:0;">Contact for price</p>
                   {% endif %}
-                  <p style="font-size:.78rem;color:{% if unit.available_from %}var(--text-2){% else %}#16a34a{% endif %};margin:.15rem 0 0;font-weight:600;">
+                  <p style="font-size:.78rem;color:{% if unit.available_from %}var(--text-2){% else %}#1e8a5c{% endif %};margin:.15rem 0 0;font-weight:600;">
                     {% if unit.available_from %}Avail. {{ unit.available_from|date:"M j, Y" }}{% else %}Available Now{% endif %}
                   </p>
                 </div>
@@ -299,7 +299,7 @@
                 <span class="chip">{{ listing.get_category_display }}</span>
                 {% if listing.featured %}<span class="inline-featured-badge">★ Featured</span>{% endif %}
                 {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
-                <span style="background:#16a34a;color:#fff;font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;">Price Reduced</span>
+                <span style="background:#1e8a5c;color:#fff;font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;">Price Reduced</span>
                 {% endif %}
             </div>
 

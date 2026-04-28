@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
 from datetime import timedelta, date
 
-from classifieds_project.services.notifications import send_listing_inquiry_email
+from listojo.services.notifications import send_listing_inquiry_email
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry, SavedSearch
 from listings.services.search import build_listing_search_context

@@ -57,7 +57,7 @@
           {% endif %}
           {% endwith %}
           {% with community.available_unit_count as uc %}
-          {% if uc %}<p style="font-size:.82rem;color:#16a34a;font-weight:600;margin:.15rem 0 0;">{{ uc }} unit{{ uc|pluralize }} available</p>{% endif %}
+          {% if uc %}<p style="font-size:.82rem;color:#1e8a5c;font-weight:600;margin:.15rem 0 0;">{{ uc }} unit{{ uc|pluralize }} available</p>{% endif %}
           {% endwith %}
         </div>
       </div>
@@ -100,7 +100,7 @@
                 </p>
                 {% with fp.available_units.count as avc %}
                 {% if avc %}
-                <span style="font-size:.72rem;color:#16a34a;font-weight:700;background:rgba(22,163,74,.1);border-radius:999px;padding:.1rem .5rem;margin-top:.25rem;display:inline-block;">{{ avc }} available</span>
+                <span style="font-size:.72rem;color:#1e8a5c;font-weight:700;background:rgba(30,138,92,.1);border-radius:999px;padding:.1rem .5rem;margin-top:.25rem;display:inline-block;">{{ avc }} available</span>
                 {% else %}
                 <span style="font-size:.72rem;color:var(--text-3);background:var(--surface-2);border-radius:999px;padding:.1rem .5rem;margin-top:.25rem;display:inline-block;">No units available</span>
                 {% endif %}
@@ -136,7 +136,7 @@
                 <td style="padding:.4rem .5rem;font-weight:600;">{{ unit.unit_number }}</td>
                 <td style="padding:.4rem .5rem;color:var(--text-3);">{% if unit.floor %}{{ unit.floor }}{% else %}—{% endif %}</td>
                 <td style="padding:.4rem .5rem;">{% if unit.price %}${{ unit.price|floatformat:0|intcomma }}/mo{% else %}TBD{% endif %}</td>
-                <td style="padding:.4rem .5rem;color:{% if unit.available_from %}var(--text-2){% else %}#16a34a{% endif %};">
+                <td style="padding:.4rem .5rem;color:{% if unit.available_from %}var(--text-2){% else %}#1e8a5c{% endif %};">
                   {% if unit.available_from %}{{ unit.available_from|date:"M j, Y" }}{% else %}Now{% endif %}
                 </td>
               </tr>

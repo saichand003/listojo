@@ -12,7 +12,7 @@
   .client-meta { font-size:.84rem; color:#64748b; margin-bottom:.75rem; }
   .client-tags { display:flex; flex-wrap:wrap; gap:.45rem; margin-bottom:.85rem; }
   .client-tag { padding:.18rem .65rem; border-radius:999px; font-size:.72rem; font-weight:700; }
-  .tag-status { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+  .tag-status { background:#e4f5ee; color:#1a6645; border:1px solid #8dcbb5; }
   .tag-city { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
   .tag-budget { background:#f8fafc; color:#334155; border:1px solid #cbd5e1; }
   .client-stats { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.75rem; }
@@ -73,7 +73,7 @@
       Last activity
       <strong>{% if client.last_activity %}{{ client.last_activity|timesince }} ago{% else %}No activity{% endif %}</strong>
       {% if client.outcomes %}
-      <div style="margin-top:.7rem;color:#166534;font-weight:700;">{{ client.outcomes.0 }}</div>
+      <div style="margin-top:.7rem;color:#1a6645;font-weight:700;">{{ client.outcomes.0 }}</div>
       {% endif %}
     </div>
   </a>

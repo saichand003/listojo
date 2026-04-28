@@ -1,4 +1,5 @@
 import os
+import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -26,16 +27,17 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'classifieds_project.middleware.DatabaseNotReadyMiddleware',
+    'listojo.middleware.DatabaseNotReadyMiddleware',
 ]
 
-ROOT_URLCONF = 'classifieds_project.urls'
+ROOT_URLCONF = 'listojo.urls'
 
 TEMPLATES = [
     {
@@ -48,23 +50,27 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'classifieds_project.context_processors.ui_asset_version',
-                'classifieds_project.context_processors.launch_config',
-                'classifieds_project.context_processors.google_maps',
-                'classifieds_project.context_processors.sidebar_counts',
+                'listojo.context_processors.ui_asset_version',
+                'listojo.context_processors.launch_config',
+                'listojo.context_processors.google_maps',
+                'listojo.context_processors.sidebar_counts',
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'classifieds_project.wsgi.application'
+WSGI_APPLICATION = 'listojo.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+_DATABASE_URL = os.getenv('DATABASE_URL')
+if _DATABASE_URL:
+    DATABASES = {'default': dj_database_url.config(default=_DATABASE_URL, conn_max_age=600, ssl_require=True)}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -79,7 +85,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
