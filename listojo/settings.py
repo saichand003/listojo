@@ -144,6 +144,9 @@ DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Listojo <noreply@listojo.
 # ── Google Maps ──────────────────────────────────────────────────────────────
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
 
+# ── Realty Mole (RapidAPI) ────────────────────────────────────────────────────
+REALTY_MOLE_API_KEY = os.getenv('REALTY_MOLE_API_KEY', '')
+
 # ── City rollout ─────────────────────────────────────────────────────────────
 # Set LAUNCH_ACTIVE = False to open the platform to all cities.
 # To add a new metro, append a block to LAUNCH_REGIONS and re-derive LAUNCH_CITIES.

@@ -55,8 +55,9 @@ class Listing(models.Model):
     ]
 
     SOURCE_CHOICES = [
-        ('native',     'Native'),
-        ('mls_ntreis', 'NTREIS MLS'),
+        ('native',      'Native'),
+        ('mls_ntreis',  'NTREIS MLS'),
+        ('realty_mole', 'Realty Mole'),
     ]
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listings')

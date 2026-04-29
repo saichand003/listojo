@@ -1,4 +1,5 @@
 Django>=5.0,<6.0
+requests>=2.31
 Pillow>=10.0
 python-dotenv>=1.0
 lightgbm>=4.0
