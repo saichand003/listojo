@@ -498,7 +498,7 @@
 </div>
 
 {# Hidden POST form — populated and submitted by submitSearch() #}
-<form id="gs-submit-form" method="post" action="{% url 'guided_search' %}{% if gs_mode %}?mode={{ gs_mode }}{% endif %}" style="display:none"></form>
+<form id="gs-submit-form" method="post" action="{% url 'guided_search' %}{% if gs_mode %}?mode={{ gs_mode }}{% endif %}" style="display:none">{% csrf_token %}</form>
 
 <script>
 var TOTAL_STEPS = 9;
@@ -669,11 +669,13 @@ function submitSearch() {
 
   fields.fmm = '1';
 
+  var existingCsrf = form.querySelector('input[name=csrfmiddlewaretoken]');
+  var csrfVal = existingCsrf ? existingCsrf.value :
+                (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
   form.innerHTML = '';
-  var csrf = document.cookie.match(/csrftoken=([^;]+)/);
   var csrfInput = document.createElement('input');
   csrfInput.type = 'hidden'; csrfInput.name = 'csrfmiddlewaretoken';
-  csrfInput.value = csrf ? csrf[1] : '';
+  csrfInput.value = csrfVal;
   form.appendChild(csrfInput);
 
   Object.keys(fields).forEach(function(k) {
