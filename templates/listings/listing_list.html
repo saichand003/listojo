@@ -4,12 +4,16 @@
 
 <section class="hero">
     <div style="position:relative;z-index:1;max-width:720px;">
+        <span style="display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:.25rem .75rem;margin-bottom:.6rem;">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          AI-Powered
+        </span>
         {% if filters.category == 'properties' %}
-        <h1 class="hero-headline">Find a property<br>worth buying.</h1>
-        <p class="hero-sub">Trusted listings from real sellers, curated for serious buyers.<br>Smart match scoring highlights homes that fit your budget,<br>location, and must-have criteria so you know why they fit.</p>
+        <h1 class="hero-headline">AI finds the property<br>worth buying.</h1>
+        <p class="hero-sub">Every listing is scored against your budget, location, and must-haves — so you see exactly why each property fits before you click.</p>
         {% else %}
-        <h1 class="hero-headline">Find the right home,<br>not just a listing.</h1>
-        <p class="hero-sub">Listojo understands what matters — budget, commute, neighborhood, lifestyle — and shows you exactly why each result fits.</p>
+        <h1 class="hero-headline">Your AI leasing agent<br>finds the right home.</h1>
+        <p class="hero-sub">Tell us what you need in plain English. Listojo's AI matches your budget, move-in date, and must-haves — and explains every result.</p>
         {% endif %}
 
         <div class="hero-ctas">
@@ -18,6 +22,21 @@
         </div>
     </div>
 </section>
+
+{# ── AI natural language search ── #}
+<div id="ai-search-wrap" style="max-width:720px;margin:0 auto 1rem;padding:0 .5rem;">
+  <div style="display:flex;gap:.5rem;align-items:center;">
+    <div style="position:relative;flex:1;">
+      <input type="text" id="ai-nl-input"
+             placeholder="Try: 2BR pet-friendly near Uptown under $1,800 →"
+             style="width:100%;padding:.6rem 1rem .6rem 2.3rem;border-radius:999px;border:1.5px solid rgba(42,126,242,.3);font-size:.88rem;background:var(--surface);color:var(--text);outline:none;"
+             autocomplete="off">
+      <svg style="position:absolute;left:.75rem;top:50%;transform:translateY(-50%);opacity:.5;" viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    </div>
+    <button type="button" id="ai-nl-btn" style="padding:.6rem 1.1rem;border-radius:999px;border:none;background:var(--primary);color:#fff;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap;">Search with AI</button>
+  </div>
+  <p id="ai-nl-status" style="display:none;font-size:.78rem;margin:.4rem .25rem 0;color:var(--muted);"></p>
+</div>
 
 {# ── Search card — separate from hero ── #}
 <div class="search-card">
@@ -912,6 +931,56 @@ bindSavePills();
   });
 
   window.addEventListener('pagehide', flush);
+})();
+
+/* ── AI natural language search ── */
+(function () {
+  var btn    = document.getElementById('ai-nl-btn');
+  var input  = document.getElementById('ai-nl-input');
+  var status = document.getElementById('ai-nl-status');
+  if (!btn || !input) return;
+
+  function doSearch() {
+    var query = input.value.trim();
+    if (!query) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+    status.style.display = '';
+    status.textContent = 'Parsing your search…';
+    status.style.color = 'var(--muted)';
+
+    fetch('{% url "ai_natural_language_search" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({ query: query }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.redirect_url) {
+          status.textContent = 'Redirecting…';
+          window.location.href = data.redirect_url;
+        } else {
+          status.textContent = data.error || 'Could not parse search.';
+          status.style.color = '#e53e3e';
+          btn.disabled = false;
+          btn.textContent = 'Search with AI';
+        }
+      })
+      .catch(function () {
+        status.textContent = 'Request failed — check your connection.';
+        status.style.color = '#e53e3e';
+        btn.disabled = false;
+        btn.textContent = 'Search with AI';
+      });
+  }
+
+  btn.addEventListener('click', doSearch);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') doSearch();
+  });
 })();
 </script>
 {% endblock %}

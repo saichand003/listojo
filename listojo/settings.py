@@ -144,6 +144,9 @@ DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Listojo <noreply@listojo.
 # ── Google Maps ──────────────────────────────────────────────────────────────
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
 
+# ── Anthropic / AI ────────────────────────────────────────────────────────────
+ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')
+
 # ── Realty Mole (RapidAPI) ────────────────────────────────────────────────────
 REALTY_MOLE_API_KEY = os.getenv('REALTY_MOLE_API_KEY', '')
 

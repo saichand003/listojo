@@ -209,7 +209,7 @@ def _compute_market_stats(params: SearchParams) -> dict:
     }
 
 
-def _score_listings_fmm(listings_qs, params: SearchParams) -> tuple[list, list, dict, dict, dict, dict]:
+def _score_listings_fmm(listings_qs, params: SearchParams) -> tuple[list, list, dict, dict, dict, dict, dict]:
     scored = []
     for listing in list(listings_qs):
         result = score_listing(
@@ -221,7 +221,7 @@ def _score_listings_fmm(listings_qs, params: SearchParams) -> tuple[list, list, 
             property_type=params.property_type,
             bedrooms=params.bedrooms_int,
         )
-        scored.append((listing, result.pct, result.reasons, result.tag_hits))
+        scored.append((listing, result.pct, result.reasons, result.tag_hits, result.sub_scores))
     scored.sort(key=lambda x: (-x[1], -x[0].featured, x[0].created_at))
 
     exact = [item for item in scored if item[1] >= 50]
@@ -236,6 +236,7 @@ def _score_listings_fmm(listings_qs, params: SearchParams) -> tuple[list, list, 
     scores = {item[0].pk: item[1] for item in scored}
     score_classes = {item[0].pk: 'high' if item[1] >= 85 else 'mid' for item in scored}
     reasons = {item[0].pk: item[2] for item in scored}
+    sub_scores = {item[0].pk: item[4] for item in scored}
     explanations = {
         item[0].pk: explain_match(
             item[0], item[2],
@@ -246,7 +247,7 @@ def _score_listings_fmm(listings_qs, params: SearchParams) -> tuple[list, list, 
         )
         for item in scored
     }
-    return final_listings, near_match_listings, scores, score_classes, reasons, explanations
+    return final_listings, near_match_listings, scores, score_classes, reasons, explanations, sub_scores
 
 
 def _score_communities_fmm(communities: list, params: SearchParams) -> tuple[list, dict, dict, dict, dict]:
@@ -281,7 +282,7 @@ def _score_communities_fmm(communities: list, params: SearchParams) -> tuple[lis
 def _build_fmm_context(listings_qs, communities: list, params: SearchParams) -> dict:
     (
         listings, near_match_listings,
-        listing_scores, listing_score_classes, listing_reasons, listing_explanations,
+        listing_scores, listing_score_classes, listing_reasons, listing_explanations, listing_sub_scores,
     ) = _score_listings_fmm(listings_qs, params)
 
     (
@@ -300,6 +301,7 @@ def _build_fmm_context(listings_qs, communities: list, params: SearchParams) -> 
         'listing_score_classes': listing_score_classes,
         'listing_reasons': listing_reasons,
         'listing_explanations': listing_explanations,
+        'listing_sub_scores': listing_sub_scores,
         'community_scores': community_scores,
         'community_score_classes': community_score_classes,
         'community_reasons': community_reasons,
@@ -379,6 +381,7 @@ def build_listing_search_context(request) -> dict:
         'listing_score_classes': fmm.get('listing_score_classes', {}),
         'listing_reasons': fmm.get('listing_reasons', {}),
         'listing_explanations': fmm.get('listing_explanations', {}),
+        'listing_sub_scores': fmm.get('listing_sub_scores', {}),
         'community_scores': fmm.get('community_scores', {}),
         'community_score_classes': fmm.get('community_score_classes', {}),
         'community_reasons': fmm.get('community_reasons', {}),

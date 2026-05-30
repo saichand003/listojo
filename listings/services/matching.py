@@ -11,6 +11,7 @@ class MatchResult(NamedTuple):
     reasons: list[str]
     caveats: list[str]
     tag_hits: int
+    sub_scores: dict = {}
 
 
 _TAG_RELATED: dict[str, list[str]] = {
@@ -163,7 +164,27 @@ def score_listing(
         return MatchResult(70, reasons[:5], caveats[:2], tag_hits)
 
     pct = int(round(pts / max_pts * 100))
-    return MatchResult(min(100, max(0, pct)), reasons[:5], caveats[:2], tag_hits)
+
+    # Sub-scores for visual breakdown card
+    sub: dict = {}
+    if max_price and max_price > 0 and listing.price:
+        price = float(listing.price)
+        effective = price - (150 if listing.bills_included else 0)
+        headroom = float(max_price) - effective
+        if headroom >= 0:
+            sub['Budget'] = min(100, 70 + int((headroom / float(max_price)) * 30))
+        elif headroom >= -float(max_price) * 0.10:
+            sub['Budget'] = 40
+        else:
+            sub['Budget'] = 10
+    if bedrooms and listing.bedrooms:
+        sub['Bedrooms'] = 100 if listing.bedrooms == bedrooms else 0
+    if requested_tags:
+        sub['Amenities'] = int(tag_hits / len(requested_tags) * 100) if requested_tags else 0
+    if avail_date:
+        sub['Availability'] = 100 if (not listing.available_from or listing.available_from <= avail_date) else 0
+
+    return MatchResult(min(100, max(0, pct)), reasons[:5], caveats[:2], tag_hits, sub)
 
 
 def score_for_preference(listing, preference) -> MatchResult:

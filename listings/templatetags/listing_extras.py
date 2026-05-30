@@ -17,6 +17,19 @@ def dict_get(d, key):
     return ''
 
 @register.filter
+def price_drop_pct(current_price, original_price):
+    """Return the percentage drop from original_price to current_price as an integer."""
+    try:
+        orig = float(original_price)
+        curr = float(current_price)
+        if orig > 0:
+            return int(round((orig - curr) / orig * 100))
+    except (TypeError, ValueError, ZeroDivisionError):
+        pass
+    return 0
+
+
+@register.filter
 def category_icon(cat):
     icons = {
         'roommates':      '👥',

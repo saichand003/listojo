@@ -21,6 +21,11 @@ urlpatterns = [
     path('listing/estimate-range/', views.listing_estimate_range, name='listing_estimate_range'),
     path('listing/<int:pk>/set-status/', views.set_listing_status, name='set_listing_status'),
 
+    # ── AI routes ─────────────────────────────────────────────────────────
+    path('ai/generate-description/', views.ai_generate_description, name='ai_generate_description'),
+    path('ai/search/', views.ai_natural_language_search, name='ai_natural_language_search'),
+    path('ai/match-explain/<int:pk>/', views.ai_match_explain, name='ai_match_explain'),
+
     # ── Community routes ──────────────────────────────────────────────────
     path('communities/', community_views.my_communities, name='my_communities'),
     path('communities/create/', community_views.create_community, name='create_community'),

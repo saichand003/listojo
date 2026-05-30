@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load humanize %}
+{% load humanize listing_extras %}
 {% block content %}
 
 <style>
@@ -84,6 +84,15 @@
     <button class="ld-confirm-ok" style="background:#FEF2F2;color:#DC2626;border:1px solid rgba(220,38,38,.25)" onclick="ldSetStatus('closed')">Yes, close listing</button>
     <button class="ld-confirm-cancel" onclick="ldCloseConfirm()">Cancel</button>
   </div>
+</div>
+{% endif %}
+
+{% if quality_warnings %}
+<div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;padding:.85rem 1rem;margin-bottom:.85rem;">
+  <div style="font-weight:700;font-size:.85rem;color:#92400e;margin-bottom:.4rem;">Listing quality tips</div>
+  <ul style="margin:0;padding-left:1.2rem;font-size:.82rem;color:#78350f;line-height:1.7;">
+    {% for w in quality_warnings %}<li>{{ w }}</li>{% endfor %}
+  </ul>
 </div>
 {% endif %}
 
@@ -510,6 +519,10 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
             </a>
             {% endif %}
 
+            {% if user.is_authenticated and user != listing.owner %}
+            <div id="ai-match-wrap" style="display:none;background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:10px;padding:.6rem .9rem;margin-bottom:.85rem;font-size:.83rem;color:var(--primary);font-weight:500;"></div>
+            {% endif %}
+
             <p style="color:var(--text-2);line-height:1.7;">{{ listing.description }}</p>
 
             {% with listing.get_tags_list as tags %}
@@ -576,9 +589,19 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
         {% if listing.status == 'sold' %}
         <p style="color:#dc2626;font-size:.85rem;font-weight:600;">This listing is marked as sold. Inquiries are disabled.</p>
         {% else %}
-        <form method="post">
+        <form method="post" id="inquiry-form-main">
             {% csrf_token %}
             {{ inquiry_form.as_p }}
+            <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.65rem;" id="quick-replies">
+              <span style="font-size:.75rem;color:var(--muted);font-weight:600;width:100%;">Quick messages:</span>
+              {% with "Is this still available?,Can I schedule a tour?,What's the earliest move-in date?,Is the price negotiable?"|split_csv as quick_msgs %}
+              {% for msg in quick_msgs %}
+              <button type="button" class="quick-reply-btn"
+                style="font-size:.78rem;padding:.28rem .65rem;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);cursor:pointer;transition:background .12s;"
+                data-msg="{{ msg }}">{{ msg }}</button>
+              {% endfor %}
+              {% endwith %}
+            </div>
             <button type="submit" style="width:100%;margin-top:.25rem;">Send inquiry</button>
         </form>
         {% endif %}
@@ -637,6 +660,30 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
 </script>
 {% endif %}
 
+{# ── Quick reply chips ── #}
+{% if user.is_authenticated and user != listing.owner %}
+<script>
+(function () {
+  var form = document.getElementById('inquiry-form-main');
+  if (!form) return;
+  form.querySelectorAll('.quick-reply-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var msgArea = form.querySelector('textarea');
+      if (msgArea) msgArea.value = btn.dataset.msg;
+      form.querySelectorAll('.quick-reply-btn').forEach(function (b) {
+        b.style.background = '';
+        b.style.color = '';
+        b.style.borderColor = '';
+      });
+      btn.style.background = 'rgba(42,126,242,.1)';
+      btn.style.color = 'var(--primary)';
+      btn.style.borderColor = 'rgba(42,126,242,.4)';
+    });
+  });
+})();
+</script>
+{% endif %}
+
 {# ── LIGHTBOX (regular listings only) ── #}
 {% if not render_as_community %}
 <div id="lightbox" class="lightbox">
@@ -676,6 +723,25 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
   document.getElementById('lb-next').addEventListener('click', next);
   lb.addEventListener('click', function(e){ if (e.target === lb) close(); });
   document.addEventListener('keydown', function(e){ if (!lb.classList.contains('open')) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowLeft') prev(); if (e.key === 'ArrowRight') next(); });
+})();
+</script>
+{% endif %}
+
+{# ── AI match explanation lazy-load ── #}
+{% if user.is_authenticated and user != listing.owner %}
+<script>
+(function () {
+  var wrap = document.getElementById('ai-match-wrap');
+  if (!wrap) return;
+  fetch('{% url "ai_match_explain" listing.pk %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.explanation) {
+        wrap.textContent = '✦ ' + data.explanation;
+        wrap.style.display = '';
+      }
+    })
+    .catch(function () {});
 })();
 </script>
 {% endif %}

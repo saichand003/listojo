@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -12,12 +14,15 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
 from datetime import timedelta, date
 
+logger = logging.getLogger(__name__)
+
 from listojo.services.notifications import send_listing_inquiry_email
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry, SavedSearch
 from listings.services.search import build_listing_search_context
 from listings.services.valuation import predict_price
 from listings.services.event_tracker import log_event, log_impression_batch
+from listings.services import ai as ai_service
 from portal.services.routing import least_loaded_agent
 from portal.services.lead_service import create_or_update_lead, parse_budget, parse_move_in
 
@@ -214,10 +219,16 @@ def listing_detail(request, pk):
     else:
         inquiry_form = ListingInquiryForm()
 
+    quality_warnings = request.session.pop('listing_quality_warnings', [])
     return render(
         request,
         'listings/listing_detail.html',
-        {'listing': listing, 'inquiry_form': inquiry_form, 'render_as_community': False},
+        {
+            'listing': listing,
+            'inquiry_form': inquiry_form,
+            'render_as_community': False,
+            'quality_warnings': quality_warnings,
+        },
     )
 
 
@@ -247,6 +258,16 @@ def edit_listing(request, pk):
             next_order = listing.images.count()
             for i, f in enumerate(new_files):
                 ListingImage.objects.create(listing=listing, image=f, order=next_order + i)
+            total_images = listing.images.count()
+            quality_warnings = ai_service.check_listing_quality(
+                title=listing.title,
+                description=listing.description or '',
+                price=listing.price,
+                category=listing.category,
+                image_count=total_images,
+            )
+            if quality_warnings:
+                request.session['listing_quality_warnings'] = quality_warnings
             messages.success(request, 'Listing updated successfully.')
             return redirect('listing_detail', pk=listing.pk)
     else:
@@ -320,6 +341,15 @@ def create_listing(request):
             listing.save()
             for i, f in enumerate(new_files):
                 ListingImage.objects.create(listing=listing, image=f, order=i)
+            quality_warnings = ai_service.check_listing_quality(
+                title=listing.title,
+                description=listing.description or '',
+                price=listing.price,
+                category=listing.category,
+                image_count=len(new_files),
+            )
+            if quality_warnings:
+                request.session['listing_quality_warnings'] = quality_warnings
             return redirect('listing_detail', pk=listing.pk)
     else:
         form = ListingForm()
@@ -436,6 +466,94 @@ def listing_estimate_range(request):
     if result is None:
         return JsonResponse({'error': 'model_not_ready'}, status=404)
     return JsonResponse(result)
+
+@login_required
+@csrf_protect
+def ai_generate_description(request):
+    """POST — return AI-generated listing description as JSON."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method not allowed'}, status=405)
+    try:
+        import json as _json
+        data = _json.loads(request.body)
+    except Exception:
+        return JsonResponse({'error': 'invalid JSON'}, status=400)
+    try:
+        description = ai_service.generate_listing_description(
+            title=data.get('title', ''),
+            category=data.get('category', ''),
+            bedrooms=data.get('bedrooms') or None,
+            bathrooms=data.get('bathrooms') or None,
+            price=data.get('price') or None,
+            price_unit=data.get('price_unit', 'mo'),
+            tags=data.get('tags', ''),
+            city=data.get('city', ''),
+            property_type=data.get('property_type', ''),
+            accommodation_type=data.get('accommodation_type', ''),
+            square_footage=data.get('square_footage') or None,
+        )
+        return JsonResponse({'description': description})
+    except ValueError as exc:
+        return JsonResponse({'error': str(exc)}, status=503)
+    except Exception as exc:
+        logger.warning('ai_generate_description failed: %s', exc)
+        return JsonResponse({'error': 'AI unavailable'}, status=503)
+
+
+@csrf_protect
+def ai_natural_language_search(request):
+    """POST — parse a natural-language query and return redirect URL with structured params."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method not allowed'}, status=405)
+    try:
+        import json as _json
+        data = _json.loads(request.body)
+    except Exception:
+        return JsonResponse({'error': 'invalid JSON'}, status=400)
+    query = (data.get('query') or '').strip()
+    if not query:
+        return JsonResponse({'error': 'query required'}, status=400)
+    try:
+        filters = ai_service.parse_natural_language_search(query)
+    except ValueError as exc:
+        return JsonResponse({'error': str(exc)}, status=503)
+    except Exception as exc:
+        logger.warning('ai_natural_language_search failed: %s', exc)
+        return JsonResponse({'error': 'AI unavailable'}, status=503)
+
+    from urllib.parse import urlencode
+    from django.urls import reverse
+    qs = {}
+    for key in ('category', 'city', 'bedrooms', 'max_price', 'min_price', 'tags',
+                'accommodation_type', 'property_type'):
+        if key in filters and filters[key] is not None:
+            qs[key] = filters[key]
+    redirect_url = reverse('listing_list') + ('?' + urlencode(qs) if qs else '')
+    return JsonResponse({'redirect_url': redirect_url, 'filters': filters})
+
+
+def ai_match_explain(request, pk):
+    """GET — return AI match explanation for a listing given a user's saved search."""
+    listing = get_object_or_404(Listing, pk=pk)
+    if not request.user.is_authenticated:
+        return JsonResponse({'explanation': ''})
+    saved = SavedSearch.objects.filter(user=request.user).first()
+    if not saved:
+        return JsonResponse({'explanation': ''})
+    tags = [t.strip() for t in (saved.amenities or '').split(',') if t.strip()]
+    try:
+        explanation = ai_service.generate_ai_match_explanation(
+            listing,
+            max_price=float(saved.max_budget) if saved.max_budget else None,
+            bedrooms=saved.bedrooms,
+            tags=tags,
+            score=0,
+        )
+        return JsonResponse({'explanation': explanation})
+    except Exception as exc:
+        logger.warning('ai_match_explain failed: %s', exc)
+        return JsonResponse({'explanation': ''})
+
 
 @csrf_protect
 def log_impressions(request):

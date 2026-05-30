@@ -212,8 +212,15 @@
       </div>
 
       <div class="cl-field" style="margin-top:.85rem;">
-        <label class="cl-label" for="f-description">Description <span class="cl-required">*</span></label>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem;">
+          <label class="cl-label" for="f-description" style="margin-bottom:0;">Description <span class="cl-required">*</span></label>
+          <button type="button" id="ai-gen-btn" style="display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:600;color:var(--primary);background:rgba(42,126,242,.08);border:1px solid rgba(42,126,242,.2);border-radius:999px;padding:.3rem .75rem;cursor:pointer;transition:background .15s;">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Write with AI
+          </button>
+        </div>
         {% if form.description.errors %}<p class="cl-field-error">{{ form.description.errors.0 }}</p>{% endif %}
+        <div id="ai-gen-status" style="display:none;font-size:.78rem;color:var(--primary);margin-bottom:.35rem;"></div>
         <textarea id="f-description" name="description" rows="5"
                   placeholder="Describe your listing — features, condition, rules, what's included…"
                   style="width:100%;resize:vertical;" required>{{ form.description.value|default:'' }}</textarea>
@@ -633,6 +640,57 @@
   }
 
   updateCompletion();
+
+  /* ── AI description generator ── */
+  document.getElementById('ai-gen-btn').addEventListener('click', function () {
+    var btn    = this;
+    var status = document.getElementById('ai-gen-status');
+    var desc   = document.getElementById('f-description');
+    btn.disabled = true;
+    btn.textContent = 'Generating…';
+    status.style.display = '';
+    status.textContent = 'Writing your description…';
+
+    var payload = {
+      title:              (document.getElementById('f-title')              || {}).value || '',
+      category:           (document.getElementById('f-category')           || {}).value || '',
+      city:               (document.getElementById('f-city')               || {}).value || '',
+      price:              parseFloat((document.getElementById('f-price')   || {}).value) || null,
+      price_unit:         (document.getElementById('f-price-unit')         || {}).value || 'mo',
+      tags:               (document.getElementById('f-tags')               || {}).value || '',
+      property_type:      (document.getElementById('f-property-type')      || {}).value || '',
+      accommodation_type: (document.getElementById('f-accommodation-type') || {}).value || '',
+    };
+
+    fetch('{% url "ai_generate_description" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.description) {
+          desc.value = data.description;
+          updateDescCount();
+          status.textContent = 'Description generated — feel free to edit it.';
+          status.style.color = 'var(--accent)';
+        } else {
+          status.textContent = data.error || 'Could not generate description.';
+          status.style.color = '#e53e3e';
+        }
+      })
+      .catch(function () {
+        status.textContent = 'Request failed — check your connection.';
+        status.style.color = '#e53e3e';
+      })
+      .finally(function () {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Write with AI';
+      });
+  });
 
   /* ── Address autocomplete (Google Places API New — REST, no SDK needed) ── */
   (function () {
