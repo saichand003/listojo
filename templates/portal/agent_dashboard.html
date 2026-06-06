@@ -1,115 +1,83 @@
 {% extends 'portal/agent_base.html' %}
 {% block page_title %}Agent Dashboard{% endblock %}
 {% block content %}
-<style>
-  /* KPI cards */
-  .agent-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.75rem; }
-  .agent-kpi { background:#fff; border:1px solid #e8e2d8; border-radius:14px; padding:1.25rem 1.4rem; display:flex; align-items:center; gap:1rem; box-shadow:0 2px 8px rgba(0,0,0,.05); }
-  .agent-kpi-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0; }
-  .agent-kpi-label { font-size:.78rem; color:#8a7f72; font-weight:500; margin-bottom:.15rem; }
-  .agent-kpi-value { font-family:'Montserrat',sans-serif; font-size:2rem; font-weight:800; color:#1a1a1a; line-height:1; }
-  .agent-kpi-delta { font-size:.72rem; font-weight:600; margin-top:.3rem; }
-  .delta-up   { color:#28b87c; }
-  .delta-warn { color:#c47e00; }
-
-  /* Filter tabs */
-  .filter-tabs { display:flex; gap:.5rem; margin-bottom:1.25rem; }
-  .filter-tab { padding:.4rem 1.1rem; border-radius:999px; font-size:.82rem; font-weight:600; text-decoration:none; border:1.5px solid #d4cfc6; color:#6b6258; background:#fff; transition:all .15s; cursor:pointer; }
-  .filter-tab:hover { border-color:#1a2e1e; color:#1a2e1e; }
-  .filter-tab.active { background:#1a2e1e; color:#fff; border-color:#1a2e1e; }
-
-  /* Lead cards */
-  .lead-card { background:#fff; border:1px solid #e8e2d8; border-radius:14px; padding:1.1rem 1.3rem; margin-bottom:.85rem; display:flex; align-items:flex-start; gap:1rem; box-shadow:0 1px 4px rgba(0,0,0,.04); transition:box-shadow .15s; }
-  .lead-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.09); }
-
-  /* Avatar */
-  .lead-avatar { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:800; color:#fff; flex-shrink:0; margin-top:.1rem; }
-
-  /* Lead body */
-  .lead-body { flex:1; min-width:0; }
-  .lead-name-row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin-bottom:.2rem; }
-  .lead-name { font-weight:700; font-size:.97rem; color:#1a1a1a; }
-  .lead-pref { font-size:.82rem; color:#7a7168; margin-bottom:.55rem; }
-
-  /* Status badges */
-  .status-new      { background:#fff3e0; color:#b45309; border:1px solid #fcd38a; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; }
-  .status-working  { background:#e4f5ee; color:#1a6645; border:1px solid #8dcbb5; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; }
-  .status-pending  { background:#fef9c3; color:#854d0e; border:1px solid #fde047; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; }
-  .status-other    { background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; }
-  .status-won      { background:#e4f5ee; color:#1a6645; border:1px solid #8dcbb5; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; }
-  .status-lost     { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; font-size:.68rem; font-weight:700; padding:.15rem .55rem; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; }
-
-  /* Tag chips */
-  .lead-tags { display:flex; gap:.4rem; flex-wrap:wrap; }
-  .tag-shortlist  { background:#e4f5ee; color:#1a6645; border:1px solid #bbf7d0; font-size:.72rem; font-weight:600; padding:.18rem .55rem; border-radius:999px; }
-  .tag-match      { background:#e4f5ee; color:#1a6645; border:1px solid #bbf7d0; font-size:.72rem; font-weight:600; padding:.18rem .55rem; border-radius:999px; }
-  .tag-area       { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:.72rem; font-weight:600; padding:.18rem .55rem; border-radius:999px; }
-  .tag-tour       { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:.72rem; font-weight:600; padding:.18rem .55rem; border-radius:999px; }
-  .tag-awaiting   { background:#fefce8; color:#854d0e; border:1px solid #fef08a; font-size:.72rem; font-weight:600; padding:.18rem .55rem; border-radius:999px; }
-
-  /* Right side: time + matched count */
-  .lead-right { text-align:right; flex-shrink:0; min-width:130px; }
-  .lead-time  { font-size:.72rem; color:#9a9088; margin-bottom:.3rem; }
-  .lead-matched { font-size:.82rem; color:#1a2e1e; font-weight:700; white-space:nowrap; }
-  .lead-matched a { color:#1a2e1e; text-decoration:none; }
-  .lead-matched a:hover { text-decoration:underline; }
-</style>
 
 {# ── Page header ── #}
-<div style="margin-bottom:1.5rem;">
-  <h1 style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.75rem;color:#1a1a1a;margin:0 0 .3rem;">Agent Dashboard</h1>
-  <p style="color:#7a7168;font-size:.9rem;margin:0;">
-    Welcome back, {{ request.user.first_name|default:request.user.username }}.
-    {% if new_count %}You have <strong style="color:#1a1a1a;">{{ new_count }} new lead{{ new_count|pluralize }}</strong> waiting.{% else %}You have <strong style="color:#1a1a1a;">{{ active_count }} active lead{{ active_count|pluralize }}</strong> in progress.{% endif %}
-  </p>
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+  <div>
+    <p style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin:0 0 .3rem;">Agent Portal</p>
+    <h1 style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.55rem;color:var(--text);margin:0 0 .25rem;line-height:1.2;">
+      Good {% now "H" as hour %}{% if hour < "12" %}morning{% elif hour < "17" %}afternoon{% else %}evening{% endif %}, {{ request.user.first_name|default:request.user.username }}.
+    </h1>
+    <p style="color:var(--muted);font-size:.82rem;margin:0;">
+      {% if new_count %}<span style="color:#c2410c;font-weight:700;">{{ new_count }} new lead{{ new_count|pluralize }}</span> waiting for action.{% else %}<span style="font-weight:600;color:var(--text);">{{ active_count }} active lead{{ active_count|pluralize }}</span> in progress.{% endif %}
+    </p>
+  </div>
+  <a href="{% url 'agent_leads' %}" class="btn btn-primary" style="flex-shrink:0;margin-top:.25rem;">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+    View all leads
+  </a>
 </div>
 
 {# ── KPI Cards ── #}
-<div class="agent-kpi-grid">
-  <div class="agent-kpi">
-    <div class="agent-kpi-icon" style="background:#fff3e0;">🎯</div>
-    <div>
-      <div class="agent-kpi-label">New leads</div>
-      <div class="agent-kpi-value">{{ new_count }}</div>
-      <div class="agent-kpi-delta delta-up">+{{ new_count }} unread</div>
+<div class="kpi-grid">
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#fff7ed;">
+      <svg viewBox="0 0 24 24" fill="#d97706"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+    </div>
+    <div class="kpi-body">
+      <div class="kpi-label">New Leads</div>
+      <div class="kpi-value">{{ new_count }}</div>
+      <div class="kpi-delta {% if new_count > 0 %}warn{% else %}muted{% endif %}">{% if new_count > 0 %}Needs action{% else %}All caught up{% endif %}</div>
     </div>
   </div>
-  <div class="agent-kpi">
-    <div class="agent-kpi-icon" style="background:#f0f4ff;">📋</div>
-    <div>
-      <div class="agent-kpi-label">Shortlists sent</div>
-      <div class="agent-kpi-value">{{ shortlists_sent }}</div>
-      <div class="agent-kpi-delta delta-up">Active shortlists</div>
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#eff6ff;">
+      <svg viewBox="0 0 24 24" fill="#2A7EF2"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg>
+    </div>
+    <div class="kpi-body">
+      <div class="kpi-label">Shortlists Sent</div>
+      <div class="kpi-value">{{ shortlists_sent }}</div>
+      <div class="kpi-delta up">Active shortlists</div>
     </div>
   </div>
-  <div class="agent-kpi">
-    <div class="agent-kpi-icon" style="background:#e4f5ee;">🏆</div>
-    <div>
-      <div class="agent-kpi-label">Closings</div>
-      <div class="agent-kpi-value">{{ won_count }}</div>
-      <div class="agent-kpi-delta delta-up">{{ lost_count }} lost</div>
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#ecfdf5;">
+      <svg viewBox="0 0 24 24" fill="#28b87c"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+    </div>
+    <div class="kpi-body">
+      <div class="kpi-label">Closings</div>
+      <div class="kpi-value">{{ won_count }}</div>
+      <div class="kpi-delta {% if lost_count > 0 %}warn{% else %}muted{% endif %}">{{ lost_count }} lost</div>
     </div>
   </div>
-  <div class="agent-kpi">
-    <div class="agent-kpi-icon" style="background:#fdf4ff;">📊</div>
-    <div>
-      <div class="agent-kpi-label">Total leads</div>
-      <div class="agent-kpi-value">{{ total }}</div>
-      <div class="agent-kpi-delta delta-up">{{ active_count }} active</div>
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#faf5ff;">
+      <svg viewBox="0 0 24 24" fill="#7c3aed"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    </div>
+    <div class="kpi-body">
+      <div class="kpi-label">Total Leads</div>
+      <div class="kpi-value">{{ total }}</div>
+      <div class="kpi-delta up">{{ active_count }} active</div>
     </div>
   </div>
 </div>
 
 {# ── Incoming leads section ── #}
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem;">
-  <h2 style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.15rem;color:#1a1a1a;margin:0;">Incoming Leads</h2>
-  <a href="{% url 'agent_leads' %}" style="font-size:.8rem;color:#1a2e1e;font-weight:600;text-decoration:none;">View all &rarr;</a>
+  <div>
+    <h2 style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.1rem;color:var(--text);margin:0 0 .1rem;">Incoming Leads</h2>
+    <p style="font-size:.75rem;color:var(--muted);margin:0;">Most recent first · Click to open</p>
+  </div>
+  <a href="{% url 'agent_leads' %}" class="btn btn-ghost btn-sm">View all &rarr;</a>
 </div>
 
 {# Filter tabs #}
 <div class="filter-tabs">
-  <a href="?" class="filter-tab {% if not status_filter %}active{% endif %}">All</a>
-  <a href="?status=new" class="filter-tab {% if status_filter == 'new' %}active{% endif %}">New</a>
+  <a href="?" class="filter-tab {% if not status_filter %}active{% endif %}">All leads</a>
+  <a href="?status=new" class="filter-tab {% if status_filter == 'new' %}active{% endif %}">
+    New {% if new_count %}<span style="background:rgba(194,65,12,.15);color:#c2410c;padding:.05rem .4rem;border-radius:999px;font-size:.65rem;margin-left:.2rem;">{{ new_count }}</span>{% endif %}
+  </a>
   <a href="?status=shortlist_sent" class="filter-tab {% if status_filter == 'shortlist_sent' %}active{% endif %}">Working</a>
   <a href="?status=application_in_progress" class="filter-tab {% if status_filter == 'application_in_progress' %}active{% endif %}">Pending</a>
 </div>
@@ -136,13 +104,13 @@
   <div class="lead-body">
     <div class="lead-name-row">
       <span class="lead-name">{{ lead.name }}</span>
-      {% if lead.status == 'new' %}<span class="status-new">New</span>
-      {% elif lead.status == 'contacted' or lead.status == 'shortlist_ready' or lead.status == 'shortlist_sent' %}<span class="status-working">Working</span>
-      {% elif lead.status == 'touring' %}<span class="status-tour" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:999px;text-transform:uppercase;">Touring</span>
-      {% elif lead.status == 'application_in_progress' %}<span class="status-pending">Pending</span>
-      {% elif lead.status == 'closed_won' %}<span class="status-won">Won</span>
-      {% elif lead.status == 'closed_lost' %}<span class="status-lost">Lost</span>
-      {% else %}<span class="status-other">{{ lead.get_status_display }}</span>{% endif %}
+      {% if lead.status == 'new' %}<span class="s-pill s-new">New</span>
+      {% elif lead.status == 'contacted' or lead.status == 'shortlist_ready' or lead.status == 'shortlist_sent' %}<span class="s-pill s-working">Working</span>
+      {% elif lead.status == 'touring' %}<span class="s-pill s-touring">Touring</span>
+      {% elif lead.status == 'application_in_progress' %}<span class="s-pill s-pending">Pending</span>
+      {% elif lead.status == 'closed_won' %}<span class="s-pill s-won">Won</span>
+      {% elif lead.status == 'closed_lost' %}<span class="s-pill s-lost">Lost</span>
+      {% else %}<span class="s-pill s-other">{{ lead.get_status_display }}</span>{% endif %}
     </div>
 
     {% if item.pref_summary %}
@@ -152,13 +120,13 @@
     {% endif %}
 
     <div class="lead-tags">
-      {% if lead.status == 'new' %}<span class="tag-shortlist">Shortlist ready</span>
-      {% elif lead.status == 'shortlist_sent' %}<span class="tag-shortlist">Shortlist sent</span>
-      {% elif lead.status == 'touring' %}<span class="tag-tour">Tour scheduled</span>
-      {% elif lead.status == 'application_in_progress' %}<span class="tag-awaiting">Awaiting response</span>
+      {% if lead.status == 'new' %}<span class="t-chip t-shortlist">Shortlist ready</span>
+      {% elif lead.status == 'shortlist_sent' %}<span class="t-chip t-shortlist">Shortlist sent</span>
+      {% elif lead.status == 'touring' %}<span class="t-chip t-tour">Tour scheduled</span>
+      {% elif lead.status == 'application_in_progress' %}<span class="t-chip t-awaiting">Awaiting response</span>
       {% endif %}
-      {% if item.match_pct %}<span class="tag-match">{{ item.match_pct }}% top match</span>{% endif %}
-      {% if item.preference and item.preference.city %}<span class="tag-area">{{ item.preference.city }} area</span>{% endif %}
+      {% if item.match_pct %}<span class="t-chip t-match">{{ item.match_pct }}% top match</span>{% endif %}
+      {% if item.preference and item.preference.city %}<span class="t-chip t-area">{{ item.preference.city }}</span>{% endif %}
     </div>
   </div>
 
@@ -176,10 +144,12 @@
 </a>
 {% endwith %}
 {% empty %}
-<div style="background:#fff;border:1px solid #e8e2d8;border-radius:14px;padding:3rem 1rem;text-align:center;color:#9a9088;">
-  <div style="font-size:2.5rem;margin-bottom:.75rem;">📭</div>
-  <div style="font-weight:700;font-size:1rem;color:#3a3530;margin-bottom:.3rem;">No leads yet</div>
-  <div style="font-size:.84rem;">Leads appear here when renters submit inquiries on listings.</div>
+<div class="empty-state">
+  <div class="empty-icon">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="40" height="40" style="color:var(--border-2);margin:0 auto .75rem;display:block"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"/></svg>
+  </div>
+  <div class="empty-title">No leads yet</div>
+  <div class="empty-sub">Leads appear when renters submit inquiries on listings. Check back soon.</div>
 </div>
 {% endfor %}
 

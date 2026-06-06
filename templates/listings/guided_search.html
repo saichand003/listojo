@@ -145,7 +145,7 @@
   <div class="gs-progress-wrap">
     <div class="gs-progress-meta">
       <span class="gs-progress-label" id="progress-section-label">Getting started</span>
-      <span class="gs-progress-step" id="progress-step-text">Step 1 of 9</span>
+      <span class="gs-progress-step" id="progress-step-text">Step 1 of 8</span>
     </div>
     <div class="gs-progress-track">
       <div class="gs-progress-fill" id="progress-fill" style="width:11%"></div>
@@ -301,7 +301,7 @@
     </div>
   </div>
 
-  {# ── Step 5: Budget ── #}
+  {# ── Step 5: Budget + Income ── #}
   <div id="step5" style="display:none">
     <div class="gs-card">
       <div class="gs-card-label">Step 5</div>
@@ -321,6 +321,17 @@
           <span class="gs-sep">to</span>
           <input id="max_price" class="gs-input" placeholder="Max $" type="number" min="0" style="flex:1" value="3000">
         </div>
+      </div>
+      <div class="gs-group" style="border-top:1px solid #F3F4F6;padding-top:20px;margin-top:4px;">
+        <label class="gs-label">Monthly household income <span style="font-weight:400;color:#9CA3AF">(before taxes, optional)</span></label>
+        <div class="income-display" id="income_disp">$5,000</div>
+        <div class="income-hint">Most landlords require 2.5–3× the monthly rent</div>
+        <input type="range" class="gs-slider" id="income_slider" min="1000" max="30000" step="250" value="5000"
+               oninput="onIncomeSlide(this.value)">
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#9CA3AF;margin-top:2px">
+          <span>$1,000</span><span>$30,000</span>
+        </div>
+        <input type="hidden" id="monthly_income_val" value="5000">
       </div>
       <div class="gs-actions">
         <button class="gs-btn gs-btn-ghost" onclick="goStep(4)">← Back</button>
@@ -375,12 +386,12 @@
     </div>
   </div>
 
-  {# ── Step 7: Timeline + Urgency ── #}
+  {# ── Step 7: Timeline + Urgency (merged) ── #}
   <div id="step7" style="display:none">
     <div class="gs-card">
       <div class="gs-card-label">Step 7</div>
-      <h2>When are you looking to move?</h2>
-      <p class="gs-sub">This helps us filter by availability and understand how urgently you need to find a place.</p>
+      <h2>When do you want to move?</h2>
+      <p class="gs-sub">Helps us filter by availability and understand your urgency.</p>
       <div class="gs-group">
         <label class="gs-label">Move-in timeline</label>
         <div class="gs-options" id="timeline-group">
@@ -402,59 +413,7 @@
           </div>
         </div>
       </div>
-      <div class="gs-group" id="lease-group">
-        <label class="gs-label">Lease preference</label>
-        <div class="tag-grid">
-          <div class="tag-pill" data-group="lease" data-val="12 month lease" onclick="toggleTag(this)">12 months</div>
-          <div class="tag-pill" data-group="lease" data-val="6 month lease" onclick="toggleTag(this)">6 months</div>
-          <div class="tag-pill" data-group="lease" data-val="month-to-month" onclick="toggleTag(this)">Month-to-month</div>
-        </div>
-      </div>
-      <div class="gs-actions">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(6)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(8)">Continue →</button>
-      </div>
-    </div>
-  </div>
-
-  {# ── Step 8: Priority ── #}
-  <div id="step8" style="display:none">
-    <div class="gs-card">
-      <div class="gs-card-label">Step 8</div>
-      <h2>What matters most to you?</h2>
-      <p class="gs-sub">This helps us rank your results — the top matches will be optimized for what you care about most.</p>
-      <div class="priority-grid" id="priority-group">
-        <div class="priority-card" id="pc-price" onclick="selectPriority('price')">
-          <div class="pc-icon">💰</div>
-          <div class="pc-title">Best price</div>
-          <div class="pc-sub">I want the most affordable option for what I get</div>
-        </div>
-        <div class="priority-card" id="pc-location" onclick="selectPriority('location')">
-          <div class="pc-icon">📍</div>
-          <div class="pc-title">Right location</div>
-          <div class="pc-sub">City, commute, and neighborhood matter most to me</div>
-        </div>
-        <div class="priority-card" id="pc-features" onclick="selectPriority('features')">
-          <div class="pc-icon">✨</div>
-          <div class="pc-title">Best features</div>
-          <div class="pc-sub">I want my must-haves: amenities, space, and quality</div>
-        </div>
-      </div>
-      <div class="gs-actions" style="margin-top:24px">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(7)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(9)">Continue →</button>
-      </div>
-    </div>
-  </div>
-
-  {# ── Step 9: Urgency + Income ── #}
-  <div id="step9" style="display:none">
-    <div class="gs-card">
-      <div class="gs-card-label">Step 9</div>
-      <h2>Almost there — two quick ones.</h2>
-      <p class="gs-sub">These help us surface listings that are actually in reach for you.</p>
-
-      <div class="gs-group">
+      <div class="gs-group" style="border-top:1px solid #F3F4F6;padding-top:20px;margin-top:4px;">
         <label class="gs-label">How urgently do you need to move?</label>
         <div class="gs-options" id="urgency-group">
           <div class="gs-option" data-val="just_looking" onclick="selectUrgency(this)">
@@ -475,21 +434,46 @@
           </div>
         </div>
       </div>
-
-      <div class="gs-group">
-        <label class="gs-label">Monthly household income <span style="font-weight:400;color:#9CA3AF">(before taxes, optional)</span></label>
-        <div class="income-display" id="income_disp">$5,000</div>
-        <div class="income-hint">Most landlords require 2.5–3× the monthly rent</div>
-        <input type="range" class="gs-slider" id="income_slider" min="1000" max="30000" step="250" value="5000"
-               oninput="onIncomeSlide(this.value)">
-        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#9CA3AF;margin-top:2px">
-          <span>$1,000</span><span>$30,000</span>
+      <div class="gs-group" id="lease-group" style="border-top:1px solid #F3F4F6;padding-top:20px;margin-top:4px;">
+        <label class="gs-label">Lease preference</label>
+        <div class="tag-grid">
+          <div class="tag-pill" data-group="lease" data-val="12 month lease" onclick="toggleTag(this)">12 months</div>
+          <div class="tag-pill" data-group="lease" data-val="6 month lease" onclick="toggleTag(this)">6 months</div>
+          <div class="tag-pill" data-group="lease" data-val="month-to-month" onclick="toggleTag(this)">Month-to-month</div>
         </div>
-        <input type="hidden" id="monthly_income_val" value="5000">
       </div>
-
       <div class="gs-actions">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(8)">← Back</button>
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(6)">← Back</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(8)">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  {# ── Step 8: Priority + Submit ── #}
+  <div id="step8" style="display:none">
+    <div class="gs-card">
+      <div class="gs-card-label">Step 8</div>
+      <h2>What matters most to you?</h2>
+      <p class="gs-sub">This helps us rank your results — the top matches will be optimized for what you care about most.</p>
+      <div class="priority-grid" id="priority-group">
+        <div class="priority-card" id="pc-price" onclick="selectPriority('price')">
+          <div class="pc-icon">💰</div>
+          <div class="pc-title">Best price</div>
+          <div class="pc-sub">Most affordable for what I get</div>
+        </div>
+        <div class="priority-card" id="pc-location" onclick="selectPriority('location')">
+          <div class="pc-icon">📍</div>
+          <div class="pc-title">Right location</div>
+          <div class="pc-sub">City, commute, and neighborhood first</div>
+        </div>
+        <div class="priority-card" id="pc-features" onclick="selectPriority('features')">
+          <div class="pc-icon">✨</div>
+          <div class="pc-title">Best features</div>
+          <div class="pc-sub">Amenities, space, and quality above all</div>
+        </div>
+      </div>
+      <div class="gs-actions" style="margin-top:24px">
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(7)">← Back</button>
         <button class="gs-btn gs-btn-primary gs-btn-lg gs-btn-submit" onclick="submitSearch()">Show my matches →</button>
       </div>
     </div>
@@ -501,7 +485,7 @@
 <form id="gs-submit-form" method="post" action="{% url 'guided_search' %}{% if gs_mode %}?mode={{ gs_mode }}{% endif %}" style="display:none">{% csrf_token %}</form>
 
 <script>
-var TOTAL_STEPS = 9;
+var TOTAL_STEPS = 8;
 var rentBuy = 'rent';
 var roomType = 'whole';
 var buyPurpose = 'primary';
@@ -511,8 +495,8 @@ var GS_MODE = '{{ gs_mode|escapejs }}';
 
 var STEP_LABELS = [
   '', 'Getting started', 'Space type', 'Property type',
-  'Location', 'Budget', 'Must-haves', 'Timeline',
-  'Priorities', 'Final touches'
+  'Location', 'Budget & Income', 'Must-haves', 'Timeline & Urgency',
+  'Priorities'
 ];
 
 function goStep(n) {

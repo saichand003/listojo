@@ -2,153 +2,106 @@
 {% block page_title %}Dashboard{% endblock %}
 {% block content %}
 
-<style>
-/* ── KPI grid ─────────────────────────────────────────────────── */
-.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.25rem; }
-.kpi-card { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:1.25rem 1.4rem; box-shadow:var(--shadow); display:flex; align-items:flex-start; gap:1rem; }
-.kpi-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.35rem; flex-shrink:0; }
-.kpi-body { flex:1; min-width:0; }
-.kpi-label { font-size:.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.2rem; }
-.kpi-value { font-family:'Montserrat',sans-serif; font-size:1.9rem; font-weight:800; color:var(--text); line-height:1.1; }
-.kpi-delta { font-size:.75rem; font-weight:600; margin-top:.25rem; }
-.kpi-delta.up   { color:#28b87c; }
-.kpi-delta.warn { color:#d97706; }
-.kpi-delta.danger { color:#dc2626; }
-.kpi-delta a { color:inherit; text-decoration:none; }
-
-/* ── Two-col layout ───────────────────────────────────────────── */
-.dash-row { display:grid; gap:1rem; margin-bottom:1rem; }
-.dash-row-2 { grid-template-columns:1fr 1fr; }
-.dash-row-3 { grid-template-columns:1.6fr 1fr; }
-
-/* ── Funnel (stacked: label+count row, then bar below) ────────── */
-.funnel-step { padding:.7rem 0; border-bottom:1px solid var(--border); }
-.funnel-step:last-child { border-bottom:none; }
-.funnel-top  { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.42rem; }
-.funnel-lbl  { font-size:.875rem; color:var(--text); font-weight:400; }
-.funnel-right{ font-size:.875rem; white-space:nowrap; }
-.funnel-num  { font-weight:800; color:var(--text); font-size:.95rem; }
-.funnel-pct  { color:var(--muted); font-weight:400; font-size:.82rem; margin-left:.2rem; }
-.funnel-track{ height:8px; background:#e2e8e2; border-radius:99px; overflow:hidden; }
-.funnel-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#2A7EF2,#28b87c); transition:width .45s ease; }
-.funnel-fill.warn { background:#f59e0b; }
-
-/* ── Search intent (icon · label · bar · pct) ─────────────────── */
-.intent-row  { display:flex; align-items:center; gap:.7rem; padding:.62rem 0; border-bottom:1px solid var(--border); }
-.intent-row:last-child { border-bottom:none; }
-.intent-icon { font-size:1.15rem; flex-shrink:0; width:26px; text-align:center; }
-.intent-lbl  { flex:0 0 145px; font-size:.86rem; color:var(--text); font-weight:400; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.intent-track{ flex:1; height:8px; background:#e2e8e2; border-radius:99px; overflow:hidden; }
-.intent-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#2A7EF2,#28b87c); }
-.intent-pct  { width:44px; text-align:right; font-size:.9rem; font-weight:800; color:var(--text); }
-
-/* ── Review table ─────────────────────────────────────────────── */
-.review-table table { width:100%; border-collapse:collapse; font-size:.875rem; }
-.review-table thead th { text-align:left; padding:.5rem .75rem; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); border-bottom:2px solid var(--border); }
-.review-table tbody td { padding:.7rem .75rem; border-bottom:1px solid var(--border); vertical-align:middle; }
-.review-table tbody tr:last-child td { border-bottom:none; }
-.review-table tbody tr:hover td { background:#f8faff; }
-
-/* ── Top listers table ────────────────────────────────────────── */
-.lister-rank { font-size:.75rem; font-weight:800; color:var(--muted); width:24px; }
-
-/* ── Quality alerts ───────────────────────────────────────────── */
-.quality-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; }
-.quality-card { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:.9rem 1rem; display:flex; align-items:center; gap:.75rem; }
-.quality-icon { font-size:1.5rem; flex-shrink:0; }
-.quality-count { font-family:'Montserrat',sans-serif; font-size:1.5rem; font-weight:800; line-height:1; }
-.quality-label { font-size:.75rem; color:var(--muted); margin-top:.1rem; }
-.quality-warn  .quality-count { color:#d97706; }
-.quality-danger .quality-count { color:#dc2626; }
-
-/* ── Card header ──────────────────────────────────────────────── */
-.card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
-.card-head h2 { font-family:'Montserrat',sans-serif; font-weight:700; font-size:.97rem; color:var(--text); margin:0; }
-.view-all { font-size:.78rem; font-weight:600; color:var(--primary); text-decoration:none; border:1px solid var(--border); padding:.25rem .7rem; border-radius:8px; }
-.view-all:hover { background:var(--bg); }
-
-/* ── Recent users ─────────────────────────────────────────────── */
-.user-row { display:flex; align-items:center; justify-content:space-between; padding:.55rem 0; border-bottom:1px solid var(--border); font-size:.84rem; }
-.user-row:last-child { border-bottom:none; }
-.user-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#a5b4fc,#7dd3fc); display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; color:#1e40af; flex-shrink:0; }
-.user-name { font-weight:600; color:var(--text); }
-.user-meta { font-size:.72rem; color:var(--muted); margin-top:1px; }
-</style>
 
 {# ── PAGE HEADER ────────────────────────────────────────────── #}
-<div style="margin-bottom:1.5rem;">
-  <h1 style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.6rem;color:var(--text);margin:0 0 .2rem;">Admin Dashboard</h1>
-  <p style="color:var(--muted);font-size:.82rem;margin:0;">Platform overview &middot; Listojo &middot; Irving, TX launch</p>
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+  <div>
+    <p style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin:0 0 .3rem;">Admin Dashboard</p>
+    <h1 style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.55rem;color:var(--text);margin:0 0 .25rem;line-height:1.2;">Platform Overview</h1>
+    <p style="color:var(--muted);font-size:.8rem;margin:0;">Listojo &middot; Dallas–Fort Worth pilot</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:.5rem;flex-shrink:0;margin-top:.25rem;">
+    <div class="platform-status">
+      <span class="status-dot"></span>
+      All systems operational
+    </div>
+  </div>
 </div>
 
 {# ── ROW 1: PRIMARY KPIs ─────────────────────────────────────── #}
 <div class="kpi-grid">
-  <div class="kpi-card">
-    <div class="kpi-icon" style="background:#EBF3FF;">🏠</div>
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#EBF3FF;">
+      <svg viewBox="0 0 24 24" fill="#2A7EF2"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    </div>
     <div class="kpi-body">
       <div class="kpi-label">Active Listings</div>
       <div class="kpi-value">{{ active_listings }}</div>
-      <div class="kpi-delta up">+{{ new_listings_7 }} this week</div>
+      <div class="kpi-sub up">+{{ new_listings_7 }} this week</div>
     </div>
   </div>
-  <div class="kpi-card">
-    <div class="kpi-icon" style="background:#F0FDF4;">👥</div>
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#F0FDF4;">
+      <svg viewBox="0 0 24 24" fill="#28b87c"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    </div>
     <div class="kpi-body">
       <div class="kpi-label">Registered Users</div>
       <div class="kpi-value">{{ total_users }}</div>
-      <div class="kpi-delta up">+{{ new_users_7 }} this week</div>
+      <div class="kpi-sub up">+{{ new_users_7 }} this week</div>
     </div>
   </div>
-  <div class="kpi-card">
-    <div class="kpi-icon" style="background:#FFFBEB;">🏡</div>
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#FFFBEB;">
+      <svg viewBox="0 0 24 24" fill="#d97706"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg>
+    </div>
     <div class="kpi-body">
       <div class="kpi-label">Active Listers</div>
       <div class="kpi-value">{{ active_listers }}</div>
-      <div class="kpi-delta up">Users with live listings</div>
+      <div class="kpi-sub up">Users with live listings</div>
     </div>
   </div>
-  <div class="kpi-card">
-    <div class="kpi-icon" style="background:#FFF1F2;">💬</div>
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#FFF1F2;">
+      <svg viewBox="0 0 24 24" fill="#ef4444"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5M8 11h8v1.5H8V11zm0 4h8v1.5H8V15z"/></svg>
+    </div>
     <div class="kpi-body">
       <div class="kpi-label">Inquiries (7 days)</div>
       <div class="kpi-value">{{ new_inquiries_7 }}</div>
-      <div class="kpi-delta up">{{ total_inquiries }} all time</div>
+      <div class="kpi-sub up">{{ total_inquiries }} all time</div>
     </div>
   </div>
 </div>
 
 {# ── ROW 2: SECONDARY KPIs ───────────────────────────────────── #}
 <div class="kpi-grid" style="margin-bottom:1.25rem;">
-  <div class="kpi-card">
-    <div class="kpi-icon" style="background:#FFF1F2;">⏳</div>
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#FFF7ED;">
+      <svg viewBox="0 0 24 24" fill="#d97706"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+    </div>
     <div class="kpi-body">
       <div class="kpi-label">Pending Review</div>
       <div class="kpi-value" style="color:#d97706;">{{ pending_count }}</div>
-      <div class="kpi-delta warn"><a href="{% url 'portal_listings' %}?status=pending">Review now &rarr;</a></div>
+      <div class="kpi-sub warn"><a href="{% url 'portal_listings' %}?status=pending" style="color:inherit;text-decoration:none;">Review now &rarr;</a></div>
     </div>
   </div>
-  <div class="kpi-card">
-    <div class="kpi-icon" style="background:#F5F3FF;">💬</div>
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#F5F3FF;">
+      <svg viewBox="0 0 24 24" fill="#7c3aed"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+    </div>
     <div class="kpi-body">
       <div class="kpi-label">Total Messages</div>
       <div class="kpi-value">{{ total_messages }}</div>
-      <div class="kpi-delta up">Chat activity all time</div>
+      <div class="kpi-sub up">Chat activity all time</div>
     </div>
   </div>
-  <div class="kpi-card">
-    <div class="kpi-icon" style="background:#EBF3FF;">👁</div>
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#EBF3FF;">
+      <svg viewBox="0 0 24 24" fill="#2A7EF2"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+    </div>
     <div class="kpi-body">
       <div class="kpi-label">Total Listing Views</div>
       <div class="kpi-value">{{ total_views }}</div>
-      <div class="kpi-delta up">Across all listings</div>
+      <div class="kpi-sub up">Across all listings</div>
     </div>
   </div>
-  <div class="kpi-card">
-    <div class="kpi-icon" style="background:#F0FDF4;">⭐</div>
+  <div class="card kpi-card">
+    <div class="kpi-icon-wrap" style="background:#F0FDF4;">
+      <svg viewBox="0 0 24 24" fill="#28b87c"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+    </div>
     <div class="kpi-body">
       <div class="kpi-label">Featured Listings</div>
       <div class="kpi-value">{{ featured }}</div>
-      <div class="kpi-delta up">Boosted on search</div>
+      <div class="kpi-sub up">Boosted on search</div>
     </div>
   </div>
 </div>
@@ -371,21 +324,27 @@
   </div>
   <div class="quality-grid">
     <div class="quality-card {% if no_photos > 0 %}quality-warn{% endif %}">
-      <div class="quality-icon">📷</div>
+      <div class="quality-icon-wrap" style="background:{% if no_photos > 0 %}#fff7ed{% else %}var(--bg){% endif %};">
+        <svg viewBox="0 0 24 24" fill="{% if no_photos > 0 %}#d97706{% else %}var(--muted){% endif %}"><path d="M20 5h-3.17L15 3H9L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-8 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+      </div>
       <div>
         <div class="quality-count">{{ no_photos }}</div>
         <div class="quality-label">Active listings with no photos</div>
       </div>
     </div>
     <div class="quality-card {% if no_tags > 0 %}quality-warn{% endif %}">
-      <div class="quality-icon">🏷️</div>
+      <div class="quality-icon-wrap" style="background:{% if no_tags > 0 %}#fff7ed{% else %}var(--bg){% endif %};">
+        <svg viewBox="0 0 24 24" fill="{% if no_tags > 0 %}#d97706{% else %}var(--muted){% endif %}"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
+      </div>
       <div>
         <div class="quality-count">{{ no_tags }}</div>
         <div class="quality-label">Active listings with no tags</div>
       </div>
     </div>
     <div class="quality-card {% if stale > 0 %}quality-danger{% endif %}">
-      <div class="quality-icon">⏰</div>
+      <div class="quality-icon-wrap" style="background:{% if stale > 0 %}#fff5f5{% else %}var(--bg){% endif %};">
+        <svg viewBox="0 0 24 24" fill="{% if stale > 0 %}#dc2626{% else %}var(--muted){% endif %}"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+      </div>
       <div>
         <div class="quality-count">{{ stale }}</div>
         <div class="quality-label">Stale listings (&gt;14 days, &lt;3 views)</div>

@@ -151,18 +151,26 @@
     <h1 class="hc-headline">Find your next home<br>with confidence.</h1>
     <p class="hc-subline">Real listings. Smart match scoring. No noise.<br>We show you why each home fits — so you decide fast.</p>
 
-    <div class="hc-ctas">
-      <a href="{% url 'guided_search' %}" class="hc-btn-primary">
-        Start guided search &rarr;
-      </a>
-      <a href="{% url 'listing_list' %}?category=rentals" class="hc-btn-ghost">
-        <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="15.5" cy="8.5" r="3.5"/><path d="M13 11 4 20"/><path d="M6.5 17.5 9 20"/><path d="M8.8 15.2 11.3 17.7"/></svg>
-        Rentals
-      </a>
-      <a href="{% url 'listing_list' %}?category=properties" class="hc-btn-ghost">
-        <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5"/><path d="M6.5 9.5V20h11V9.5"/><path d="M10 20v-5h4v5"/></svg>
-        Homes for Sale
-      </a>
+    {# ── Hero Inline Search Bar (Zillow-style) ── #}
+    <form class="home-quick-search" method="get" action="{% url 'listing_list' %}" role="search" aria-label="Property search">
+      <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="#9CA3AF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-left:1.1rem;" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="home-quick-search-input" type="text" name="city" placeholder="City, neighborhood, or ZIP — e.g. Irving, TX" autocomplete="off" aria-label="Search city or neighborhood">
+      <div class="home-quick-search-divider" aria-hidden="true"></div>
+      <button class="home-quick-search-btn" type="submit" aria-label="Search">
+        <svg viewBox="0 0 24 24" fill="none" width="15" height="15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Search
+      </button>
+    </form>
+
+    {# ── Popular searches ── #}
+    <div class="popular-searches">
+      <span class="popular-label">Popular:</span>
+      <a href="{% url 'listing_list' %}?city=Irving" class="popular-pill">Irving</a>
+      <a href="{% url 'listing_list' %}?city=Dallas" class="popular-pill">Dallas</a>
+      <a href="{% url 'listing_list' %}?city=Frisco" class="popular-pill">Frisco</a>
+      <a href="{% url 'listing_list' %}?city=Plano" class="popular-pill">Plano</a>
+      <a href="{% url 'listing_list' %}?city=Fort+Worth" class="popular-pill">Fort Worth</a>
+      <a href="{% url 'guided_search' %}" class="popular-pill" style="background:rgba(93,194,40,.18);border-color:rgba(93,194,40,.4);color:#5DC228;">✦ Guided Search</a>
     </div>
 
     <div class="hc-stats">
@@ -205,39 +213,89 @@
   <div class="hc-progress" aria-hidden="true"><div class="hc-progress-bar" id="hc-progress-bar"></div></div>
 </section>
 
+{# ── QUICK FILTER BAR (Zumper-style) ─────────────────────────── #}
+<div class="qfb-wrap">
+  <span class="qfb-label">Quick search:</span>
+  <a href="{% url 'listing_list' %}?category=rentals" class="qfb-pill">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="opacity:.7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+    Rentals
+  </a>
+  <a href="{% url 'listing_list' %}?category=properties" class="qfb-pill">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="opacity:.7"><path d="M4 10.5 12 4l8 6.5"/><path d="M6.5 9.5V20h11V9.5"/></svg>
+    For Sale
+  </a>
+  <a href="{% url 'listing_list' %}?category=roommates" class="qfb-pill">🚪 Rooms</a>
+  <div class="qfb-divider" aria-hidden="true"></div>
+  <a href="{% url 'listing_list' %}?bedrooms=1" class="qfb-pill">1 Bed</a>
+  <a href="{% url 'listing_list' %}?bedrooms=2" class="qfb-pill">2 Bed</a>
+  <a href="{% url 'listing_list' %}?bedrooms=3" class="qfb-pill">3+ Bed</a>
+  <div class="qfb-divider" aria-hidden="true"></div>
+  <a href="{% url 'listing_list' %}?max_price=1500" class="qfb-pill">Under $1,500</a>
+  <a href="{% url 'listing_list' %}?max_price=2500" class="qfb-pill">Under $2,500</a>
+  <a href="{% url 'guided_search' %}" class="qfb-pill" style="border-color:var(--primary);color:var(--primary);background:rgba(42,126,242,.07);">✦ AI Match</a>
+</div>
+
+{# ── MARKET STATS (DFW snapshot) ──────────────────────────────── #}
+<div class="market-strip" style="margin-bottom:2rem;">
+  <div class="market-stat-cell">
+    <span class="market-stat-num">{{ stats.listing_count|default:0 }}+</span>
+    <span class="market-stat-lbl">Active listings</span>
+    <span class="market-stat-trend trend-up">↑ Live now</span>
+  </div>
+  <div class="market-stat-cell">
+    <span class="market-stat-num">{{ stats.city_count|default:"20" }}</span>
+    <span class="market-stat-lbl">DFW cities covered</span>
+    <span class="market-stat-trend trend-flat">DFW metroplex</span>
+  </div>
+  <div class="market-stat-cell">
+    <span class="market-stat-num">{{ stats.landlord_count|default:0 }}+</span>
+    <span class="market-stat-lbl">Verified owners</span>
+    <span class="market-stat-trend trend-down">✓ Direct contact</span>
+  </div>
+  <div class="market-stat-cell">
+    <span class="market-stat-num">$0</span>
+    <span class="market-stat-lbl">Agency fees — ever</span>
+    <span class="market-stat-trend trend-down">No commissions</span>
+  </div>
+</div>
+
 {# ── HOW IT WORKS ───────────────────────────────────────────────── #}
 <section style="margin-bottom:2.5rem;">
-  <div style="display:flex;align-items:baseline;gap:.75rem;margin-bottom:1.25rem;">
-    <h2 class="home-section-title">How Listojo Works</h2>
-    <span style="font-size:.8rem;color:var(--text-3);font-weight:500;">Takes 2 minutes</span>
+  <div class="section-header">
+    <div class="section-header-left">
+      <div class="section-eyebrow eyebrow-blue">Simple Process</div>
+      <h2 class="section-title-xl">How Listojo Works</h2>
+      <p class="section-sub">From search to signed — in 3 steps. Takes 2 minutes.</p>
+    </div>
+    <a href="{% url 'guided_search' %}" class="section-link">Start now &rarr;</a>
   </div>
   <div class="home-how-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem;">
 
     <div class="card hiw-card" style="border-top:3px solid #2A7EF2;">
-      <div class="hiw-card-icon" style="background:rgba(42,126,242,.12);">
-        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="#2A7EF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <div class="hiw-step-num" style="background:#2A7EF2;">1</div>
+      <div class="hiw-card-icon" style="background:rgba(42,126,242,.1);margin-bottom:.6rem;">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="#2A7EF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       </div>
-      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2A7EF2;margin-bottom:.35rem;">Step 1</div>
-      <div style="font-weight:700;font-size:.98rem;margin-bottom:.45rem;font-family:'Montserrat',sans-serif;">Tell us what you need</div>
-      <div style="font-size:.82rem;color:var(--text-3);line-height:1.6;">Budget, city, bedrooms, must-haves. Our guided search saves your preferences automatically.</div>
+      <div style="font-weight:800;font-size:1rem;margin-bottom:.45rem;font-family:'Montserrat',sans-serif;">Tell us what you need</div>
+      <div style="font-size:.82rem;color:var(--muted);line-height:1.65;">Budget, city, bedrooms, must-haves. Our guided search saves your preferences automatically.</div>
     </div>
 
     <div class="card hiw-card" style="border-top:3px solid #7c3aed;">
-      <div class="hiw-card-icon" style="background:rgba(124,58,237,.12);">
-        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="#7c3aed" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      <div class="hiw-step-num" style="background:#7c3aed;">2</div>
+      <div class="hiw-card-icon" style="background:rgba(124,58,237,.1);margin-bottom:.6rem;">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="#7c3aed" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
       </div>
-      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7c3aed;margin-bottom:.35rem;">Step 2</div>
-      <div style="font-weight:700;font-size:.98rem;margin-bottom:.45rem;font-family:'Montserrat',sans-serif;">We score every match</div>
-      <div style="font-size:.82rem;color:var(--text-3);line-height:1.6;">Every listing gets a match % and a plain-English reason — so you know exactly why it fits.</div>
+      <div style="font-weight:800;font-size:1rem;margin-bottom:.45rem;font-family:'Montserrat',sans-serif;">We score every match</div>
+      <div style="font-size:.82rem;color:var(--muted);line-height:1.65;">Every listing gets a match % and a plain-English reason — so you know exactly why it fits your criteria.</div>
     </div>
 
     <div class="card hiw-card" style="border-top:3px solid #1e8a5c;">
-      <div class="hiw-card-icon" style="background:rgba(30,138,92,.12);">
-        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="#1e8a5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <div class="hiw-step-num" style="background:#1e8a5c;">3</div>
+      <div class="hiw-card-icon" style="background:rgba(30,138,92,.1);margin-bottom:.6rem;">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="#1e8a5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       </div>
-      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#1e8a5c;margin-bottom:.35rem;">Step 3</div>
-      <div style="font-weight:700;font-size:.98rem;margin-bottom:.45rem;font-family:'Montserrat',sans-serif;">Connect with the owner</div>
-      <div style="font-size:.82rem;color:var(--text-3);line-height:1.6;">Message directly, request a tour, or get a free local agent. No middlemen, no agency fees.</div>
+      <div style="font-weight:800;font-size:1rem;margin-bottom:.45rem;font-family:'Montserrat',sans-serif;">Connect with the owner</div>
+      <div style="font-size:.82rem;color:var(--muted);line-height:1.65;">Message directly, request a tour, or get a free local agent. No middlemen, no agency fees ever.</div>
     </div>
 
   </div>
@@ -246,12 +304,13 @@
 {# ── TRENDING RENTALS ─────────────────────────────────────────── #}
 {% if trending_rentals %}
 <section style="margin-bottom:2.5rem;">
-  <div class="home-sec-hdr" style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem;">
-    <div>
-      <h2 class="home-section-title">Trending Rentals</h2>
-      <p style="font-size:.8rem;color:var(--text-3);margin:0;">Most-viewed rentals in DFW right now</p>
+  <div class="section-header home-sec-hdr" style="margin-bottom:1rem;">
+    <div class="section-header-left">
+      <div class="section-eyebrow eyebrow-blue">Hot in DFW</div>
+      <h2 class="section-title-xl">Trending Rentals</h2>
+      <p class="section-sub">Most-viewed rentals in the metroplex right now</p>
     </div>
-    <a href="{% url 'listing_list' %}?category=rentals" style="font-size:.82rem;font-weight:700;color:var(--primary);text-decoration:none;padding:.35rem .85rem;border:1.5px solid var(--primary);border-radius:999px;white-space:nowrap;">See all &rarr;</a>
+    <a href="{% url 'listing_list' %}?category=rentals" class="section-link">See all &rarr;</a>
   </div>
   <div class="home-scroll-row" style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
     {% for listing in trending_rentals %}
@@ -292,12 +351,13 @@
 {# ── TRENDING PROPERTIES ─────────────────────────────────────── #}
 {% if trending_properties %}
 <section style="margin-bottom:2.5rem;">
-  <div class="home-sec-hdr" style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem;">
-    <div>
-      <h2 class="home-section-title">Trending Homes for Sale</h2>
-      <p style="font-size:.8rem;color:var(--text-3);margin:0;">Top-viewed homes on the DFW market</p>
+  <div class="section-header home-sec-hdr" style="margin-bottom:1rem;">
+    <div class="section-header-left">
+      <div class="section-eyebrow eyebrow-green">DFW Market</div>
+      <h2 class="section-title-xl">Homes for Sale</h2>
+      <p class="section-sub">Top-viewed homes on the DFW market</p>
     </div>
-    <a href="{% url 'listing_list' %}?category=properties" style="font-size:.82rem;font-weight:700;color:#1e8a5c;text-decoration:none;padding:.35rem .85rem;border:1.5px solid #1e8a5c;border-radius:999px;white-space:nowrap;">See all &rarr;</a>
+    <a href="{% url 'listing_list' %}?category=properties" class="section-link" style="border-color:#1e8a5c;color:#1e8a5c;">See all &rarr;</a>
   </div>
   <div class="home-scroll-row" style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
     {% for listing in trending_properties %}
@@ -337,52 +397,49 @@
 
 {# ── TESTIMONIALS ─────────────────────────────────────────────── #}
 <section style="margin-bottom:2.5rem;">
-  <div style="margin-bottom:1.25rem;">
-    <h2 class="home-section-title">What people are saying</h2>
-    <p style="font-size:.8rem;color:var(--text-3);margin:0;">From tenants and landlords across DFW</p>
+  <div class="section-header" style="margin-bottom:1.25rem;">
+    <div class="section-header-left">
+      <div class="section-eyebrow eyebrow-amber">Real Stories</div>
+      <h2 class="section-title-xl">What DFW residents say</h2>
+      <p class="section-sub">Tenants and landlords across the metroplex</p>
+    </div>
   </div>
   <div class="home-testimonials-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
 
-    {% with star='<svg viewBox="0 0 20 20" fill="#F59E0B" width="15" height="15"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>' %}
+    {% with star='<svg viewBox="0 0 20 20" fill="#F59E0B" width="14" height="14"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>' %}
 
-    <div class="card home-testimonial">
-      <div style="display:flex;gap:.25rem;">
-        {{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}
-      </div>
-      <p style="font-size:.88rem;color:var(--text-2);line-height:1.65;margin:0;font-style:italic;">"Found my apartment in Irving in 3 days. The match score explained why each place fit my budget — I didn't have to guess."</p>
-      <div style="display:flex;align-items:center;gap:.7rem;margin-top:auto;">
-        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2A7EF2,#62C2FF);display:flex;align-items:center;justify-content:center;font-size:.88rem;font-weight:700;color:#fff;flex-shrink:0;">P</div>
+    <div class="testimonial-v2">
+      <div class="testimonial-stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
+      <p class="testimonial-quote">"Found my apartment in Irving in 3 days. The AI match score explained exactly why each place fit my budget — I didn't have to guess or scroll endlessly."</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar" style="background:linear-gradient(135deg,#2A7EF2,#62C2FF);">P</div>
         <div>
-          <div style="font-size:.84rem;font-weight:700;">Priya M.</div>
-          <div style="font-size:.74rem;color:var(--text-3);">Renter &middot; Irving, TX</div>
+          <div class="testimonial-name">Priya M.</div>
+          <div class="testimonial-role">Renter &middot; Irving, TX</div>
         </div>
       </div>
     </div>
 
-    <div class="card home-testimonial">
-      <div style="display:flex;gap:.25rem;">
-        {{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}
-      </div>
-      <p style="font-size:.88rem;color:var(--text-2);line-height:1.65;margin:0;font-style:italic;">"The guided search was super easy. It saved my preferences and when I came back a week later, it remembered exactly what I was looking for."</p>
-      <div style="display:flex;align-items:center;gap:.7rem;margin-top:auto;">
-        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:.88rem;font-weight:700;color:#fff;flex-shrink:0;">M</div>
+    <div class="testimonial-v2">
+      <div class="testimonial-stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
+      <p class="testimonial-quote">"The guided search is brilliant. It saved my preferences and when I came back a week later, it remembered exactly what I needed. No other platform does this."</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">M</div>
         <div>
-          <div style="font-size:.84rem;font-weight:700;">Marcus T.</div>
-          <div style="font-size:.74rem;color:var(--text-3);">Renter &middot; Las Colinas, TX</div>
+          <div class="testimonial-name">Marcus T.</div>
+          <div class="testimonial-role">Renter &middot; Las Colinas, TX</div>
         </div>
       </div>
     </div>
 
-    <div class="card home-testimonial" style="border-left:3px solid #1e8a5c;">
-      <div style="display:flex;gap:.25rem;">
-        {{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}
-      </div>
-      <p style="font-size:.88rem;color:var(--text-2);line-height:1.65;margin:0;font-style:italic;">"Listed my condo and got serious inquiries within 48 hours. No fees, no agency headache. This is how it should work."</p>
-      <div style="display:flex;align-items:center;gap:.7rem;margin-top:auto;">
-        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#1e8a5c,#7ecbaa);display:flex;align-items:center;justify-content:center;font-size:.88rem;font-weight:700;color:#fff;flex-shrink:0;">R</div>
+    <div class="testimonial-v2" style="border-left:3px solid #1e8a5c;">
+      <div class="testimonial-stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
+      <p class="testimonial-quote">"Listed my condo and had serious inquiries within 48 hours. Zero agency fees, zero headaches. I'm in direct contact with every renter. This is how it should work."</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar" style="background:linear-gradient(135deg,#1e8a5c,#7ecbaa);">R</div>
         <div>
-          <div style="font-size:.84rem;font-weight:700;">Rohan K.</div>
-          <div style="font-size:.74rem;color:var(--text-3);">Landlord &middot; Frisco, TX</div>
+          <div class="testimonial-name">Rohan K.</div>
+          <div class="testimonial-role">Landlord &middot; Frisco, TX</div>
         </div>
       </div>
     </div>
@@ -394,19 +451,34 @@
 {# ── EXPLORE BY CITY ──────────────────────────────────────────── #}
 {% if cities %}
 <section style="margin-bottom:2.5rem;">
-  <div style="margin-bottom:1rem;">
-    <h2 class="home-section-title">Explore by City</h2>
-    <p style="font-size:.8rem;color:var(--text-3);margin:0;">Listings across the DFW metroplex</p>
+  <div class="section-header" style="margin-bottom:1rem;">
+    <div class="section-header-left">
+      <div class="section-eyebrow eyebrow-blue">DFW Metroplex</div>
+      <h2 class="section-title-xl">Explore by City</h2>
+      <p class="section-sub">Listings across the Dallas–Fort Worth area</p>
+    </div>
   </div>
-  <div class="home-cities-row" style="display:flex;flex-wrap:wrap;gap:.6rem;">
+  <div class="home-cities-row" style="display:flex;flex-wrap:wrap;gap:.5rem;">
     {% for city in cities %}
-    <a href="{% url 'listing_list' %}?city={{ city|urlencode }}" class="home-city-pill">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="flex-shrink:0;opacity:.6;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    <a href="{% url 'listing_list' %}?city={{ city|urlencode }}" class="city-card">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="flex-shrink:0;color:var(--primary);opacity:.7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
       {{ city|title }}
     </a>
     {% endfor %}
   </div>
 </section>
+{% endif %}
+
+{# ── PROPERTY ALERT BANNER (Redfin-inspired) ─────────────────── #}
+{% if not user.is_authenticated %}
+<div class="alert-setup-strip" style="margin-bottom:2rem;">
+  <span class="alert-setup-icon">🔔</span>
+  <div>
+    <div class="alert-setup-text">Get notified when new DFW listings match your criteria</div>
+    <div class="alert-setup-sub">Create a free account and we'll alert you the moment a perfect match appears</div>
+  </div>
+  <a href="{% url 'register' %}" class="alert-setup-btn">Set up alerts &rarr;</a>
+</div>
 {% endif %}
 
 {# ── LANDLORD CTA ─────────────────────────────────────────────── #}

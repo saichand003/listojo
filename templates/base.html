@@ -77,18 +77,24 @@
     </div>
 
     <div class="nav-links">
-      <button type="button" class="nav-text-btn" data-theme-toggle>🌓 Theme</button>
+      <button type="button" class="nav-text-btn" data-theme-toggle title="Toggle dark/light mode">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+        Theme
+      </button>
       {% if user.is_authenticated %}
         {% if user.is_superuser %}
-        <a href="{% url 'portal_dashboard' %}" style="font-weight:600;color:var(--primary)">Admin Portal</a>
+        <a href="{% url 'portal_dashboard' %}" style="font-weight:700;color:var(--primary);font-size:.82rem;padding:.4rem .75rem;border-radius:8px;background:rgba(42,126,242,.08);">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="vertical-align:middle;margin-right:2px" aria-hidden="true"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+          Admin
+        </a>
         {% endif %}
         <form method="post" action="{% url 'logout' %}" style="display:inline;">
           {% csrf_token %}
-          <button type="submit" class="nav-text-btn">Logout</button>
+          <button type="submit" class="nav-text-btn">Sign out</button>
         </form>
       {% else %}
-        <a href="{% url 'login' %}">Login</a>
-        <a href="{% url 'register' %}" class="button">Register</a>
+        <a href="{% url 'login' %}" class="nav-text-btn" style="font-weight:600;">Sign in</a>
+        <a href="{% url 'register' %}" class="button" style="padding:.45rem 1.1rem;font-size:.85rem;">Get started</a>
       {% endif %}
     </div>
   </nav>
@@ -98,7 +104,13 @@
 <div class="site-body">
 
   {# ── LEFT SIDEBAR ── #}
-  <aside class="app-sidebar" id="app-sidebar">
+  <aside class="app-sidebar" id="app-sidebar" aria-label="Site navigation">
+
+    {# DFW region badge #}
+    <div style="display:flex;align-items:center;gap:.4rem;padding:.35rem .5rem .9rem;margin-bottom:.5rem;border-bottom:1px solid var(--border);">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="color:var(--primary);flex-shrink:0"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <span style="font-size:.7rem;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;">Dallas–Fort Worth</span>
+    </div>
 
     {# Discover section #}
     <div class="sb-section">
@@ -166,23 +178,29 @@
     </div>
     {% endif %}
 
-    {# Sidebar footer: user info + auth links #}
+    {# Sidebar footer: authenticated user info only #}
+    {% if user.is_authenticated %}
     <div class="sb-footer">
-      {% if user.is_authenticated %}
       <div class="sb-footer-user">
-        <span>👤</span>
-        <span>{{ user.get_full_name|default:user.username }}</span>
+        <div class="sb-avatar">{{ user.get_full_name|default:user.username|first|upper }}</div>
+        <div class="sb-footer-user-info">
+          <span class="sb-footer-name">{{ user.get_full_name|default:user.username }}</span>
+          <span class="sb-footer-role">{% if user.is_superuser %}Admin{% elif user.is_staff %}Agent{% else %}Member{% endif %}</span>
+        </div>
       </div>
-      <a href="{% url 'profile' %}">Profile settings</a>
+      <a href="{% url 'profile' %}" class="sb-link" style="margin-bottom:2px;">
+        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg></span>
+        Profile settings
+      </a>
       <form method="post" action="{% url 'logout' %}">
         {% csrf_token %}
-        <button type="submit">🚪 Sign out</button>
+        <button type="submit" class="sb-link" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;font-size:1rem;color:var(--text);padding:.5rem .65rem;border-radius:8px;display:flex;align-items:center;gap:.65rem;">
+          <span class="sb-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg></span>
+          Sign out
+        </button>
       </form>
-      {% else %}
-      <a href="{% url 'login' %}">🔑 Sign in</a>
-      <a href="{% url 'register' %}">✨ Create account</a>
-      {% endif %}
     </div>
+    {% endif %}
 
   </aside>
 
@@ -236,25 +254,79 @@
     {% endif %}
 </nav>
 
-<footer class="site-footer">
-    <div class="site-footer-inner">
-        <div class="site-footer-brand">
-            <svg width="22" height="28" viewBox="0 0 345 420" fill="none">
-                <path d="M210 55 C130 55 85 115 85 175 C85 270 165 335 200 370 C205 375 210 378 215 378 C220 378 225 375 230 370 C265 335 345 270 345 175 C345 115 290 55 210 55Z" fill="url(#fp)"/>
-                <path d="M190 135 C190 110 205 95 225 95 L225 225 L280 225 C278 245 258 265 220 280 L175 280 L175 145 C175 120 182 105 190 100Z" fill="white"/>
-                <defs><linearGradient id="fp" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#62C2FF"/><stop offset="52%" stop-color="#2A7EF2"/><stop offset="100%" stop-color="#1A5DD4"/></linearGradient></defs>
-            </svg>
-            <span class="site-footer-logo">Listo<em>jo</em></span>
+<footer class="site-footer" role="contentinfo">
+  <div class="site-footer-inner">
+    <div class="site-footer-top">
+
+      {# Brand column #}
+      <div class="site-footer-brand-col">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">
+          <svg width="20" height="26" viewBox="0 0 345 420" fill="none" aria-hidden="true">
+            <path d="M210 55 C130 55 85 115 85 175 C85 270 165 335 200 370 C205 375 210 378 215 378 C220 378 225 375 230 370 C265 335 345 270 345 175 C345 115 290 55 210 55Z" fill="url(#fp2)"/>
+            <path d="M190 135 C190 110 205 95 225 95 L225 225 L280 225 C278 245 258 265 220 280 L175 280 L175 145 C175 120 182 105 190 100Z" fill="white"/>
+            <defs><linearGradient id="fp2" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#62C2FF"/><stop offset="52%" stop-color="#2A7EF2"/><stop offset="100%" stop-color="#1A5DD4"/></linearGradient></defs>
+          </svg>
+          <span class="site-footer-logo">Listo<em>jo</em></span>
         </div>
-        <nav class="site-footer-links">
-            <a href="#">About</a>
-            <a href="#">Terms</a>
-            <a href="#">Privacy</a>
-            <a href="#">Help</a>
-            <a href="#">Contact</a>
-        </nav>
-        <span class="site-footer-copy">© 2026 Listojo. All rights reserved.</span>
+        <p class="site-footer-tagline">DFW's AI-powered home search. Real listings. Smart matching. Zero agency fees.</p>
+        <div class="site-footer-badges">
+          <span class="site-footer-badge">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11" style="color:#5DC228"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Verified listings
+          </span>
+          <span class="site-footer-badge">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11" style="color:#2A7EF2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            AI Match Scores
+          </span>
+        </div>
+      </div>
+
+      {# Search column #}
+      <div class="site-footer-col">
+        <div class="site-footer-col-title">Search</div>
+        <a href="{% url 'listing_list' %}?category=rentals">Rentals</a>
+        <a href="{% url 'listing_list' %}?category=properties">Homes for Sale</a>
+        <a href="{% url 'listing_list' %}?category=roommates">Roommates</a>
+        <a href="{% url 'guided_search' %}">Guided Search</a>
+        <a href="{% url 'listing_list' %}?city=Irving">Irving, TX</a>
+        <a href="{% url 'listing_list' %}?city=Dallas">Dallas, TX</a>
+        <a href="{% url 'listing_list' %}?city=Frisco">Frisco, TX</a>
+      </div>
+
+      {# List column #}
+      <div class="site-footer-col">
+        <div class="site-footer-col-title">For Landlords</div>
+        <a href="{% url 'create_listing' %}">Post a Listing</a>
+        <a href="{% url 'create_community' %}">List a Community</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'my_listings' %}">My Listings</a>
+        <a href="{% url 'inquiries_overview' %}">Inquiries</a>
+        <a href="{% url 'performance' %}">Performance</a>
+        {% endif %}
+      </div>
+
+      {# Company column #}
+      <div class="site-footer-col">
+        <div class="site-footer-col-title">Company</div>
+        <a href="#">About Listojo</a>
+        <a href="#">How it Works</a>
+        <a href="#">DFW Coverage</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Contact Us</a>
+      </div>
+
     </div>
+
+    <div class="site-footer-bottom">
+      <span class="site-footer-copy">© 2026 Listojo, Inc. Dallas–Fort Worth, TX. All rights reserved.</span>
+      <nav style="display:flex;gap:1rem;" aria-label="Footer legal links">
+        <a href="#" style="font-size:.72rem;color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Terms</a>
+        <a href="#" style="font-size:.72rem;color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Privacy</a>
+        <a href="#" style="font-size:.72rem;color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Sitemap</a>
+      </nav>
+    </div>
+  </div>
 </footer>
 
 {% include 'includes/message_notifier.html' %}

@@ -2006,19 +2006,12 @@ footer {
   margin-top: 2rem; background: var(--surface);
   border-top: 1px solid var(--border); padding: 1.25rem 0;
 }
-.site-footer-inner {
-  max-width: 1140px; margin: 0 auto; padding: 0 1.25rem;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 1rem; flex-wrap: wrap;
-}
+/* old footer inner — overridden by enterprise footer below */
 .site-footer-brand { display: flex; align-items: center; gap: .45rem; }
-.site-footer-logo { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.1rem; color: var(--text); }
-.site-footer-logo em { color: #1e8a5c; font-style: normal; }
 .site-footer-links { display: flex; gap: 1.25rem; flex-wrap: wrap; }
-.site-footer-links a { font-size: .82rem; color: var(--muted); text-decoration: none; transition: color .15s; }
-.site-footer-links a:hover { color: var(--primary); }
-.site-footer-copy { font-size: .78rem; color: var(--muted); }
-:root.dark .site-footer { background: rgba(16,29,53,.6); }
+.site-footer-links a { font-size: .82rem; color: rgba(255,255,255,.55); text-decoration: none; transition: color .15s; }
+.site-footer-links a:hover { color: #fff; }
+:root.dark .site-footer { background: #060d1a; }
 
 /* ── RESPONSIVE ─────────────────────────────────────────────── */
 /* ════════════════════════════════════════════════════════════════
@@ -2936,3 +2929,755 @@ footer {
   .hc-stat-num { font-size: 1.25rem; }
   .hc-stat-lbl { font-size: .68rem; }
 }
+
+
+/* ══════════════════════════════════════════════════════════════
+   ENTERPRISE REVAMP — Modern Real Estate UI (Zumper/Zillow/Redfin-inspired)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── SIDEBAR FOOTER AVATAR ──────────────────────────────────── */
+.sb-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-dk), var(--primary));
+  color: #fff;
+  font-size: .88rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(42,126,242,.3);
+}
+.sb-footer-user { display: flex; align-items: center; gap: .65rem; padding: .5rem .5rem .8rem; }
+.sb-footer-user-info { display: flex; flex-direction: column; gap: 1px; }
+.sb-footer-name { font-size: .84rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+.sb-footer-role {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: rgba(42,126,242,.1);
+  padding: 1px 7px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+/* ── HERO INLINE SEARCH BAR (Zillow-style) ──────────────────── */
+.hero-search-row {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 0;
+  max-width: 620px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.28);
+  background: #fff;
+}
+.hero-search-input {
+  flex: 1;
+  padding: .9rem 1.2rem;
+  border: none;
+  outline: none;
+  font-size: .95rem;
+  font-family: inherit;
+  color: #0f1c35;
+  background: #fff;
+  width: 100%;
+}
+.hero-search-input::placeholder { color: #9CA3AF; }
+.hero-search-btn {
+  padding: .9rem 1.5rem;
+  background: linear-gradient(135deg, #1A5DD4, #2A7EF2);
+  color: #fff;
+  border: none;
+  font-size: .92rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity .15s;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.hero-search-btn:hover { opacity: .9; }
+@media (max-width: 600px) {
+  .hero-search-row { flex-direction: column; border-radius: 14px; }
+  .hero-search-btn { border-radius: 0 0 14px 14px; justify-content: center; }
+}
+
+/* ── QUICK FILTER BAR (Zumper-style) ────────────────────────── */
+.qfb-wrap {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .85rem 0 1.1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+.qfb-label {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-right: .25rem;
+  white-space: nowrap;
+}
+.qfb-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .38rem .9rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.qfb-pill:hover, .qfb-pill.active {
+  border-color: var(--primary);
+  background: rgba(42,126,242,.09);
+  color: var(--primary);
+}
+.qfb-pill.active { font-weight: 700; }
+.qfb-divider { width: 1px; height: 20px; background: var(--border); margin: 0 .25rem; flex-shrink: 0; }
+
+/* ── TRUST SIGNAL STRIP (Zumper-inspired) ───────────────────── */
+.trust-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: .65rem 1rem;
+  background: linear-gradient(135deg, rgba(42,126,242,.04), rgba(30,138,92,.03));
+  border: 1px solid rgba(42,126,242,.1);
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.trust-item svg { opacity: .7; flex-shrink: 0; }
+.trust-item-green { color: #047857; }
+.trust-item-blue  { color: var(--primary); }
+
+/* ── VERIFIED OWNER BADGE (Zumper-inspired) ─────────────────── */
+.verified-owner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .28rem;
+  padding: .18rem .55rem;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+/* ── DAYS ON MARKET CHIP (Zillow-inspired) ──────────────────── */
+.dom-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  padding: .18rem .55rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: .68rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dom-chip-new {
+  background: rgba(42,126,242,.09);
+  border-color: rgba(42,126,242,.22);
+  color: var(--primary);
+  font-weight: 700;
+}
+.dom-chip-hot {
+  background: rgba(249,115,22,.09);
+  border-color: rgba(249,115,22,.25);
+  color: #c2410c;
+  font-weight: 700;
+}
+
+/* ── NEIGHBORHOOD SCORE CHIPS (Walk Score-inspired) ─────────── */
+.neighborhood-chips {
+  display: flex;
+  gap: .35rem;
+  flex-wrap: wrap;
+  margin: .4rem 0 .1rem;
+}
+.ns-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  padding: .2rem .55rem;
+  border-radius: 6px;
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.ns-walk    { background: #ecfdf3; color: #047857; }
+.ns-transit { background: rgba(42,126,242,.09); color: var(--primary); }
+.ns-noise   { background: #f3f4f6; color: #4B5563; }
+.ns-schools { background: rgba(124,58,237,.09); color: #6D28D9; }
+
+/* ── PRICE TREND CHIP ───────────────────────────────────────── */
+.price-trend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: .18rem .55rem;
+  border-radius: 999px;
+}
+.price-trend-down { background: #ecfdf3; color: #047857; }
+.price-trend-up   { background: #fef2f2; color: #dc2626; }
+
+/* ── CARD INFO ROW (beds/baths/sqft strip) ──────────────────── */
+.card-info-row {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  font-size: .78rem;
+  color: var(--text-2);
+  font-weight: 500;
+  margin: .2rem 0 .5rem;
+  flex-wrap: wrap;
+}
+.card-info-sep { color: var(--border-2); font-size: .65rem; }
+.card-info-val { font-weight: 700; color: var(--text); }
+
+/* ── LISTING CARD V2 ENHANCEMENTS ───────────────────────────── */
+.card-meta-row {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-wrap: wrap;
+  margin-bottom: .4rem;
+}
+
+/* ── VIRTUAL TOUR BADGE (Apartments.com-inspired) ────────────── */
+.vtour-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .28rem;
+  padding: .22rem .6rem;
+  border-radius: 999px;
+  background: rgba(124,58,237,.09);
+  border: 1px solid rgba(124,58,237,.22);
+  color: #6D28D9;
+  font-size: .67rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── SECTION EYEBROW LABELS ─────────────────────────────────── */
+.section-eyebrow {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: .35rem;
+}
+.eyebrow-blue  { color: var(--primary); }
+.eyebrow-green { color: #1e8a5c; }
+.eyebrow-amber { color: #B45309; }
+
+/* ── ENTERPRISE SECTION HEADER ──────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+.section-header-left {}
+.section-title-xl {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+  margin: 0 0 .2rem;
+}
+.section-sub {
+  font-size: .8rem;
+  color: var(--muted);
+  margin: 0;
+}
+.section-link {
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+  padding: .35rem .85rem;
+  border: 1.5px solid var(--primary);
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.section-link:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ── MARKET DATA STRIP ──────────────────────────────────────── */
+.market-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+.market-stat-cell {
+  background: var(--surface);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+}
+.market-stat-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--text);
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+.market-stat-lbl {
+  font-size: .72rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+.market-stat-trend {
+  font-size: .72rem;
+  font-weight: 700;
+}
+.trend-up   { color: #dc2626; }
+.trend-down { color: #047857; }
+.trend-flat { color: var(--muted); }
+
+/* ── TESTIMONIAL V2 (better card) ───────────────────────────── */
+.testimonial-v2 {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.4rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: .85rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .2s, transform .2s;
+}
+.testimonial-v2:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.testimonial-stars { display: flex; gap: .2rem; }
+.testimonial-quote { font-size: .875rem; color: var(--text-2); line-height: 1.65; font-style: italic; margin: 0; flex: 1; }
+.testimonial-author { display: flex; align-items: center; gap: .65rem; }
+.testimonial-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .88rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+.testimonial-name { font-size: .84rem; font-weight: 700; color: var(--text); }
+.testimonial-role { font-size: .73rem; color: var(--muted); }
+
+/* ── CITY CARD (enhanced) ───────────────────────────────────── */
+.city-card {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem 1.1rem;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text-2);
+  font-size: .84rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all .15s;
+}
+.city-card:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(42,126,242,.05);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(42,126,242,.1);
+}
+.city-card-count {
+  margin-left: auto;
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--surface-2);
+  padding: .1rem .45rem;
+  border-radius: 999px;
+}
+
+/* ── FEATURED LANDLORD CTA (enhanced) ───────────────────────── */
+#home-landlord-cta {
+  background: linear-gradient(135deg, #0f1c35 0%, #182B52 50%, #1A5DD4 100%);
+}
+
+/* ── LISTING TAG PILLS (card) ────────────────────────────────── */
+.listing-tag-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+  margin: .3rem 0;
+}
+.listing-tag-pill {
+  display: inline-block;
+  padding: .15rem .5rem;
+  border-radius: 6px;
+  font-size: .66rem;
+  font-weight: 600;
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* ── SITE FOOTER — Modern multi-column ──────────────────────── */
+.site-footer {
+  background: #0f1c35;
+  color: rgba(255,255,255,.7);
+  margin-top: 3rem;
+  padding: 0;
+}
+.site-footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 1.25rem;
+}
+.site-footer-top {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 2.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.site-footer-brand-col {}
+.site-footer-logo {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.02em;
+}
+.site-footer-logo em { color: #5DC228; font-style: normal; }
+.site-footer-tagline {
+  font-size: .82rem;
+  color: rgba(255,255,255,.5);
+  margin: .5rem 0 1rem;
+  line-height: 1.6;
+  max-width: 220px;
+}
+.site-footer-col-title {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.4);
+  margin-bottom: .85rem;
+}
+.site-footer-col a {
+  display: block;
+  font-size: .82rem;
+  color: rgba(255,255,255,.6);
+  text-decoration: none;
+  margin-bottom: .45rem;
+  transition: color .15s;
+}
+.site-footer-col a:hover { color: #fff; }
+.site-footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.site-footer-copy {
+  font-size: .75rem;
+  color: rgba(255,255,255,.35);
+}
+.site-footer-badges {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+}
+.site-footer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .28rem .7rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.12);
+  font-size: .7rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.5);
+}
+@media (max-width: 860px) {
+  .site-footer-top {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+}
+@media (max-width: 540px) {
+  .site-footer-top { grid-template-columns: 1fr; }
+  .site-footer-bottom { flex-direction: column; align-items: flex-start; }
+}
+
+/* ── HOW IT WORKS (enhanced step icons) ─────────────────────── */
+.hiw-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  margin-bottom: .75rem;
+}
+
+/* ── SEARCH RESULTS HEADER STRIP ────────────────────────────── */
+.results-header-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.results-count {
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.results-count span { color: var(--primary); }
+.results-sort-row { display: flex; align-items: center; gap: .5rem; }
+.results-sort-label { font-size: .78rem; color: var(--muted); font-weight: 500; }
+.results-sort-select {
+  width: auto;
+  padding: .3rem .7rem;
+  font-size: .8rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* ── MAP VIEW TOGGLE (Zillow-inspired placeholder) ───────────── */
+.map-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.map-view-btn {
+  padding: .4rem .85rem;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  white-space: nowrap;
+}
+.map-view-btn:hover { background: var(--surface-2); }
+.map-view-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+.map-view-btn + .map-view-btn {
+  border-left: 1px solid var(--border);
+}
+.map-view-btn.active + .map-view-btn {
+  border-left-color: var(--primary);
+}
+
+/* ── NOTIFY ME BANNER (Redfin-inspired) ─────────────────────── */
+.notify-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .85rem 1.25rem;
+  background: linear-gradient(135deg, rgba(42,126,242,.06), rgba(30,138,92,.04));
+  border: 1.5px solid rgba(42,126,242,.15);
+  border-radius: 14px;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.notify-banner-text { font-size: .85rem; font-weight: 600; color: var(--text); }
+.notify-banner-sub  { font-size: .76rem; color: var(--muted); }
+.notify-banner-btn {
+  padding: .5rem 1.1rem;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: opacity .15s;
+  flex-shrink: 0;
+}
+.notify-banner-btn:hover { opacity: .9; }
+
+/* ── HOME QUICK-SEARCH BOX ──────────────────────────────────── */
+.home-quick-search {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.25), 0 2px 8px rgba(0,0,0,.12);
+  max-width: 580px;
+  width: 100%;
+  margin-top: 1.5rem;
+  border: 1.5px solid rgba(255,255,255,.6);
+}
+.home-quick-search-input {
+  flex: 1;
+  padding: 1rem 1.25rem;
+  border: none;
+  outline: none;
+  font-size: .95rem;
+  font-family: inherit;
+  color: #0f1c35;
+  background: #fff;
+}
+.home-quick-search-input::placeholder { color: #9CA3AF; }
+.home-quick-search-divider { width: 1px; height: 28px; background: #E5E7EB; flex-shrink: 0; }
+.home-quick-search-btn {
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #1A5DD4, #2A7EF2);
+  color: #fff;
+  border: none;
+  font-size: .92rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  transition: opacity .15s;
+}
+.home-quick-search-btn:hover { opacity: .9; }
+
+/* ── POPULAR SEARCHES (Zumper-style) ────────────────────────── */
+.popular-searches {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  margin-top: .85rem;
+  flex-wrap: wrap;
+}
+.popular-label { font-size: .72rem; color: rgba(255,255,255,.55); font-weight: 500; white-space: nowrap; }
+.popular-pill {
+  display: inline-flex;
+  padding: .22rem .65rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  color: rgba(255,255,255,.85);
+  font-size: .73rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background .15s, border-color .15s;
+}
+.popular-pill:hover { background: rgba(255,255,255,.22); color: #fff; border-color: rgba(255,255,255,.4); }
+
+/* ── PROPERTY ALERT BANNER ──────────────────────────────────── */
+.alert-setup-strip {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  background: linear-gradient(135deg, #ecfdf3, #eff6ff);
+  border: 1.5px solid #a7f3d0;
+  border-radius: 12px;
+  padding: .7rem 1rem;
+  margin-bottom: 1.25rem;
+}
+.alert-setup-icon { font-size: 1.1rem; flex-shrink: 0; }
+.alert-setup-text { flex: 1; font-size: .82rem; font-weight: 600; color: #065F46; }
+.alert-setup-sub  { font-size: .74rem; color: #047857; font-weight: 400; }
+.alert-setup-btn  {
+  padding: .38rem .85rem;
+  background: #047857;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: opacity .15s;
+}
+.alert-setup-btn:hover { opacity: .9; }
+
+/* ── LISTING CARD — BEDS/BATHS/SQFT ROW ─────────────────────── */
+.card-specs-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .76rem;
+  color: var(--text-2);
+  font-weight: 500;
+  margin: .1rem 0 .45rem;
+  flex-wrap: wrap;
+}
+.card-spec-item { display: flex; align-items: center; gap: .2rem; }
+.card-spec-item strong { font-weight: 700; color: var(--text); }
+.card-spec-dot { color: var(--border-2); font-size: .5rem; }
+

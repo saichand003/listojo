@@ -1,5 +1,5 @@
 {% load listing_extras humanize %}
-{# listing_explanations is only present in FMM mode — dict_get returns '' otherwise #}
+{% comment %}listing_explanations is only present in FMM mode — dict_get returns '' otherwise{% endcomment %}
 <section class="grid grid-listings" id="listings-grid">
 
 {# ── Community cards ── #}
@@ -31,20 +31,27 @@
                 {% endif %}
                 {% endwith %}
             </div>
-            <p class="card-location-time">
-                📍 {{ community.city }}{% if community.state %}, {{ community.state }}{% endif %}
-                &nbsp;·&nbsp; {{ community.created_at|timesince }} ago
-            </p>
+            {# Meta row: location + days on market #}
+            <div class="card-meta-row">
+                <span class="card-location-time" style="margin-bottom:0;">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11" style="opacity:.5;flex-shrink:0;display:inline;vertical-align:middle;margin-right:2px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                  {{ community.city }}{% if community.state %}, {{ community.state }}{% endif %}
+                </span>
+                <span class="dom-chip {% if community.created_at|timesince|slice:'1:' == ' day ago' or community.created_at|timesince == '0 minutes ago' %}dom-chip-new{% endif %}">
+                  {{ community.created_at|timesince|truncatechars:12 }} ago
+                </span>
+            </div>
             {% if unit_count %}
-            <p style="font-size:.8rem;color:#1e8a5c;font-weight:600;margin:.2rem 0;">
+            <p style="font-size:.8rem;color:#1e8a5c;font-weight:700;margin:.2rem 0;">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="margin-right:3px;vertical-align:middle;color:#1e8a5c"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 {{ unit_count }} unit{{ unit_count|pluralize }} available
             </p>
             {% endif %}
             {% with community.bedroom_types as btypes %}
             {% if btypes %}
-            <p style="font-size:.78rem;color:var(--text-3);margin:.15rem 0;">
-                {% for b in btypes %}{% if b == 0 %}Studio{% else %}{{ b }}BR{% endif %}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
-            </p>
+            <div class="card-specs-row">
+                {% for b in btypes %}<span class="card-spec-item"><strong>{% if b == 0 %}Studio{% else %}{{ b }}BR{% endif %}</strong></span>{% if not forloop.last %}<span class="card-spec-dot">●</span>{% endif %}{% endfor %}
+            </div>
             {% endif %}
             {% endwith %}
             <p class="price">
@@ -122,30 +129,63 @@
             {% endif %}
         </div>
         <div class="listing-body">
+            {# Title row with match score or save pill #}
             <div class="card-title-row">
                 <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
                 {% with listing_scores|dict_get:listing.pk as score %}
                 {% if score %}
-                <span class="match-score-badge match-score-{{ listing_score_classes|dict_get:listing.pk }}">{{ score }}% match</span>
+                <span class="match-score-badge match-score-{{ listing_score_classes|dict_get:listing.pk }}">{{ score }}%</span>
                 {% elif user.is_authenticated %}
                 <button type="button"
                     class="save-pill {% if listing.pk in fav_ids %}save-pill-active{% endif %}"
                     data-fav-url="{% url 'toggle_favourite' listing.pk %}"
                     data-csrf="{{ csrf_token }}">
-                    {% if listing.pk in fav_ids %}♥ Saved{% else %}♡ Save{% endif %}
+                    {% if listing.pk in fav_ids %}♥{% else %}♡{% endif %}
                 </button>
                 {% endif %}
                 {% endwith %}
             </div>
-            <p class="card-location-time">
-                📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %} &nbsp;·&nbsp; {{ listing.created_at|timesince }} ago
-            </p>
-            {% if listing.available_from %}
-            <p class="card-avail">📅 Available {{ listing.available_from|date:"M j, Y" }}</p>
+
+            {# Meta row: location + days on market + verified badge #}
+            <div class="card-meta-row">
+                <span class="card-location-time" style="margin-bottom:0;flex:1;">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11" style="opacity:.5;display:inline;vertical-align:middle;margin-right:2px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                  {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}
+                </span>
+                {% if listing.view_count > 30 %}
+                <span class="dom-chip dom-chip-hot">🔥 Popular</span>
+                {% elif listing.created_at|timesince|slice:":1" == "0" %}
+                <span class="dom-chip dom-chip-new">✦ New</span>
+                {% else %}
+                <span class="dom-chip">{{ listing.created_at|timesince|truncatechars:10 }} ago</span>
+                {% endif %}
+            </div>
+
+            {# Verified owner badge + availability #}
+            <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin:.25rem 0 .4rem;">
+                {% if listing.owner.get_full_name %}
+                <span class="verified-owner-badge">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                  Verified Owner
+                </span>
+                {% endif %}
+                {% if listing.available_from %}
+                <span class="card-avail" style="margin:0;">📅 Avail. {{ listing.available_from|date:"M j" }}</span>
+                {% endif %}
+            </div>
+
+            {# Specs row: bedrooms info if available from tags #}
+            {% with listing.get_tags_list as tag_list %}
+            {% if listing.bedrooms %}
+            <div class="card-specs-row">
+                <span class="card-spec-item"><strong>{{ listing.bedrooms }}</strong> bed</span>
+                {% if listing.bathrooms %}<span class="card-spec-dot">●</span><span class="card-spec-item"><strong>{{ listing.bathrooms }}</strong> bath</span>{% endif %}
+                {% if listing.sqft %}<span class="card-spec-dot">●</span><span class="card-spec-item"><strong>{{ listing.sqft|intcomma }}</strong> sqft</span>{% endif %}
+            </div>
             {% endif %}
-            {% with listing.recommended_income as inc %}
-            {% if inc %}<p class="card-income-hint">Income req. ~${{ inc|floatformat:0 }}/mo</p>{% endif %}
             {% endwith %}
+
+            {# Price — large, prominent #}
             <p class="price">
                 {% if listing.price %}
                     ${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span class="price-unit">{{ listing.get_price_unit_display }}</span>{% endif %}
@@ -153,11 +193,20 @@
                     <span style="font-size:1rem;font-weight:600;-webkit-text-fill-color:var(--muted);background:none;">Contact for price</span>
                 {% endif %}
             </p>
+
+            {# Income qualifier hint #}
+            {% with listing.recommended_income as inc %}
+            {% if inc %}<p class="card-income-hint">Income req. ~${{ inc|floatformat:0 }}/mo</p>{% endif %}
+            {% endwith %}
+
+            {# AI Match explanation #}
             {% with listing_explanations|dict_get:listing.pk as explanation %}
             {% if explanation %}
             <p class="match-explanation">{{ explanation }}</p>
             {% endif %}
             {% endwith %}
+
+            {# Match reason pills #}
             {% with listing_reasons|dict_get:listing.pk as reasons %}
             {% if reasons %}
             <div class="match-reason-pills">
@@ -165,6 +214,8 @@
             </div>
             {% endif %}
             {% endwith %}
+
+            {# Feature tag pills (max 4) #}
             {% with listing.get_tags_list as tag_list %}
             {% if tag_list %}
             <div class="listing-tag-pills">
@@ -172,15 +223,23 @@
             </div>
             {% endif %}
             {% endwith %}
+
+            {# Action buttons #}
             <div class="card-actions">
                 <a href="{% url 'listing_detail' listing.pk %}" class="card-btn-primary">View Listing</a>
                 {% if user.is_authenticated and user != listing.owner %}
                 <button type="button" class="card-btn-secondary open-chat-btn"
                     data-listing-id="{{ listing.pk }}"
                     data-listing-title="{{ listing.title|truncatechars:40 }}"
-                    data-owner="{{ listing.owner.username }}">💬 Chat</button>
+                    data-owner="{{ listing.owner.username }}">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="opacity:.7"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+                    Chat
+                </button>
                 {% elif not user.is_authenticated %}
-                <a href="{% url 'login' %}?next={{ request.path }}" class="card-btn-secondary">💬 Chat</a>
+                <a href="{% url 'login' %}?next={{ request.path }}" class="card-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="opacity:.7"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                    Chat
+                </a>
                 {% endif %}
             </div>
         </div>
