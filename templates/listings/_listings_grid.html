@@ -87,7 +87,11 @@
              data-kind="listing"
              data-pk="{{ listing.pk }}"
              data-rank="{{ forloop.counter0 }}"
-             data-fmm="{% with listing_scores|dict_get:listing.pk as s %}{{ s|default:'' }}{% endwith %}">
+             data-fmm="{% with listing_scores|dict_get:listing.pk as s %}{{ s|default:'' }}{% endwith %}"
+             data-city="{{ listing.city }}"
+             data-title="{{ listing.title|escapejs }}"
+             data-price="{{ listing.price }}"
+             data-address="{{ listing.address_line|escapejs }}">
         <div class="listing-thumb-wrap">
             {% with listing.images.all as imgs %}
             {% if imgs %}

@@ -9,6 +9,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'styles.css' %}?v={{ UI_ASSET_VERSION }}">
+    <style>
+    /* ── Sidebar city switcher ── */
+    .sb-city-switcher{position:relative;padding:.35rem .5rem .9rem;margin-bottom:.5rem;border-bottom:1px solid var(--border);}
+    .sb-city-btn{display:flex;align-items:center;gap:.4rem;width:100%;background:none;border:none;padding:0;cursor:pointer;font-size:.7rem;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;transition:color .15s;}
+    .sb-city-btn:hover{color:var(--primary);}
+    .sb-city-btn svg:last-child{margin-left:auto;transition:transform .2s;}
+    .sb-city-btn[aria-expanded="true"] svg:last-child{transform:rotate(180deg);}
+    .sb-city-dropdown{position:absolute;top:calc(100% - .5rem);left:0;right:0;background:var(--surface,#fff);border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;padding:.5rem 0;min-width:170px;}
+    .sb-city-search{display:block;width:calc(100% - 1.2rem);margin:.3rem .6rem .4rem;padding:.35rem .6rem;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;outline:none;background:var(--bg,#f8fafc);color:var(--text);}
+    .sb-city-search:focus{border-color:var(--primary);}
+    .sb-city-list{list-style:none;margin:0;padding:0;max-height:200px;overflow-y:auto;}
+    .sb-city-list li{padding:.38rem .9rem;font-size:.8rem;font-weight:600;color:var(--text);cursor:pointer;transition:background .1s;}
+    .sb-city-list li:hover,.sb-city-list li.sb-city-active{background:rgba(42,126,242,.08);color:var(--primary);}
+    .sb-city-list .sb-city-all{font-size:.75rem;color:var(--muted);font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border);margin-bottom:.2rem;padding-bottom:.5rem;}
+    </style>
 </head>
 <body id="page-top">
 
@@ -106,10 +121,31 @@
   {# ── LEFT SIDEBAR ── #}
   <aside class="app-sidebar" id="app-sidebar" aria-label="Site navigation">
 
-    {# DFW region badge #}
-    <div style="display:flex;align-items:center;gap:.4rem;padding:.35rem .5rem .9rem;margin-bottom:.5rem;border-bottom:1px solid var(--border);">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="color:var(--primary);flex-shrink:0"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-      <span style="font-size:.7rem;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;">Dallas–Fort Worth</span>
+    {# DFW city switcher #}
+    <div class="sb-city-switcher">
+      <button class="sb-city-btn" id="sb-city-btn" aria-haspopup="listbox" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="color:var(--primary);flex-shrink:0"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        <span id="sb-city-label">Dallas–Fort Worth</span>
+        <svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><path d="M7 10l5 5 5-5z"/></svg>
+      </button>
+      <div class="sb-city-dropdown" id="sb-city-dropdown" hidden>
+        <input class="sb-city-search" type="text" id="sb-city-search" placeholder="🔍 Search city…" autocomplete="off">
+        <ul class="sb-city-list" id="sb-city-list">
+          <li class="sb-city-all" data-city="">All DFW</li>
+          <li data-city="Irving">Irving</li>
+          <li data-city="Dallas">Dallas</li>
+          <li data-city="Frisco">Frisco</li>
+          <li data-city="Plano">Plano</li>
+          <li data-city="Fort Worth">Fort Worth</li>
+          <li data-city="Arlington">Arlington</li>
+          <li data-city="Garland">Garland</li>
+          <li data-city="McKinney">McKinney</li>
+          <li data-city="Denton">Denton</li>
+          <li data-city="Allen">Allen</li>
+          <li data-city="Carrollton">Carrollton</li>
+          <li data-city="Grand Prairie">Grand Prairie</li>
+        </ul>
+      </div>
     </div>
 
     {# Discover section #}
@@ -554,6 +590,65 @@
     wrap.addEventListener('click', function() { textInput.focus(); });
     renderChips();
   });
+})();
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('sb-city-btn');
+  var dropdown = document.getElementById('sb-city-dropdown');
+  var search = document.getElementById('sb-city-search');
+  var list = document.getElementById('sb-city-list');
+  var label = document.getElementById('sb-city-label');
+  if (!btn) return;
+
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var open = !dropdown.hidden;
+    dropdown.hidden = open;
+    btn.setAttribute('aria-expanded', String(!open));
+    if (!open) { search.value = ''; filterCities(''); search.focus(); }
+  });
+
+  document.addEventListener('click', function(){ dropdown.hidden = true; btn.setAttribute('aria-expanded','false'); });
+  dropdown.addEventListener('click', function(e){ e.stopPropagation(); });
+
+  search.addEventListener('input', function(){ filterCities(search.value); });
+
+  list.addEventListener('click', function(e){
+    var li = e.target.closest('li[data-city]');
+    if (!li) return;
+    var city = li.dataset.city;
+    label.textContent = city || 'Dallas–Fort Worth';
+    dropdown.hidden = true;
+    btn.setAttribute('aria-expanded','false');
+    var url = new URL(window.location.href);
+    if (city) url.searchParams.set('city', city);
+    else url.searchParams.delete('city');
+    // Always go to listings page when switching city
+    if (!window.location.pathname.includes('/listings')) {
+      window.location.href = '/listings/?' + (city ? 'city='+encodeURIComponent(city) : '');
+    } else {
+      window.location.href = url.toString();
+    }
+  });
+
+  function filterCities(q){
+    var items = list.querySelectorAll('li');
+    items.forEach(function(li){
+      var match = !q || li.textContent.toLowerCase().includes(q.toLowerCase());
+      li.style.display = match ? '' : 'none';
+    });
+  }
+
+  // Highlight active city on load
+  var params = new URLSearchParams(window.location.search);
+  var activeCity = params.get('city');
+  if (activeCity) {
+    label.textContent = activeCity;
+    list.querySelectorAll('li').forEach(function(li){
+      if (li.dataset.city === activeCity) li.classList.add('sb-city-active');
+    });
+  }
 })();
 </script>
 </body>

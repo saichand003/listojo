@@ -151,26 +151,18 @@
     <h1 class="hc-headline">Find your next home<br>with confidence.</h1>
     <p class="hc-subline">Real listings. Smart match scoring. No noise.<br>We show you why each home fits — so you decide fast.</p>
 
-    {# ── Hero Inline Search Bar (Zillow-style) ── #}
-    <form class="home-quick-search" method="get" action="{% url 'listing_list' %}" role="search" aria-label="Property search">
-      <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="#9CA3AF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-left:1.1rem;" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="home-quick-search-input" type="text" name="city" placeholder="City, neighborhood, or ZIP — e.g. Irving, TX" autocomplete="off" aria-label="Search city or neighborhood">
-      <div class="home-quick-search-divider" aria-hidden="true"></div>
-      <button class="home-quick-search-btn" type="submit" aria-label="Search">
-        <svg viewBox="0 0 24 24" fill="none" width="15" height="15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        Search
-      </button>
-    </form>
-
-    {# ── Popular searches ── #}
-    <div class="popular-searches">
-      <span class="popular-label">Popular:</span>
-      <a href="{% url 'listing_list' %}?city=Irving" class="popular-pill">Irving</a>
-      <a href="{% url 'listing_list' %}?city=Dallas" class="popular-pill">Dallas</a>
-      <a href="{% url 'listing_list' %}?city=Frisco" class="popular-pill">Frisco</a>
-      <a href="{% url 'listing_list' %}?city=Plano" class="popular-pill">Plano</a>
-      <a href="{% url 'listing_list' %}?city=Fort+Worth" class="popular-pill">Fort Worth</a>
-      <a href="{% url 'guided_search' %}" class="popular-pill" style="background:rgba(93,194,40,.18);border-color:rgba(93,194,40,.4);color:#5DC228;">✦ Guided Search</a>
+    <div class="hc-ctas">
+      <a href="{% url 'guided_search' %}" class="hc-btn-primary">
+        Start guided search &rarr;
+      </a>
+      <a href="{% url 'listing_list' %}?category=rentals" class="hc-btn-ghost">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="15.5" cy="8.5" r="3.5"/><path d="M13 11 4 20"/><path d="M6.5 17.5 9 20"/><path d="M8.8 15.2 11.3 17.7"/></svg>
+        Rentals
+      </a>
+      <a href="{% url 'listing_list' %}?category=properties" class="hc-btn-ghost">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5"/><path d="M6.5 9.5V20h11V9.5"/><path d="M10 20v-5h4v5"/></svg>
+        Homes for Sale
+      </a>
     </div>
 
     <div class="hc-stats">

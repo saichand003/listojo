@@ -413,27 +413,6 @@
           </div>
         </div>
       </div>
-      <div class="gs-group" style="border-top:1px solid #F3F4F6;padding-top:20px;margin-top:4px;">
-        <label class="gs-label">How urgently do you need to move?</label>
-        <div class="gs-options" id="urgency-group">
-          <div class="gs-option" data-val="just_looking" onclick="selectUrgency(this)">
-            <div class="radio"></div>
-            <div><div class="gs-option-title">Just looking around</div><div class="gs-option-sub">No pressure, exploring options</div></div>
-          </div>
-          <div class="gs-option sel" data-val="no_hurry" onclick="selectUrgency(this)">
-            <div class="radio"></div>
-            <div><div class="gs-option-title">I want to move, but no rush</div><div class="gs-option-sub">Willing to wait for the right place</div></div>
-          </div>
-          <div class="gs-option" data-val="flexible" onclick="selectUrgency(this)">
-            <div class="radio"></div>
-            <div><div class="gs-option-title">Need to move, can be flexible</div><div class="gs-option-sub">Have a deadline but some wiggle room</div></div>
-          </div>
-          <div class="gs-option" data-val="asap" onclick="selectUrgency(this)">
-            <div class="radio"></div>
-            <div><div class="gs-option-title">I've gotta move — ASAP</div><div class="gs-option-sub">Need to sign something soon</div></div>
-          </div>
-        </div>
-      </div>
       <div class="gs-group" id="lease-group" style="border-top:1px solid #F3F4F6;padding-top:20px;margin-top:4px;">
         <label class="gs-label">Lease preference</label>
         <div class="tag-grid">
@@ -572,11 +551,6 @@ function selectOption(el, group) {
   el.classList.add('sel');
 }
 
-function selectUrgency(el) {
-  document.querySelectorAll('#urgency-group .gs-option').forEach(function(o){ o.classList.remove('sel'); });
-  el.classList.add('sel');
-  selectedUrgency = el.dataset.val;
-}
 
 function selectPriority(val) {
   selectedPriority = val;
@@ -644,9 +618,6 @@ function submitSearch() {
   }
 
   if (selectedPriority) fields.priority = selectedPriority;
-
-  var urgencyOpt = document.querySelector('#urgency-group .gs-option.sel');
-  if (urgencyOpt) fields.urgency = urgencyOpt.dataset.val;
 
   var income = document.getElementById('monthly_income_val').value;
   if (income && income !== '5000') fields.monthly_income = income;

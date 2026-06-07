@@ -150,6 +150,24 @@ function dismissAgentCta() {
 </div>
 {% endif %}
 
+{# ── List / Map view toggle ── #}
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem;">
+  <div id="view-toggle" style="display:flex;gap:.3rem;background:var(--border);border-radius:8px;padding:.2rem;">
+    <button id="btn-list-view" onclick="setView('list')" style="display:flex;align-items:center;gap:.4rem;padding:.35rem .75rem;border-radius:6px;border:none;cursor:pointer;font-size:.78rem;font-weight:700;background:#fff;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1);">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg>
+      List
+    </button>
+    <button id="btn-map-view" onclick="setView('map')" style="display:flex;align-items:center;gap:.4rem;padding:.35rem .75rem;border-radius:6px;border:none;cursor:pointer;font-size:.78rem;font-weight:700;background:transparent;color:var(--muted);">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
+      Map
+    </button>
+  </div>
+</div>
+
+{# ── Map/List wrapper ── #}
+<div id="view-wrapper" style="display:flex;gap:1rem;align-items:flex-start;">
+  <div id="list-panel" style="flex:1;min-width:0;">
+
 {# ── Section heading ── #}
 <div style="margin-bottom:1rem;">
     {% if fmm_mode %}
@@ -240,6 +258,439 @@ function dismissAgentCta() {
     {% endwith %}
 </div>
 {% endif %}
+
+  </div>{# /list-panel #}
+  <div id="map-panel" style="display:none;flex:0 0 55%;position:sticky;top:70px;height:calc(100vh - 90px);border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+    <div id="listing-map" style="width:100%;height:100%;"></div>
+  </div>
+</div>{# /view-wrapper #}
+
+{# Google Maps InfoWindow overrides #}
+<style>
+.gm-style .gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18) !important;
+  overflow: hidden !important;
+}
+.gm-style .gm-style-iw-d {
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+.gm-style .gm-style-iw-tc { display: none !important; }
+.gm-style .gm-style-iw-chr { position: absolute; top: 6px; right: 6px; z-index: 10; }
+.gm-style .gm-style-iw-chr button { background: rgba(255,255,255,.85) !important; border-radius: 999px !important; width: 24px !important; height: 24px !important; }
+.lj-iw { font-family: 'Sora', sans-serif; width: 210px; }
+.lj-iw-img { width: 100%; height: 120px; object-fit: cover; display: block; }
+.lj-iw-body { padding: .65rem .75rem .75rem; }
+.lj-iw-price { font-size: 1rem; font-weight: 800; color: #111827; margin-bottom: .1rem; }
+.lj-iw-price span { font-size: .72rem; font-weight: 500; color: #6b7280; }
+.lj-iw-title { font-size: .78rem; font-weight: 600; color: #374151; margin-bottom: .18rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lj-iw-meta { font-size: .7rem; color: #9ca3af; margin-bottom: .55rem; }
+.lj-iw-btn { display: block; background: #222; color: #fff; padding: .4rem .75rem; border-radius: 8px; font-size: .75rem; font-weight: 700; text-decoration: none; text-align: center; transition: background .15s; }
+.lj-iw-btn:hover { background: #2A7EF2; color: #fff; }
+</style>
+<style>
+/* ── Airbnb-style 2-col map tiles ── */
+#list-panel.map-mode {
+  padding-right: .25rem;
+  background: transparent;
+}
+
+#list-panel.map-mode .grid-listings {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: .75rem !important;
+  padding: 0 !important;
+}
+
+/* Card shell — borderless, Airbnb style */
+#list-panel.map-mode .listing-card {
+  display: flex !important;
+  flex-direction: column !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: #fff !important;
+  cursor: pointer;
+  transition: transform .18s ease;
+}
+#list-panel.map-mode .listing-card:hover {
+  transform: translateY(-2px);
+}
+/* Highlighted card from pin click */
+#list-panel.map-mode .listing-card[style*="outline"] {
+  outline: 2.5px solid #2A7EF2 !important;
+  border-radius: 12px !important;
+}
+
+/* Photo — square-ish, top of card */
+#list-panel.map-mode .listing-thumb-wrap {
+  width: 100% !important;
+  height: 130px !important;
+  flex-shrink: 0 !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+#list-panel.map-mode .listing-thumb-track {
+  width: 100% !important;
+  height: 100% !important;
+}
+#list-panel.map-mode .listing-thumb {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 0 !important;
+  display: block !important;
+}
+#list-panel.map-mode .listing-thumb-placeholder {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #f1f5f9 !important;
+  font-size: 2rem !important;
+  border-radius: 0 !important;
+}
+
+/* Keep save heart + category badge, hide carousel controls */
+#list-panel.map-mode .thumb-nav,
+#list-panel.map-mode .thumb-dots,
+#list-panel.map-mode .featured-badge { display: none !important; }
+
+#list-panel.map-mode .listing-thumb-wrap .save-pill {
+  display: flex !important;
+  position: absolute !important;
+  top: .5rem !important;
+  right: .5rem !important;
+  background: rgba(255,255,255,.85) !important;
+  backdrop-filter: blur(4px) !important;
+  border: none !important;
+  border-radius: 999px !important;
+  padding: .25rem .5rem !important;
+  font-size: .7rem !important;
+  cursor: pointer !important;
+  color: #374151 !important;
+  z-index: 2 !important;
+}
+#list-panel.map-mode .listing-thumb-wrap .save-pill.save-pill-active { color: #e11d48 !important; }
+
+#list-panel.map-mode .listing-thumb-wrap .category-badge,
+#list-panel.map-mode .listing-thumb-wrap .new-badge {
+  position: absolute !important;
+  top: .5rem !important;
+  left: .5rem !important;
+  font-size: .62rem !important;
+  padding: .18rem .45rem !important;
+  border-radius: 6px !important;
+  z-index: 2 !important;
+}
+
+/* Body — below photo, tight padding */
+#list-panel.map-mode .listing-body {
+  padding: .5rem .3rem .4rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: .12rem !important;
+  min-width: 0 !important;
+}
+
+/* Price — bold, first */
+#list-panel.map-mode .price {
+  order: -2 !important;
+  font-size: .88rem !important;
+  font-weight: 800 !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  background: none !important;
+}
+#list-panel.map-mode .price .price-unit {
+  font-size: .68rem !important;
+  font-weight: 500 !important;
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+}
+
+/* Title */
+#list-panel.map-mode .card-title-row {
+  order: -1 !important;
+  margin: 0 !important;
+}
+#list-panel.map-mode .card-title-row h3 {
+  font-size: .75rem !important;
+  font-weight: 500 !important;
+  color: #6b7280 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  margin: 0 !important;
+}
+#list-panel.map-mode .card-title-row h3 a { color: inherit !important; }
+#list-panel.map-mode .card-title-row .save-pill,
+#list-panel.map-mode .match-score-badge { display: none !important; }
+
+/* Specs */
+#list-panel.map-mode .card-specs-row {
+  font-size: .7rem !important;
+  color: #6b7280 !important;
+  margin: 0 !important;
+  gap: .2rem !important;
+}
+#list-panel.map-mode .card-spec-item { font-size: .7rem !important; }
+#list-panel.map-mode .card-spec-dot { font-size: .35rem !important; color: #d1d5db !important; }
+
+/* Location */
+#list-panel.map-mode .card-meta-row {
+  font-size: .68rem !important;
+  color: #9ca3af !important;
+  margin: 0 !important;
+}
+#list-panel.map-mode .dom-chip { display: none !important; }
+
+/* Hide everything else */
+#list-panel.map-mode .verified-owner-badge,
+#list-panel.map-mode .card-avail,
+#list-panel.map-mode .card-income-hint,
+#list-panel.map-mode .match-explanation,
+#list-panel.map-mode .match-reason-pills,
+#list-panel.map-mode .listing-tag-pills,
+#list-panel.map-mode .card-actions { display: none !important; }
+
+/* Hide page sections not relevant in map mode */
+#list-panel.map-mode .fmm-active-banner,
+#list-panel.map-mode .fmm-market-strip,
+#list-panel.map-mode .fmm-near-matches .fmm-near-header { display: none !important; }
+
+/* ── Zillow-style map pins ── */
+.lj-pin-wrap {
+  display: inline-block;
+  transform: translate(-50%, calc(-100% - 7px));
+  transform-origin: bottom center;
+  cursor: pointer;
+}
+.lj-pin {
+  background: #2A7EF2;
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 800;
+  font-family: 'Sora', sans-serif;
+  padding: .28rem .62rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(42,126,242,.35);
+  position: relative;
+  transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s ease;
+  transform-origin: center bottom;
+  user-select: none;
+  line-height: 1.4;
+}
+.lj-pin::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid #2A7EF2;
+}
+.lj-pin-wrap:hover .lj-pin {
+  transform: scale(1.18);
+  box-shadow: 0 6px 20px rgba(42,126,242,.5);
+}
+.lj-pin-wrap.lj-active .lj-pin {
+  background: #182B52;
+  box-shadow: 0 4px 16px rgba(24,43,82,.45);
+}
+.lj-pin-wrap.lj-active .lj-pin::after {
+  border-top-color: #182B52;
+}
+.lj-pin-wrap.lj-active:hover .lj-pin {
+  transform: scale(1.15);
+}
+</style>
+<script>
+(function(){
+  var DFW_COORDS = {
+    'Irving':        {lat:32.8140, lng:-96.9489},
+    'Dallas':        {lat:32.7767, lng:-96.7970},
+    'Frisco':        {lat:33.1507, lng:-96.8236},
+    'Plano':         {lat:33.0198, lng:-96.6989},
+    'Fort Worth':    {lat:32.7555, lng:-97.3308},
+    'Arlington':     {lat:32.7357, lng:-97.1081},
+    'Garland':       {lat:32.9126, lng:-96.6389},
+    'McKinney':      {lat:33.1972, lng:-96.6397},
+    'Denton':        {lat:33.2148, lng:-97.1331},
+    'Allen':         {lat:33.1032, lng:-96.6706},
+    'Carrollton':    {lat:32.9537, lng:-96.8903},
+    'Grand Prairie': {lat:32.7460, lng:-96.9978},
+    'default':       {lat:32.8998, lng:-96.9500},
+  };
+
+  var gMap = null, gMarkers = [], gOpenInfoWin = null, gMapsReady = false;
+
+  // Called by Google Maps API once loaded
+  window.initListojoMap = function(){
+    gMapsReady = true;
+    _buildMap();
+  };
+
+  function _loadGMapsScript(){
+    if(document.querySelector('script[src*="maps.googleapis"]')) return;
+    var s = document.createElement('script');
+    s.src = 'https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=marker&callback=initListojoMap&loading=async';
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
+  }
+
+  function _buildMap(){
+    if(gMap) return;
+    gMap = new google.maps.Map(document.getElementById('listing-map'), {
+      center: {lat:32.8998, lng:-96.9500},
+      zoom: 10,
+      mapId: 'DEMO_MAP_ID',
+      zoomControl: true,
+      streetViewControl: false,
+      mapTypeControl: false,
+      fullscreenControl: false,
+      clickableIcons: false,
+      gestureHandling: 'greedy',
+    });
+    _placeMarkers();
+  }
+
+  function _placeMarkers(){
+    gMarkers.forEach(function(m){ m.map = null; });
+    gMarkers = [];
+    if(gOpenInfoWin){ gOpenInfoWin.close(); gOpenInfoWin = null; }
+
+    var cards = document.querySelectorAll('#list-panel .listing-card[data-city]');
+    var bounds = new google.maps.LatLngBounds();
+
+    cards.forEach(function(card){
+      var city   = card.dataset.city || '';
+      var base   = DFW_COORDS[city] || DFW_COORDS['default'];
+      var pos    = {
+        lat: base.lat + (Math.random()-.5)*.018,
+        lng: base.lng + (Math.random()-.5)*.018,
+      };
+      var price  = card.dataset.price ? '$'+Number(card.dataset.price).toLocaleString() : '—';
+      var title  = card.dataset.title || 'Listing';
+      var pk     = card.dataset.pk;
+      var imgEl  = card.querySelector('.listing-thumb');
+      var imgSrc = imgEl ? imgEl.src : '';
+
+      // Custom HTML pin
+      var pinWrap = document.createElement('div');
+      pinWrap.className = 'lj-pin-wrap';
+      pinWrap.innerHTML = '<div class="lj-pin">'+price+'</div>';
+
+      var marker = new google.maps.marker.AdvancedMarkerElement({
+        map: gMap,
+        position: pos,
+        content: pinWrap,
+        title: title,
+        zIndex: 10,
+      });
+
+      // InfoWindow
+      var iwContent =
+        '<div class="lj-iw">'+
+        (imgSrc ? '<img class="lj-iw-img" src="'+imgSrc+'" loading="lazy">' : '')+
+        '<div class="lj-iw-body">'+
+        '<div class="lj-iw-price">'+price+'<span>/mo</span></div>'+
+        '<div class="lj-iw-title">'+title+'</div>'+
+        '<div class="lj-iw-meta">📍 '+city+'</div>'+
+        '<a class="lj-iw-btn" href="/listing/'+pk+'/">View listing →</a>'+
+        '</div></div>';
+
+      var infoWin = new google.maps.InfoWindow({
+        content: iwContent,
+        pixelOffset: new google.maps.Size(0, -4),
+      });
+
+      marker.addListener('click', function(){
+        if(gOpenInfoWin) gOpenInfoWin.close();
+        document.querySelectorAll('.lj-pin-wrap').forEach(function(p){ p.classList.remove('lj-active'); });
+        pinWrap.classList.add('lj-active');
+        marker.zIndex = 100;
+        infoWin.open({map: gMap, anchor: marker});
+        gOpenInfoWin = infoWin;
+        // Highlight + scroll to card
+        document.querySelectorAll('#list-panel .listing-card').forEach(function(c){ c.style.outline=''; });
+        var c = document.querySelector('#list-panel .listing-card[data-pk="'+pk+'"]');
+        if(c){ c.style.outline='2.5px solid #2A7EF2'; c.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+      });
+
+      infoWin.addListener('closeclick', function(){
+        pinWrap.classList.remove('lj-active');
+        marker.zIndex = 10;
+        gOpenInfoWin = null;
+        document.querySelectorAll('#list-panel .listing-card').forEach(function(c){ c.style.outline=''; });
+      });
+
+      bounds.extend(pos);
+      gMarkers.push(marker);
+    });
+
+    if(!bounds.isEmpty()) gMap.fitBounds(bounds, {padding: 40});
+  }
+
+  window.setView = function(mode){
+    var listPanel = document.getElementById('list-panel');
+    var mapPanel  = document.getElementById('map-panel');
+    var btnList   = document.getElementById('btn-list-view');
+    var btnMap    = document.getElementById('btn-map-view');
+
+    if(mode === 'map'){
+      listPanel.classList.add('map-mode');
+      listPanel.style.flex       = '0 0 45%';
+      listPanel.style.overflowY  = 'auto';
+      listPanel.style.maxHeight  = 'calc(100vh - 90px)';
+      listPanel.style.position   = 'sticky';
+      listPanel.style.top        = '70px';
+      mapPanel.style.display     = 'block';
+      btnMap.style.background    = '#fff';
+      btnMap.style.color         = 'var(--text)';
+      btnMap.style.boxShadow     = '0 1px 4px rgba(0,0,0,.1)';
+      btnList.style.background   = 'transparent';
+      btnList.style.color        = 'var(--muted)';
+      btnList.style.boxShadow    = '';
+      if(!gMapsReady){
+        _loadGMapsScript();
+      } else if(!gMap){
+        _buildMap();
+      } else {
+        google.maps.event.trigger(gMap,'resize');
+        if(!gMap.getBounds() || gMap.getBounds().isEmpty()) _placeMarkers();
+      }
+    } else {
+      listPanel.classList.remove('map-mode');
+      listPanel.style.flex      = '1';
+      listPanel.style.overflowY = '';
+      listPanel.style.maxHeight = '';
+      listPanel.style.position  = '';
+      listPanel.style.top       = '';
+      mapPanel.style.display    = 'none';
+      btnList.style.background  = '#fff';
+      btnList.style.color       = 'var(--text)';
+      btnList.style.boxShadow   = '0 1px 4px rgba(0,0,0,.1)';
+      btnMap.style.background   = 'transparent';
+      btnMap.style.color        = 'var(--muted)';
+      btnMap.style.boxShadow    = '';
+    }
+  };
+})();
+</script>
 
 {# ── CITY BROWSING ── #}
 <div class="city-browse-section">
