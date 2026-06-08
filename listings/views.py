@@ -290,9 +290,11 @@ def saved_listings(request):
     )
     listings = [f.listing for f in favourites]
     fav_ids = {l.pk for l in listings}
+    search_profile = SavedSearch.objects.filter(user=request.user).first()
     return render(request, 'listings/saved_listings.html', {
         'listings': listings,
         'fav_ids': fav_ids,
+        'search_profile': search_profile,
     })
 
 
@@ -461,3 +463,50 @@ def log_impressions(request):
     cache.set(rate_key, hits + 1, 60)
     logged = log_impression_batch(request, items, search_id=search_id)
     return JsonResponse({'ok': True, 'logged': logged})
+
+
+@login_required
+def bulk_message_landlords(request):
+    """
+    POST: Send one message to multiple listing owners at once.
+    Body: listing_ids (comma-separated) + message text.
+    Creates a ChatMessage per listing (skips own listings).
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method not allowed'}, status=405)
+
+    import json
+    from chatapp.models import ChatMessage as CM
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'invalid json'}, status=400)
+
+    raw_ids = data.get('listing_ids', [])
+    message_text = data.get('message', '').strip()
+
+    if not raw_ids or not message_text:
+        return JsonResponse({'error': 'missing listing_ids or message'}, status=400)
+
+    try:
+        pks = [int(pk) for pk in raw_ids]
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'invalid listing ids'}, status=400)
+
+    listings = Listing.objects.filter(
+        pk__in=pks,
+        status='active',
+    ).select_related('owner').exclude(owner=request.user)
+
+    sent = 0
+    for listing in listings:
+        CM.objects.create(
+            sender=request.user,
+            recipient=listing.owner,
+            listing=listing,
+            message=message_text,
+        )
+        sent += 1
+
+    return JsonResponse({'ok': True, 'sent': sent})

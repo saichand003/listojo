@@ -161,7 +161,7 @@ def _matching_communities(user, params: SearchParams) -> list[Community]:
             floor_plans__units__price__lte=params.max_price_val,
             floor_plans__units__status='available',
         )
-    if params.category and params.category not in ('rentals', 'properties'):
+    if params.category != 'rentals':
         return []
 
     mapped_type = COMMUNITY_TYPE_BY_PROPERTY_TYPE.get(params.property_type)

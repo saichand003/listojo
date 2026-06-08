@@ -278,8 +278,35 @@ function dismissAgentCta() {
   padding: 0 !important;
 }
 .gm-style .gm-style-iw-tc { display: none !important; }
-.gm-style .gm-style-iw-chr { position: absolute; top: 6px; right: 6px; z-index: 10; }
-.gm-style .gm-style-iw-chr button { background: rgba(255,255,255,.85) !important; border-radius: 999px !important; width: 24px !important; height: 24px !important; }
+/* Airbnb/Zillow-style close: solid white circle, dark X, strong shadow for
+   visibility on any background (incl. white/snow). */
+.gm-style .gm-style-iw-chr { position: absolute; top: 8px; right: 8px; z-index: 10; height: auto !important; }
+.gm-style .gm-style-iw-chr button {
+  background: #fff !important;
+  border-radius: 50% !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 1 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.06) !important;
+  transition: transform .12s ease, box-shadow .12s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.gm-style .gm-style-iw-chr button:hover {
+  transform: scale(1.08) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,.4), 0 0 0 1px rgba(0,0,0,.08) !important;
+}
+.gm-style .gm-style-iw-chr button span {
+  background-color: #222 !important;
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 !important;
+}
 .lj-iw { font-family: 'Sora', sans-serif; width: 210px; }
 .lj-iw-img { width: 100%; height: 120px; object-fit: cover; display: block; }
 .lj-iw-body { padding: .65rem .75rem .75rem; }
@@ -469,12 +496,6 @@ function dismissAgentCta() {
 #list-panel.map-mode .fmm-near-matches .fmm-near-header { display: none !important; }
 
 /* ── Zillow-style map pins ── */
-.lj-pin-wrap {
-  display: inline-block;
-  transform: translate(-50%, calc(-100% - 7px));
-  transform-origin: bottom center;
-  cursor: pointer;
-}
 .lj-pin {
   background: #2A7EF2;
   color: #fff;
@@ -485,36 +506,33 @@ function dismissAgentCta() {
   border-radius: 6px;
   white-space: nowrap;
   box-shadow: 0 2px 10px rgba(42,126,242,.35);
-  position: relative;
-  transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s ease;
+  transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s ease, background .12s;
   transform-origin: center bottom;
   user-select: none;
   line-height: 1.4;
+  display: inline-block;
 }
-.lj-pin::after {
-  content: '';
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
+.lj-pin-tail {
+  width: 0; height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
   border-top: 7px solid #2A7EF2;
+  margin: 0 auto;
+  transition: border-top-color .12s;
 }
-.lj-pin-wrap:hover .lj-pin {
+/* outer div hover/active — transform is already on outer div */
+[style*="translate(-50%"]:hover .lj-pin {
   transform: scale(1.18);
   box-shadow: 0 6px 20px rgba(42,126,242,.5);
 }
-.lj-pin-wrap.lj-active .lj-pin {
+[style*="translate(-50%"].lj-active .lj-pin {
   background: #182B52;
   box-shadow: 0 4px 16px rgba(24,43,82,.45);
 }
-.lj-pin-wrap.lj-active .lj-pin::after {
+[style*="translate(-50%"].lj-active .lj-pin-tail {
   border-top-color: #182B52;
 }
-.lj-pin-wrap.lj-active:hover .lj-pin {
+[style*="translate(-50%"].lj-active:hover .lj-pin {
   transform: scale(1.15);
 }
 </style>
@@ -536,28 +554,79 @@ function dismissAgentCta() {
     'default':       {lat:32.8998, lng:-96.9500},
   };
 
+  var DATA_CATEGORY = '{{ filters.category }}';
   var gMap = null, gMarkers = [], gOpenInfoWin = null, gMapsReady = false;
 
-  // Called by Google Maps API once loaded
-  window.initListojoMap = function(){
-    gMapsReady = true;
-    _buildMap();
-  };
+  // Zillow/Airbnb-style: hide all POIs, mute roads, clean grey palette
+  var CLEAN_STYLE = [
+    {featureType:'poi',                                      stylers:[{visibility:'off'}]},
+    {featureType:'transit',                                  stylers:[{visibility:'off'}]},
+    {featureType:'road',          elementType:'geometry',    stylers:[{color:'#ffffff'}]},
+    {featureType:'road.arterial', elementType:'geometry',    stylers:[{color:'#f0f0f0'}]},
+    {featureType:'road.highway',  elementType:'geometry',    stylers:[{color:'#e6e6e6'}]},
+    {featureType:'road.highway',  elementType:'geometry.stroke', stylers:[{color:'#d4d4d4'}]},
+    {featureType:'road',          elementType:'labels.text.fill',   stylers:[{color:'#9ca3af'}]},
+    {featureType:'road',          elementType:'labels.text.stroke', stylers:[{color:'#ffffff'}]},
+    {featureType:'landscape',     elementType:'geometry',    stylers:[{color:'#f8f9fa'}]},
+    {featureType:'landscape.natural', elementType:'geometry',stylers:[{color:'#eef2ee'}]},
+    {featureType:'water',         elementType:'geometry',    stylers:[{color:'#c9dff0'}]},
+    {featureType:'administrative.locality',    elementType:'labels.text.fill',   stylers:[{color:'#374151'}]},
+    {featureType:'administrative.locality',    elementType:'labels.text.stroke', stylers:[{color:'#ffffff'},{weight:3}]},
+    {featureType:'administrative.neighborhood',elementType:'labels.text.fill',   stylers:[{color:'#9ca3af'}]},
+    {featureType:'administrative.neighborhood',elementType:'labels.text.stroke', stylers:[{color:'#ffffff'}]},
+  ];
+
+  window.initListojoMap = function(){ gMapsReady = true; _buildMap(); };
 
   function _loadGMapsScript(){
     if(document.querySelector('script[src*="maps.googleapis"]')) return;
     var s = document.createElement('script');
-    s.src = 'https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=marker&callback=initListojoMap&loading=async';
+    s.src = 'https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&callback=initListojoMap&loading=async';
     s.async = true; s.defer = true;
     document.head.appendChild(s);
   }
 
+  // LjMarker is defined lazily inside _buildMap() once google.maps is available
+  var LjMarker = null;
+  function _defineLjMarker(){
+    if(LjMarker) return;
+    function Marker(opts){
+      this._latlng = new google.maps.LatLng(opts.position.lat, opts.position.lng);
+      this._div    = null;
+      this._price  = opts.price || '—';
+      this._click  = opts.onClick || null;
+      this.setMap(opts.map);
+    }
+    Marker.prototype = Object.create(google.maps.OverlayView.prototype);
+    Marker.prototype.onAdd = function(){
+      var div = document.createElement('div');
+      div.style.cssText = 'position:absolute;cursor:pointer;transform:translate(-50%,calc(-100% - 7px));transform-origin:bottom center;';
+      div.innerHTML = '<div class="lj-pin">'+this._price+'</div><div class="lj-pin-tail"></div>';
+      div.addEventListener('click', this._click || function(){});
+      this._div = div;
+      this.getPanes().overlayMouseTarget.appendChild(div);
+    };
+    Marker.prototype.draw = function(){
+      var p = this.getProjection().fromLatLngToDivPixel(this._latlng);
+      if(this._div && p){ this._div.style.left = p.x+'px'; this._div.style.top = p.y+'px'; }
+    };
+    Marker.prototype.onRemove = function(){
+      if(this._div && this._div.parentNode){ this._div.parentNode.removeChild(this._div); }
+      this._div = null;
+    };
+    Marker.prototype.setActive = function(on){
+      if(this._div) this._div.classList.toggle('lj-active', on);
+    };
+    LjMarker = Marker;
+  }
+
   function _buildMap(){
     if(gMap) return;
+    _defineLjMarker();
     gMap = new google.maps.Map(document.getElementById('listing-map'), {
       center: {lat:32.8998, lng:-96.9500},
       zoom: 10,
-      mapId: 'DEMO_MAP_ID',
+      styles: CLEAN_STYLE,
       zoomControl: true,
       streetViewControl: false,
       mapTypeControl: false,
@@ -569,7 +638,7 @@ function dismissAgentCta() {
   }
 
   function _placeMarkers(){
-    gMarkers.forEach(function(m){ m.map = null; });
+    gMarkers.forEach(function(m){ m.setMap(null); });
     gMarkers = [];
     if(gOpenInfoWin){ gOpenInfoWin.close(); gOpenInfoWin = null; }
 
@@ -577,68 +646,57 @@ function dismissAgentCta() {
     var bounds = new google.maps.LatLngBounds();
 
     cards.forEach(function(card){
-      var city   = card.dataset.city || '';
-      var base   = DFW_COORDS[city] || DFW_COORDS['default'];
-      var pos    = {
-        lat: base.lat + (Math.random()-.5)*.018,
-        lng: base.lng + (Math.random()-.5)*.018,
-      };
+      var city  = card.dataset.city || '';
+      var base  = DFW_COORDS[city] || DFW_COORDS['default'];
+      var latlng = new google.maps.LatLng(
+        base.lat + (Math.random()-.5)*.018,
+        base.lng + (Math.random()-.5)*.018
+      );
       var price  = card.dataset.price ? '$'+Number(card.dataset.price).toLocaleString() : '—';
       var title  = card.dataset.title || 'Listing';
       var pk     = card.dataset.pk;
       var imgEl  = card.querySelector('.listing-thumb');
       var imgSrc = imgEl ? imgEl.src : '';
 
-      // Custom HTML pin
-      var pinWrap = document.createElement('div');
-      pinWrap.className = 'lj-pin-wrap';
-      pinWrap.innerHTML = '<div class="lj-pin">'+price+'</div>';
-
-      var marker = new google.maps.marker.AdvancedMarkerElement({
+      var marker = new LjMarker({
+        position: {lat: latlng.lat(), lng: latlng.lng()},
+        price: price,
         map: gMap,
-        position: pos,
-        content: pinWrap,
-        title: title,
-        zIndex: 10,
+        onClick: function(){
+          if(gOpenInfoWin){ gOpenInfoWin.close(); gOpenInfoWin = null; }
+          gMarkers.forEach(function(m){ m.setActive(false); });
+          marker.setActive(true);
+
+          var priceUnit = (DATA_CATEGORY === 'properties') ? '' : '<span>/mo</span>';
+          var iwLabel   = (DATA_CATEGORY === 'properties') ? 'View Property →' : 'View Listing →';
+          var iw = new google.maps.InfoWindow({
+            content:
+              '<div class="lj-iw">'+
+              (imgSrc ? '<img class="lj-iw-img" src="'+imgSrc+'" loading="lazy">' : '')+
+              '<div class="lj-iw-body">'+
+              '<div class="lj-iw-price">'+price+priceUnit+'</div>'+
+              '<div class="lj-iw-title">'+title+'</div>'+
+              '<div class="lj-iw-meta">📍 '+city+'</div>'+
+              '<a class="lj-iw-btn" href="/listing/'+pk+'/">'+iwLabel+'</a>'+
+              '</div></div>',
+            position: latlng,
+            pixelOffset: new google.maps.Size(0, -38),
+          });
+          iw.open(gMap);
+          iw.addListener('closeclick', function(){
+            marker.setActive(false);
+            gOpenInfoWin = null;
+            document.querySelectorAll('#list-panel .listing-card').forEach(function(c){ c.style.outline=''; });
+          });
+          gOpenInfoWin = iw;
+
+          document.querySelectorAll('#list-panel .listing-card').forEach(function(c){ c.style.outline=''; });
+          var c = document.querySelector('#list-panel .listing-card[data-pk="'+pk+'"]');
+          if(c){ c.style.outline='2.5px solid #2A7EF2'; c.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+        },
       });
 
-      // InfoWindow
-      var iwContent =
-        '<div class="lj-iw">'+
-        (imgSrc ? '<img class="lj-iw-img" src="'+imgSrc+'" loading="lazy">' : '')+
-        '<div class="lj-iw-body">'+
-        '<div class="lj-iw-price">'+price+'<span>/mo</span></div>'+
-        '<div class="lj-iw-title">'+title+'</div>'+
-        '<div class="lj-iw-meta">📍 '+city+'</div>'+
-        '<a class="lj-iw-btn" href="/listing/'+pk+'/">View listing →</a>'+
-        '</div></div>';
-
-      var infoWin = new google.maps.InfoWindow({
-        content: iwContent,
-        pixelOffset: new google.maps.Size(0, -4),
-      });
-
-      marker.addListener('click', function(){
-        if(gOpenInfoWin) gOpenInfoWin.close();
-        document.querySelectorAll('.lj-pin-wrap').forEach(function(p){ p.classList.remove('lj-active'); });
-        pinWrap.classList.add('lj-active');
-        marker.zIndex = 100;
-        infoWin.open({map: gMap, anchor: marker});
-        gOpenInfoWin = infoWin;
-        // Highlight + scroll to card
-        document.querySelectorAll('#list-panel .listing-card').forEach(function(c){ c.style.outline=''; });
-        var c = document.querySelector('#list-panel .listing-card[data-pk="'+pk+'"]');
-        if(c){ c.style.outline='2.5px solid #2A7EF2'; c.scrollIntoView({behavior:'smooth',block:'nearest'}); }
-      });
-
-      infoWin.addListener('closeclick', function(){
-        pinWrap.classList.remove('lj-active');
-        marker.zIndex = 10;
-        gOpenInfoWin = null;
-        document.querySelectorAll('#list-panel .listing-card').forEach(function(c){ c.style.outline=''; });
-      });
-
-      bounds.extend(pos);
+      bounds.extend(latlng);
       gMarkers.push(marker);
     });
 
@@ -813,9 +871,25 @@ function dismissAgentCta() {
     <div class="cbb-content">
       <div>
         <h2 class="cbb-title">Browse Dallas–Fort Worth</h2>
+        {% if filters.category == 'properties' %}
+        <p class="cbb-sub">Find homes for sale across the DFW metroplex</p>
+        {% else %}
         <p class="cbb-sub">Find rentals across the DFW metroplex</p>
+        {% endif %}
       </div>
       <div class="cbb-pills">
+        {% if filters.category == 'properties' %}
+        <a href="?city=Irving&category=properties" class="cbb-pill">Irving</a>
+        <a href="?city=Las+Colinas&category=properties" class="cbb-pill">Las Colinas</a>
+        <a href="?city=Dallas&category=properties" class="cbb-pill">Dallas</a>
+        <a href="?city=Fort+Worth&category=properties" class="cbb-pill">Fort Worth</a>
+        <a href="?city=Frisco&category=properties" class="cbb-pill">Frisco</a>
+        <a href="?city=Plano&category=properties" class="cbb-pill">Plano</a>
+        <a href="?city=Southlake&category=properties" class="cbb-pill">Southlake</a>
+        <a href="?city=Arlington&category=properties" class="cbb-pill">Arlington</a>
+        <a href="?city=McKinney&category=properties" class="cbb-pill">McKinney</a>
+        <a href="?city=Allen&category=properties" class="cbb-pill">Allen</a>
+        {% else %}
         <a href="?city=Irving&category=rentals" class="cbb-pill">Irving</a>
         <a href="?city=Las+Colinas&category=rentals" class="cbb-pill">Las Colinas</a>
         <a href="?city=Dallas&category=rentals" class="cbb-pill">Dallas</a>
@@ -826,6 +900,7 @@ function dismissAgentCta() {
         <a href="?city=Arlington&category=rentals" class="cbb-pill">Arlington</a>
         <a href="?city=McKinney&category=rentals" class="cbb-pill">McKinney</a>
         <a href="?city=Carrollton&category=rentals" class="cbb-pill">Carrollton</a>
+        {% endif %}
       </div>
     </div>
   </div>

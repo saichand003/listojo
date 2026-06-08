@@ -1,13 +1,128 @@
 {% extends 'base.html' %}
 {% block content %}
-<div style="margin-bottom:1.5rem;">
-    <h1 style="font-size:1.7rem;margin-bottom:.35rem;">Saved Listings</h1>
-    <p class="muted">Listings you've saved for later — all in one place.</p>
+
+<style>
+.sl-header { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
+.sl-header-left h1 { font-size:1.55rem; font-weight:800; margin:0 0 .2rem; }
+.sl-select-bar {
+  display:none; align-items:center; gap:.75rem; flex-wrap:wrap;
+  background:#EFF6FF; border:1.5px solid #BFDBFE; border-radius:10px;
+  padding:.6rem 1rem; margin-bottom:1.25rem;
+}
+.sl-select-bar.visible { display:flex; }
+.sl-select-count { font-size:.82rem; font-weight:700; color:#2A7EF2; }
+.sl-msg-btn {
+  display:inline-flex; align-items:center; gap:.4rem;
+  background:#2A7EF2; color:#fff; border:none; border-radius:8px;
+  padding:.42rem .9rem; font-size:.8rem; font-weight:700; cursor:pointer;
+  transition:background .15s;
+}
+.sl-msg-btn:hover { background:#1d6fd8; }
+.sl-msg-btn:disabled { background:#93c5fd; cursor:not-allowed; }
+.sl-clear-btn {
+  background:none; border:none; color:#6b7280; font-size:.78rem;
+  font-weight:600; cursor:pointer; padding:.3rem .5rem; border-radius:6px;
+}
+.sl-clear-btn:hover { background:#e5e7eb; }
+.sl-card-wrap { position:relative; }
+.sl-checkbox {
+  position:absolute; top:.65rem; left:.65rem; z-index:10;
+  width:18px; height:18px; cursor:pointer; accent-color:#2A7EF2;
+}
+.sl-card-wrap.sl-selected article { outline:2.5px solid #2A7EF2; box-shadow:0 0 0 4px rgba(42,126,242,.1); }
+.sl-modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.45);
+  z-index:1000; align-items:center; justify-content:center; padding:1rem;
+}
+.sl-modal-overlay.open { display:flex; }
+.sl-modal {
+  background:#fff; border-radius:16px; padding:1.75rem;
+  width:100%; max-width:520px;
+  box-shadow:0 16px 48px rgba(0,0,0,.2);
+  animation:sl-pop .2s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes sl-pop { from{transform:scale(.93);opacity:0} to{transform:scale(1);opacity:1} }
+.sl-modal-title { font-size:1.1rem; font-weight:800; margin:0 0 .2rem; color:#111827; }
+.sl-modal-sub { font-size:.8rem; color:#6b7280; margin:0 0 1rem; }
+.sl-chip-list { display:flex; flex-wrap:wrap; gap:.35rem; margin-bottom:1rem; }
+.sl-chip {
+  display:flex; align-items:center; gap:.3rem;
+  background:#F3F4F6; border-radius:999px;
+  padding:.22rem .65rem; font-size:.72rem; font-weight:600; color:#374151;
+  max-width:200px; overflow:hidden;
+}
+.sl-chip img { width:18px; height:18px; object-fit:cover; border-radius:999px; flex-shrink:0; }
+.sl-chip span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sl-textarea-label { font-size:.75rem; font-weight:700; color:#374151; margin-bottom:.35rem; display:block; }
+.sl-textarea {
+  width:100%; box-sizing:border-box;
+  border:1.5px solid #E5E7EB; border-radius:10px;
+  padding:.75rem; font-size:.82rem; line-height:1.6;
+  font-family:inherit; resize:vertical; min-height:140px;
+  transition:border-color .15s; outline:none; color:#111827;
+}
+.sl-textarea:focus { border-color:#2A7EF2; }
+.sl-modal-actions { display:flex; align-items:center; justify-content:flex-end; gap:.6rem; margin-top:1rem; }
+.sl-cancel-btn {
+  background:none; border:1.5px solid #E5E7EB; border-radius:8px;
+  padding:.42rem .9rem; font-size:.8rem; font-weight:600; cursor:pointer; color:#374151;
+}
+.sl-cancel-btn:hover { background:#F9FAFB; }
+.sl-send-btn {
+  display:inline-flex; align-items:center; gap:.4rem;
+  background:#2A7EF2; color:#fff; border:none; border-radius:8px;
+  padding:.42rem 1.1rem; font-size:.82rem; font-weight:700; cursor:pointer;
+  transition:background .15s;
+}
+.sl-send-btn:hover { background:#1d6fd8; }
+.sl-send-btn:disabled { background:#93c5fd; cursor:not-allowed; }
+.sl-success-banner {
+  display:none; align-items:center; gap:.6rem;
+  background:#ECFDF5; border:1.5px solid #A7F3D0; border-radius:10px;
+  padding:.7rem 1rem; margin-bottom:1.25rem;
+  font-size:.82rem; font-weight:600; color:#065F46;
+}
+.sl-success-banner.visible { display:flex; }
+</style>
+
+<div class="sl-header">
+  <div class="sl-header-left">
+    <h1>Saved Listings</h1>
+    <p class="muted" style="margin:0;font-size:.83rem;">
+      {% if listings %}Select listings to message their landlords in one go.{% else %}Listings you've saved for later.{% endif %}
+    </p>
+  </div>
+  {% if listings %}
+  <button type="button" class="sl-msg-btn" id="sl-open-modal-btn" disabled>
+    <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+    Message landlords
+  </button>
+  {% endif %}
+</div>
+
+<div class="sl-success-banner" id="sl-success-banner">
+  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+  <span id="sl-success-text">Messages sent!</span>
+</div>
+
+<div class="sl-select-bar" id="sl-select-bar">
+  <span class="sl-select-count" id="sl-select-count">0 selected</span>
+  <button type="button" class="sl-msg-btn" id="sl-open-modal-btn2">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+    Message selected
+  </button>
+  <button type="button" class="sl-clear-btn" id="sl-clear-btn">Clear selection</button>
 </div>
 
 {% if listings %}
-<section class="grid grid-listings">
+<section class="grid grid-listings" id="sl-grid">
 {% for listing in listings %}
+  <div class="sl-card-wrap"
+       data-pk="{{ listing.pk }}"
+       data-title="{{ listing.title|escapejs }}"
+       data-price="{{ listing.price|default:'' }}"
+       data-img="{% with listing.images.all as imgs %}{% if imgs %}{{ imgs.0.image.url }}{% elif listing.image %}{{ listing.image.url }}{% endif %}{% endwith %}">
+    <input type="checkbox" class="sl-checkbox" aria-label="Select {{ listing.title }}">
     <article class="card listing-card {% if listing.featured %}listing-featured{% endif %}">
         <div class="listing-thumb-wrap">
             {% with listing.images.all as imgs %}
@@ -19,30 +134,33 @@
                 <div class="listing-thumb listing-thumb-placeholder">🏷️</div>
             {% endif %}
             {% endwith %}
-            {% if listing.featured %}
-                <span class="featured-badge">★ Featured</span>
-            {% endif %}
+            {% if listing.featured %}<span class="featured-badge">★ Featured</span>{% endif %}
             <span class="category-badge">{{ listing.get_category_display }}</span>
         </div>
         <div class="listing-body">
             <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
             <p class="price" style="margin:.3rem 0;">
-                {% if listing.price %}${{ listing.price }}{% else %}Contact for price{% endif %}
+                {% if listing.price %}${{ listing.price|floatformat:0 }}<span class="price-unit">/mo</span>{% else %}Contact for price{% endif %}
             </p>
-            <p class="muted" style="font-size:.78rem;">📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}</p>
-            <p class="listing-desc">{{ listing.description|truncatewords:18 }}</p>
+            {% if listing.bedrooms %}
+            <div class="card-specs-row" style="margin:.2rem 0;">
+                <span class="card-spec-item"><strong>{{ listing.bedrooms }}</strong> bed</span>
+                {% if listing.bathrooms %}<span class="card-spec-dot">●</span><span class="card-spec-item"><strong>{{ listing.bathrooms }}</strong> bath</span>{% endif %}
+            </div>
+            {% endif %}
+            <p class="muted" style="font-size:.78rem;margin:.2rem 0 .5rem;">📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}</p>
             <div class="card-footer-row">
-                <span class="card-time-row">🕐 {{ listing.created_at|timesince }} ago</span>
-                <button type="button"
-                    class="fav-btn fav-btn-active"
+                <span class="card-time-row" style="font-size:.72rem;">{{ listing.created_at|timesince }} ago</span>
+                <button type="button" class="fav-btn fav-btn-active"
                     data-fav-url="{% url 'toggle_favourite' listing.pk %}"
-                    data-csrf="{{ csrf_token }}"
-                    title="Remove from saved">♥</button>
+                    data-csrf="{{ csrf_token }}" title="Remove from saved">♥</button>
             </div>
         </div>
     </article>
+  </div>
 {% endfor %}
 </section>
+
 {% else %}
 <div class="card" style="text-align:center;padding:3rem 2rem;">
     <div style="font-size:2.5rem;margin-bottom:1rem;">♡</div>
@@ -52,20 +170,154 @@
 </div>
 {% endif %}
 
+{# ── Compose modal ── #}
+<div class="sl-modal-overlay" id="sl-modal">
+  <div class="sl-modal">
+    <div class="sl-modal-title">Message landlords</div>
+    <p class="sl-modal-sub">Sending to <strong id="sl-modal-count">0</strong> landlord(s) — they'll reply in your Listojo inbox.</p>
+    <div class="sl-chip-list" id="sl-chip-list"></div>
+    <label class="sl-textarea-label">Your message <span style="font-weight:400;color:#9ca3af;">(edit before sending)</span></label>
+    <textarea class="sl-textarea" id="sl-message-text"></textarea>
+    <div class="sl-modal-actions">
+      <button type="button" class="sl-cancel-btn" id="sl-cancel-btn">Cancel</button>
+      <button type="button" class="sl-send-btn" id="sl-send-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        Send messages
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
-document.querySelectorAll('.fav-btn[data-fav-url]').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    var url  = btn.dataset.favUrl;
-    var csrf = btn.dataset.csrf;
-    fetch(url, {
-      method: 'POST',
-      headers: { 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'csrfmiddlewaretoken=' + encodeURIComponent(csrf),
-    }).then(function() {
-      var card = btn.closest('article');
-      if (card) { card.style.transition = 'opacity .3s'; card.style.opacity = '0'; setTimeout(function(){ card.remove(); }, 300); }
+(function(){
+  var BULK_URL = '{% url "bulk_message_landlords" %}';
+  var CSRF     = '{{ csrf_token }}';
+
+  {% if search_profile %}
+  var profile = {
+    city:     '{{ search_profile.city|escapejs }}',
+    budget:   '{{ search_profile.max_budget|default:""|escapejs }}',
+    bedrooms: '{{ search_profile.bedrooms|default:""|escapejs }}',
+    moveBy:   '{{ search_profile.available_by|default:""|escapejs }}',
+  };
+  {% else %}
+  var profile = {};
+  {% endif %}
+
+  function buildMessage() {
+    var name  = '{{ request.user.first_name|default:request.user.username|escapejs }}';
+    var lines = ['Hi,', ''];
+    lines.push("I found your listing on Listojo and I'm interested in learning more.");
+    if (profile.bedrooms || profile.city || profile.budget || profile.moveBy) {
+      lines.push(''); lines.push('About me:');
+      if (profile.bedrooms) lines.push('- Looking for: ' + profile.bedrooms + ' bedroom(s)');
+      if (profile.city)     lines.push('- Area: ' + profile.city);
+      if (profile.budget)   lines.push('- Budget: up to $' + Number(profile.budget).toLocaleString() + '/mo');
+      if (profile.moveBy)   lines.push('- Move-in: ' + profile.moveBy);
+    }
+    lines.push(''); lines.push('Could we schedule a viewing? You can reply here on Listojo.');
+    lines.push(''); lines.push('Thanks, ' + name);
+    return lines.join('\n');
+  }
+
+  var selected = new Set();
+
+  document.querySelectorAll('.sl-card-wrap').forEach(function(wrap) {
+    var cb = wrap.querySelector('.sl-checkbox');
+    cb.addEventListener('change', function() {
+      if (cb.checked) { selected.add(wrap); wrap.classList.add('sl-selected'); }
+      else            { selected.delete(wrap); wrap.classList.remove('sl-selected'); }
+      syncUI();
+    });
+    wrap.querySelector('article').addEventListener('click', function(e) {
+      if (e.target.closest('a') || e.target.closest('.fav-btn')) return;
+      cb.checked = !cb.checked;
+      cb.dispatchEvent(new Event('change'));
     });
   });
-});
+
+  function syncUI() {
+    var n = selected.size;
+    document.getElementById('sl-select-bar').classList.toggle('visible', n > 0);
+    document.getElementById('sl-select-count').textContent = n + ' selected';
+    var btn = document.getElementById('sl-open-modal-btn');
+    if (btn) btn.disabled = n === 0;
+  }
+
+  function openModal() {
+    document.getElementById('sl-modal-count').textContent = selected.size;
+    document.getElementById('sl-message-text').value = buildMessage();
+    var chipList = document.getElementById('sl-chip-list');
+    chipList.innerHTML = '';
+    selected.forEach(function(wrap) {
+      var chip = document.createElement('div');
+      chip.className = 'sl-chip';
+      if (wrap.dataset.img) chip.innerHTML = '<img src="'+wrap.dataset.img+'" alt="">';
+      var price = wrap.dataset.price ? ' · $'+Number(wrap.dataset.price).toLocaleString() : '';
+      chip.innerHTML += '<span>'+wrap.dataset.title+price+'</span>';
+      chipList.appendChild(chip);
+    });
+    document.getElementById('sl-modal').classList.add('open');
+    setTimeout(function(){ document.getElementById('sl-message-text').focus(); }, 120);
+  }
+
+  ['sl-open-modal-btn','sl-open-modal-btn2'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('click', openModal);
+  });
+
+  document.getElementById('sl-cancel-btn').addEventListener('click', function(){
+    document.getElementById('sl-modal').classList.remove('open');
+  });
+  document.getElementById('sl-modal').addEventListener('click', function(e){
+    if (e.target === this) this.classList.remove('open');
+  });
+  document.getElementById('sl-clear-btn') && document.getElementById('sl-clear-btn').addEventListener('click', function(){
+    selected.forEach(function(w){ w.classList.remove('sl-selected'); w.querySelector('.sl-checkbox').checked=false; });
+    selected.clear(); syncUI();
+  });
+
+  document.getElementById('sl-send-btn').addEventListener('click', function(){
+    var btn  = this;
+    var text = document.getElementById('sl-message-text').value.trim();
+    if (!text) { document.getElementById('sl-message-text').focus(); return; }
+    var ids = []; selected.forEach(function(w){ ids.push(parseInt(w.dataset.pk)); });
+    btn.disabled = true; btn.textContent = 'Sending…';
+    fetch(BULK_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':CSRF,'X-Requested-With':'XMLHttpRequest'},
+      body: JSON.stringify({listing_ids:ids, message:text}),
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      document.getElementById('sl-modal').classList.remove('open');
+      var banner = document.getElementById('sl-success-banner');
+      document.getElementById('sl-success-text').textContent =
+        '✓ Messages sent to ' + data.sent + ' landlord' + (data.sent!==1?'s':'') + '. Check your inbox for replies.';
+      banner.classList.add('visible');
+      banner.scrollIntoView({behavior:'smooth',block:'nearest'});
+      selected.forEach(function(w){ w.classList.remove('sl-selected'); w.querySelector('.sl-checkbox').checked=false; });
+      selected.clear(); syncUI();
+    })
+    .catch(function(){
+      btn.disabled=false;
+      btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> Send messages';
+    });
+  });
+
+  document.querySelectorAll('.fav-btn[data-fav-url]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      fetch(btn.dataset.favUrl,{
+        method:'POST',
+        headers:{'X-CSRFToken':btn.dataset.csrf,'X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded'},
+        body:'csrfmiddlewaretoken='+encodeURIComponent(btn.dataset.csrf),
+      }).then(function(){
+        var wrap = btn.closest('.sl-card-wrap');
+        if(wrap){ selected.delete(wrap); syncUI(); wrap.style.transition='opacity .3s'; wrap.style.opacity='0'; setTimeout(function(){wrap.remove();},300); }
+      });
+    });
+  });
+})();
 </script>
 {% endblock %}
