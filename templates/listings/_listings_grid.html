@@ -96,7 +96,8 @@
              data-city="{{ listing.city }}"
              data-title="{{ listing.title|escapejs }}"
              data-price="{{ listing.price }}"
-             data-address="{{ listing.address_line|escapejs }}">
+             data-address="{{ listing.address_line|escapejs }}"
+             {% if listing.latitude and listing.longitude %}data-lat="{{ listing.latitude }}" data-lng="{{ listing.longitude }}"{% endif %}>
         <div class="listing-thumb-wrap">
             {% with listing.images.all as imgs %}
             {% if imgs %}

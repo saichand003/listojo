@@ -112,8 +112,20 @@ class Listing(models.Model):
     floor_plan_image = models.ImageField(upload_to='floor_plan_images/', null=True, blank=True)
     virtual_tour_url = models.URLField(max_length=500, blank=True, default='')
 
+    # ── Geocoding (real map coordinates) ──────────────────────────────────
+    latitude  = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, db_index=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, db_index=True)
+    geocoded_address = models.CharField(max_length=300, blank=True, default='',
+                          help_text='The address string last sent to the geocoder — used to detect changes')
+
 
     INCOME_QUALIFIER_CATEGORIES = {'rentals', 'roommates'}
+
+    @property
+    def full_address(self):
+        """Single-line address used for geocoding."""
+        parts = [self.address_line, self.city, self.state, self.zip_code, self.country]
+        return ', '.join(p.strip() for p in parts if p and p.strip())
 
     def get_tags_list(self):
         return [t.strip() for t in self.tags.split(',') if t.strip()]
@@ -341,12 +353,24 @@ class Community(models.Model):
     featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # ── Geocoding (real map coordinates) ──────────────────────────────────
+    latitude  = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, db_index=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, db_index=True)
+    geocoded_address = models.CharField(max_length=300, blank=True, default='',
+                          help_text='The address string last sent to the geocoder — used to detect changes')
+
     class Meta:
         ordering = ['-featured', '-created_at']
         verbose_name_plural = 'communities'
 
     def __str__(self):
         return self.name
+
+    @property
+    def full_address(self):
+        """Single-line address used for geocoding."""
+        parts = [self.address_line, self.city, self.state, self.zip_code, self.country]
+        return ', '.join(p.strip() for p in parts if p and p.strip())
 
     def get_amenities_list(self, field):
         val = getattr(self, field, '') or ''

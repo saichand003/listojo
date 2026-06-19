@@ -260,7 +260,7 @@ function dismissAgentCta() {
 {% endif %}
 
   </div>{# /list-panel #}
-  <div id="map-panel" style="display:none;flex:0 0 55%;position:sticky;top:70px;height:calc(100vh - 90px);border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+  <div id="map-panel" style="display:none;flex:0 0 50%;position:sticky;top:70px;height:calc(100vh - 90px);border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);">
     <div id="listing-map" style="width:100%;height:100%;"></div>
   </div>
 </div>{# /view-wrapper #}
@@ -647,11 +647,18 @@ function dismissAgentCta() {
 
     cards.forEach(function(card){
       var city  = card.dataset.city || '';
-      var base  = DFW_COORDS[city] || DFW_COORDS['default'];
-      var latlng = new google.maps.LatLng(
-        base.lat + (Math.random()-.5)*.018,
-        base.lng + (Math.random()-.5)*.018
-      );
+      var latlng;
+      if(card.dataset.lat && card.dataset.lng){
+        // Real geocoded coordinates
+        latlng = new google.maps.LatLng(parseFloat(card.dataset.lat), parseFloat(card.dataset.lng));
+      } else {
+        // Fallback: city centroid + small jitter (un-geocoded listings)
+        var base = DFW_COORDS[city] || DFW_COORDS['default'];
+        latlng = new google.maps.LatLng(
+          base.lat + (Math.random()-.5)*.018,
+          base.lng + (Math.random()-.5)*.018
+        );
+      }
       var price  = card.dataset.price ? '$'+Number(card.dataset.price).toLocaleString() : '—';
       var title  = card.dataset.title || 'Listing';
       var pk     = card.dataset.pk;
@@ -717,7 +724,7 @@ function dismissAgentCta() {
 
     if(mode === 'map'){
       listPanel.classList.add('map-mode');
-      listPanel.style.flex       = '0 0 45%';
+      listPanel.style.flex       = '0 0 50%';
       listPanel.style.overflowY  = 'auto';
       listPanel.style.maxHeight  = 'calc(100vh - 90px)';
       listPanel.style.position   = 'sticky';

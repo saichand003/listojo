@@ -142,7 +142,11 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Listojo <noreply@listojo.com>')
 
 # ── Google Maps ──────────────────────────────────────────────────────────────
+# Browser key — used in templates for the JS Maps API. Restrict by HTTP referrer.
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
+# Server-side key — used for the Geocoding API (no referrer). Restrict by IP / API.
+# Falls back to the browser key if not separately configured.
+GOOGLE_GEOCODING_API_KEY = os.getenv('GOOGLE_GEOCODING_API_KEY', '') or GOOGLE_MAPS_API_KEY
 
 # ── Realty Mole (RapidAPI) ────────────────────────────────────────────────────
 REALTY_MOLE_API_KEY = os.getenv('REALTY_MOLE_API_KEY', '')
