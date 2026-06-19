@@ -700,7 +700,13 @@ function dismissAgentCta() {
       gMarkers.push(marker);
     });
 
-    if(!bounds.isEmpty()) gMap.fitBounds(bounds, {padding: 40});
+    if(!bounds.isEmpty()){
+      gMap.fitBounds(bounds, {padding: 60});
+      // Cap zoom so tightly-clustered pins don't leave the map zoomed way in
+      google.maps.event.addListenerOnce(gMap, 'bounds_changed', function(){
+        if(gMap.getZoom() > 12) gMap.setZoom(12);
+      });
+    }
   }
 
   window.setView = function(mode){
