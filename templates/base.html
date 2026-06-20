@@ -23,6 +23,11 @@
     .sb-city-list li{padding:.38rem .9rem;font-size:.8rem;font-weight:600;color:var(--text);cursor:pointer;transition:background .1s;}
     .sb-city-list li:hover,.sb-city-list li.sb-city-active{background:rgba(42,126,242,.08);color:var(--primary);}
     .sb-city-list .sb-city-all{font-size:.75rem;color:var(--muted);font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border);margin-bottom:.2rem;padding-bottom:.5rem;}
+    .sb-city-locate{display:flex;align-items:center;gap:.45rem;width:calc(100% - 1.2rem);margin:.1rem .6rem .4rem;padding:.45rem .6rem;border:1.5px solid var(--primary);border-radius:7px;background:rgba(42,126,242,.06);color:var(--primary);font-size:.78rem;font-weight:700;cursor:pointer;transition:background .12s;font-family:inherit;}
+    .sb-city-locate:hover{background:rgba(42,126,242,.12);}
+    .sb-city-locate:disabled{opacity:.6;cursor:default;}
+    .sb-city-locate-msg{margin:0 .6rem .5rem;padding:.5rem .6rem;border-radius:7px;font-size:.74rem;line-height:1.4;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;}
+    .sb-city-locate-msg a{color:var(--primary);font-weight:700;text-decoration:none;}
     </style>
 </head>
 <body id="page-top">
@@ -129,6 +134,11 @@
         <svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><path d="M7 10l5 5 5-5z"/></svg>
       </button>
       <div class="sb-city-dropdown" id="sb-city-dropdown" hidden>
+        <button type="button" class="sb-city-locate" id="sb-city-locate">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="flex-shrink:0"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+          <span id="sb-city-locate-label">Use my location</span>
+        </button>
+        <div class="sb-city-locate-msg" id="sb-city-locate-msg" hidden></div>
         <input class="sb-city-search" type="text" id="sb-city-search" placeholder="🔍 Search city…" autocomplete="off">
         <ul class="sb-city-list" id="sb-city-list">
           <li class="sb-city-all" data-city="">All DFW</li>
@@ -649,6 +659,51 @@
       if (li.dataset.city === activeCity) li.classList.add('sb-city-active');
     });
   }
+
+  // ── "Use my location" — browser geolocation → detect_city ──
+  var locateBtn   = document.getElementById('sb-city-locate');
+  var locateLabel = document.getElementById('sb-city-locate-label');
+  var locateMsg   = document.getElementById('sb-city-locate-msg');
+
+  if (locateBtn) {
+    locateBtn.addEventListener('click', function(){
+      if (!navigator.geolocation) {
+        showMsg('Your browser doesn’t support location detection.');
+        return;
+      }
+      locateBtn.disabled = true;
+      locateLabel.textContent = 'Locating…';
+      locateMsg.hidden = true;
+
+      navigator.geolocation.getCurrentPosition(function(pos){
+        var lat = pos.coords.latitude, lng = pos.coords.longitude;
+        fetch('/detect-city/?lat=' + lat + '&lng=' + lng)
+          .then(function(r){ return r.json(); })
+          .then(function(d){
+            resetBtn();
+            if (!d.ok) { showMsg('Couldn’t detect your city. Pick one below.'); return; }
+            if (d.served && d.redirect_url) {
+              // We serve this city — switch to it
+              locateLabel.textContent = 'Found ' + d.city + ' →';
+              window.location.href = d.redirect_url;
+            } else {
+              // Outside DFW — stay on DFW, offer waitlist
+              var loc = d.city + (d.state ? ', ' + d.state : '');
+              showMsg('We’re not in <strong>' + loc + '</strong> yet — browsing Dallas–Fort Worth. '
+                    + '<a href="/coming-soon/waitlist/?city=' + encodeURIComponent(d.city) + '">Join the waitlist</a>');
+            }
+          })
+          .catch(function(){ resetBtn(); showMsg('Something went wrong. Pick a city below.'); });
+      }, function(err){
+        resetBtn();
+        if (err.code === err.PERMISSION_DENIED) showMsg('Location permission denied. Pick a city below.');
+        else showMsg('Couldn’t get your location. Pick a city below.');
+      }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
+    });
+  }
+
+  function resetBtn(){ locateBtn.disabled = false; locateLabel.textContent = 'Use my location'; }
+  function showMsg(html){ locateMsg.innerHTML = html; locateMsg.hidden = false; }
 })();
 </script>
 </body>

@@ -334,6 +334,53 @@ def create_listing(request):
     })
 
 
+# DFW markets we currently serve. Detection only auto-switches to one of these;
+# anything else falls back to DFW + a waitlist prompt.
+SERVED_CITIES = {
+    'irving', 'dallas', 'frisco', 'plano', 'fort worth', 'arlington',
+    'garland', 'mckinney', 'denton', 'allen', 'carrollton', 'grand prairie',
+    'las colinas', 'richardson', 'lewisville', 'flower mound', 'grapevine',
+    'coppell', 'addison', 'farmers branch', 'rowlett', 'mesquite', 'euless',
+    'bedford', 'southlake', 'colleyville', 'keller', 'mansfield', 'desoto',
+    'cedar hill', 'the colony', 'little elm', 'wylie', 'sachse', 'murphy',
+    'prosper', 'celina', 'northlake', 'roanoke', 'haltom city', 'watauga',
+}
+
+
+def detect_city(request):
+    """
+    Reverse-geocode a visitor's browser coordinates → city name, and report
+    whether it's a market we serve. Frontend ('Use my location') calls this.
+
+    GET params: lat, lng
+    Returns JSON: {ok, city, state, served, redirect_url}
+    """
+    from django.urls import reverse
+    from listings.services.geocoding import reverse_geocode
+
+    try:
+        lat = float(request.GET.get('lat', ''))
+        lng = float(request.GET.get('lng', ''))
+    except (TypeError, ValueError):
+        return JsonResponse({'ok': False, 'error': 'invalid coordinates'}, status=400)
+
+    result = reverse_geocode(lat, lng)
+    if not result:
+        return JsonResponse({'ok': False, 'error': 'could not resolve location'}, status=200)
+
+    city  = result['city']
+    state = result.get('state', '')
+    served = city.lower() in SERVED_CITIES
+
+    return JsonResponse({
+        'ok': True,
+        'city': city,
+        'state': state,
+        'served': served,
+        'redirect_url': (reverse('listing_list') + '?city=' + city) if served else '',
+    })
+
+
 def waitlist_signup(request):
     """Handle city waitlist form submission."""
     if request.method == 'POST':

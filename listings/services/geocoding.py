@@ -61,6 +61,47 @@ def geocode_address(address: str) -> tuple[float, float] | None:
     return float(loc['lat']), float(loc['lng'])
 
 
+def reverse_geocode(lat: float, lng: float) -> dict | None:
+    """
+    Resolve (lat, lng) → {'city': ..., 'state': ...}, or None on failure.
+
+    Used to turn a visitor's browser coordinates into a human city name.
+    """
+    api_key = getattr(settings, 'GOOGLE_GEOCODING_API_KEY', '') or getattr(settings, 'GOOGLE_MAPS_API_KEY', '')
+    if not api_key:
+        logger.warning('reverse_geocode: no Google geocoding key set — skipping')
+        return None
+
+    try:
+        resp = requests.get(
+            _GEOCODE_URL,
+            params={'latlng': f'{lat},{lng}', 'key': api_key},
+            timeout=_TIMEOUT,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except (requests.RequestException, ValueError) as exc:
+        logger.warning('reverse_geocode: request failed for (%s,%s): %s', lat, lng, exc)
+        return None
+
+    if data.get('status') != 'OK' or not data.get('results'):
+        logger.info('reverse_geocode: %s for (%s,%s)', data.get('status'), lat, lng)
+        return None
+
+    city, state = '', ''
+    for comp in data['results'][0].get('address_components', []):
+        types = comp.get('types', [])
+        if not city and ('locality' in types or 'postal_town' in types):
+            city = comp['long_name']
+        elif not city and 'administrative_area_level_3' in types:
+            city = comp['long_name']
+        if 'administrative_area_level_1' in types:
+            state = comp['short_name']
+    if not city:
+        return None
+    return {'city': city, 'state': state}
+
+
 def geocode_instance(instance, *, force: bool = False) -> bool:
     """
     Geocode a Listing/Community in-place (does NOT save).
