@@ -3,7 +3,7 @@
 <div style="max-width:680px;margin:0 auto;padding:24px 16px">
   <h1 style="font-size:1.5rem;font-weight:800;margin-bottom:1.5rem;color:var(--text)">Profile Info</h1>
 
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:1.25rem">
     <h2 style="font-size:1rem;font-weight:700;margin-bottom:20px;color:var(--text)">Account Information</h2>
     <table style="width:100%;border-collapse:collapse">
       <tbody>
@@ -36,5 +36,134 @@
       </tbody>
     </table>
   </div>
+
+  {# ── Alerts & Notifications ── #}
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px" id="notif-card">
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:6px;color:var(--text)">Alerts &amp; Notifications</h2>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:22px">Get notified the moment new listings match your saved searches.</p>
+
+    {# Phone verification #}
+    <div style="margin-bottom:24px">
+      <label style="display:block;font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:8px">Mobile number {% if profile.phone_verified %}<span style="color:#1e8a5c;font-weight:700">· Verified ✓</span>{% endif %}</label>
+
+      <div id="phone-row" style="display:flex;gap:.5rem;{% if profile.phone_verified %}opacity:.7{% endif %}">
+        <input type="tel" id="phone-input" placeholder="(469) 555-1234" value="{{ profile.phone }}"
+               style="flex:1;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.9rem;background:var(--bg,#f8fafc);color:var(--text);outline:none"
+               {% if profile.phone_verified %}readonly{% endif %}>
+        <button type="button" id="send-code-btn"
+                style="padding:.6rem 1.1rem;border:none;border-radius:9px;background:var(--primary);color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">
+          {% if profile.phone_verified %}Change{% else %}Send code{% endif %}
+        </button>
+      </div>
+
+      {# OTP entry — hidden until a code is sent #}
+      <div id="code-row" style="display:none;gap:.5rem;margin-top:.6rem">
+        <input type="text" id="code-input" inputmode="numeric" maxlength="10" placeholder="Enter 6-digit code"
+               style="flex:1;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-size:.9rem;letter-spacing:.1em;background:var(--bg,#f8fafc);color:var(--text);outline:none">
+        <button type="button" id="verify-code-btn"
+                style="padding:.6rem 1.1rem;border:none;border-radius:9px;background:#1e8a5c;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">Verify</button>
+      </div>
+
+      <div id="phone-msg" style="display:none;font-size:.78rem;margin-top:.55rem"></div>
+    </div>
+
+    {# Channel toggles #}
+    <div style="border-top:1px solid var(--border);padding-top:18px">
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:.55rem 0;cursor:pointer">
+        <span>
+          <span style="font-size:.88rem;font-weight:600;color:var(--text)">Email alerts</span>
+          <span style="display:block;font-size:.76rem;color:var(--muted)">New matches sent to {{ user.email|default:'your email' }}</span>
+        </span>
+        <input type="checkbox" id="pref-email" {% if profile.notify_email %}checked{% endif %}
+               style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:.55rem 0;cursor:pointer">
+        <span>
+          <span style="font-size:.88rem;font-weight:600;color:var(--text)">SMS alerts</span>
+          <span style="display:block;font-size:.76rem;color:var(--muted)" id="sms-pref-sub">
+            {% if profile.phone_verified %}Texts to your verified number{% else %}Verify your phone above to enable{% endif %}
+          </span>
+        </span>
+        <input type="checkbox" id="pref-sms" {% if profile.notify_sms %}checked{% endif %} {% if not profile.phone_verified %}disabled{% endif %}
+               style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer">
+      </label>
+    </div>
+  </div>
 </div>
+
+<script>
+(function(){
+  var CSRF = '{{ csrf_token }}';
+  function post(url, data){
+    var body = Object.keys(data).map(function(k){ return encodeURIComponent(k)+'='+encodeURIComponent(data[k]); }).join('&');
+    return fetch(url, {
+      method:'POST',
+      headers:{'X-CSRFToken':CSRF,'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest'},
+      body: body
+    }).then(function(r){ return r.json(); });
+  }
+  function showMsg(text, ok){
+    var el = document.getElementById('phone-msg');
+    el.textContent = text;
+    el.style.display = 'block';
+    el.style.color = ok ? '#1e8a5c' : '#b91c1c';
+  }
+
+  var sendBtn   = document.getElementById('send-code-btn');
+  var verifyBtn = document.getElementById('verify-code-btn');
+  var codeRow   = document.getElementById('code-row');
+  var phoneInp  = document.getElementById('phone-input');
+  var codeInp   = document.getElementById('code-input');
+  var smsPref   = document.getElementById('pref-sms');
+  var emailPref = document.getElementById('pref-email');
+
+  sendBtn.addEventListener('click', function(){
+    if (phoneInp.readOnly) {            // "Change" re-opens the field
+      phoneInp.readOnly = false;
+      phoneInp.focus();
+      sendBtn.textContent = 'Send code';
+      return;
+    }
+    sendBtn.disabled = true; sendBtn.textContent = 'Sending…';
+    post('{% url "send_phone_code" %}', {phone: phoneInp.value}).then(function(d){
+      sendBtn.disabled = false; sendBtn.textContent = 'Send code';
+      if (d.ok) {
+        codeRow.style.display = 'flex';
+        codeInp.focus();
+        showMsg('Code sent to ' + (d.phone || phoneInp.value) + '.', true);
+      } else {
+        showMsg(d.error || 'Could not send code.', false);
+      }
+    }).catch(function(){ sendBtn.disabled = false; sendBtn.textContent = 'Send code'; showMsg('Something went wrong.', false); });
+  });
+
+  verifyBtn.addEventListener('click', function(){
+    verifyBtn.disabled = true; verifyBtn.textContent = 'Verifying…';
+    post('{% url "verify_phone_code" %}', {code: codeInp.value}).then(function(d){
+      verifyBtn.disabled = false; verifyBtn.textContent = 'Verify';
+      if (d.ok && d.verified) {
+        showMsg('Phone verified ✓ — SMS alerts are on.', true);
+        codeRow.style.display = 'none';
+        phoneInp.readOnly = true;
+        sendBtn.textContent = 'Change';
+        smsPref.disabled = false; smsPref.checked = true;
+        document.getElementById('sms-pref-sub').textContent = 'Texts to your verified number';
+      } else {
+        showMsg(d.error || 'Invalid code.', false);
+      }
+    }).catch(function(){ verifyBtn.disabled = false; verifyBtn.textContent = 'Verify'; showMsg('Something went wrong.', false); });
+  });
+
+  function savePrefs(){
+    post('{% url "update_notification_prefs" %}', {
+      notify_email: emailPref.checked ? 'true':'false',
+      notify_sms:   smsPref.checked ? 'true':'false'
+    }).then(function(d){
+      if (d.ok) { smsPref.checked = d.notify_sms; emailPref.checked = d.notify_email; }
+    });
+  }
+  emailPref.addEventListener('change', savePrefs);
+  smsPref.addEventListener('change', savePrefs);
+})();
+</script>
 {% endblock %}

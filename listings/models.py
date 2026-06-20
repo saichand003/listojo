@@ -470,6 +470,12 @@ class SavedSearch(models.Model):
     monthly_income    = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     last_updated      = models.DateTimeField(auto_now=True)
 
+    # ── Alerts ────────────────────────────────────────────────────────────
+    alerts_enabled    = models.BooleanField(default=True,
+                            help_text='Send new-match alerts (email/SMS) for this search')
+    last_alerted_at   = models.DateTimeField(null=True, blank=True,
+                            help_text='Watermark — only listings created after this are alerted')
+
     class Meta:
         unique_together = [('user', 'search_type')]
 

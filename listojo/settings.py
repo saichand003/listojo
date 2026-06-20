@@ -148,6 +148,15 @@ GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
 # Falls back to the browser key if not separately configured.
 GOOGLE_GEOCODING_API_KEY = os.getenv('GOOGLE_GEOCODING_API_KEY', '') or GOOGLE_MAPS_API_KEY
 
+# ── Site ──────────────────────────────────────────────────────────────────────
+SITE_URL = os.getenv('SITE_URL', 'https://listojo.com')
+
+# ── Twilio (phone verification + SMS notifications) ───────────────────────────
+TWILIO_ACCOUNT_SID        = os.getenv('TWILIO_ACCOUNT_SID', '')
+TWILIO_AUTH_TOKEN         = os.getenv('TWILIO_AUTH_TOKEN', '')
+TWILIO_VERIFY_SERVICE_SID = os.getenv('TWILIO_VERIFY_SERVICE_SID', '')   # for OTP (Verify)
+TWILIO_SMS_FROM           = os.getenv('TWILIO_SMS_FROM', '')             # sender number for SMS
+
 # ── Realty Mole (RapidAPI) ────────────────────────────────────────────────────
 REALTY_MOLE_API_KEY = os.getenv('REALTY_MOLE_API_KEY', '')
 
