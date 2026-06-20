@@ -1,6 +1,8 @@
-{# Reusable phone-verification gate. Call window.ljRequirePhoneVerified(onSuccess, reason).
-   - Guests and already-verified users pass straight through (onSuccess runs immediately).
-   - Authenticated, unverified users get the OTP modal first; onSuccess runs after verify. #}
+{% comment %}
+Reusable phone-verification gate. Call window.ljRequirePhoneVerified(onSuccess, reason).
+- Guests and already-verified users pass straight through (onSuccess runs immediately).
+- Authenticated, unverified users get the OTP modal first; onSuccess runs after verify.
+{% endcomment %}
 <style>
   .ljv-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9000;display:none;align-items:center;justify-content:center;padding:1rem;}
   .ljv-overlay.open{display:flex;}

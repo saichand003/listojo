@@ -10,8 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'styles.css' %}?v={{ UI_ASSET_VERSION }}">
     <style>
-    /* ── Full-screen auth pages: hide app chrome (top nav, sidebar, mobile nav) ── */
-    body.auth-fullscreen .site-topbar,
+    /* ── Auth pages: keep the top nav, drop the left sidebar + mobile nav + footer ── */
     body.auth-fullscreen .app-sidebar,
     body.auth-fullscreen .mob-nav,
     body.auth-fullscreen #back-to-top,
