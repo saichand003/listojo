@@ -367,7 +367,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
         {% if listing.status == 'sold' %}
         <p style="color:#dc2626;font-size:.85rem;font-weight:600;">This listing is sold.</p>
         {% else %}
-        <form method="post">
+        <form method="post" data-contact-gate>
           {% csrf_token %}
           {{ inquiry_form.as_p }}
           <button type="submit" style="width:100%;margin-top:.25rem;">Send inquiry</button>
@@ -701,5 +701,24 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
 })();
 </script>
 {% endif %}
+
+{# Progressive verification on inquiry/contact forms #}
+<script>
+(function(){
+  document.querySelectorAll('form[data-contact-gate]').forEach(function(form){
+    form.addEventListener('submit', function(e){
+      if (form.dataset.ljVerified === '1') return;      // already passed gate
+      if (!window.ljRequirePhoneVerified) return;        // gate not loaded → normal submit
+      if (window.LJ_AUTHED && !window.LJ_PHONE_VERIFIED){
+        e.preventDefault();
+        window.ljRequirePhoneVerified(function(){
+          form.dataset.ljVerified = '1';
+          form.submit();
+        }, 'Verify your number to contact this lister — they’ll be able to reach you back.');
+      }
+    });
+  });
+})();
+</script>
 
 {% endblock %}

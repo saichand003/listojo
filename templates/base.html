@@ -461,14 +461,23 @@
     }
   } catch(e) {}
 
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    if (!currentListingId) return;
+  function _sendChatMessage() {
     var fd = new FormData(form);
     fetch(sendUrl(currentListingId), { method: 'POST', body: fd, headers: { 'X-CSRFToken': csrf } })
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(d) { if (d) { form.querySelector('textarea').value = ''; load(); } })
       .catch(function() {});
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!currentListingId) return;
+    // Progressive verification: confirm phone before contacting a landlord.
+    if (window.ljRequirePhoneVerified) {
+      window.ljRequirePhoneVerified(_sendChatMessage, 'Verify your number to message this landlord — they’ll be able to reach you back.');
+    } else {
+      _sendChatMessage();
+    }
   });
 
   document.addEventListener('click', function(e) {
@@ -480,6 +489,8 @@
 })();
 </script>
 {% endif %}
+
+{% include 'includes/phone_verify_gate.html' %}
 
 <script src="{% static 'app.js' %}?v={{ UI_ASSET_VERSION }}"></script>
 <script>

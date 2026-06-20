@@ -23,6 +23,12 @@ INSTALLED_APPS = [
     'chatapp',
     'portal',
     'django.contrib.humanize',
+    # Social login (Google) via django-allauth
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
@@ -34,6 +40,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'listojo.middleware.SubdomainPortalMiddleware',
     'listojo.middleware.DatabaseNotReadyMiddleware',
 ]
@@ -54,6 +61,7 @@ TEMPLATES = [
                 'listojo.context_processors.ui_asset_version',
                 'listojo.context_processors.launch_config',
                 'listojo.context_processors.google_maps',
+                'listojo.context_processors.feature_flags',
                 'listojo.context_processors.sidebar_counts',
             ],
         },
@@ -126,6 +134,36 @@ else:
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'listing_list'
 LOGOUT_REDIRECT_URL = 'listing_list'
+
+# ── Social login (django-allauth / Google) ───────────────────────────────────
+SITE_ID = 1
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',           # username/password (existing)
+    'allauth.account.auth_backends.AuthenticationBackend',  # social login
+]
+
+GOOGLE_OAUTH_CLIENT_ID     = os.getenv('GOOGLE_OAUTH_CLIENT_ID', '')
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET', '')
+
+# Google emails are already verified — frictionless: no extra signup form,
+# no verification email, straight through to Google on click.
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_AUTO_SIGNUP  = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_ADAPTER      = 'accounts.adapters.SocialAccountAdapter'
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APPS': [{
+            'client_id': GOOGLE_OAUTH_CLIENT_ID,
+            'secret':    GOOGLE_OAUTH_CLIENT_SECRET,
+            'key': '',
+        }],
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'OAUTH_PKCE_ENABLED': True,
+    },
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

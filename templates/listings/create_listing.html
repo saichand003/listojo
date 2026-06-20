@@ -463,7 +463,16 @@
   });
   form.addEventListener('submit', function(e) {
     var hasErrors = files.some(function(f){ return f.error; });
-    if (hasErrors) { e.preventDefault(); alert('Please remove invalid images before publishing.'); }
+    if (hasErrors) { e.preventDefault(); alert('Please remove invalid images before publishing.'); return; }
+    // Progressive verification: confirm the lister's phone before publishing.
+    if (form.dataset.ljVerified === '1') return;
+    if (window.ljRequirePhoneVerified && window.LJ_AUTHED && !window.LJ_PHONE_VERIFIED) {
+      e.preventDefault();
+      window.ljRequirePhoneVerified(function(){
+        form.dataset.ljVerified = '1';
+        form.submit();
+      }, 'Verify your phone to publish — verified listings earn the “Verified” badge and more responses.');
+    }
   });
 
   /* ── Category picker ── */

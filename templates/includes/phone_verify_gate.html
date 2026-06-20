@@ -1,0 +1,107 @@
+{# Reusable phone-verification gate. Call window.ljRequirePhoneVerified(onSuccess, reason).
+   - Guests and already-verified users pass straight through (onSuccess runs immediately).
+   - Authenticated, unverified users get the OTP modal first; onSuccess runs after verify. #}
+<style>
+  .ljv-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9000;display:none;align-items:center;justify-content:center;padding:1rem;}
+  .ljv-overlay.open{display:flex;}
+  .ljv-modal{background:#fff;border-radius:18px;max-width:420px;width:100%;padding:1.6rem 1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .ljv-modal h3{font-size:1.15rem;font-weight:800;color:#0f172a;margin:0 0 .35rem;}
+  .ljv-sub{font-size:.86rem;color:#64748b;margin:0 0 1.1rem;line-height:1.45;}
+  .ljv-row{display:flex;gap:.5rem;}
+  .ljv-input{flex:1;padding:.65rem .85rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;outline:none;}
+  .ljv-input:focus{border-color:#2A7EF2;}
+  .ljv-btn{padding:.65rem 1.15rem;border:none;border-radius:10px;background:#2A7EF2;color:#fff;font-size:.88rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .ljv-btn-go{background:#1e8a5c;}
+  .ljv-btn:disabled{opacity:.6;cursor:default;}
+  .ljv-msg{font-size:.8rem;margin-top:.6rem;min-height:1em;}
+  .ljv-foot{margin-top:1.1rem;display:flex;justify-content:flex-end;gap:.5rem;}
+  .ljv-cancel{background:none;border:none;color:#64748b;font-size:.85rem;font-weight:600;cursor:pointer;padding:.5rem .25rem;}
+</style>
+
+<div class="ljv-overlay" id="ljv-overlay">
+  <div class="ljv-modal">
+    <h3>Verify your phone</h3>
+    <p class="ljv-sub" id="ljv-reason">We’ll text you a code to confirm your number.</p>
+
+    <div class="ljv-row" id="ljv-phone-row">
+      <input type="tel" class="ljv-input" id="ljv-phone" placeholder="(469) 555-1234">
+      <button type="button" class="ljv-btn" id="ljv-send">Send code</button>
+    </div>
+
+    <div class="ljv-row" id="ljv-code-row" style="display:none;margin-top:.6rem;">
+      <input type="text" class="ljv-input" id="ljv-code" inputmode="numeric" maxlength="10" placeholder="Enter 6-digit code" style="letter-spacing:.1em;">
+      <button type="button" class="ljv-btn ljv-btn-go" id="ljv-verify">Verify</button>
+    </div>
+
+    <div class="ljv-msg" id="ljv-msg"></div>
+
+    <div class="ljv-foot">
+      <button type="button" class="ljv-cancel" id="ljv-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  window.LJ_AUTHED = {% if user.is_authenticated %}true{% else %}false{% endif %};
+  window.LJ_PHONE_VERIFIED = {% if user.is_authenticated and user.profile.phone_verified %}true{% else %}false{% endif %};
+  window.LJ_VERIFY_ENABLED = {% if PHONE_VERIFY_ENABLED %}true{% else %}false{% endif %};
+  var CSRF = '{{ csrf_token }}';
+
+  var overlay = document.getElementById('ljv-overlay');
+  var phoneRow= document.getElementById('ljv-phone-row');
+  var codeRow = document.getElementById('ljv-code-row');
+  var phoneIn = document.getElementById('ljv-phone');
+  var codeIn  = document.getElementById('ljv-code');
+  var sendBtn = document.getElementById('ljv-send');
+  var verBtn  = document.getElementById('ljv-verify');
+  var msg     = document.getElementById('ljv-msg');
+  var reasonEl= document.getElementById('ljv-reason');
+  var cancel  = document.getElementById('ljv-cancel');
+  var pending = null;   // onSuccess callback
+
+  function post(url, data){
+    var body = Object.keys(data).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(data[k]);}).join('&');
+    return fetch(url,{method:'POST',headers:{'X-CSRFToken':CSRF,'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest'},body:body}).then(function(r){return r.json();});
+  }
+  function setMsg(t, ok){ msg.textContent=t||''; msg.style.color = ok?'#1e8a5c':'#b91c1c'; }
+  function reset(){ codeRow.style.display='none'; setMsg(''); sendBtn.disabled=false; sendBtn.textContent='Send code'; verBtn.disabled=false; verBtn.textContent='Verify'; }
+  function close(){ overlay.classList.remove('open'); pending=null; }
+
+  window.ljRequirePhoneVerified = function(onSuccess, reason){
+    // Fail open: pass through for guests, already-verified users, or when
+    // phone verification isn't configured yet (no Twilio creds) — never block.
+    if (!window.LJ_AUTHED || window.LJ_PHONE_VERIFIED || !window.LJ_VERIFY_ENABLED) { onSuccess(); return; }
+    pending = onSuccess;
+    reset();
+    reasonEl.textContent = reason || 'We’ll text you a code to confirm your number.';
+    overlay.classList.add('open');
+    setTimeout(function(){ phoneIn.focus(); }, 50);
+  };
+
+  sendBtn.addEventListener('click', function(){
+    sendBtn.disabled=true; sendBtn.textContent='Sending…';
+    post('{% url "send_phone_code" %}', {phone: phoneIn.value}).then(function(d){
+      sendBtn.disabled=false; sendBtn.textContent='Send code';
+      if (d.ok){ codeRow.style.display='flex'; codeIn.focus(); setMsg('Code sent to '+(d.phone||phoneIn.value)+'.', true); }
+      else setMsg(d.error || 'Could not send code.', false);
+    }).catch(function(){ sendBtn.disabled=false; sendBtn.textContent='Send code'; setMsg('Something went wrong.', false); });
+  });
+
+  verBtn.addEventListener('click', function(){
+    verBtn.disabled=true; verBtn.textContent='Verifying…';
+    post('{% url "verify_phone_code" %}', {code: codeIn.value}).then(function(d){
+      verBtn.disabled=false; verBtn.textContent='Verify';
+      if (d.ok && d.verified){
+        window.LJ_PHONE_VERIFIED = true;
+        var cb = pending;
+        close();
+        if (cb) cb();
+      } else setMsg(d.error || 'Invalid code.', false);
+    }).catch(function(){ verBtn.disabled=false; verBtn.textContent='Verify'; setMsg('Something went wrong.', false); });
+  });
+
+  cancel.addEventListener('click', close);
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) close(); });
+})();
+</script>

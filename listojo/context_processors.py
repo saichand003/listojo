@@ -44,3 +44,20 @@ def google_maps(request):
     return {
         'GOOGLE_MAPS_API_KEY': settings.GOOGLE_MAPS_API_KEY,
     }
+
+
+def feature_flags(request):
+    """Expose whether phone verification is live (Twilio Verify configured)."""
+    verify_enabled = bool(
+        getattr(settings, 'TWILIO_ACCOUNT_SID', '')
+        and getattr(settings, 'TWILIO_AUTH_TOKEN', '')
+        and getattr(settings, 'TWILIO_VERIFY_SERVICE_SID', '')
+    )
+    google_login_enabled = bool(
+        getattr(settings, 'GOOGLE_OAUTH_CLIENT_ID', '')
+        and getattr(settings, 'GOOGLE_OAUTH_CLIENT_SECRET', '')
+    )
+    return {
+        'PHONE_VERIFY_ENABLED': verify_enabled,
+        'GOOGLE_LOGIN_ENABLED': google_login_enabled,
+    }
