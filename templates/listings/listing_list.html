@@ -387,12 +387,13 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
   border-radius: 12px !important;
 }
 
-/* Photo — square-ish, top of card */
+/* Photo — large & square-ish, top of card (Airbnb) */
 #list-panel.map-mode .listing-thumb-wrap {
   width: 100% !important;
-  height: 130px !important;
+  aspect-ratio: 20 / 19 !important;
+  height: auto !important;
   flex-shrink: 0 !important;
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   overflow: hidden !important;
   position: relative !important;
 }
@@ -418,10 +419,39 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
   border-radius: 0 !important;
 }
 
-/* Keep save heart + category badge, hide carousel controls */
-#list-panel.map-mode .thumb-nav,
-#list-panel.map-mode .thumb-dots,
+/* Keep save heart + badges; show the photo carousel (Airbnb style) */
 #list-panel.map-mode .featured-badge { display: none !important; }
+
+/* Carousel arrows — circular, appear on hover */
+#list-panel.map-mode .thumb-nav {
+  display: flex !important;
+  position: absolute !important;
+  top: 50% !important; transform: translateY(-50%) !important;
+  width: 30px !important; height: 30px !important;
+  align-items: center !important; justify-content: center !important;
+  background: rgba(255,255,255,.92) !important; border: none !important;
+  border-radius: 999px !important; cursor: pointer !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,.28) !important;
+  font-size: 1.1rem !important; line-height: 1 !important; color: #222 !important;
+  opacity: 0 !important; transition: opacity .15s, transform .12s !important;
+  z-index: 3 !important; padding: 0 !important;
+}
+#list-panel.map-mode .listing-thumb-wrap:hover .thumb-nav { opacity: 1 !important; }
+#list-panel.map-mode .thumb-nav:hover { transform: translateY(-50%) scale(1.08) !important; }
+#list-panel.map-mode .thumb-nav-prev { left: .55rem !important; }
+#list-panel.map-mode .thumb-nav-next { right: .55rem !important; }
+
+/* Dot indicators — bottom center */
+#list-panel.map-mode .thumb-dots {
+  display: flex !important;
+  position: absolute !important; bottom: .55rem !important; left: 50% !important;
+  transform: translateX(-50%) !important; gap: .28rem !important; z-index: 3 !important;
+}
+#list-panel.map-mode .thumb-dot {
+  width: 6px !important; height: 6px !important; border-radius: 999px !important;
+  background: rgba(255,255,255,.6) !important; box-shadow: 0 0 2px rgba(0,0,0,.3) !important;
+}
+#list-panel.map-mode .thumb-dot.active { background: #fff !important; transform: scale(1.15) !important; }
 
 #list-panel.map-mode .listing-thumb-wrap .save-pill {
   display: flex !important;
