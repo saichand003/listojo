@@ -8,6 +8,8 @@ numpy>=1.26
 pandas>=2.2
 twilio>=9.0
 django-allauth>=65.0
+PyJWT>=2.8           # required by allauth Google provider (OAuth id_token)
+cryptography>=42.0   # required by allauth Google provider (JWT signing/verify)
 
 # Production
 gunicorn>=21.2
