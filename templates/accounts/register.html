@@ -1,83 +1,112 @@
 {% extends 'base.html' %}
+{% block body_class %}auth-fullscreen{% endblock %}
 {% block content %}
 <style>
-  /* ── Clean, modern centered signup ───────────────────────────── */
+  /* ── Graffiti / street-art signup (single column) ────────────── */
   .gr-page{
-    min-height:calc(100vh - 80px);
+    min-height:100vh;
     display:flex; align-items:center; justify-content:center;
-    padding:2.5rem 1.25rem;
-    position:relative;
+    padding:3rem 1.25rem; position:relative; overflow:hidden;
     font-family:'Sora',-apple-system,BlinkMacSystemFont,sans-serif;
   }
-  /* soft brand glow behind the card */
+  /* vibrant spray-paint mesh backdrop */
   .gr-page::before{
     content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
     background:
-      radial-gradient(38% 42% at 20% 12%, rgba(42,126,242,.14), transparent 60%),
-      radial-gradient(36% 40% at 85% 90%, rgba(30,138,92,.13), transparent 60%);
+      radial-gradient(34% 38% at 14% 16%, rgba(42,126,242,.42), transparent 62%),
+      radial-gradient(34% 36% at 88% 14%, rgba(168,85,247,.40), transparent 62%),
+      radial-gradient(40% 42% at 84% 88%, rgba(30,138,92,.42), transparent 62%),
+      radial-gradient(32% 34% at 10% 90%, rgba(255,77,141,.38), transparent 62%),
+      radial-gradient(50% 50% at 50% 50%, rgba(255,212,59,.16), transparent 70%);
+    filter:saturate(1.15);
+  }
+  /* concrete grain */
+  .gr-page::after{
+    content:''; position:absolute; inset:0; z-index:0; opacity:.05; pointer-events:none; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
+  /* sticker-style card: thick border + hard offset shadow */
   .gr-card{
     position:relative; z-index:1;
-    width:100%; max-width:420px;
-    background:var(--surface,#fff);
-    border:1px solid var(--border,#e2e8f0);
-    border-radius:20px;
-    padding:2.6rem 2.2rem;
-    box-shadow:0 18px 50px rgba(15,23,42,.10);
+    width:100%; max-width:430px;
+    background:#fff;
+    border:3px solid #0c0c12;
+    border-radius:22px;
+    padding:2.4rem 2.1rem;
+    box-shadow:9px 9px 0 rgba(12,12,18,.92);
   }
 
   .gr-chip{
-    width:42px; height:42px; border-radius:13px;
+    width:46px; height:46px; border-radius:14px;
     background:linear-gradient(135deg,#2A7EF2,#1e8a5c);
     display:flex; align-items:center; justify-content:center;
-    transform:rotate(-6deg); box-shadow:0 8px 20px rgba(42,126,242,.4);
-    font-size:1.3rem; margin-bottom:1.1rem;
+    transform:rotate(-7deg); border:2.5px solid #0c0c12;
+    box-shadow:3px 3px 0 rgba(12,12,18,.85);
+    font-size:1.4rem; margin-bottom:1.2rem;
   }
 
   .gr-card h1{
-    font-size:1.65rem; font-weight:900; letter-spacing:-.02em;
-    margin:0 0 .35rem; color:var(--text,#0c0c12);
+    font-size:1.85rem; font-weight:900; letter-spacing:-.025em; line-height:1.05;
+    margin:0 0 .4rem; color:#0c0c12;
   }
-  /* subtle graffiti marker swipe on one word */
   .gr-mark{ position:relative; display:inline-block; white-space:nowrap; }
   .gr-mark::before{
-    content:''; position:absolute; left:-3%; right:-3%; bottom:.1em; height:.4em; z-index:-1;
+    content:''; position:absolute; left:-4%; right:-4%; bottom:.06em; height:.46em; z-index:-1;
     background:linear-gradient(90deg,#FFD43B,#FF4D8D);
-    transform:skew(-9deg) rotate(-1.5deg); border-radius:3px; opacity:.85;
+    transform:skew(-10deg) rotate(-1.5deg); border-radius:3px; opacity:.95;
   }
-  .gr-lead{ font-size:.92rem; color:var(--muted,#64748b); margin:0 0 1.6rem; }
+  .gr-lead{ font-size:.92rem; color:#475569; margin:0 0 1.2rem; }
 
-  .gr-form{ display:flex; flex-direction:column; gap:1rem; }
-  .gr-field label{ display:block; font-size:.82rem; font-weight:700; color:var(--text,#0c0c12); margin-bottom:.4rem; }
+  /* compact value-prop stickers */
+  .gr-stickers{ display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.5rem; }
+  .gr-sticker{
+    font-size:.74rem; font-weight:800; color:#0c0c12;
+    padding:.35rem .6rem; border-radius:9px; background:#fff;
+    border:2px solid #0c0c12; box-shadow:2px 2px 0 rgba(12,12,18,.8);
+    display:inline-flex; align-items:center; gap:.3rem;
+  }
+  .gr-sticker:nth-child(1){ transform:rotate(-2.5deg); }
+  .gr-sticker:nth-child(2){ transform:rotate(1.5deg); }
+  .gr-sticker:nth-child(3){ transform:rotate(-1deg); }
+
+  .gr-form{ display:flex; flex-direction:column; gap:.95rem; }
+  .gr-field label{ display:block; font-size:.8rem; font-weight:800; color:#0c0c12; margin-bottom:.35rem; text-transform:uppercase; letter-spacing:.03em; }
   .gr-form input{
     width:100%; box-sizing:border-box; padding:.7rem .9rem;
-    border:2px solid var(--border,#e2e8f0); border-radius:11px;
-    font-size:.95rem; font-family:inherit; background:var(--bg,#f8fafc); color:var(--text,#0c0c12);
+    border:2px solid #cbd5e1; border-radius:11px;
+    font-size:.95rem; font-family:inherit; background:#f8fafc; color:#0c0c12;
     transition:border-color .15s, box-shadow .15s, background .15s;
   }
-  .gr-form input:focus{ outline:none; border-color:#2A7EF2; background:var(--surface,#fff); box-shadow:0 0 0 4px rgba(42,126,242,.12); }
+  .gr-form input:focus{ outline:none; border-color:#0c0c12; background:#fff; box-shadow:3px 3px 0 rgba(42,126,242,.25); }
   .gr-form .errorlist{ list-style:none; margin:.4rem 0 0; padding:0; color:#dc2626; font-size:.78rem; font-weight:600; }
   .gr-form .helptext{ display:none; }
 
   .gr-submit{
-    margin-top:.3rem; width:100%; padding:.8rem; border:none; border-radius:12px; cursor:pointer;
-    font-size:1rem; font-weight:800; font-family:inherit; color:#fff;
-    background:linear-gradient(135deg,#2A7EF2,#1e6fe0);
-    box-shadow:0 8px 22px rgba(42,126,242,.38); transition:transform .12s, box-shadow .15s;
+    margin-top:.4rem; width:100%; padding:.8rem; cursor:pointer;
+    font-size:1rem; font-weight:900; font-family:inherit; color:#fff; letter-spacing:.01em;
+    background:#2A7EF2; border:2.5px solid #0c0c12; border-radius:13px;
+    box-shadow:4px 4px 0 rgba(12,12,18,.9); transition:transform .1s, box-shadow .1s;
   }
-  .gr-submit:hover{ transform:translateY(-1px); box-shadow:0 12px 28px rgba(42,126,242,.48); }
+  .gr-submit:hover{ transform:translate(-1px,-1px); box-shadow:5px 5px 0 rgba(12,12,18,.9); }
+  .gr-submit:active{ transform:translate(2px,2px); box-shadow:2px 2px 0 rgba(12,12,18,.9); }
 
-  .gr-nonfield{ background:#fef2f2; border:1.5px solid #fca5a5; color:#b91c1c; border-radius:10px; padding:.7rem .9rem; font-size:.85rem; margin-bottom:1rem; }
-  .gr-signin{ text-align:center; font-size:.88rem; color:var(--muted,#64748b); margin-top:1.4rem; }
-  .gr-signin a{ color:#2A7EF2; font-weight:700; text-decoration:none; }
+  .gr-nonfield{ background:#fef2f2; border:2px solid #0c0c12; color:#b91c1c; border-radius:10px; padding:.7rem .9rem; font-size:.85rem; font-weight:600; margin-bottom:1rem; box-shadow:2px 2px 0 rgba(12,12,18,.7); }
+  .gr-signin{ text-align:center; font-size:.88rem; color:#475569; margin-top:1.3rem; }
+  .gr-signin a{ color:#2A7EF2; font-weight:800; text-decoration:none; }
 </style>
 
 <div class="gr-page">
   <div class="gr-card">
     <div class="gr-chip">🏠</div>
-    <h1>Create your <span class="gr-mark">account.</span></h1>
-    <p class="gr-lead">Join free — start matching in under a minute.</p>
+    <h1>Find your<br><span class="gr-mark">next spot.</span></h1>
+    <p class="gr-lead">Join free — guided search, real listings, instant match alerts.</p>
+
+    <div class="gr-stickers">
+      <span class="gr-sticker">⚡ 60-sec search</span>
+      <span class="gr-sticker">🔔 Match alerts</span>
+      <span class="gr-sticker">✓ Verified listers</span>
+    </div>
 
     {% if form.non_field_errors %}
     <div class="gr-nonfield">{{ form.non_field_errors }}</div>

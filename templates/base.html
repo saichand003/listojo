@@ -10,6 +10,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'styles.css' %}?v={{ UI_ASSET_VERSION }}">
     <style>
+    /* ── Full-screen auth pages: hide app chrome (top nav, sidebar, mobile nav) ── */
+    body.auth-fullscreen .site-topbar,
+    body.auth-fullscreen .app-sidebar,
+    body.auth-fullscreen .mob-nav,
+    body.auth-fullscreen #back-to-top,
+    body.auth-fullscreen .site-footer{ display:none !important; }
+    body.auth-fullscreen .site-body{ display:block; }
+    body.auth-fullscreen .app-content{ padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; }
+
     /* ── Sidebar city switcher ── */
     .sb-city-switcher{position:relative;padding:.35rem .5rem .9rem;margin-bottom:.5rem;border-bottom:1px solid var(--border);}
     .sb-city-btn{display:flex;align-items:center;gap:.4rem;width:100%;background:none;border:none;padding:0;cursor:pointer;font-size:.7rem;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;transition:color .15s;}
@@ -30,7 +39,7 @@
     .sb-city-locate-msg a{color:var(--primary);font-weight:700;text-decoration:none;}
     </style>
 </head>
-<body id="page-top">
+<body id="page-top" class="{% block body_class %}{% endblock %}">
 
 {# ── TOP NAVBAR ── #}
 <div class="site-topbar">
