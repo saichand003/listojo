@@ -1,6 +1,17 @@
 {% extends 'base.html' %}
-{% load listing_extras %}
+{% load listing_extras static %}
 {% block content %}
+<style>
+  /* Faint WhatsApp-style property-icon pattern fills empty space behind listings */
+  .app-content{
+    background-image:url("{% static 'img/property-pattern.svg' %}");
+    background-repeat:repeat;
+    background-size:300px 300px;
+    background-attachment:fixed;
+  }
+  /* Don't tile behind the map view */
+  body.lj-map-active .app-content{ background-image:none; }
+</style>
 
 <section class="hero">
     <div style="position:relative;z-index:1;max-width:720px;">

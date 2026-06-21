@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+  <g fill="none" stroke="#b9c5de" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.5">
+
+    <!-- House -->
+    <path d="M20 64 L44 44 L68 64"/>
+    <path d="M26 60 V92 H62 V60"/>
+    <path d="M40 92 V76 H48 V92"/>
+
+    <!-- Apartment building -->
+    <rect x="198" y="34" width="40" height="66" rx="2"/>
+    <path d="M205 46 h7 M221 46 h7 M205 60 h7 M221 60 h7 M205 74 h7 M221 74 h7 M205 88 h7 M221 88 h7"/>
+
+    <!-- Townhouse (two connected) -->
+    <path d="M96 156 L116 138 L136 156"/>
+    <path d="M136 156 L156 138 L176 156"/>
+    <path d="M100 153 V192 H172 V153"/>
+    <path d="M136 192 V160"/>
+    <path d="M112 192 V180 H120 V192"/>
+    <path d="M152 192 V180 H160 V192"/>
+
+    <!-- Trailer -->
+    <path d="M24 206 q0-6 6-6 h54 q6 0 6 6 v22 h-66 z"/>
+    <path d="M24 222 h66"/>
+    <circle cx="40" cy="234" r="5"/>
+    <circle cx="76" cy="234" r="5"/>
+    <path d="M90 213 h11"/>
+
+    <!-- Listojo location pin with little house -->
+    <path d="M232 196 a18 18 0 1 0 -36 0 c0 14 18 32 18 32 s18-18 18-32 z"/>
+    <path d="M206 197 l8-7 l8 7"/>
+    <path d="M209 195 v10 h12 v-10"/>
+
+  </g>
+</svg>
