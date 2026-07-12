@@ -15,12 +15,26 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 import secrets
+import threading
 import time
 
 from django.conf import settings
 from django.core import signing
 from django.core.mail import send_mail
+
+logger = logging.getLogger(__name__)
+
+
+def _send_email_async(subject: str, body: str, to: str) -> None:
+    """Fire-and-forget email send so a slow SMTP server can't block the request."""
+    def _run():
+        try:
+            send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [to], fail_silently=True)
+        except Exception:  # noqa: BLE001
+            logger.exception('async OTP email send failed to %s', to)
+    threading.Thread(target=_run, daemon=True).start()
 
 CODE_TTL = 10 * 60      # seconds a code stays valid
 MAX_ATTEMPTS = 5
@@ -126,16 +140,14 @@ def start_email_otp(request, user) -> bool:
     request.session[f'{_S}_last_sent'] = time.time()
 
     if user.email:
-        send_mail(
-            subject='Your Listojo verification code',
-            message=(
+        _send_email_async(
+            'Your Listojo verification code',
+            (
                 f'Hi {user.get_full_name() or user.username},\n\n'
                 f'Your verification code is: {code}\n\n'
                 f'It expires in 10 minutes. If you didn’t try to sign in, ignore this email.'
             ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=True,
+            user.email,
         )
     return True
 

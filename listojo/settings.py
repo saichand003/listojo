@@ -178,6 +178,8 @@ EMAIL_USE_TLS  = os.getenv('EMAIL_USE_TLS', 'true').lower() == 'true'
 EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Listojo <noreply@listojo.com>')
+# Fail fast on a slow/unreachable SMTP server instead of hanging the request.
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
 
 # ── Google Maps ──────────────────────────────────────────────────────────────
 # Browser key — used in templates for the JS Maps API. Restrict by HTTP referrer.
