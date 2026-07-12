@@ -127,7 +127,8 @@ def register(request):
         form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            # Explicit backend required — allauth adds a second auth backend.
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('listing_list')
     else:
         form = RegistrationForm()

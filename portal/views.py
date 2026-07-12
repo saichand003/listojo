@@ -58,7 +58,8 @@ def portal_login(request):
                             password=request.POST.get('password'))
         if user and user.is_superuser:
             logout(request)          # clear any existing regular-user session
-            login(request, user)
+            # Explicit backend required — allauth adds a second auth backend.
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('portal_dashboard')
         error = 'Invalid credentials or insufficient permissions.'
     return render(request, 'portal/login.html', {'error': error})
