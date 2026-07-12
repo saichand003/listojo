@@ -38,7 +38,7 @@
       <div class="lc-boxes" id="lc-boxes">
         {% for i in "123456" %}<input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit {{ forloop.counter }}"{% if forloop.first %} autofocus{% endif %}>{% endfor %}
       </div>
-      <div class="lc-err">{{ error }}</div>
+      <div class="lc-err">{% if error %}{{ error }}{% endif %}</div>
       <div class="lc-resend">
         Didn't get it? <button type="button" class="lc-link" id="lc-resend">Send a new code</button>
       </div>
