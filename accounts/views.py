@@ -24,15 +24,96 @@ def user_login(request):
 
         user = authenticate(request, username=username, password=password)
         if user is not None:
-            login(request, user)
-            request.session.set_expiry(REMEMBER_ME_AGE if remember else 0)
-            return redirect(request.POST.get('next') or request.GET.get('next') or 'listing_list')
+            from accounts.services import login_otp
+            next_url = request.POST.get('next') or request.GET.get('next') or ''
+            # Trusted device → skip OTP and log in directly.
+            if login_otp.is_trusted_device(request, user):
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                request.session.set_expiry(REMEMBER_ME_AGE if remember else 0)
+                return redirect(next_url or 'listing_list')
+            # Otherwise step-up: confirm via OTP before the session starts.
+            login_otp.begin(request, user, remember=remember, next_url=next_url)
+            login_otp.start_email_otp(request, user)
+            return redirect('login_confirm')
         error = 'Invalid username or password.'
 
     return render(request, 'registration/login.html', {
         'error': error,
         'next': request.GET.get('next', ''),
     })
+
+
+def login_confirm(request):
+    """'Confirm it's you' — verify the OTP, then complete the login."""
+    from django.contrib.auth.models import User
+    from accounts.services import login_otp
+
+    uid = login_otp.pending_user_id(request)
+    if not uid:
+        return redirect('login')
+    try:
+        user = User.objects.select_related('profile').get(pk=uid)
+    except User.DoesNotExist:
+        login_otp.clear(request)
+        return redirect('login')
+
+    error = None
+    if request.method == 'POST':
+        code = request.POST.get('code', '')
+        if login_otp.check_otp(request, user, code):
+            remember, next_url = login_otp.pop_intent(request)
+            trust = request.POST.get('trust_device') == 'on'
+            login_otp.clear(request)
+            # Explicit backend required — allauth adds a second auth backend.
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            request.session.set_expiry(REMEMBER_ME_AGE if remember else 0)
+            resp = redirect(next_url or 'listing_list')
+            if trust:
+                login_otp.set_trusted_cookie(resp, user)
+            return resp
+        error = 'Invalid or expired code. Try again.'
+
+    profile = getattr(user, 'profile', None)
+    has_phone = bool(profile and profile.phone_verified and profile.phone)
+    ch = login_otp.channel(request)
+    return render(request, 'registration/login_confirm.html', {
+        'error': error,
+        'channel': ch,
+        'sent_to': login_otp.mask_phone(profile.phone) if ch == 'sms' and profile else login_otp.mask_email(user.email),
+        'has_phone': has_phone,
+        'phone_masked': login_otp.mask_phone(profile.phone) if has_phone else '',
+    })
+
+
+def login_confirm_resend(request):
+    """Resend the code on the current channel."""
+    from django.contrib.auth.models import User
+    from accounts.services import login_otp
+    uid = login_otp.pending_user_id(request)
+    if not uid:
+        return JsonResponse({'ok': False}, status=400)
+    user = User.objects.select_related('profile').get(pk=uid)
+    if login_otp.channel(request) == 'sms':
+        ok = login_otp.start_sms_otp(request, user)
+    else:
+        ok = login_otp.start_email_otp(request, user)
+    return JsonResponse({'ok': ok})
+
+
+def login_confirm_switch(request):
+    """'Try another way' — switch the code channel (email ⇄ sms)."""
+    from django.contrib.auth.models import User
+    from accounts.services import login_otp
+    uid = login_otp.pending_user_id(request)
+    if not uid:
+        return JsonResponse({'ok': False}, status=400)
+    user = User.objects.select_related('profile').get(pk=uid)
+    to = request.POST.get('channel', 'sms')
+    if to == 'sms':
+        ok = login_otp.start_sms_otp(request, user)
+    else:
+        ok = login_otp.start_email_otp(request, user)
+    return JsonResponse({'ok': ok})
 
 
 def user_logout(request):
