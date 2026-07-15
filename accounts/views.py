@@ -13,17 +13,35 @@ REMEMBER_ME_AGE = 60 * 60 * 24 * 90  # 90 days
 
 
 def user_login(request):
+    from accounts.services import security
     if request.user.is_authenticated:
         return redirect('listing_list')
 
     error = None
     if request.method == 'POST':
+        # Hard per-IP rate limit — stops brute-force / credential stuffing.
+        if not security.rate_limit(request, key='login', limit=10, window=900):
+            return render(request, 'registration/login.html', {
+                'error': 'Too many attempts. Please try again in a few minutes.',
+                'next': request.GET.get('next', ''),
+                'captcha_required': security.login_captcha_required(request),
+            })
+
+        # Adaptive CAPTCHA — required only after repeated failures.
+        if security.login_captcha_required(request) and not security.verify_turnstile(request):
+            return render(request, 'registration/login.html', {
+                'error': 'Please complete the bot check below.',
+                'next': request.GET.get('next', ''),
+                'captcha_required': True,
+            })
+
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
         remember = request.POST.get('remember_me') == 'on'
 
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            security.clear_login_failures(request)
             from accounts.services import login_otp
             next_url = request.POST.get('next') or request.GET.get('next') or ''
             # Trusted device → skip OTP and log in directly.
@@ -35,11 +53,13 @@ def user_login(request):
             login_otp.begin(request, user, remember=remember, next_url=next_url)
             login_otp.start_email_otp(request, user, force=True)
             return redirect('login_confirm')
+        security.record_login_failure(request)
         error = 'Invalid username or password.'
 
     return render(request, 'registration/login.html', {
         'error': error,
         'next': request.GET.get('next', ''),
+        'captcha_required': security.login_captcha_required(request),
     })
 
 

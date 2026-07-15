@@ -45,10 +45,15 @@
         </label>
       </div>
 
+      {% if captcha_required and TURNSTILE_ENABLED %}
+      <div class="cf-turnstile" data-sitekey="{{ TURNSTILE_SITE_KEY }}" style="margin:0 0 1rem;"></div>
+      {% endif %}
+
       <button type="submit" class="button accent" style="width:100%;padding:.7rem;font-size:1rem;font-weight:700;">
         Sign in
       </button>
     </form>
+    {% if captcha_required and TURNSTILE_ENABLED %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}
 
     {% include 'includes/google_login_button.html' %}
 

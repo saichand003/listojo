@@ -46,6 +46,42 @@ def turnstile_enabled() -> bool:
     return bool(getattr(settings, 'TURNSTILE_SITE_KEY', '') and getattr(settings, 'TURNSTILE_SECRET_KEY', ''))
 
 
+# ── Adaptive login protection ─────────────────────────────────────────────────
+LOGIN_CAPTCHA_THRESHOLD = 3          # failed attempts before CAPTCHA is required
+_LOGIN_FAIL_WINDOW = 15 * 60         # failures decay after 15 min
+
+
+def _login_fail_key(request) -> str:
+    return f'loginfail:{client_ip(request)}'
+
+
+def login_failures(request) -> int:
+    return cache.get(_login_fail_key(request), 0)
+
+
+def record_login_failure(request) -> int:
+    key = _login_fail_key(request)
+    try:
+        count = cache.get_or_set(key, 0, _LOGIN_FAIL_WINDOW)
+        cache.incr(key)
+        return count + 1
+    except Exception:  # noqa: BLE001
+        logger.exception('record_login_failure cache error')
+        return 0
+
+
+def clear_login_failures(request) -> None:
+    try:
+        cache.delete(_login_fail_key(request))
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def login_captcha_required(request) -> bool:
+    """CAPTCHA kicks in only after repeated failures (and only if configured)."""
+    return turnstile_enabled() and login_failures(request) >= LOGIN_CAPTCHA_THRESHOLD
+
+
 def verify_turnstile(request) -> bool:
     """
     Verify the Turnstile token from the form. Fail-open (True) when Turnstile
