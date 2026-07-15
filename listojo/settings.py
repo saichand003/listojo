@@ -194,6 +194,19 @@ GOOGLE_GEOCODING_API_KEY = os.getenv('GOOGLE_GEOCODING_API_KEY', '') or GOOGLE_M
 # ── Site ──────────────────────────────────────────────────────────────────────
 SITE_URL = os.getenv('SITE_URL', 'https://listojo.com')
 
+# ── Cache (DB-backed — shared across gunicorn workers, no Redis needed) ────────
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'listojo_cache',
+    }
+}
+
+# ── Cloudflare Turnstile (bot protection on signup) ───────────────────────────
+# Fail-open: when keys are absent, the CAPTCHA check is skipped.
+TURNSTILE_SITE_KEY   = os.getenv('TURNSTILE_SITE_KEY', '')
+TURNSTILE_SECRET_KEY = os.getenv('TURNSTILE_SECRET_KEY', '')
+
 # ── Twilio (phone verification + SMS notifications) ───────────────────────────
 TWILIO_ACCOUNT_SID        = os.getenv('TWILIO_ACCOUNT_SID', '')
 TWILIO_AUTH_TOKEN         = os.getenv('TWILIO_AUTH_TOKEN', '')

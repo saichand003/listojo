@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block body_class %}auth-fullscreen{% endblock %}
+{% block content %}
+<style>
+  .lc-page{ min-height:calc(100vh - 74px); display:flex; align-items:flex-start; justify-content:center; padding:3rem 1.25rem; font-family:'Sora',-apple-system,BlinkMacSystemFont,sans-serif; }
+  .lc-card{ width:100%; max-width:420px; text-align:center; }
+  .lc-card h1{ font-size:1.75rem; font-weight:800; letter-spacing:-.02em; margin:0 0 .5rem; color:var(--text,#0f172a); }
+  .lc-sub{ font-size:.95rem; color:var(--muted,#64748b); margin:0 0 2rem; }
+  .lc-sub b{ color:var(--text,#0f172a); font-weight:700; }
+  .lc-boxes{ display:flex; gap:.55rem; justify-content:center; margin-bottom:1.1rem; }
+  .lc-boxes input{ width:48px; height:58px; text-align:center; font-size:1.5rem; font-weight:700; border:1.5px solid var(--border,#cbd5e1); border-radius:12px; background:var(--bg,#f8fafc); color:var(--text,#0f172a); outline:none; transition:border-color .15s, box-shadow .15s; }
+  .lc-boxes input:focus{ border-color:#2A7EF2; box-shadow:0 0 0 4px rgba(42,126,242,.12); background:var(--surface,#fff); }
+  .lc-err{ color:#dc2626; font-size:.85rem; font-weight:600; margin:.2rem 0 1rem; min-height:1em; }
+  .lc-resend{ font-size:.9rem; color:var(--muted,#64748b); margin-bottom:1.75rem; }
+  .lc-link{ background:none; border:none; color:var(--text,#0f172a); font-weight:700; text-decoration:underline; cursor:pointer; font-size:.9rem; font-family:inherit; padding:0; }
+  .lc-link:disabled{ color:#94a3b8; text-decoration:none; cursor:default; }
+  .lc-submit{ width:100%; padding:.8rem; border:none; border-radius:12px; cursor:pointer; font-size:1rem; font-weight:800; color:#fff; font-family:inherit; background:linear-gradient(135deg,#2A7EF2,#1e6fe0); box-shadow:0 8px 22px rgba(42,126,242,.32); transition:transform .12s,box-shadow .15s; }
+  .lc-submit:hover{ transform:translateY(-1px); }
+  .lc-back{ display:inline-block; margin-top:1.5rem; font-size:.88rem; color:var(--muted,#64748b); text-decoration:none; }
+</style>
+
+<div class="lc-page">
+  <div class="lc-card">
+    <h1>Verify your email</h1>
+    <p class="lc-sub">We sent a code to <b>{{ sent_to }}</b>. Enter it to finish creating your account.</p>
+
+    <form method="post" id="lc-form">
+      {% csrf_token %}
+      <input type="hidden" name="code" id="lc-code">
+      <div class="lc-boxes" id="lc-boxes">
+        {% for i in "123456" %}<input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit {{ forloop.counter }}"{% if forloop.first %} autofocus{% endif %}>{% endfor %}
+      </div>
+      <div class="lc-err">{% if error %}{{ error }}{% endif %}</div>
+      <div class="lc-resend">
+        Didn't get it? <button type="button" class="lc-link" id="lc-resend">Send a new code</button>
+      </div>
+      <button type="submit" class="lc-submit">Verify &amp; create account</button>
+    </form>
+
+    <a href="{% url 'register' %}" class="lc-back">← Back to sign up</a>
+  </div>
+</div>
+
+<script>
+(function(){
+  var CSRF = '{{ csrf_token }}';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('#lc-boxes input'));
+  var hidden = document.getElementById('lc-code');
+  var form = document.getElementById('lc-form');
+  function collect(){ return boxes.map(function(b){ return b.value; }).join(''); }
+  function sync(){ hidden.value = collect(); }
+  boxes.forEach(function(box, i){
+    box.addEventListener('input', function(){
+      box.value = box.value.replace(/\D/g,'').slice(0,1);
+      if (box.value && i < boxes.length-1) boxes[i+1].focus();
+      sync();
+    });
+    box.addEventListener('keydown', function(e){
+      if (e.key === 'Backspace' && !box.value && i > 0) boxes[i-1].focus();
+    });
+    box.addEventListener('paste', function(e){
+      e.preventDefault();
+      var t = (e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,6);
+      for (var j=0; j<t.length && j<boxes.length; j++) boxes[j].value = t[j];
+      sync();
+      (boxes[Math.min(t.length, boxes.length-1)]).focus();
+    });
+  });
+  form.addEventListener('submit', sync);
+
+  var resend = document.getElementById('lc-resend');
+  resend.addEventListener('click', function(){
+    resend.disabled = true;
+    var body = 'x=1';
+    fetch('{% url "register_confirm_resend" %}', {method:'POST', headers:{'X-CSRFToken':CSRF,'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest'}, body:body})
+      .finally(function(){
+        var n = 30;
+        var t = setInterval(function(){ resend.textContent = 'Resend in ' + n + 's'; if(--n < 0){ clearInterval(t); resend.disabled=false; resend.textContent='Send a new code'; } }, 1000);
+      });
+  });
+})();
+</script>
+{% endblock %}

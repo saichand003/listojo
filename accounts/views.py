@@ -123,16 +123,66 @@ from listings.models import ListingInquiry
 
 
 def register(request):
+    from accounts.services import security, signup_otp
+    error = None
     if request.method == 'POST':
+        # Bot / abuse controls before doing any work.
+        if not security.rate_limit(request, key='signup', limit=5, window=3600):
+            return render(request, 'accounts/register.html',
+                          {'form': RegistrationForm(), 'error': 'Too many attempts. Please try again later.'})
+        if not security.verify_turnstile(request):
+            return render(request, 'accounts/register.html',
+                          {'form': RegistrationForm(), 'error': 'Bot check failed. Please try again.'})
+
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            # Explicit backend required — allauth adds a second auth backend.
-            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            return redirect('listing_list')
+            # Don't create the account yet — verify the email first.
+            signup_otp.begin(
+                request,
+                username=form.cleaned_data['username'],
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password1'],
+            )
+            return redirect('register_confirm')
     else:
         form = RegistrationForm()
-    return render(request, 'accounts/register.html', {'form': form})
+    return render(request, 'accounts/register.html', {'form': form, 'error': error})
+
+
+def register_confirm(request):
+    """Verify the emailed code, then actually create the account and log in."""
+    from accounts.services import signup_otp
+    data = signup_otp.pending(request)
+    if not data:
+        return redirect('register')
+
+    error = None
+    if request.method == 'POST':
+        if signup_otp.check(request, request.POST.get('code', '')):
+            user = signup_otp.complete(request)
+            if user:
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                return redirect('listing_list')
+            error = 'That username or email was just taken. Please start over.'
+        else:
+            error = 'Invalid or expired code. Try again.'
+
+    return render(request, 'accounts/register_confirm.html', {
+        'error': error,
+        'sent_to': _mask_email(data['email']),
+    })
+
+
+def register_confirm_resend(request):
+    from accounts.services import security, signup_otp
+    if not security.rate_limit(request, key='signup_resend', limit=5, window=600):
+        return JsonResponse({'ok': False, 'error': 'Too many requests'}, status=429)
+    return JsonResponse({'ok': signup_otp.resend(request)})
+
+
+def _mask_email(email: str) -> str:
+    from accounts.services.login_otp import mask_email
+    return mask_email(email)
 
 
 @login_required

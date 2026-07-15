@@ -96,6 +96,9 @@
       <span class="gr-sticker">✓ Verified listers</span>
     </div>
 
+    {% if error %}
+    <div class="gr-nonfield">{{ error }}</div>
+    {% endif %}
     {% if form.non_field_errors %}
     <div class="gr-nonfield">{{ form.non_field_errors }}</div>
     {% endif %}
@@ -122,8 +125,12 @@
         {{ form.password2 }}
         {{ form.password2.errors }}
       </div>
+      {% if TURNSTILE_ENABLED %}
+      <div class="cf-turnstile" data-sitekey="{{ TURNSTILE_SITE_KEY }}" style="margin:.2rem 0;"></div>
+      {% endif %}
       <button type="submit" class="gr-submit">Create account →</button>
     </form>
+    {% if TURNSTILE_ENABLED %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}
 
     {% include 'includes/google_login_button.html' %}
 

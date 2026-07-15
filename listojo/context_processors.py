@@ -60,4 +60,6 @@ def feature_flags(request):
     return {
         'PHONE_VERIFY_ENABLED': verify_enabled,
         'GOOGLE_LOGIN_ENABLED': google_login_enabled,
+        'TURNSTILE_SITE_KEY': getattr(settings, 'TURNSTILE_SITE_KEY', ''),
+        'TURNSTILE_ENABLED': bool(getattr(settings, 'TURNSTILE_SITE_KEY', '') and getattr(settings, 'TURNSTILE_SECRET_KEY', '')),
     }
