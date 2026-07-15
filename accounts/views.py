@@ -33,7 +33,7 @@ def user_login(request):
                 return redirect(next_url or 'listing_list')
             # Otherwise step-up: confirm via OTP before the session starts.
             login_otp.begin(request, user, remember=remember, next_url=next_url)
-            login_otp.start_email_otp(request, user)
+            login_otp.start_email_otp(request, user, force=True)
             return redirect('login_confirm')
         error = 'Invalid username or password.'
 

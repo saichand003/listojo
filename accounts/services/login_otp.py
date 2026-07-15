@@ -106,10 +106,14 @@ def pending_user_id(request) -> int | None:
 
 
 def begin(request, user, *, remember: bool, next_url: str) -> None:
-    """Record who is mid-login and their post-verify intent."""
+    """Record who is mid-login and their post-verify intent, and reset any prior
+    OTP send-state so a fresh login always sends a new code (the resend cooldown
+    should only apply to the manual 'Send a new code' button)."""
     request.session[f'{_S}_uid'] = user.pk
     request.session[f'{_S}_remember'] = bool(remember)
     request.session[f'{_S}_next'] = next_url or ''
+    for k in ('hash', 'exp', 'attempts', 'channel', 'last_sent'):
+        request.session.pop(f'{_S}_{k}', None)
 
 
 def pop_intent(request) -> tuple[bool, str]:
@@ -128,9 +132,10 @@ def _can_resend(request) -> bool:
     return (time.time() - last) >= RESEND_COOLDOWN
 
 
-def start_email_otp(request, user) -> bool:
-    """Generate + email a fresh 6-digit code. Returns False if on cooldown."""
-    if not _can_resend(request):
+def start_email_otp(request, user, *, force: bool = False) -> bool:
+    """Generate + email a fresh 6-digit code. Returns False if on cooldown
+    (unless force=True, e.g. a brand-new login rather than a resend)."""
+    if not force and not _can_resend(request):
         return False
     code = f'{secrets.randbelow(1_000_000):06d}'
     request.session[f'{_S}_hash'] = _hash(code)
