@@ -61,7 +61,7 @@ def _build_alert_bodies(search: SavedSearch, listings: list, site_url: str):
     kind = 'home' if search.search_type == 'buy' else 'rental'
     subject = f'{n} new {kind}{"s" if n != 1 else ""}{where} matching your search'
 
-    lines = [f'Hi {search.user.get_full_name() or search.user.username},', '',
+    lines = [f'Hi {search.user.get_full_name() or search.user.email or search.user.username},', '',
              f'{n} new listing{"s" if n != 1 else ""} just matched your saved {kind} search'
              f'{where}:', '']
     for lst in listings[:_MAX_ITEMS]:

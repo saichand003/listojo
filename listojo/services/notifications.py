@@ -64,7 +64,7 @@ def send_listing_inquiry_email(listing, inquiry) -> None:
     send_mail(
         subject=f'New inquiry for "{listing.title}"',
         message=(
-            f'Hi {listing.owner.username},\n\n'
+            f'Hi {listing.owner.get_full_name() or listing.owner.email or listing.owner.username},\n\n'
             f'{inquiry.name} sent an inquiry about your listing "{listing.title}".\n\n'
             f'Message:\n{inquiry.message}\n\n'
             f'Reply to: {inquiry.email}'

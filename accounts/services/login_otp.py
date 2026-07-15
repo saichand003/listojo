@@ -148,7 +148,7 @@ def start_email_otp(request, user, *, force: bool = False) -> bool:
         _send_email_async(
             'Your Listojo verification code',
             (
-                f'Hi {user.get_full_name() or user.username},\n\n'
+                f'Hi {user.get_full_name() or user.email or user.username},\n\n'
                 f'Your verification code is: {code}\n\n'
                 f'It expires in 10 minutes. If you didn’t try to sign in, ignore this email.'
             ),
