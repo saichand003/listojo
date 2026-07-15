@@ -12,6 +12,7 @@ urlpatterns = [
     path('register/confirm/', views.register_confirm, name='register_confirm'),
     path('register/confirm/resend/', views.register_confirm_resend, name='register_confirm_resend'),
     path('profile/', views.profile, name='profile'),
+    path('profile/update-name/', views.update_name, name='update_name'),
     path('phone/send-code/', views.send_phone_code, name='send_phone_code'),
     path('phone/verify-code/', views.verify_phone_code, name='verify_phone_code'),
     path('notifications/prefs/', views.update_notification_prefs, name='update_notification_prefs'),

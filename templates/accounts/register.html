@@ -105,6 +105,18 @@
 
     <form method="post" class="gr-form" novalidate>
       {% csrf_token %}
+      <div style="display:flex;gap:.6rem;">
+        <div class="gr-field" style="flex:1;">
+          <label for="{{ form.first_name.id_for_label }}">First name</label>
+          {{ form.first_name }}
+          {{ form.first_name.errors }}
+        </div>
+        <div class="gr-field" style="flex:1;">
+          <label for="{{ form.last_name.id_for_label }}">Last name</label>
+          {{ form.last_name }}
+          {{ form.last_name.errors }}
+        </div>
+      </div>
       <div class="gr-field">
         <label for="{{ form.username.id_for_label }}">Username</label>
         {{ form.username }}

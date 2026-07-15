@@ -162,6 +162,8 @@ def register(request):
                 username=form.cleaned_data['username'],
                 email=form.cleaned_data['email'],
                 password=form.cleaned_data['password1'],
+                first_name=form.cleaned_data.get('first_name', ''),
+                last_name=form.cleaned_data.get('last_name', ''),
             )
             return redirect('register_confirm')
     else:
@@ -209,6 +211,19 @@ def _mask_email(email: str) -> str:
 def profile(request):
     profile_obj, _ = request.user.profile.__class__.objects.get_or_create(user=request.user)
     return render(request, 'accounts/profile.html', {'profile': profile_obj})
+
+
+@login_required
+def update_name(request):
+    """Set the user's first/last name from the profile page."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False}, status=405)
+    first = request.POST.get('first_name', '').strip()[:30]
+    last = request.POST.get('last_name', '').strip()[:30]
+    request.user.first_name = first
+    request.user.last_name = last
+    request.user.save(update_fields=['first_name', 'last_name'])
+    return JsonResponse({'ok': True, 'full_name': request.user.get_full_name()})
 
 
 def _normalize_phone(raw: str) -> str:

@@ -13,7 +13,15 @@
         </tr>
         <tr style="border-bottom:1px solid var(--border)">
           <td style="padding:12px 0;color:var(--muted);font-size:.875rem">Full name</td>
-          <td style="padding:12px 0;font-weight:600;font-size:.875rem;color:var(--text)">{{ user.get_full_name|default:'Not provided' }}</td>
+          <td style="padding:12px 0;font-weight:600;font-size:.875rem;color:var(--text)">
+            <span id="fullname-display">{{ user.get_full_name|default:'Not provided' }}</span>
+            <button type="button" id="edit-name-btn" style="margin-left:.6rem;background:none;border:none;color:var(--primary);font-size:.8rem;font-weight:700;cursor:pointer;text-decoration:underline;">Edit</button>
+            <span id="name-edit-row" style="display:none;align-items:center;gap:.4rem;">
+              <input type="text" id="in-first" placeholder="First" value="{{ user.first_name }}" style="width:90px;padding:.35rem .5rem;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;background:var(--bg,#f8fafc);color:var(--text);">
+              <input type="text" id="in-last" placeholder="Last" value="{{ user.last_name }}" style="width:90px;padding:.35rem .5rem;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;background:var(--bg,#f8fafc);color:var(--text);">
+              <button type="button" id="save-name-btn" style="padding:.35rem .8rem;border:none;border-radius:7px;background:var(--primary);color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;">Save</button>
+            </span>
+          </td>
         </tr>
         <tr style="border-bottom:1px solid var(--border)">
           <td style="padding:12px 0;color:var(--muted);font-size:.875rem">Email</td>
@@ -102,6 +110,32 @@
       body: body
     }).then(function(r){ return r.json(); });
   }
+  // ── Full name inline editor ──
+  var editBtn = document.getElementById('edit-name-btn');
+  var editRow = document.getElementById('name-edit-row');
+  var nameDisp = document.getElementById('fullname-display');
+  if (editBtn) editBtn.addEventListener('click', function(){
+    editRow.style.display = 'inline-flex';
+    editBtn.style.display = 'none';
+    nameDisp.style.display = 'none';
+  });
+  var saveNameBtn = document.getElementById('save-name-btn');
+  if (saveNameBtn) saveNameBtn.addEventListener('click', function(){
+    saveNameBtn.disabled = true;
+    post('{% url "update_name" %}', {
+      first_name: document.getElementById('in-first').value,
+      last_name:  document.getElementById('in-last').value
+    }).then(function(d){
+      saveNameBtn.disabled = false;
+      if (d.ok) {
+        nameDisp.textContent = d.full_name || 'Not provided';
+        editRow.style.display = 'none';
+        nameDisp.style.display = 'inline';
+        editBtn.style.display = 'inline';
+      }
+    });
+  });
+
   function showMsg(text, ok){
     var el = document.getElementById('phone-msg');
     el.textContent = text;

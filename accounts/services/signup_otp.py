@@ -32,9 +32,13 @@ def _can_resend(request) -> bool:
     return (time.time() - request.session.get(f'{_S}_last_sent', 0)) >= RESEND_COOLDOWN
 
 
-def begin(request, *, username: str, email: str, password: str) -> None:
+def begin(request, *, username: str, email: str, password: str,
+          first_name: str = '', last_name: str = '') -> None:
     """Store the pending signup and email a verification code."""
-    request.session[f'{_S}_data'] = {'username': username, 'email': email, 'password': password}
+    request.session[f'{_S}_data'] = {
+        'username': username, 'email': email, 'password': password,
+        'first_name': first_name, 'last_name': last_name,
+    }
     _send_code(request, email, force=True)
 
 
@@ -90,6 +94,7 @@ def complete(request):
         return None
     user = User.objects.create_user(
         username=data['username'], email=data['email'], password=data['password'],
+        first_name=data.get('first_name', ''), last_name=data.get('last_name', ''),
     )
     clear(request)
     return user
