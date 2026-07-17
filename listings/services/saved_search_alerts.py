@@ -72,11 +72,21 @@ def _card_context(lst, search: SavedSearch, site_url: str) -> dict:
     }
 
 
+def _logo_url(site_url: str) -> str:
+    """Absolute URL to the email logo PNG, resolving whitenoise hashed names."""
+    from django.templatetags.static import static
+    path = static('logo-email.png')
+    if path.startswith(('http://', 'https://')):
+        return path
+    return f"{site_url.rstrip('/')}/{path.lstrip('/')}"
+
+
 def _build_html_body(search: SavedSearch, listings: list, site_url: str) -> str:
     """Render the Zumper-style HTML email for a batch of new matches."""
     n = len(listings)
     kind = 'home' if search.search_type == 'buy' else 'rental'
     context = {
+        'logo_url': _logo_url(site_url),
         'subject': f'{n} new {kind}{"s" if n != 1 else ""} matching your search',
         'preheader': f'Fresh {kind} matches for your saved search — explore them on Listojo.',
         'headline': 'More of our favorite listings',
