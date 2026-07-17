@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives, send_mail
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +20,14 @@ def _get_profile(user):
     return profile
 
 
-def notify_user(user, *, subject: str, email_body: str, sms_body: str | None = None) -> dict:
+def notify_user(user, *, subject: str, email_body: str, html_body: str | None = None,
+                sms_body: str | None = None) -> dict:
     """
     Send a notification across the channels the user has opted into.
 
-    - Email when the profile allows it (notify_email + has email).
+    - Email when the profile allows it (notify_email + has email). When
+      `html_body` is given, a multipart email is sent with the plain-text
+      `email_body` as fallback and the HTML as the rich alternative.
     - SMS when the profile allows it (notify_sms + verified phone) and sms_body given.
 
     Returns {'email': bool, 'sms': bool} indicating what was sent.
@@ -36,13 +39,23 @@ def notify_user(user, *, subject: str, email_body: str, sms_body: str | None = N
 
     if profile.can_email:
         try:
-            send_mail(
-                subject=subject,
-                message=email_body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=True,
-            )
+            if html_body:
+                msg = EmailMultiAlternatives(
+                    subject=subject,
+                    body=email_body,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[user.email],
+                )
+                msg.attach_alternative(html_body, 'text/html')
+                msg.send(fail_silently=True)
+            else:
+                send_mail(
+                    subject=subject,
+                    message=email_body,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=True,
+                )
             sent['email'] = True
         except Exception:
             logger.exception('notify_user: email failed for %s', user)

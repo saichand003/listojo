@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title>{{ subject }}</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td, a { font-family: Arial, Helvetica, sans-serif !important; }
+  </style>
+  <![endif]-->
+</head>
+<body style="margin:0; padding:0; width:100%; background-color:#f2f4f7; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;">
+  <!-- Preheader (hidden preview text) -->
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#f2f4f7; opacity:0;">
+    {{ preheader }}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f2f4f7;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px; background-color:#ffffff; border-radius:14px; overflow:hidden; box-shadow:0 1px 4px rgba(16,24,40,0.06);">
+
+          <!-- Header / logo -->
+          <tr>
+            <td align="center" style="padding:28px 24px 8px 24px;">
+              <a href="{{ site_url }}" style="text-decoration:none; font-family:Arial,Helvetica,sans-serif; font-size:26px; font-weight:800; letter-spacing:-0.5px; color:#1A5DD4;">
+                Listo<span style="color:#3DB549;">jo</span>
+              </a>
+            </td>
+          </tr>
+
+          <!-- Headline -->
+          <tr>
+            <td style="padding:16px 32px 0 32px;">
+              <h1 style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:30px; line-height:1.2; font-weight:800; color:#0f2942;">
+                {{ headline }}
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Intro -->
+          <tr>
+            <td style="padding:14px 32px 8px 32px;">
+              <p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:16px; line-height:1.6; color:#475467;">
+                {{ intro_lead }}{% if city %} in <strong style="color:#1A5DD4;">{{ city }}</strong>{% endif %}. {{ intro_tail }}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Listing cards -->
+          {% for item in items %}
+          <tr>
+            <td style="padding:20px 32px 0 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e4e7ec; border-radius:12px; overflow:hidden;">
+                <!-- Photo -->
+                {% if item.image_url %}
+                <tr>
+                  <td style="padding:0; font-size:0; line-height:0;">
+                    <a href="{{ item.url }}" style="text-decoration:none;">
+                      <img src="{{ item.image_url }}" width="536" alt="{{ item.title }}" style="display:block; width:100%; max-width:536px; height:auto; border:0; outline:none; text-decoration:none;">
+                    </a>
+                  </td>
+                </tr>
+                {% endif %}
+                <!-- Details -->
+                <tr>
+                  <td style="padding:20px 22px 22px 22px;">
+                    <div style="font-family:Arial,Helvetica,sans-serif; font-size:24px; font-weight:800; color:#0f2942;">
+                      {{ item.price_display }}
+                    </div>
+                    <div style="font-family:Arial,Helvetica,sans-serif; font-size:15px; color:#667085; padding-top:8px;">
+                      {{ item.specs }}
+                    </div>
+                    <div style="font-family:Arial,Helvetica,sans-serif; font-size:15px; color:#667085; padding-top:6px;">
+                      {{ item.address }}
+                    </div>
+                    <!-- View Listing button -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="padding-top:18px;">
+                      <tr>
+                        <td align="center" bgcolor="#0f2942" style="border-radius:8px;">
+                          <a href="{{ item.url }}" style="display:block; padding:14px 20px; font-family:Arial,Helvetica,sans-serif; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none; border-radius:8px;">
+                            View Listing
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endfor %}
+
+          <!-- "See more" CTA -->
+          <tr>
+            <td style="padding:34px 32px 6px 32px;">
+              <h2 style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:26px; line-height:1.25; font-weight:800; color:#0f2942;">
+                We add new listings{% if city %} in {{ city }}{% endif %} every day
+              </h2>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 32px 6px 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" bgcolor="#1A5DD4" style="border-radius:8px;">
+                    <a href="{{ results_url }}" style="display:inline-block; padding:14px 26px; font-family:Arial,Helvetica,sans-serif; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none; border-radius:8px;">
+                      See more{% if city %} in {{ city }}{% endif %}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px 0 32px;">
+              <p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:15px; line-height:1.6; color:#475467;">
+                Not seeing your ideal place? <a href="{{ prefs_url }}" style="color:#1A5DD4; font-weight:700; text-decoration:underline;">Update your search</a> to improve your recommendations.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:28px 32px 8px 32px;">
+              <div style="height:1px; line-height:1px; font-size:1px; background-color:#e4e7ec;">&nbsp;</div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:8px 32px 32px 32px;">
+              <p style="margin:0 0 6px 0; font-family:Arial,Helvetica,sans-serif; font-size:18px; font-weight:800; color:#0f2942;">
+                Listo<span style="color:#3DB549;">jo</span>
+              </p>
+              <p style="margin:0 0 16px 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:#667085;">
+                Find your fresh start.
+              </p>
+              <p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:1.6; color:#98a2b3;">
+                You're receiving this because you saved a search on Listojo.<br>
+                <a href="{{ prefs_url }}" style="color:#98a2b3; text-decoration:underline;">Manage email preferences</a> &nbsp;·&nbsp;
+                <a href="{{ unsubscribe_url }}" style="color:#98a2b3; text-decoration:underline;">Unsubscribe</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
