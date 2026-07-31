@@ -191,6 +191,11 @@ GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
 # Falls back to the browser key if not separately configured.
 GOOGLE_GEOCODING_API_KEY = os.getenv('GOOGLE_GEOCODING_API_KEY', '') or GOOGLE_MAPS_API_KEY
 
+# ── Walk Score ───────────────────────────────────────────────────────────────
+# Server-side key from walkscore.com/professional/api. Absent key = feature is
+# simply skipped; scores stay null and the UI section hides itself.
+WALKSCORE_API_KEY = os.getenv('WALKSCORE_API_KEY', '')
+
 # ── Site ──────────────────────────────────────────────────────────────────────
 SITE_URL = os.getenv('SITE_URL', 'https://listojo.com')
 

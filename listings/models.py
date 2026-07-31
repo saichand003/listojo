@@ -118,6 +118,19 @@ class Listing(models.Model):
     geocoded_address = models.CharField(max_length=300, blank=True, default='',
                           help_text='The address string last sent to the geocoder — used to detect changes')
 
+    # ── Walk Score (walkability / transit / bike) ─────────────────────────
+    # Populated from lat/lng by listings.services.walkscore. Nullable because a
+    # score is only available once the row is geocoded and the API has data.
+    walk_score             = models.PositiveSmallIntegerField(null=True, blank=True, db_index=True)
+    walk_score_description = models.CharField(max_length=60, blank=True, default='')
+    transit_score          = models.PositiveSmallIntegerField(null=True, blank=True)
+    transit_description    = models.CharField(max_length=60, blank=True, default='')
+    bike_score             = models.PositiveSmallIntegerField(null=True, blank=True)
+    bike_description       = models.CharField(max_length=60, blank=True, default='')
+    walk_score_link        = models.URLField(max_length=500, blank=True, default='',
+                                 help_text="Attribution link back to Walk Score — required by their API terms")
+    walk_score_updated     = models.DateTimeField(null=True, blank=True,
+                                 help_text='When the scores were last fetched — used to detect staleness')
 
     INCOME_QUALIFIER_CATEGORIES = {'rentals', 'roommates'}
 
@@ -126,6 +139,26 @@ class Listing(models.Model):
         """Single-line address used for geocoding."""
         parts = [self.address_line, self.city, self.state, self.zip_code, self.country]
         return ', '.join(p.strip() for p in parts if p and p.strip())
+
+    @property
+    def walk_score_rows(self):
+        """
+        (label, score, description) for each Walk Score metric that has data.
+
+        Transit and bike coverage is patchy outside dense metros, so rows with
+        no score are dropped here rather than guarded for in the template.
+        """
+        rows = [
+            ('Walk Score', self.walk_score, self.walk_score_description),
+            ('Transit Score', self.transit_score, self.transit_description),
+            ('Bike Score', self.bike_score, self.bike_description),
+        ]
+        return [r for r in rows if r[1] is not None]
+
+    @property
+    def has_walk_scores(self):
+        """True when at least one Walk Score metric is available to display."""
+        return bool(self.walk_score_rows)
 
     def get_tags_list(self):
         return [t.strip() for t in self.tags.split(',') if t.strip()]
