@@ -365,8 +365,8 @@
         <a href="{% url 'about' %}">About Listojo</a>
         <a href="#">How it Works</a>
         <a href="#">DFW Coverage</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Privacy Policy</a>
+        <a href="{% url 'terms' %}">Terms of Service</a>
+        <a href="{% url 'privacy' %}">Privacy Policy</a>
         <a href="#">Contact Us</a>
       </div>
 
@@ -375,8 +375,8 @@
     <div class="site-footer-bottom">
       <span class="site-footer-copy">© 2026 Listojo, Inc. Dallas–Fort Worth, TX. All rights reserved.</span>
       <nav style="display:flex;gap:1rem;" aria-label="Footer legal links">
-        <a href="#" style="font-size:.72rem;color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Terms</a>
-        <a href="#" style="font-size:.72rem;color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Privacy</a>
+        <a href="{% url 'terms' %}" style="font-size:.72rem;color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Terms</a>
+        <a href="{% url 'privacy' %}" style="font-size:.72rem;color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Privacy</a>
         <a href="#" style="font-size:.72rem;color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Sitemap</a>
       </nav>
     </div>

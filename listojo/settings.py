@@ -199,6 +199,10 @@ WALKSCORE_API_KEY = os.getenv('WALKSCORE_API_KEY', '')
 # ── Site ──────────────────────────────────────────────────────────────────────
 SITE_URL = os.getenv('SITE_URL', 'https://listojo.com')
 
+# Address published on the Privacy Policy and Terms pages. This must be a mailbox
+# that can RECEIVE mail — privacy requests arrive here. noreply@ is send-only.
+LEGAL_CONTACT_EMAIL = os.getenv('LEGAL_CONTACT_EMAIL', 'support@listojo.com')
+
 # ── Cache (DB-backed — shared across gunicorn workers, no Redis needed) ────────
 CACHES = {
     'default': {

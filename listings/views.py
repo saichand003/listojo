@@ -38,6 +38,28 @@ def about(request):
     return render(request, 'listings/about.html')
 
 
+# Shown on the legal pages. Kept here so the date and contact address are
+# changed in one place rather than hunted for across two templates.
+LEGAL_LAST_UPDATED = 'August 5, 2026'
+
+
+def _legal_context():
+    return {
+        'last_updated': LEGAL_LAST_UPDATED,
+        'contact_email': getattr(settings, 'LEGAL_CONTACT_EMAIL', 'support@listojo.com'),
+    }
+
+
+def privacy(request):
+    """Privacy Policy — static, no DB access."""
+    return render(request, 'listings/privacy.html', _legal_context())
+
+
+def terms(request):
+    """Terms of Service — static, no DB access."""
+    return render(request, 'listings/terms.html', _legal_context())
+
+
 def home(request):
     if not _listings_table_ready():
         return _render_db_setup_page(request)
