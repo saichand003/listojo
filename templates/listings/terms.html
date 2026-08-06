@@ -1,44 +1,61 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div style="max-width:760px;margin:0 auto;padding:0 1rem;">
+<div class="pg-wrap">
 
-  <div style="padding:2.5rem 0 1.5rem;">
-    <p style="font-size:.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.08em;margin:0 0 .5rem;">Legal</p>
-    <h1 style="font-size:2rem;margin:0 0 .5rem;">Terms of Service</h1>
-    <p class="muted" style="font-size:.85rem;margin:0;">Last updated: {{ last_updated }}</p>
-  </div>
-
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);margin:0;">
-      These terms are the agreement between you and Listojo, Inc. for use of
-      listojo.com. By using the site, posting a listing, or contacting a lister,
-      you accept them. If you do not agree, do not use Listojo.
+  <div class="pg-hero">
+    <span class="pg-eyebrow">Legal</span>
+    <h1>Terms of Service</h1>
+    <p class="pg-hero-sub">
+      The agreement between you and Listojo, Inc. for use of listojo.com. By
+      using the site, posting a listing, or contacting a lister, you accept them.
     </p>
+    <p class="pg-hero-meta">Last updated {{ last_updated }}</p>
   </div>
 
-  {# ── 1. What Listojo is ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">1. What Listojo is, and is not</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0 0 .85rem;">
+  {# ── TOC ── #}
+  <nav class="pg-toc" aria-label="Sections">
+    <p class="pg-toc-title">On this page</p>
+    <div class="pg-toc-links">
+      <a href="#t1"><span>01</span> What Listojo is</a>
+      <a href="#t2"><span>02</span> Your account</a>
+      <a href="#t3"><span>03</span> Rules for listings</a>
+      <a href="#t4"><span>04</span> Fair housing</a>
+      <a href="#t5"><span>05</span> Your content</a>
+      <a href="#t6"><span>06</span> Scores and estimates</a>
+      <a href="#t7"><span>07</span> Fees</a>
+      <a href="#t8"><span>08</span> Suspension</a>
+      <a href="#t9"><span>09</span> Disclaimers and limits</a>
+      <a href="#t10"><span>10</span> Dealing with users</a>
+      <a href="#t11"><span>11</span> Governing law</a>
+      <a href="#t12"><span>12</span> Contact</a>
+    </div>
+  </nav>
+
+  {# ── 1 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t1"><span class="pg-num">01</span> What Listojo is, and is not</h2>
+  <div class="pg-panel">
+    <p>
       Listojo is a venue where landlords, property managers, and individuals
       publish rental and property listings, and where renters find and contact
       them. We provide the platform. We are not a party to any rental
       transaction.
     </p>
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
-      <strong>We are not a real estate broker or agent.</strong> We do not
-      represent buyers, sellers, landlords, or tenants. We do not hold deposits
-      or funds, run tenant screening, verify income, draft leases, or provide
-      legal, financial, or real estate advice. Any agreement you reach is
+  </div>
+  <div class="pg-panel accent">
+    <p style="margin:0;">
+      <strong style="color:var(--text);">We are not a real estate broker or agent.</strong>
+      We do not represent buyers, sellers, landlords, or tenants. We do not hold
+      deposits or funds, run tenant screening, verify income, draft leases, or
+      provide legal, financial, or real estate advice. Any agreement you reach is
       directly between you and the other party.
     </p>
   </div>
 
-  {# ── 2. Accounts ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">2. Your account</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <ul style="line-height:1.8;color:var(--text-2);font-size:.9rem;margin:0;padding-left:1.15rem;">
+  {# ── 2 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t2"><span class="pg-num">02</span> Your account</h2>
+  <div class="pg-panel">
+    <ul class="pg-list">
       <li>You must be at least 18 and able to enter a binding contract.</li>
       <li>Give accurate information and keep it current.</li>
       <li>You are responsible for activity under your account and for keeping your password secure.</li>
@@ -47,11 +64,11 @@
     </ul>
   </div>
 
-  {# ── 3. Listing rules ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">3. Rules for listings</h2>
-  <div class="card" style="margin-bottom:.85rem;">
-    <p style="font-weight:700;font-size:.95rem;margin:0 0 .5rem;">You must</p>
-    <ul style="line-height:1.8;color:var(--text-2);font-size:.9rem;margin:0;padding-left:1.15rem;">
+  {# ── 3 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t3"><span class="pg-num">03</span> Rules for listings</h2>
+  <div class="pg-panel">
+    <p class="pg-panel-label">You must</p>
+    <ul class="pg-list check">
       <li>Have the legal right to list the property.</li>
       <li>Describe it accurately, including price, availability, size, and condition.</li>
       <li>Use photos of the actual property that you own or have permission to use.</li>
@@ -59,10 +76,9 @@
       <li>Comply with all applicable landlord-tenant, licensing, and advertising laws.</li>
     </ul>
   </div>
-
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="font-weight:700;font-size:.95rem;margin:0 0 .5rem;">You must not</p>
-    <ul style="line-height:1.8;color:var(--text-2);font-size:.9rem;margin:0;padding-left:1.15rem;">
+  <div class="pg-panel">
+    <p class="pg-panel-label">You must not</p>
+    <ul class="pg-list cross">
       <li>Post a property that does not exist, is not available, or that you have no right to offer.</li>
       <li>Post bait listings, duplicate listings, or listings whose real purpose is to collect leads.</li>
       <li>Publish discriminatory preferences or restrictions. See section 4.</li>
@@ -73,56 +89,56 @@
     </ul>
   </div>
 
-  {# ── 4. Fair housing ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">4. Fair housing</h2>
-  <div class="card" style="margin-bottom:1.25rem;border-left:3px solid var(--primary);">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0 0 .85rem;">
+  {# ── 4 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t4"><span class="pg-num">04</span> Fair housing</h2>
+  <div class="pg-panel accent">
+    <p>
       Listojo supports equal housing opportunity. Federal law prohibits
       statements of preference, limitation, or discrimination in housing
       advertising based on race, color, religion, sex, disability, familial
       status, or national origin. Texas and local law may protect further
       characteristics.
     </p>
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+    <p style="margin-bottom:0;">
       This applies to listing text as much as to formal policy. We remove
       listings that violate it and may suspend the accounts behind them. If you
       believe a listing is discriminatory, report it to us.
     </p>
   </div>
 
-  {# ── 5. Content ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">5. Your content</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0 0 .85rem;">
+  {# ── 5 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t5"><span class="pg-num">05</span> Your content</h2>
+  <div class="pg-panel">
+    <p>
       You keep ownership of everything you post. You grant Listojo a
       non-exclusive, worldwide, royalty-free license to host, store, display,
       resize, and distribute that content for the purpose of operating and
       promoting the service. The license ends when you delete the content,
       except for copies retained in backups for a limited period.
     </p>
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+    <p>
       We may remove or refuse any content at our discretion, particularly where
       it breaks these terms. We are not obligated to monitor content, and we do
       not verify listings before they appear.
     </p>
   </div>
 
-  {# ── 6. Neighborhood data ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">6. Match scores and neighborhood data</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+  {# ── 6 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t6"><span class="pg-num">06</span> Match scores and neighborhood data</h2>
+  <div class="pg-panel">
+    <p style="margin:0;">
       Match scores, price estimates, walkability, transit, and bike scores are
-      informational only. Some come from third parties such as Walk Score and
-      Google, and we do not control or independently verify them. They are
-      estimates, not guarantees, and should not be your only basis for a housing
-      decision. Always visit a property and do your own diligence.
+      informational only. Some come from third parties, and we do not control or
+      independently verify them. They are estimates, not guarantees, and should
+      not be your only basis for a housing decision. Always visit a property and
+      do your own diligence.
     </p>
   </div>
 
-  {# ── 7. Fees ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">7. Fees</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+  {# ── 7 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t7"><span class="pg-num">07</span> Fees</h2>
+  <div class="pg-panel tinted">
+    <p style="margin:0;">
       Listojo is currently free to use, for both listers and renters. If we
       introduce paid features we will publish the terms and pricing before they
       apply, and paid features will be optional additions rather than a charge
@@ -130,10 +146,10 @@
     </p>
   </div>
 
-  {# ── 8. Suspension ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">8. Suspension and termination</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+  {# ── 8 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t8"><span class="pg-num">08</span> Suspension and termination</h2>
+  <div class="pg-panel">
+    <p style="margin:0;">
       You can stop using Listojo at any time and ask us to close your account.
       We may suspend or terminate an account that breaks these terms, is used
       fraudulently, or creates risk for other users. Where practical we will
@@ -141,16 +157,16 @@
     </p>
   </div>
 
-  {# ── 9. Disclaimers ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">9. Disclaimers and limits</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0 0 .85rem;">
+  {# ── 9 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t9"><span class="pg-num">09</span> Disclaimers and limits</h2>
+  <div class="pg-panel">
+    <p>
       Listojo is provided "as is" and "as available", without warranties of any
       kind to the fullest extent the law allows. We do not warrant that listings
       are accurate, that listers are who they claim to be, that the service will
       be uninterrupted, or that any listing will result in a rental.
     </p>
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+    <p>
       To the maximum extent permitted by law, Listojo is not liable for indirect,
       incidental, or consequential damages, or for lost profits or lost
       opportunities, arising from your use of the service or from dealings with
@@ -159,10 +175,10 @@
     </p>
   </div>
 
-  {# ── 10. Safety ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">10. Dealing with other users</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+  {# ── 10 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t10"><span class="pg-num">10</span> Dealing with other users</h2>
+  <div class="pg-panel accent">
+    <p style="margin:0;">
       You are solely responsible for your interactions with other users. Visit
       properties in person, verify ownership before paying anything, and never
       wire money or send a deposit to someone you have not met for a property
@@ -171,29 +187,29 @@
     </p>
   </div>
 
-  {# ── 11. Law ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">11. Governing law and changes</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0 0 .85rem;">
+  {# ── 11 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t11"><span class="pg-num">11</span> Governing law and changes</h2>
+  <div class="pg-panel">
+    <p>
       These terms are governed by the laws of the State of Texas, without regard
       to conflict-of-law rules. Disputes will be brought in the state or federal
       courts located in Dallas County, Texas.
     </p>
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+    <p>
       We may update these terms. Material changes will be reflected in the date
       at the top, and continued use after a change means you accept it. If a
       provision is found unenforceable, the rest stays in effect.
     </p>
   </div>
 
-  {# ── 12. Contact ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">12. Contact</h2>
-  <div class="card" style="margin-bottom:3rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+  {# ── 12 ── #}
+  <h2 class="pg-h2 pg-anchor" id="t12"><span class="pg-num">12</span> Contact</h2>
+  <div class="pg-panel tinted">
+    <p style="margin:0;">
       Questions about these terms, or reporting a listing? Email
-      <a href="mailto:{{ contact_email }}" style="color:var(--primary);">{{ contact_email }}</a>.
-      Listojo, Inc., Dallas–Fort Worth, Texas.
-      See also our <a href="{% url 'privacy' %}" style="color:var(--primary);">Privacy Policy</a>.
+      <a href="mailto:{{ contact_email }}" style="color:var(--primary);font-weight:600;">{{ contact_email }}</a>.
+      Listojo, Inc., Dallas–Fort Worth, Texas. See also our
+      <a href="{% url 'privacy' %}" style="color:var(--primary);font-weight:600;">Privacy Policy</a>.
     </p>
   </div>
 

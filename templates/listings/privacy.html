@@ -1,29 +1,46 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div style="max-width:760px;margin:0 auto;padding:0 1rem;">
+<div class="pg-wrap">
 
-  <div style="padding:2.5rem 0 1.5rem;">
-    <p style="font-size:.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.08em;margin:0 0 .5rem;">Legal</p>
-    <h1 style="font-size:2rem;margin:0 0 .5rem;">Privacy Policy</h1>
-    <p class="muted" style="font-size:.85rem;margin:0;">Last updated: {{ last_updated }}</p>
+  <div class="pg-hero">
+    <span class="pg-eyebrow">Legal</span>
+    <h1>Privacy Policy</h1>
+    <p class="pg-hero-sub">
+      What Listojo collects, why we collect it, who we share it with, and what
+      control you have over it.
+    </p>
+    <p class="pg-hero-meta">Last updated {{ last_updated }}</p>
   </div>
 
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);margin:0;">
-      This policy explains what Listojo collects, why we collect it, who we share
-      it with, and what control you have over it. Listojo, Inc. operates
-      listojo.com from Dallas–Fort Worth, Texas, and is the controller of the
-      data described here.
+  {# ── TOC ── #}
+  <nav class="pg-toc" aria-label="Sections">
+    <p class="pg-toc-title">On this page</p>
+    <div class="pg-toc-links">
+      <a href="#s1"><span>01</span> Information we collect</a>
+      <a href="#s2"><span>02</span> How we use it</a>
+      <a href="#s3"><span>03</span> Who we share with</a>
+      <a href="#s4"><span>04</span> What is public</a>
+      <a href="#s5"><span>05</span> Your choices and rights</a>
+      <a href="#s6"><span>06</span> Retention and security</a>
+      <a href="#s7"><span>07</span> Children</a>
+      <a href="#s8"><span>08</span> Changes and contact</a>
+    </div>
+  </nav>
+
+  <div class="pg-panel accent">
+    <p style="margin:0;">
+      Listojo, Inc. operates listojo.com from Dallas–Fort Worth, Texas, and is
+      the controller of the data described here.
     </p>
   </div>
 
-  {# ── 1. What we collect ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">1. Information we collect</h2>
+  {# ── 1 ── #}
+  <h2 class="pg-h2 pg-anchor" id="s1"><span class="pg-num">01</span> Information we collect</h2>
 
-  <div class="card" style="margin-bottom:.85rem;">
-    <p style="font-weight:700;font-size:.95rem;margin:0 0 .5rem;">Information you give us</p>
-    <ul style="line-height:1.8;color:var(--text-2);font-size:.9rem;margin:0;padding-left:1.15rem;">
+  <div class="pg-panel">
+    <p class="pg-panel-label">Information you give us</p>
+    <ul class="pg-list">
       <li><strong>Account details</strong> — username, email address, first and last name, and a hashed password. We never store your password in readable form.</li>
       <li><strong>Phone number</strong> — if you choose to add one. Used for verification codes and, only if you opt in, SMS notifications.</li>
       <li><strong>Listing content</strong> — property address, price, description, photos, and the contact phone or email you attach to a listing. Listings are public by design.</li>
@@ -33,18 +50,18 @@
     </ul>
   </div>
 
-  <div class="card" style="margin-bottom:.85rem;">
-    <p style="font-weight:700;font-size:.95rem;margin:0 0 .5rem;">Information collected automatically</p>
-    <ul style="line-height:1.8;color:var(--text-2);font-size:.9rem;margin:0;padding-left:1.15rem;">
+  <div class="pg-panel">
+    <p class="pg-panel-label">Information collected automatically</p>
+    <ul class="pg-list">
       <li><strong>Activity on listings</strong> — which listings you view, click, save, reject, or contact. We use this to rank results and improve match quality. It is tied to your account when you are signed in.</li>
       <li><strong>Approximate location</strong> — only if you allow your browser to share it. We convert the coordinates to a city name to show nearby listings, and we do not store the raw coordinates as part of your profile.</li>
       <li><strong>Session and security data</strong> — cookies that keep you signed in, protect forms against cross-site request forgery, and distinguish real visitors from bots.</li>
     </ul>
   </div>
 
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="font-weight:700;font-size:.95rem;margin:0 0 .5rem;">What we do not collect</p>
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+  <div class="pg-panel tinted">
+    <p class="pg-panel-label">What we do not collect</p>
+    <p style="margin:0;">
       We do not collect payment card numbers, Social Security numbers, credit
       reports, or background check data. Listojo is free to use and does not run
       tenant screening. We do not sell personal information, and we do not sell
@@ -52,10 +69,10 @@
     </p>
   </div>
 
-  {# ── 2. Why ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">2. How we use your information</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <ul style="line-height:1.8;color:var(--text-2);font-size:.9rem;margin:0;padding-left:1.15rem;">
+  {# ── 2 ── #}
+  <h2 class="pg-h2 pg-anchor" id="s2"><span class="pg-num">02</span> How we use your information</h2>
+  <div class="pg-panel">
+    <ul class="pg-list check">
       <li>To run your account and keep you signed in.</li>
       <li>To publish the listings you post and deliver inquiries to the right lister.</li>
       <li>To calculate match scores and rank search results against what you told us matters.</li>
@@ -65,48 +82,45 @@
     </ul>
   </div>
 
-  {# ── 3. Third parties ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">3. Services we share data with</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0 0 .85rem;">
+  {# ── 3 ── #}
+  <h2 class="pg-h2 pg-anchor" id="s3"><span class="pg-num">03</span> Services we share data with</h2>
+  <div class="pg-panel">
+    <p style="margin-bottom:1rem;">
       We use service providers to operate Listojo. Each acts on our instructions,
       receives only what it needs for its specific function, and is not permitted
       to use your information for its own purposes. The categories are:
     </p>
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:.85rem;min-width:420px;">
+    <div class="pg-table-wrap">
+      <table class="pg-table">
         <thead>
-          <tr style="text-align:left;border-bottom:1px solid var(--border);">
-            <th style="padding:.5rem .5rem .5rem 0;font-weight:700;">Category of provider</th>
-            <th style="padding:.5rem 0;font-weight:700;">What it receives</th>
-          </tr>
+          <tr><th>Category of provider</th><th>What it receives</th></tr>
         </thead>
-        <tbody style="color:var(--text-2);">
-          <tr style="border-bottom:1px solid var(--border);"><td style="padding:.5rem .5rem .5rem 0;">Hosting and database</td><td style="padding:.5rem 0;">Application data needed to run the service</td></tr>
-          <tr style="border-bottom:1px solid var(--border);"><td style="padding:.5rem .5rem .5rem 0;">Mapping and geocoding</td><td style="padding:.5rem 0;">Listing addresses and coordinates</td></tr>
-          <tr style="border-bottom:1px solid var(--border);"><td style="padding:.5rem .5rem .5rem 0;">Authentication</td><td style="padding:.5rem 0;">Your email and name, if you use a third-party sign-in</td></tr>
-          <tr style="border-bottom:1px solid var(--border);"><td style="padding:.5rem .5rem .5rem 0;">Neighborhood data</td><td style="padding:.5rem 0;">Listing coordinates, to return walkability and transit scores</td></tr>
-          <tr style="border-bottom:1px solid var(--border);"><td style="padding:.5rem .5rem .5rem 0;">Email and SMS delivery</td><td style="padding:.5rem 0;">Your email or phone number and the message content</td></tr>
-          <tr style="border-bottom:1px solid var(--border);"><td style="padding:.5rem .5rem .5rem 0;">Image storage and delivery</td><td style="padding:.5rem 0;">Listing photos you upload</td></tr>
-          <tr><td style="padding:.5rem .5rem .5rem 0;">Security and bot protection</td><td style="padding:.5rem 0;">Signals used to tell real visitors from automated ones</td></tr>
+        <tbody>
+          <tr><td>Hosting and database</td><td>Application data needed to run the service</td></tr>
+          <tr><td>Mapping and geocoding</td><td>Listing addresses and coordinates</td></tr>
+          <tr><td>Authentication</td><td>Your email and name, if you use a third-party sign-in</td></tr>
+          <tr><td>Neighborhood data</td><td>Listing coordinates, to return walkability and transit scores</td></tr>
+          <tr><td>Email and SMS delivery</td><td>Your email or phone number and the message content</td></tr>
+          <tr><td>Image storage and delivery</td><td>Listing photos you upload</td></tr>
+          <tr><td>Security and bot protection</td><td>Signals used to tell real visitors from automated ones</td></tr>
         </tbody>
       </table>
     </div>
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:.85rem 0 0;">
+    <p>
       We will name the specific providers in a category on request — email us at
       the address in section 8.
     </p>
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:.85rem 0 0;">
+    <p>
       We may also disclose information if required by law, or to protect the
       rights and safety of our users. If Listojo is ever acquired, data may
       transfer as part of that transaction, and we will say so before it does.
     </p>
   </div>
 
-  {# ── 4. Public info ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">4. What is public</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+  {# ── 4 ── #}
+  <h2 class="pg-h2 pg-anchor" id="s4"><span class="pg-num">04</span> What is public</h2>
+  <div class="pg-panel accent">
+    <p style="margin:0;">
       Anything you put in a listing is public: the address, photos, description,
       and any contact details you add to it. Your username appears on listings
       you post. Search engines can index public listing pages. Do not put
@@ -115,16 +129,16 @@
     </p>
   </div>
 
-  {# ── 5. Your rights ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">5. Your choices and rights</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <ul style="line-height:1.8;color:var(--text-2);font-size:.9rem;margin:0 0 .85rem;padding-left:1.15rem;">
+  {# ── 5 ── #}
+  <h2 class="pg-h2 pg-anchor" id="s5"><span class="pg-num">05</span> Your choices and rights</h2>
+  <div class="pg-panel">
+    <ul class="pg-list">
       <li><strong>Access and correction</strong> — you can view and edit your profile and listings at any time from your account.</li>
       <li><strong>Deletion</strong> — you can delete individual listings yourself. To delete your account and associated personal data, contact us and we will action it.</li>
       <li><strong>Notification settings</strong> — email and SMS alerts are opt-in and can be turned off in your account. Transactional messages tied to an active inquiry may still be sent.</li>
       <li><strong>Location</strong> — browser location sharing is optional and controlled by your browser permissions.</li>
     </ul>
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+    <p style="margin-top:1rem;">
       Texas residents have rights under the Texas Data Privacy and Security Act,
       including the right to know what we hold, to correct it, to delete it, and
       to appeal a refusal. Residents of other states may have comparable rights.
@@ -132,43 +146,44 @@
     </p>
   </div>
 
-  {# ── 6. Retention & security ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">6. Retention and security</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0 0 .85rem;">
+  {# ── 6 ── #}
+  <h2 class="pg-h2 pg-anchor" id="s6"><span class="pg-num">06</span> Retention and security</h2>
+  <div class="pg-panel">
+    <p>
       We keep account data while your account is open, and listing and inquiry
       records for as long as needed to operate the marketplace and meet legal
       obligations. Deleted listings may persist in backups for a limited period
       before being overwritten.
     </p>
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+    <p>
       Traffic is served over HTTPS, passwords are hashed, session cookies are
       secure and HTTP-only, and the database is managed with encrypted storage.
       No system is perfectly secure, and we cannot guarantee absolute security.
     </p>
   </div>
 
-  {# ── 7. Children ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">7. Children</h2>
-  <div class="card" style="margin-bottom:1.25rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+  {# ── 7 ── #}
+  <h2 class="pg-h2 pg-anchor" id="s7"><span class="pg-num">07</span> Children</h2>
+  <div class="pg-panel">
+    <p style="margin:0;">
       Listojo is not intended for anyone under 18. We do not knowingly collect
       information from children. If you believe a child has given us data,
       contact us and we will delete it.
     </p>
   </div>
 
-  {# ── 8. Contact ── #}
-  <h2 style="font-size:1.2rem;font-weight:700;margin:1.75rem 0 .75rem;">8. Changes and contact</h2>
-  <div class="card" style="margin-bottom:3rem;">
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0 0 .85rem;">
+  {# ── 8 ── #}
+  <h2 class="pg-h2 pg-anchor" id="s8"><span class="pg-num">08</span> Changes and contact</h2>
+  <div class="pg-panel tinted">
+    <p>
       If we make a material change to this policy we will update the date at the
       top and, where appropriate, notify you directly.
     </p>
-    <p style="line-height:1.75;color:var(--text-2);font-size:.9rem;margin:0;">
+    <p style="margin-bottom:0;">
       Questions, or a privacy request? Email
-      <a href="mailto:{{ contact_email }}" style="color:var(--primary);">{{ contact_email }}</a>.
-      Listojo, Inc., Dallas–Fort Worth, Texas.
+      <a href="mailto:{{ contact_email }}" style="color:var(--primary);font-weight:600;">{{ contact_email }}</a>.
+      Listojo, Inc., Dallas–Fort Worth, Texas. See also our
+      <a href="{% url 'terms' %}" style="color:var(--primary);font-weight:600;">Terms of Service</a>.
     </p>
   </div>
 
