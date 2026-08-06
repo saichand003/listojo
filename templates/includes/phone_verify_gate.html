@@ -72,7 +72,7 @@ Reusable phone-verification gate. Call window.ljRequirePhoneVerified(onSuccess, 
 
   window.ljRequirePhoneVerified = function(onSuccess, reason){
     // Fail open: pass through for guests, already-verified users, or when
-    // phone verification isn't configured yet (no Twilio creds) — never block.
+    // phone verification isn't configured yet (no SMS credentials) — never block.
     if (!window.LJ_AUTHED || window.LJ_PHONE_VERIFIED || !window.LJ_VERIFY_ENABLED) { onSuccess(); return; }
     pending = onSuccess;
     reset();
