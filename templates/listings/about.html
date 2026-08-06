@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div style="max-width:820px;margin:0 auto;padding:0 1rem;">
+
+  {# ── Hero ── #}
+  <div style="text-align:center;padding:2.5rem 0 2rem;">
+    <p style="font-size:.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.08em;margin:0 0 .6rem;">About Listojo</p>
+    <h1 style="font-size:2.1rem;line-height:1.2;margin:0 0 .85rem;">Renting in DFW shouldn't cost a broker's fee</h1>
+    <p style="font-size:1.05rem;line-height:1.65;color:var(--text-2);max-width:600px;margin:0 auto;">
+      Listojo is a Dallas–Fort Worth rental marketplace built for the people
+      the big portals leave out — independent landlords with a handful of units,
+      and renters who are tired of paying to be matched with a home.
+    </p>
+  </div>
+
+  {# ── Why we exist ── #}
+  <div class="card" style="margin-bottom:1.25rem;">
+    <h2 style="font-size:1.15rem;font-weight:700;margin:0 0 .75rem;">Why we built this</h2>
+    <p style="line-height:1.75;color:var(--text-2);margin:0 0 .85rem;">
+      If you own one or two rental units in DFW, your options are bad. The major
+      listing portals are priced for property management companies, not for
+      someone renting out a single townhouse in Irving. So most small landlords
+      end up on Craigslist or a Facebook group — free, but no verification, no
+      structure, and an inbox full of spam.
+    </p>
+    <p style="line-height:1.75;color:var(--text-2);margin:0;">
+      Renters get the mirror image of that problem: listings scattered across a
+      dozen places, half of them stale, most of them impossible to compare on
+      the things that actually matter once you live there.
+    </p>
+  </div>
+
+  {# ── What's different ── #}
+  <h2 style="font-size:1.15rem;font-weight:700;margin:1.75rem 0 .85rem;">What makes Listojo different</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:.85rem;margin-bottom:1.25rem;">
+
+    <div class="card">
+      <div style="font-size:1.5rem;margin-bottom:.5rem;">🏷️</div>
+      <p style="font-weight:700;font-size:.95rem;margin:0 0 .35rem;">Free to list</p>
+      <p style="font-size:.86rem;line-height:1.6;color:var(--text-2);margin:0;">
+        No listing fees, no agency commission, no paywall between you and an
+        interested renter. Post a unit in a few minutes.
+      </p>
+    </div>
+
+    <div class="card">
+      <div style="font-size:1.5rem;margin-bottom:.5rem;">⭐</div>
+      <p style="font-weight:700;font-size:.95rem;margin:0 0 .35rem;">Match scores, not just filters</p>
+      <p style="font-size:.86rem;line-height:1.6;color:var(--text-2);margin:0;">
+        Tell us what matters — budget, bedrooms, commute, pets, parking — and
+        every listing gets scored against it, with the reasons shown.
+      </p>
+    </div>
+
+    <div class="card">
+      <div style="font-size:1.5rem;margin-bottom:.5rem;">🚶</div>
+      <p style="font-weight:700;font-size:.95rem;margin:0 0 .35rem;">Neighborhood data built in</p>
+      <p style="font-size:.86rem;line-height:1.6;color:var(--text-2);margin:0;">
+        Walk, transit and bike scores on listings, so you know what life around
+        the address is actually like before you tour it.
+      </p>
+    </div>
+
+    <div class="card">
+      <div style="font-size:1.5rem;margin-bottom:.5rem;">💬</div>
+      <p style="font-weight:700;font-size:.95rem;margin:0 0 .35rem;">Talk to the owner directly</p>
+      <p style="font-size:.86rem;line-height:1.6;color:var(--text-2);margin:0;">
+        Message the person who owns the unit. No lead resale, no call center,
+        no middleman marking up the conversation.
+      </p>
+    </div>
+
+  </div>
+
+  {# ── Who it's for ── #}
+  <div class="card" style="margin-bottom:1.25rem;">
+    <h2 style="font-size:1.15rem;font-weight:700;margin:0 0 .85rem;">Who Listojo is for</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;">
+      <div>
+        <p style="font-weight:700;font-size:.92rem;margin:0 0 .35rem;">🔑 Independent landlords</p>
+        <p style="font-size:.86rem;line-height:1.65;color:var(--text-2);margin:0;">
+          You manage between one and five units yourself. You want them filled
+          by a good tenant without paying a percentage of the rent to do it.
+        </p>
+      </div>
+      <div>
+        <p style="font-weight:700;font-size:.92rem;margin:0 0 .35rem;">🏠 Renters and roommates</p>
+        <p style="font-size:.86rem;line-height:1.65;color:var(--text-2);margin:0;">
+          You are moving somewhere in the Metroplex and want to compare real
+          places on real criteria, then talk to whoever holds the keys.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {# ── Coverage ── #}
+  <div class="card" style="margin-bottom:1.25rem;">
+    <h2 style="font-size:1.15rem;font-weight:700;margin:0 0 .6rem;">Where we operate</h2>
+    <p style="font-size:.9rem;line-height:1.7;color:var(--text-2);margin:0 0 .85rem;">
+      Listojo is Dallas–Fort Worth first. We would rather be genuinely useful in
+      one metro than thin across fifty, so the Metroplex is where we are putting
+      everything until it works properly here.
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:.45rem;">
+      <a href="{% url 'listing_list' %}?city=Irving" style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;text-decoration:none;color:var(--text-2);">Irving</a>
+      <a href="{% url 'listing_list' %}?city=Dallas" style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;text-decoration:none;color:var(--text-2);">Dallas</a>
+      <a href="{% url 'listing_list' %}?city=Plano" style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;text-decoration:none;color:var(--text-2);">Plano</a>
+      <a href="{% url 'listing_list' %}?city=Frisco" style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;text-decoration:none;color:var(--text-2);">Frisco</a>
+      <a href="{% url 'listing_list' %}?city=Fort Worth" style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;text-decoration:none;color:var(--text-2);">Fort Worth</a>
+      <a href="{% url 'listing_list' %}?city=Richardson" style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;text-decoration:none;color:var(--text-2);">Richardson</a>
+      <a href="{% url 'listing_list' %}?city=Carrollton" style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;text-decoration:none;color:var(--text-2);">Carrollton</a>
+      <a href="{% url 'listing_list' %}?city=Coppell" style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;text-decoration:none;color:var(--text-2);">Coppell</a>
+    </div>
+  </div>
+
+  {# ── How it works ── #}
+  <h2 style="font-size:1.15rem;font-weight:700;margin:1.75rem 0 .85rem;">How it works</h2>
+  <div class="card" style="margin-bottom:1.75rem;">
+    <div style="display:flex;flex-direction:column;gap:1.1rem;">
+      <div style="display:flex;gap:.9rem;align-items:flex-start;">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
+        <div>
+          <p style="font-weight:700;font-size:.92rem;margin:0 0 .2rem;">Tell us what you need</p>
+          <p style="font-size:.86rem;line-height:1.6;color:var(--text-2);margin:0;">Budget, bedrooms, neighborhood, must-haves. Guided Search walks you through it.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:.9rem;align-items:flex-start;">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+        <div>
+          <p style="font-weight:700;font-size:.92rem;margin:0 0 .2rem;">See what fits, and why</p>
+          <p style="font-size:.86rem;line-height:1.6;color:var(--text-2);margin:0;">Every listing shows a match score with the reasons behind it, plus neighborhood scores for the address.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:.9rem;align-items:flex-start;">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+        <div>
+          <p style="font-weight:700;font-size:.92rem;margin:0 0 .2rem;">Message the owner</p>
+          <p style="font-size:.86rem;line-height:1.6;color:var(--text-2);margin:0;">Send an inquiry or open a chat. You are talking to the person who owns the unit, not a lead broker.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── CTA ── #}
+  <div class="card" style="text-align:center;padding:2rem 1.5rem;margin-bottom:3rem;background:linear-gradient(135deg,rgba(42,126,242,.06),rgba(98,194,255,.05));border:1px solid rgba(42,126,242,.18);">
+    <h2 style="font-size:1.2rem;font-weight:700;margin:0 0 .5rem;">We are early, and that is the point</h2>
+    <p style="font-size:.9rem;line-height:1.7;color:var(--text-2);max-width:520px;margin:0 auto 1.25rem;">
+      Listojo is a young platform in a single metro. If you are a DFW landlord
+      or you are hunting for a place right now, the product will get better
+      faster because you used it and told us what broke.
+    </p>
+    <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;">
+      <a href="{% url 'create_listing' %}" class="button">Post a listing</a>
+      <a href="{% url 'listing_list' %}?category=rentals" class="button secondary">Browse rentals</a>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

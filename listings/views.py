@@ -33,6 +33,11 @@ def _listings_table_ready():
         return False
 
 
+def about(request):
+    """Static About Listojo page — no DB access, safe before migrations run."""
+    return render(request, 'listings/about.html')
+
+
 def home(request):
     if not _listings_table_ready():
         return _render_db_setup_page(request)

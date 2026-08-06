@@ -18,6 +18,7 @@ urlpatterns = [
     path('listing/<int:pk>/inquiries/', views.listing_inquiries, name='listing_inquiries'),
     path('inquiries/<int:inquiry_id>/', views.inquiry_detail, name='inquiry_detail'),
     path('search/guided/', views.guided_search, name='guided_search'),
+    path('about/', views.about, name='about'),
     path('listing/<int:pk>/estimate/', views.listing_estimate, name='listing_estimate'),
     path('listing/impressions/', views.log_impressions, name='log_impressions'),
     path('listing/estimate-range/', views.listing_estimate_range, name='listing_estimate_range'),
