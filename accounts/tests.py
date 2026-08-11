@@ -1,6 +1,9 @@
+import re
 from decimal import Decimal
+from unittest import mock
 
 from django.contrib.auth.models import User
+from django.core import mail
 from django.test import TestCase
 
 from listings.models import Community, Listing, ListingInquiry
@@ -110,3 +113,45 @@ class AccountDashboardTests(TestCase):
         self.assertContains(response, inquiry.name)
         self.assertContains(response, inquiry.message)
         self.assertContains(response, 'Back to All Inquiries')
+
+
+class SignupIntentTests(TestCase):
+    """The Get Started page routes three audiences, and records which one."""
+
+    def test_signup_page_offers_both_self_serve_roles_and_the_partner_path(self):
+        response = self.client.get('/accounts/register/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "I'm looking for a place")
+        self.assertContains(response, 'I have a place to list')
+        self.assertContains(response, '/partners/apply/')
+
+    def test_landlord_intent_is_preselected_from_the_query_string(self):
+        response = self.client.get('/accounts/register/?intent=landlord')
+        self.assertEqual(response.context['intent'], 'landlord')
+
+    def test_unknown_intent_falls_back_to_renter(self):
+        response = self.client.get('/accounts/register/?intent=hacker')
+        self.assertEqual(response.context['intent'], 'renter')
+
+    def test_intent_is_stored_on_the_profile_after_verification(self):
+        # The real sender dispatches on a background thread, so capture the body
+        # synchronously instead of racing it.
+        sent = []
+        with mock.patch('accounts.services.signup_otp._send_email_async',
+                        side_effect=lambda subject, body, to: sent.append(body)):
+            response = self._register_landlord()
+
+        code = re.search(r'\b(\d{6})\b', sent[0]).group(1)
+        self.client.post('/accounts/register/confirm/', {'code': code})
+
+        user = User.objects.get(username='samr')
+        self.assertEqual(user.profile.signup_intent, 'landlord')
+
+    def _register_landlord(self):
+        return self.client.post('/accounts/register/', {
+            'intent': 'landlord',
+            'first_name': 'Sam', 'last_name': 'Rivera',
+            'username': 'samr', 'email': 'sam@example.com',
+            'password1': 'sup3r-secret-pw', 'password2': 'sup3r-secret-pw',
+        })

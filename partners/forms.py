@@ -1,6 +1,6 @@
 from django import forms
 
-from partners.models import AssistedOnboardingRequest
+from partners.models import AssistedOnboardingRequest, PartnerApplication
 
 _MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
@@ -56,3 +56,48 @@ class AssistedOnboardingForm(forms.ModelForm):
             'syndication_vendor': forms.TextInput(attrs={'placeholder': 'If you know it'}),
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
+
+
+class PartnerApplicationForm(forms.ModelForm):
+    """
+    Public "list with Listojo" application. Asks business questions only —
+    no feed URLs, no formats. See PartnerApplication for why this is not signup.
+    """
+
+    PMS_CHOICES = [
+        ('', 'Select…'),
+        ('RealPage', 'RealPage'),
+        ('Yardi', 'Yardi'),
+        ('Entrata', 'Entrata'),
+        ('AppFolio', 'AppFolio'),
+        ('Other', 'Other'),
+        ('Unknown', "I'm not sure"),
+    ]
+
+    pms_name = forms.ChoiceField(choices=PMS_CHOICES, required=False,
+                                 label='Property-management software')
+
+    class Meta:
+        model = PartnerApplication
+        fields = ['company_name', 'contact_name', 'contact_email', 'contact_phone',
+                  'website', 'portfolio_size', 'markets', 'pms_name', 'notes']
+        labels = {
+            'company_name': 'Company',
+            'contact_name': 'Your name',
+            'contact_email': 'Work email',
+            'contact_phone': 'Phone',
+            'portfolio_size': 'Portfolio size',
+            'markets': 'Which markets?',
+            'notes': 'Anything else?',
+        }
+        widgets = {
+            'markets': forms.TextInput(attrs={'placeholder': 'Dallas, Plano, Frisco…'}),
+            'website': forms.TextInput(attrs={'placeholder': 'https://'}),
+            'notes': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['portfolio_size'].required = False
+        self.fields['portfolio_size'].choices = (
+            [('', 'Select…')] + list(PartnerApplication.PORTFOLIO_CHOICES))

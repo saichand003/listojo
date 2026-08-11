@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block body_class %}auth-fullscreen{% endblock %}
+{% block content %}
+<style>
+  .pa-wrap{
+    min-height:calc(100vh - 74px);
+    display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);
+    font-family:'Sora',-apple-system,BlinkMacSystemFont,sans-serif;
+  }
+  .pa-brand{
+    position:relative; overflow:hidden; background:#0B1526; color:#e2e8f0;
+    padding:3.5rem 3.25rem; display:flex; flex-direction:column; justify-content:center;
+  }
+  .pa-brand::before{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(46% 44% at 14% 10%, rgba(42,126,242,.30), transparent 64%),
+      radial-gradient(40% 40% at 86% 90%, rgba(30,138,92,.22), transparent 64%);
+  }
+  .pa-brand > *{ position:relative; z-index:1; }
+  .pa-eyebrow{
+    font-size:.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:#7dd3fc; margin-bottom:1.1rem;
+  }
+  .pa-brand h2{
+    font-family:'Montserrat',sans-serif; font-size:2.3rem; font-weight:800;
+    line-height:1.1; letter-spacing:-.03em; color:#fff; margin:0 0 1rem; max-width:15ch;
+  }
+  .pa-brand p{ font-size:1rem; line-height:1.65; color:#94a3b8; max-width:46ch; margin:0 0 2.25rem; }
+
+  .pa-steps{ list-style:none; padding:0; margin:0 0 2.25rem; display:grid; gap:1.15rem; counter-reset:s; }
+  .pa-steps li{ display:flex; gap:.9rem; align-items:flex-start; counter-increment:s; }
+  .pa-steps li::before{
+    content:counter(s); flex:none; width:24px; height:24px; border-radius:8px;
+    background:rgba(42,126,242,.18); border:1px solid rgba(125,211,252,.35);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.74rem; font-weight:800; color:#7dd3fc; margin-top:.1rem;
+  }
+  .pa-steps strong{ display:block; color:#f1f5f9; font-size:.94rem; font-weight:650; }
+  .pa-steps span{ font-size:.85rem; color:#8296b0; line-height:1.5; }
+
+  .pa-note{
+    padding-top:1.6rem; border-top:1px solid rgba(255,255,255,.09);
+    font-size:.83rem; color:#64748b; line-height:1.6; max-width:46ch;
+  }
+
+  .pa-form-col{
+    display:flex; align-items:center; justify-content:center;
+    padding:3rem 2.25rem; background:var(--bg,#F4F7FC);
+  }
+  .pa-card{ width:100%; max-width:520px; }
+  .pa-card h1{
+    font-family:'Montserrat',sans-serif; font-size:1.7rem; font-weight:800;
+    letter-spacing:-.025em; margin:0 0 .35rem; color:var(--text,#0F1C35);
+  }
+  .pa-sub{ font-size:.92rem; color:var(--muted,#64748B); margin:0 0 1.5rem; }
+
+  .pa-panel{
+    background:var(--surface,#fff); border:1px solid var(--border,#E2E8F0);
+    border-radius:16px; padding:1.6rem; box-shadow:0 1px 3px rgba(15,28,53,.06);
+  }
+  .pa-grid{ display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
+  .pa-grid .full{ grid-column:1 / -1; }
+  .pa-field label{
+    display:block; font-size:.78rem; font-weight:650; color:var(--text-2,#3D5280); margin-bottom:.35rem;
+  }
+  .pa-field input, .pa-field select, .pa-field textarea{
+    width:100%; box-sizing:border-box; padding:.68rem .85rem;
+    border:1.5px solid var(--border,#E2E8F0); border-radius:10px;
+    font-size:.93rem; font-family:inherit; background:var(--bg,#F8FAFC); color:var(--text,#0F1C35);
+    transition:border-color .15s, box-shadow .15s, background .15s;
+  }
+  .pa-field input:focus, .pa-field select:focus, .pa-field textarea:focus{
+    outline:none; border-color:#2A7EF2; background:#fff; box-shadow:0 0 0 4px rgba(42,126,242,.12);
+  }
+  .pa-field .errorlist{ list-style:none; margin:.35rem 0 0; padding:0; color:#dc2626; font-size:.76rem; font-weight:600; }
+  .pa-field .help{ font-size:.75rem; color:var(--muted,#64748B); margin-top:.25rem; }
+
+  .pa-submit{
+    margin-top:1.1rem; width:100%; padding:.8rem; cursor:pointer;
+    font-size:.95rem; font-weight:700; font-family:inherit; color:#fff;
+    background:#2A7EF2; border:none; border-radius:11px; transition:background .15s, transform .12s;
+  }
+  .pa-submit:hover{ background:#1A5DD4; transform:translateY(-1px); }
+
+  .pa-done{
+    background:#dcfce7; border:1px solid #86efac; color:#15803d;
+    border-radius:12px; padding:1.1rem 1.25rem; margin-bottom:1.25rem;
+  }
+  .pa-done b{ display:block; font-size:.95rem; margin-bottom:.2rem; }
+  .pa-done span{ font-size:.86rem; }
+  .pa-alt{ text-align:center; font-size:.87rem; color:var(--muted,#64748B); margin-top:1.15rem; }
+  .pa-alt a{ color:#2A7EF2; font-weight:650; text-decoration:none; }
+
+  @media (max-width:960px){
+    .pa-wrap{ grid-template-columns:1fr; }
+    .pa-brand{ padding:2.5rem 1.5rem; }
+    .pa-brand h2{ font-size:1.85rem; }
+    .pa-form-col{ padding:2rem 1.25rem; }
+  }
+  @media (max-width:520px){ .pa-grid{ grid-template-columns:1fr; } }
+</style>
+
+<div class="pa-wrap">
+  <section class="pa-brand">
+    <div class="pa-eyebrow">Listojo Partners</div>
+    <h2>Put your portfolio in front of the right renters.</h2>
+    <p>
+      Listojo matches renters on budget, commute and lifestyle — so the leads you
+      get have already seen why your community fits.
+    </p>
+
+    <ul class="pa-steps">
+      <li><div><strong>Tell us about your portfolio</strong>
+        <span>Two minutes. No technical questions.</span></div></li>
+      <li><div><strong>We set up your account</strong>
+        <span>We confirm the properties you manage and invite your team.</span></div></li>
+      <li><div><strong>Send inventory your way</strong>
+        <span>Upload a CSV, or tell us your software and we will connect it for you.</span></div></li>
+    </ul>
+
+    <p class="pa-note">
+      Partner accounts are set up by our team rather than self-serve, because
+      publishing a property's listings and photos requires confirming you are
+      authorized to do it.
+    </p>
+  </section>
+
+  <section class="pa-form-col">
+    <div class="pa-card">
+      {% if submitted %}
+        <div class="pa-done">
+          <b>Application received</b>
+          <span>We will email you within two business days to get your account set up.</span>
+        </div>
+      {% endif %}
+
+      <h1>Apply to list with Listojo</h1>
+      <p class="pa-sub">For property managers and apartment operators in Dallas–Fort Worth.</p>
+
+      <form method="post" class="pa-panel" novalidate>
+        {% csrf_token %}
+        <div class="pa-grid">
+          <div class="pa-field full">
+            <label for="{{ form.company_name.id_for_label }}">{{ form.company_name.label }}</label>
+            {{ form.company_name }}{{ form.company_name.errors }}
+          </div>
+          <div class="pa-field">
+            <label for="{{ form.contact_name.id_for_label }}">{{ form.contact_name.label }}</label>
+            {{ form.contact_name }}{{ form.contact_name.errors }}
+          </div>
+          <div class="pa-field">
+            <label for="{{ form.contact_email.id_for_label }}">{{ form.contact_email.label }}</label>
+            {{ form.contact_email }}{{ form.contact_email.errors }}
+          </div>
+          <div class="pa-field">
+            <label for="{{ form.contact_phone.id_for_label }}">{{ form.contact_phone.label }}</label>
+            {{ form.contact_phone }}{{ form.contact_phone.errors }}
+          </div>
+          <div class="pa-field">
+            <label for="{{ form.website.id_for_label }}">Website</label>
+            {{ form.website }}{{ form.website.errors }}
+          </div>
+          <div class="pa-field">
+            <label for="{{ form.portfolio_size.id_for_label }}">{{ form.portfolio_size.label }}</label>
+            {{ form.portfolio_size }}{{ form.portfolio_size.errors }}
+          </div>
+          <div class="pa-field">
+            <label for="{{ form.pms_name.id_for_label }}">{{ form.pms_name.label }}</label>
+            {{ form.pms_name }}{{ form.pms_name.errors }}
+            <div class="help">Not sure? Pick "I'm not sure" — we will work it out.</div>
+          </div>
+          <div class="pa-field full">
+            <label for="{{ form.markets.id_for_label }}">{{ form.markets.label }}</label>
+            {{ form.markets }}{{ form.markets.errors }}
+          </div>
+          <div class="pa-field full">
+            <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+            {{ form.notes }}{{ form.notes.errors }}
+          </div>
+        </div>
+        <button type="submit" class="pa-submit">Send application</button>
+      </form>
+
+      <p class="pa-alt">
+        Already a partner? <a href="{% url 'partner_dashboard' %}">Sign in to Listojo Partners</a>
+      </p>
+    </div>
+  </section>
+</div>
+{% endblock %}

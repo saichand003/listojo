@@ -285,3 +285,44 @@ class PartnerPortalViewTests(TestCase):
 
         self.assertContains(response, 'acme run')
         self.assertNotContains(response, 'globex run')
+
+
+class PartnerApplicationTests(TestCase):
+    """Partner access is applied for, not signed up for."""
+
+    def test_apply_page_is_public(self):
+        response = self.client.get('/partners/apply/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Apply to list with Listojo')
+
+    def test_application_creates_a_case_without_an_account(self):
+        from partners.models import PartnerApplication
+
+        response = self.client.post('/partners/apply/', {
+            'company_name': 'Acme Residential',
+            'contact_name': 'Alice Nguyen',
+            'contact_email': 'alice@acme.com',
+            'portfolio_size': '101-500',
+            'markets': 'Dallas, Plano',
+            'pms_name': 'RealPage',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Application received')
+
+        application = PartnerApplication.objects.get()
+        self.assertEqual(application.company_name, 'Acme Residential')
+        self.assertEqual(application.status, 'new')
+        self.assertIsNone(application.organization)
+        # No account, no org — staff create those after review.
+        self.assertEqual(User.objects.count(), 0)
+        self.assertEqual(Organization.objects.count(), 0)
+
+    def test_application_requires_company_and_contact(self):
+        from partners.models import PartnerApplication
+
+        response = self.client.post('/partners/apply/', {'company_name': 'Acme'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Application received')
+        self.assertEqual(PartnerApplication.objects.count(), 0)

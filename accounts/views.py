@@ -164,11 +164,19 @@ def register(request):
                 password=form.cleaned_data['password1'],
                 first_name=form.cleaned_data.get('first_name', ''),
                 last_name=form.cleaned_data.get('last_name', ''),
+                intent=_signup_intent(request),
             )
             return redirect('register_confirm')
     else:
         form = RegistrationForm()
-    return render(request, 'accounts/register.html', {'form': form, 'error': error})
+    return render(request, 'accounts/register.html',
+                  {'form': form, 'error': error, 'intent': _signup_intent(request)})
+
+
+def _signup_intent(request) -> str:
+    """Which audience the visitor picked. Renter is the default path."""
+    value = request.POST.get('intent') or request.GET.get('intent') or 'renter'
+    return value if value in ('renter', 'landlord') else 'renter'
 
 
 def register_confirm(request):

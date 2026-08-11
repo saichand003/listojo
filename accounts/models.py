@@ -7,10 +7,20 @@ class UserProfile(models.Model):
     Extends the built-in User with a phone number, verification state, and
     notification preferences. Auto-created via signal when a User is created.
     """
+    SIGNUP_INTENT_CHOICES = [
+        ('renter',   'Looking for a place'),
+        ('landlord', 'Listing a place'),
+    ]
+
     user           = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     phone          = models.CharField(max_length=20, blank=True, default='',
                                       help_text='E.164 format, e.g. +14695551234')
     phone_verified = models.BooleanField(default=False)
+
+    # What the user came here to do. Drives onboarding copy and lifecycle email;
+    # it is not a permission — a renter can list later without a new account.
+    signup_intent  = models.CharField(max_length=20, choices=SIGNUP_INTENT_CHOICES,
+                                      blank=True, default='')
 
     # Notification channel preferences
     notify_email   = models.BooleanField(default=True)

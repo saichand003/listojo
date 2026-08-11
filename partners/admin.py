@@ -5,6 +5,7 @@ from partners.models import (
     ImportRun,
     ManagementAssignment,
     Membership,
+    PartnerApplication,
     Organization,
     SourceRecordMap,
 )
@@ -51,3 +52,13 @@ class AssistedOnboardingRequestAdmin(admin.ModelAdmin):
     list_filter = ('status', 'pms_name')
     list_editable = ('status',)
     search_fields = ('organization__name', 'technical_contact_email')
+
+
+@admin.register(PartnerApplication)
+class PartnerApplicationAdmin(admin.ModelAdmin):
+    """Inbound partner interest. Approve here, then create the Organization."""
+    list_display = ('company_name', 'contact_name', 'portfolio_size', 'pms_name',
+                    'status', 'created_at')
+    list_filter = ('status', 'portfolio_size', 'pms_name')
+    list_editable = ('status',)
+    search_fields = ('company_name', 'contact_email', 'markets')

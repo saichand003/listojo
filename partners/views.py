@@ -16,7 +16,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from listings.models import Community, Listing
 from listings.services.partner_import import CsvAdapter, import_partner_inventory
-from partners.forms import AssistedOnboardingForm, InventoryUploadForm
+from partners.forms import (
+    AssistedOnboardingForm,
+    InventoryUploadForm,
+    PartnerApplicationForm,
+)
 from partners.models import ImportRun, Membership, Organization
 
 
@@ -157,3 +161,21 @@ def import_history(request):
         'organizations': request.partner_orgs,
         'runs': request.organization.import_runs.all()[:50],
     })
+
+
+def apply_to_partner(request):
+    """
+    Public application — no login, no account created.
+
+    Staff review it, create the Organization, and invite the contact. See
+    PartnerApplication for why this is not self-serve signup.
+    """
+    form = PartnerApplicationForm(request.POST or None)
+    submitted = False
+
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        submitted = True
+        form = PartnerApplicationForm()
+
+    return render(request, 'partners/apply.html', {'form': form, 'submitted': submitted})

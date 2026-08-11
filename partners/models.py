@@ -141,6 +141,56 @@ class SourceRecordMap(models.Model):
         return f'{self.organization}:{self.source_id} → {self.community}'
 
 
+class PartnerApplication(models.Model):
+    """
+    A property manager asking to join Listojo, before any account exists.
+
+    Deliberately not self-serve signup. A partner account can publish inventory
+    and media, and blueprint §14 requires establishing that they are authorized
+    to do so for those properties — which a signup form cannot verify. Staff
+    review, create the Organization, and invite the contact.
+    """
+
+    STATUS_CHOICES = [
+        ('new',       'New'),
+        ('contacted', 'Contacted'),
+        ('approved',  'Approved'),
+        ('declined',  'Declined'),
+    ]
+
+    PORTFOLIO_CHOICES = [
+        ('1-25',    '1–25 units'),
+        ('26-100',  '26–100 units'),
+        ('101-500', '101–500 units'),
+        ('500+',    '500+ units'),
+    ]
+
+    company_name  = models.CharField(max_length=160)
+    contact_name  = models.CharField(max_length=120)
+    contact_email = models.EmailField()
+    contact_phone = models.CharField(max_length=30, blank=True, default='')
+    website       = models.URLField(blank=True, default='')
+
+    portfolio_size = models.CharField(max_length=20, choices=PORTFOLIO_CHOICES, blank=True, default='')
+    markets        = models.CharField(max_length=200, blank=True, default='',
+                         help_text='Cities or submarkets, e.g. Dallas, Plano, Frisco')
+    pms_name       = models.CharField(max_length=80, blank=True, default='',
+                         help_text='RealPage, Yardi, Entrata, AppFolio, other, or unknown')
+    notes          = models.TextField(blank=True, default='')
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    #: Set once staff turn this application into a real partner.
+    organization = models.ForeignKey(Organization, null=True, blank=True,
+                                     on_delete=models.SET_NULL, related_name='applications')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.company_name} ({self.status})'
+
+
 class ImportRun(models.Model):
     """
     One inventory upload. Blueprint §16's FEED_RUNS, in its simplest form.

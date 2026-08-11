@@ -33,11 +33,11 @@ def _can_resend(request) -> bool:
 
 
 def begin(request, *, username: str, email: str, password: str,
-          first_name: str = '', last_name: str = '') -> None:
+          first_name: str = '', last_name: str = '', intent: str = '') -> None:
     """Store the pending signup and email a verification code."""
     request.session[f'{_S}_data'] = {
         'username': username, 'email': email, 'password': password,
-        'first_name': first_name, 'last_name': last_name,
+        'first_name': first_name, 'last_name': last_name, 'intent': intent,
     }
     _send_code(request, email, force=True)
 
@@ -86,6 +86,8 @@ def check(request, code: str) -> bool:
 def complete(request):
     """Create the verified user from the pending signup. Returns the User or None."""
     from django.contrib.auth.models import User
+
+    from accounts.models import UserProfile
     data = pending(request)
     if not data:
         return None
@@ -96,5 +98,9 @@ def complete(request):
         username=data['username'], email=data['email'], password=data['password'],
         first_name=data.get('first_name', ''), last_name=data.get('last_name', ''),
     )
+    intent = data.get('intent', '')
+    if intent:
+        # The profile is created by a post_save signal, so it exists by now.
+        UserProfile.objects.filter(user=user).update(signup_intent=intent)
     clear(request)
     return user

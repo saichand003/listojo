@@ -2,151 +2,275 @@
 {% block body_class %}auth-fullscreen{% endblock %}
 {% block content %}
 <style>
-  /* ── Enterprise-grade signup with a subtle graffiti accent ───── */
-  .gr-page{
+  /* ── Get started: split brand panel + role-aware form ──────────────── */
+  .su-wrap{
     min-height:calc(100vh - 74px);
-    display:flex; align-items:center; justify-content:center;
-    padding:2.75rem 1.25rem; position:relative; overflow:hidden;
+    display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
     font-family:'Sora',-apple-system,BlinkMacSystemFont,sans-serif;
   }
-  /* soft, refined gradient wash (the graffiti accent, dialed back) */
-  .gr-page::before{
-    content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+
+  /* Left: the case for signing up. Deep navy, matches the portal sidebar. */
+  .su-brand{
+    position:relative; overflow:hidden;
+    background:#0B1526; color:#e2e8f0;
+    padding:3.5rem 3.25rem; display:flex; flex-direction:column; justify-content:center;
+  }
+  .su-brand::before{
+    content:''; position:absolute; inset:0; pointer-events:none;
     background:
-      radial-gradient(36% 40% at 16% 14%, rgba(42,126,242,.16), transparent 62%),
-      radial-gradient(34% 38% at 86% 16%, rgba(168,85,247,.13), transparent 62%),
-      radial-gradient(40% 42% at 82% 88%, rgba(30,138,92,.15), transparent 62%),
-      radial-gradient(30% 32% at 12% 90%, rgba(255,77,141,.10), transparent 62%);
+      radial-gradient(46% 44% at 12% 8%, rgba(42,126,242,.30), transparent 64%),
+      radial-gradient(40% 40% at 88% 92%, rgba(30,138,92,.24), transparent 64%);
   }
-
-  .gr-card{
-    position:relative; z-index:1;
-    width:100%; max-width:430px;
-    background:var(--surface,#fff);
-    border:1px solid var(--border,#e6e9ef);
-    border-radius:18px;
-    padding:2.5rem 2.2rem;
-    box-shadow:0 20px 50px rgba(15,23,42,.10), 0 2px 6px rgba(15,23,42,.05);
+  .su-brand > *{ position:relative; z-index:1; }
+  .su-eyebrow{
+    font-size:.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:#7dd3fc; margin-bottom:1.1rem;
   }
+  .su-brand h2{
+    font-family:'Montserrat',sans-serif; font-size:2.35rem; font-weight:800;
+    line-height:1.1; letter-spacing:-.03em; color:#fff; margin:0 0 1rem; max-width:14ch;
+  }
+  .su-brand p{ font-size:1rem; line-height:1.65; color:#94a3b8; max-width:46ch; margin:0 0 2.25rem; }
 
-  .gr-chip{
-    width:44px; height:44px; border-radius:13px;
-    background:linear-gradient(135deg,#2A7EF2,#1e8a5c);
+  .su-points{ list-style:none; padding:0; margin:0 0 2.5rem; display:grid; gap:1.05rem; }
+  .su-points li{ display:flex; gap:.85rem; align-items:flex-start; }
+  .su-tick{
+    flex:none; width:22px; height:22px; border-radius:7px; margin-top:.1rem;
+    background:rgba(42,126,242,.18); border:1px solid rgba(125,211,252,.35);
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 8px 20px rgba(42,126,242,.35);
-    font-size:1.3rem; margin-bottom:1.15rem;
+    font-size:.7rem; color:#7dd3fc; font-weight:800;
+  }
+  .su-points strong{ display:block; color:#f1f5f9; font-size:.94rem; font-weight:650; }
+  .su-points span{ font-size:.85rem; color:#8296b0; line-height:1.5; }
+
+  .su-proof{
+    display:flex; gap:2.25rem; padding-top:1.75rem;
+    border-top:1px solid rgba(255,255,255,.09);
+  }
+  .su-proof div span{
+    display:block; font-family:'Montserrat',sans-serif; font-size:1.35rem;
+    font-weight:700; color:#fff; letter-spacing:-.02em;
+  }
+  .su-proof div small{
+    font-size:.7rem; text-transform:uppercase; letter-spacing:.09em; color:#64748b;
   }
 
-  .gr-card h1{
-    font-size:1.7rem; font-weight:800; letter-spacing:-.02em; line-height:1.08;
-    margin:0 0 .4rem; color:var(--text,#0f172a);
+  /* Right: the form. */
+  .su-form-col{
+    display:flex; align-items:center; justify-content:center;
+    padding:3rem 2.25rem; background:var(--bg,#F4F7FC);
   }
-  /* subtle marker accent — thin, refined */
-  .gr-mark{ position:relative; display:inline-block; white-space:nowrap; }
-  .gr-mark::before{
-    content:''; position:absolute; left:-2%; right:-2%; bottom:.08em; height:.34em; z-index:-1;
-    background:linear-gradient(90deg,rgba(255,212,59,.85),rgba(255,77,141,.7));
-    transform:skew(-8deg); border-radius:2px;
+  .su-card{ width:100%; max-width:452px; }
+  .su-card h1{
+    font-family:'Montserrat',sans-serif; font-size:1.72rem; font-weight:800;
+    letter-spacing:-.025em; margin:0 0 .35rem; color:var(--text,#0F1C35);
   }
-  .gr-lead{ font-size:.92rem; color:var(--muted,#64748b); margin:0 0 1.25rem; }
+  .su-sub{ font-size:.92rem; color:var(--muted,#64748B); margin:0 0 1.5rem; }
 
-  /* refined feature pills (no rotation, no hard shadow) */
-  .gr-stickers{ display:flex; flex-wrap:wrap; gap:.45rem; margin-bottom:1.5rem; }
-  .gr-sticker{
-    font-size:.74rem; font-weight:600; color:var(--text-2,#475569);
-    padding:.32rem .65rem; border-radius:999px;
-    background:var(--bg,#f1f5f9); border:1px solid var(--border,#e6e9ef);
-    display:inline-flex; align-items:center; gap:.3rem;
-  }
-
-  .gr-form{ display:flex; flex-direction:column; gap:.95rem; }
-  .gr-field label{ display:block; font-size:.8rem; font-weight:700; color:var(--text,#0f172a); margin-bottom:.38rem; }
-  .gr-form input{
-    width:100%; box-sizing:border-box; padding:.7rem .9rem;
-    border:1.5px solid var(--border,#e2e8f0); border-radius:10px;
-    font-size:.95rem; font-family:inherit; background:var(--bg,#f8fafc); color:var(--text,#0f172a);
+  /* Role selector — the thing the old page was missing entirely. */
+  .su-roles{ display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin-bottom:1.5rem; }
+  .su-role{ position:relative; }
+  .su-role input{ position:absolute; opacity:0; pointer-events:none; }
+  .su-role label{
+    display:block; cursor:pointer; padding:.85rem .95rem; border-radius:12px;
+    border:1.5px solid var(--border,#E2E8F0); background:var(--surface,#fff);
     transition:border-color .15s, box-shadow .15s, background .15s;
   }
-  .gr-form input:focus{ outline:none; border-color:#2A7EF2; background:var(--surface,#fff); box-shadow:0 0 0 4px rgba(42,126,242,.12); }
-  .gr-form .errorlist{ list-style:none; margin:.4rem 0 0; padding:0; color:#dc2626; font-size:.78rem; font-weight:600; }
-  .gr-form .helptext{ display:none; }
-
-  .gr-submit{
-    margin-top:.45rem; width:100%; padding:.78rem; cursor:pointer;
-    font-size:.98rem; font-weight:700; font-family:inherit; color:#fff;
-    background:linear-gradient(135deg,#2A7EF2,#1e6fe0); border:none; border-radius:11px;
-    box-shadow:0 8px 22px rgba(42,126,242,.32); transition:transform .12s, box-shadow .15s;
+  .su-role label b{
+    display:block; font-size:.9rem; font-weight:650; color:var(--text,#0F1C35); margin-bottom:.1rem;
   }
-  .gr-submit:hover{ transform:translateY(-1px); box-shadow:0 12px 28px rgba(42,126,242,.42); }
+  .su-role label em{ font-style:normal; font-size:.76rem; color:var(--muted,#64748B); line-height:1.4; }
+  .su-role label:hover{ border-color:#93c5fd; }
+  .su-role input:checked + label{
+    border-color:#2A7EF2; background:rgba(42,126,242,.05);
+    box-shadow:0 0 0 3px rgba(42,126,242,.12);
+  }
+  .su-role input:focus-visible + label{ outline:2px solid #2A7EF2; outline-offset:2px; }
 
-  .gr-nonfield{ background:#fef2f2; border:1.5px solid #fca5a5; color:#b91c1c; border-radius:10px; padding:.7rem .9rem; font-size:.85rem; font-weight:600; margin-bottom:1rem; }
-  .gr-signin{ text-align:center; font-size:.88rem; color:var(--muted,#64748b); margin-top:1.35rem; }
-  .gr-signin a{ color:#2A7EF2; font-weight:700; text-decoration:none; }
+  .su-panel{
+    background:var(--surface,#fff); border:1px solid var(--border,#E2E8F0);
+    border-radius:16px; padding:1.6rem; box-shadow:0 1px 3px rgba(15,28,53,.06);
+  }
+
+  .su-form{ display:flex; flex-direction:column; gap:.9rem; }
+  .su-row{ display:flex; gap:.6rem; }
+  .su-row > div{ flex:1; min-width:0; }
+  .su-field label{
+    display:block; font-size:.78rem; font-weight:650; color:var(--text-2,#3D5280); margin-bottom:.35rem;
+  }
+  .su-form input{
+    width:100%; box-sizing:border-box; padding:.68rem .85rem;
+    border:1.5px solid var(--border,#E2E8F0); border-radius:10px;
+    font-size:.93rem; font-family:inherit; background:var(--bg,#F8FAFC); color:var(--text,#0F1C35);
+    transition:border-color .15s, box-shadow .15s, background .15s;
+  }
+  .su-form input:focus{
+    outline:none; border-color:#2A7EF2; background:#fff; box-shadow:0 0 0 4px rgba(42,126,242,.12);
+  }
+  .su-form .errorlist{ list-style:none; margin:.35rem 0 0; padding:0; color:#dc2626; font-size:.76rem; font-weight:600; }
+  .su-form .helptext{ display:none; }
+
+  .su-submit{
+    margin-top:.4rem; width:100%; padding:.8rem; cursor:pointer;
+    font-size:.95rem; font-weight:700; font-family:inherit; color:#fff;
+    background:#2A7EF2; border:none; border-radius:11px;
+    transition:background .15s, transform .12s;
+  }
+  .su-submit:hover{ background:#1A5DD4; transform:translateY(-1px); }
+
+  .su-error{
+    background:#fef2f2; border:1.5px solid #fca5a5; color:#b91c1c; border-radius:10px;
+    padding:.7rem .9rem; font-size:.85rem; font-weight:600; margin-bottom:1rem;
+  }
+  .su-alt{ text-align:center; font-size:.87rem; color:var(--muted,#64748B); margin-top:1.15rem; }
+  .su-alt a{ color:#2A7EF2; font-weight:650; text-decoration:none; }
+
+  /* Third audience: property managers do not self-serve. */
+  .su-partner{
+    margin-top:1rem; padding:1rem 1.15rem; border-radius:12px;
+    background:var(--surface,#fff); border:1px dashed var(--border-2,#CBD5E1);
+    display:flex; gap:.9rem; align-items:center; justify-content:space-between; flex-wrap:wrap;
+  }
+  .su-partner b{ display:block; font-size:.88rem; color:var(--text,#0F1C35); font-weight:650; }
+  .su-partner span{ font-size:.79rem; color:var(--muted,#64748B); }
+  .su-partner a{
+    flex:none; font-size:.82rem; font-weight:650; color:#2A7EF2; text-decoration:none;
+    padding:.5rem .9rem; border:1px solid var(--border,#E2E8F0); border-radius:9px; background:var(--bg,#F8FAFC);
+  }
+  .su-partner a:hover{ border-color:#93c5fd; }
+
+  @media (max-width:960px){
+    .su-wrap{ grid-template-columns:1fr; }
+    .su-brand{ padding:2.5rem 1.5rem; }
+    .su-brand h2{ font-size:1.85rem; }
+    .su-points{ margin-bottom:1.5rem; }
+    .su-form-col{ padding:2rem 1.25rem; }
+  }
+  @media (max-width:520px){
+    .su-roles{ grid-template-columns:1fr; }
+    .su-row{ flex-direction:column; gap:.9rem; }
+  }
 </style>
 
-<div class="gr-page">
-  <div class="gr-card">
-    <div class="gr-chip">🏠</div>
-    <h1>Find your <span class="gr-mark">next spot.</span></h1>
-    <p class="gr-lead">Join free — guided search, real listings, instant match alerts.</p>
+<div class="su-wrap">
+  <section class="su-brand">
+    <div class="su-eyebrow">Dallas–Fort Worth</div>
+    <h2>Find the right home, not just a listing.</h2>
+    <p>
+      Listojo learns what actually matters to you — budget, commute, neighborhood,
+      lifestyle — and shows you why each result fits.
+    </p>
 
-    <div class="gr-stickers">
-      <span class="gr-sticker">⚡ 60-second search</span>
-      <span class="gr-sticker">🔔 Match alerts</span>
-      <span class="gr-sticker">✓ Verified listers</span>
+    <ul class="su-points">
+      <li>
+        <span class="su-tick">✓</span>
+        <div><strong>Guided search</strong>
+        <span>Answer a few questions, get a ranked shortlist instead of 400 tabs.</span></div>
+      </li>
+      <li>
+        <span class="su-tick">✓</span>
+        <div><strong>Walk, transit and commute scores</strong>
+        <span>See how connected a place really is before you tour it.</span></div>
+      </li>
+      <li>
+        <span class="su-tick">✓</span>
+        <div><strong>Match alerts</strong>
+        <span>We watch the market and email you when something fits.</span></div>
+      </li>
+      <li>
+        <span class="su-tick">✓</span>
+        <div><strong>Verified listers</strong>
+        <span>Phone-verified owners and authorized property managers.</span></div>
+      </li>
+    </ul>
+
+    <div class="su-proof">
+      <div><span>DFW</span><small>Launch market</small></div>
+      <div><span>Free</span><small>For renters</small></div>
+      <div><span>60s</span><small>To your shortlist</small></div>
     </div>
+  </section>
 
-    {% if error %}
-    <div class="gr-nonfield">{{ error }}</div>
-    {% endif %}
-    {% if form.non_field_errors %}
-    <div class="gr-nonfield">{{ form.non_field_errors }}</div>
-    {% endif %}
+  <section class="su-form-col">
+    <div class="su-card">
+      <h1>Get started</h1>
+      <p class="su-sub">Create a free account. It takes about a minute.</p>
 
-    <form method="post" class="gr-form" novalidate>
-      {% csrf_token %}
-      <div style="display:flex;gap:.6rem;">
-        <div class="gr-field" style="flex:1;">
-          <label for="{{ form.first_name.id_for_label }}">First name</label>
-          {{ form.first_name }}
-          {{ form.first_name.errors }}
+      {% if error %}<div class="su-error">{{ error }}</div>{% endif %}
+      {% if form.non_field_errors %}<div class="su-error">{{ form.non_field_errors }}</div>{% endif %}
+
+      <form method="post" class="su-form" novalidate>
+        {% csrf_token %}
+
+        <div class="su-roles">
+          <div class="su-role">
+            <input type="radio" name="intent" value="renter" id="intent-renter"
+                   {% if intent != 'landlord' %}checked{% endif %}>
+            <label for="intent-renter">
+              <b>I'm looking for a place</b>
+              <em>Search, save and get matched</em>
+            </label>
+          </div>
+          <div class="su-role">
+            <input type="radio" name="intent" value="landlord" id="intent-landlord"
+                   {% if intent == 'landlord' %}checked{% endif %}>
+            <label for="intent-landlord">
+              <b>I have a place to list</b>
+              <em>Post a rental you own</em>
+            </label>
+          </div>
         </div>
-        <div class="gr-field" style="flex:1;">
-          <label for="{{ form.last_name.id_for_label }}">Last name</label>
-          {{ form.last_name }}
-          {{ form.last_name.errors }}
+
+        <div class="su-panel">
+          <div class="su-row">
+            <div class="su-field">
+              <label for="{{ form.first_name.id_for_label }}">First name</label>
+              {{ form.first_name }}{{ form.first_name.errors }}
+            </div>
+            <div class="su-field">
+              <label for="{{ form.last_name.id_for_label }}">Last name</label>
+              {{ form.last_name }}{{ form.last_name.errors }}
+            </div>
+          </div>
+          <div class="su-field" style="margin-top:.9rem;">
+            <label for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}{{ form.username.errors }}
+          </div>
+          <div class="su-field" style="margin-top:.9rem;">
+            <label for="{{ form.email.id_for_label }}">Email</label>
+            {{ form.email }}{{ form.email.errors }}
+          </div>
+          <div class="su-row" style="margin-top:.9rem;">
+            <div class="su-field">
+              <label for="{{ form.password1.id_for_label }}">Password</label>
+              {{ form.password1 }}{{ form.password1.errors }}
+            </div>
+            <div class="su-field">
+              <label for="{{ form.password2.id_for_label }}">Confirm</label>
+              {{ form.password2 }}{{ form.password2.errors }}
+            </div>
+          </div>
+
+          {% if TURNSTILE_ENABLED %}
+          <div class="cf-turnstile" data-sitekey="{{ TURNSTILE_SITE_KEY }}" style="margin:.9rem 0 0;"></div>
+          {% endif %}
+
+          <button type="submit" class="su-submit">Create account</button>
+          {% include 'includes/google_login_button.html' %}
         </div>
-      </div>
-      <div class="gr-field">
-        <label for="{{ form.username.id_for_label }}">Username</label>
-        {{ form.username }}
-        {{ form.username.errors }}
-      </div>
-      <div class="gr-field">
-        <label for="{{ form.email.id_for_label }}">Email</label>
-        {{ form.email }}
-        {{ form.email.errors }}
-      </div>
-      <div class="gr-field">
-        <label for="{{ form.password1.id_for_label }}">Password</label>
-        {{ form.password1 }}
-        {{ form.password1.errors }}
-      </div>
-      <div class="gr-field">
-        <label for="{{ form.password2.id_for_label }}">Confirm password</label>
-        {{ form.password2 }}
-        {{ form.password2.errors }}
-      </div>
-      {% if TURNSTILE_ENABLED %}
-      <div class="cf-turnstile" data-sitekey="{{ TURNSTILE_SITE_KEY }}" style="margin:.2rem 0;"></div>
-      {% endif %}
-      <button type="submit" class="gr-submit">Create account →</button>
-    </form>
-    {% if TURNSTILE_ENABLED %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}
+      </form>
+      {% if TURNSTILE_ENABLED %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}
 
-    {% include 'includes/google_login_button.html' %}
+      <div class="su-partner">
+        <div>
+          <b>Manage properties for a living?</b>
+          <span>Listojo Partners is for property managers and apartment operators.</span>
+        </div>
+        <a href="{% url 'partner_apply' %}">Apply →</a>
+      </div>
 
-    <p class="gr-signin">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
-  </div>
+      <p class="su-alt">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+    </div>
+  </section>
 </div>
 {% endblock %}
