@@ -1,0 +1,34 @@
+{% extends 'partners/base.html' %}
+{% block title %} — Upload history{% endblock %}
+{% block nav_history %}active{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Upload history</h1>
+  <p class="sub">Every inventory refresh we have received from you.</p>
+</div>
+
+<div class="card">
+  {% if runs %}
+    <table>
+      <thead><tr><th>When</th><th>File</th><th>Result</th><th>Rejected</th></tr></thead>
+      <tbody>
+        {% for run in runs %}
+          <tr>
+            <td>{{ run.created_at|date:"M j, Y H:i" }}</td>
+            <td>{{ run.filename|default:"—" }}</td>
+            <td>
+              {% if run.succeeded %}<span class="pill pill-ok">Applied</span>
+              {% else %}<span class="pill pill-warn">Rejected</span>{% endif %}
+              <div class="sub">{{ run.summary }}</div>
+            </td>
+            <td>{{ run.rejected_count }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No uploads yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'listings',
     'chatapp',
     'portal',
+    'partners',
     'django.contrib.humanize',
     # Social login (Google) via django-allauth
     'django.contrib.sites',
@@ -221,9 +222,6 @@ TWILIO_ACCOUNT_SID        = os.getenv('TWILIO_ACCOUNT_SID', '')
 TWILIO_AUTH_TOKEN         = os.getenv('TWILIO_AUTH_TOKEN', '')
 TWILIO_VERIFY_SERVICE_SID = os.getenv('TWILIO_VERIFY_SERVICE_SID', '')   # for OTP (Verify)
 TWILIO_SMS_FROM           = os.getenv('TWILIO_SMS_FROM', '')             # sender number for SMS
-
-# ── Realty Mole (RapidAPI) ────────────────────────────────────────────────────
-REALTY_MOLE_API_KEY = os.getenv('REALTY_MOLE_API_KEY', '')
 
 # ── City rollout ─────────────────────────────────────────────────────────────
 # Set LAUNCH_ACTIVE = False to open the platform to all cities.

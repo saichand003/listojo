@@ -57,7 +57,6 @@ Cloudflare R2 (media) · LightGBM (price valuation).
                            │  • Cloudflare    — Turnstile CAPTCHA          │
                            │    Turnstile                                  │
                            │  • Twilio        — phone OTP + SMS (optional) │
-                           │  • RealtyMole    — listing feed import (opt)  │
                            └──────────────────────────────────────────────┘
 
   Source control + CI:  GitHub (branch: dangerously-allow-revamp) ──▶ Railway auto-deploy
@@ -78,6 +77,7 @@ Cloudflare R2 (media) · LightGBM (price valuation).
 | `listings` | Listings, communities/floor-plans/units, search, ML valuation, geocoding, saved-search alerts |
 | `accounts` | Auth, signup + email verification, login OTP, device trust, profile, Twilio, security (rate-limit/CAPTCHA) |
 | `portal` | Concierge/admin CRM — Lead → Shortlist → Agent routing (superuser/agent only) |
+| `partners` | Partner organizations, memberships, management assignments, feed provenance, and the Listojo Partners portal |
 | `chatapp` | In-app + guest messaging |
 | `listojo` | Project config: `settings.py`, `context_processors.py`, `email_backends.py`, middleware |
 
@@ -153,12 +153,7 @@ One Cloud project holds three products. **APIs & Services → Credentials.**
   (`VA...`) for OTP; buy a phone number for `TWILIO_SMS_FROM` (SMS alerts only —
   Verify OTP doesn't need a number). Set `TWILIO_*` vars.
 
-### 4.8 RealtyMole / RapidAPI — listing feed (optional)
-- **What:** `sync_realty_mole` management command imports external listings.
-- **Configure:** `REALTY_MOLE_API_KEY` (RapidAPI key). Note: RealtyMole is
-  deprecated → migrate to RentCast when revisiting inventory.
-
-### 4.9 GitHub — source & CI
+### 4.8 GitHub — source & CI
 - Repo hosts the code; Railway watches the `dangerously-allow-revamp` branch and
   auto-deploys on push. Keep secrets out of commits.
 
@@ -213,7 +208,6 @@ Set on **Railway → `listojo` service → Variables** (and locally in `.env`).
 ### Other
 | Var | Notes |
 |-----|-------|
-| `REALTY_MOLE_API_KEY` | Listing feed import (optional). |
 | `LAUNCH_ACTIVE` | Launch/waitlist gating flag. |
 
 **Feature toggles are automatic:** each integration checks whether its keys are
@@ -250,7 +244,8 @@ Email prints to the console locally (console backend) unless SMTP/Resend vars ar
 | **Test email delivery** | `python manage.py send_test_email you@x.com` (Railway Console). |
 | **Backfill geocoding** | `python manage.py geocode_listings` |
 | **Send alerts manually** | `python manage.py send_saved_search_alerts` |
-| **Import feed** | `python manage.py sync_realty_mole` |
+| **Import partner CSV** | `python manage.py import_partner_csv <org-slug> file.csv` (add `--dry-run` first) |
+| **Hand a property to a new PM** | `partners.models.transfer_management(community, to_organization=org)` |
 | **Check prod security** | `python manage.py check --deploy` |
 | **DB shell** | Railway → Postgres → Connect. |
 

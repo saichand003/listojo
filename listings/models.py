@@ -57,10 +57,14 @@ class Listing(models.Model):
     SOURCE_CHOICES = [
         ('native',      'Native'),
         ('mls_ntreis',  'NTREIS MLS'),
-        ('realty_mole', 'Realty Mole'),
+        ('partner_csv', 'Partner CSV'),
     ]
 
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listings')
+    # SET_NULL, not CASCADE: inventory outlives the account that entered it.
+    # For partner rows the company holds it via `organization`; for a native
+    # listing this leaves an unclaimed row rather than silently destroying it.
+    owner = models.ForeignKey(User, null=True, blank=True,
+                              on_delete=models.SET_NULL, related_name='listings')
     title = models.CharField(max_length=120)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
@@ -102,6 +106,20 @@ class Listing(models.Model):
 
     # ── Data source ───────────────────────────────────────────────────────
     source_type = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='native')
+    # Partner-supplied rows carry the partner's own identifier so re-imports
+    # update the same row. Matching on address is unreliable — one formatting
+    # change from the partner and the same unit imports twice.
+    source_listing_id = models.CharField(max_length=120, blank=True, default='', db_index=True,
+                            help_text="The partner's own ID for this unit. Blank for native listings.")
+    # Partner-supplied rows belong to a company, not a person. Null for native
+    # listings, which an individual landlord genuinely does own via `owner`.
+    organization = models.ForeignKey('partners.Organization', null=True, blank=True,
+                                     on_delete=models.SET_NULL, related_name='listings')
+    # Blueprint §13: a listing absent from one feed run is only *pending*
+    # deactivation. A second run that also omits it closes it. This is what
+    # stops a truncated upload from wiping a partner's inventory.
+    deactivation_pending_since = models.DateTimeField(null=True, blank=True,
+                                     help_text='Set when a partner feed first omitted this row.')
 
     # ── Community unit link ───────────────────────────────────────────────
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='units')
@@ -355,7 +373,10 @@ class Community(models.Model):
         ('other',             'Other'),
     ]
 
-    owner          = models.ForeignKey(User, on_delete=models.CASCADE, related_name='communities')
+    # SET_NULL for the same reason as Listing.owner — a building must survive
+    # the departure of whoever keyed it in. Management lives in `managed_by`.
+    owner          = models.ForeignKey(User, null=True, blank=True,
+                                       on_delete=models.SET_NULL, related_name='communities')
     name           = models.CharField(max_length=120)
     description    = models.TextField()
     address_line   = models.CharField(max_length=200, blank=True)
@@ -382,6 +403,17 @@ class Community(models.Model):
         max_length=30, choices=COMMUNITY_TYPE_CHOICES,
         blank=True, default='',
     )
+    # ── Management ────────────────────────────────────────────────────────
+    # The company that currently manages this property. SET_NULL, never CASCADE:
+    # a building outlives the company managing it. History lives in
+    # partners.ManagementAssignment; the partner's own ID for this property
+    # lives in partners.SourceRecordMap.
+    managed_by = models.ForeignKey('partners.Organization', null=True, blank=True,
+                                   on_delete=models.SET_NULL, related_name='communities')
+    # Display rights come from the managing partner's agreement (blueprint §14),
+    # so they do not survive a change of manager.
+    media_rights_confirmed = models.BooleanField(default=False,
+                                 help_text='Partner has authorized Listojo to display this media.')
     status   = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -551,6 +583,9 @@ class Unit(models.Model):
         ('available',   'Available'),
         ('occupied',    'Occupied'),
         ('coming_soon', 'Coming Soon'),
+        # A unit the partner stopped sending. Distinct from 'occupied' on
+        # purpose — we know they withdrew it, not that someone moved in.
+        ('withdrawn',   'Withdrawn'),
     ]
 
     floor_plan   = models.ForeignKey(FloorPlan, on_delete=models.CASCADE, related_name='units')
@@ -560,6 +595,12 @@ class Unit(models.Model):
     available_from = models.DateField(null=True, blank=True)
     status       = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
     notes        = models.CharField(max_length=500, blank=True)
+
+    # ── Partner feed provenance ───────────────────────────────────────────
+    source_unit_id = models.CharField(max_length=120, blank=True, default='', db_index=True,
+                         help_text="The partner's own ID for this unit. Defaults to unit_number.")
+    deactivation_pending_since = models.DateTimeField(null=True, blank=True,
+                                     help_text='Set when a partner feed first omitted this unit.')
 
     class Meta:
         ordering = ['unit_number']

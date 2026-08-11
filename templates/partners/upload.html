@@ -1,0 +1,55 @@
+{% extends 'partners/base.html' %}
+{% block title %} — Upload inventory{% endblock %}
+{% block nav_upload %}active{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Upload inventory</h1>
+  <p class="sub">Send a CSV export of your current availability. Re-uploading replaces what we hold.</p>
+</div>
+
+<div class="card">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="field">
+      <label for="id_csv_file">Inventory CSV</label>
+      {{ form.csv_file }}
+      {{ form.csv_file.errors }}
+      <div class="help">
+        Use the <a href="/static/partner-csv-template.csv" download>Listojo template</a>.
+        One row per unit. Not sure how to export it?
+        <a href="{% url 'partner_onboarding' %}">Let us connect it for you</a>.
+      </div>
+    </div>
+    <button class="btn btn-ghost" type="submit" name="preview" value="1">Preview changes</button>
+    <button class="btn btn-primary" type="submit" name="apply" value="1">Publish inventory</button>
+  </form>
+</div>
+
+{% if result %}
+  <div class="card">
+    <h2>{% if was_preview %}Preview{% else %}Result{% endif %}</h2>
+    {% if result.ok %}
+      <p style="margin-bottom:.75rem;">{{ result.summary }}</p>
+      {% if was_preview %}
+        <p class="sub">Nothing has been published yet. Press <strong>Publish inventory</strong> to apply.</p>
+      {% endif %}
+    {% else %}
+      <div class="msg msg-error">{{ result.aborted_reason }}</div>
+    {% endif %}
+
+    {% if result.rejections %}
+      <h2 style="margin-top:1rem;">Rows we could not read ({{ result.rejections|length }})</h2>
+      <table>
+        <thead><tr><th style="width:80px;">Row</th><th>Why</th></tr></thead>
+        <tbody>
+          {% for r in result.rejections|slice:":25" %}
+            <tr><td>{% if r.row_number %}{{ r.row_number }}{% else %}File{% endif %}</td><td>{{ r.reason }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="sub" style="margin-top:.6rem;">Everything else imported. Fix these rows and upload again.</p>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

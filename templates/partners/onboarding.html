@@ -1,0 +1,40 @@
+{% extends 'partners/base.html' %}
+{% block title %} — Help me connect{% endblock %}
+{% block nav_connect %}active{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Help me connect</h1>
+  <p class="sub">
+    You do not need to know your feed URL, or what XML and JSON are. Tell us what
+    software you use and we will work out the rest with your provider.
+  </p>
+</div>
+
+{% if open_cases %}
+  <div class="card">
+    <h2>In progress</h2>
+    {% for case in open_cases %}
+      <p class="sub">
+        Submitted {{ case.created_at|date:"M j, Y" }} —
+        <span class="pill pill-muted">{{ case.get_status_display }}</span>
+      </p>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="card">
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">Send to Listojo</button>
+  </form>
+</div>
+{% endblock %}

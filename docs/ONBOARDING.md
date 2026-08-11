@@ -81,7 +81,7 @@ accounts/           auth, signup+verification, OTP, profile, twilio, security
   services/         login_otp, signup_otp, twilio_service, security
 listings/           listings, communities, search, valuation, geocoding, alerts
   services/         search, matching, valuation, geocoding, saved_search_alerts, visibility
-  management/commands/   geocode_listings, send_saved_search_alerts, sync_realty_mole, ...
+  management/commands/   geocode_listings, send_saved_search_alerts, fetch_walk_scores, ...
 portal/             concierge/admin CRM (Lead→Shortlist→Agent)
 chatapp/            in-app + guest messaging
 templates/          all HTML

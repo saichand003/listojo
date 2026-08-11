@@ -116,9 +116,40 @@ New listings matching a saved search are emailed (+ SMS) on a schedule.
   `listings/ml/valuation_model.pkl`).
 - Returns `None` gracefully if the model isn't trained.
 
-## 14. Listing feed import (optional)
-- `sync_realty_mole` imports external listings (photos included) via RapidAPI.
-- **Config:** `REALTY_MOLE_API_KEY`. RealtyMole is deprecated → migrate to RentCast.
+## 14. Partner inventory import (CSV)
+- Property managers supply inventory as a CSV; every supply format normalizes
+  into a canonical record before anything touches the database.
+- **Files:** `listings/services/partner_import.py` (adapter interface +
+  `CsvAdapter` + upsert), `listings/services/media.py` (photo fetch),
+  `listings/management/commands/import_partner_csv.py`.
+- **Template:** `docs/partner-csv-template.csv`.
+
+**Two row shapes, selected per row by the `community_ref` column:**
+
+| `community_ref` | Builds | Renders as |
+|---|---|---|
+| set | `Community` → `FloorPlan` → `Unit` | Community chip → floor plans → unit tables |
+| empty | `Listing` | Standard listing card |
+
+Community and floor-plan columns repeat on every unit row of the same property;
+the importer de-duplicates. One file can carry both shapes — an operator with
+apartment communities *and* scattered single-family rentals sends one CSV.
+
+- **Identity:** communities resolve through `partners.SourceRecordMap`
+  (`organization` + the partner's own `source_id`), units on
+  `(community, source_unit_id)` (defaults to `unit_number`), standalone rows on
+  `(organization, source_listing_id)`. Never on address — a partner reformatting
+  an address must not duplicate inventory, and a property changing managers must
+  not import twice.
+- **Safe deactivation:** absent from one file marks *pending*; only a second file
+  that also omits it retires the row (`Listing.status='closed'`,
+  `Unit.status='withdrawn'`). A file omitting more than 30% of a partner's live
+  rows aborts the whole run untouched.
+- **`withdrawn` vs `occupied`:** a withdrawn unit drops out of
+  `available_unit_count`, `price_range` and `bedroom_types`, so it leaves the
+  community card cleanly without asserting someone moved in.
+- **Adding a format** (XML/JSON/MITS) means one new `PartnerAdapter` subclass —
+  the import, validation and deactivation logic is format-agnostic.
 
 ---
 
@@ -127,3 +158,33 @@ New listings matching a saved search are emailed (+ SMS) on a schedule.
 sends across the channels a user opted into (`UserProfile.notify_email/notify_sms`).
 Email greetings resolve **full name → email → username**. All email flows go
 through Resend's HTTP-API backend.
+
+## 15. Listojo Partners portal
+- Partner-facing surface at `/partners/` (and `partners.listojo.com` via
+  `SubdomainPortalMiddleware`). Access requires a `partners.Membership`, not a
+  staff flag; superusers see all orgs for support.
+- **Pages:** Portfolio (communities, standalone rentals, last-refreshed,
+  rows pending deactivation), Upload inventory (preview → publish, with a
+  per-row rejection table), Upload history, and "Help me connect" (blueprint §21
+  assisted onboarding).
+- **Files:** `partners/views.py`, `partners/forms.py`, `partners/urls.py`,
+  `templates/partners/`.
+
+### Ownership model
+`Listing.owner` used to collapse three facts. They are now separate:
+
+| Fact | Field |
+|---|---|
+| Who manages it | `Community.managed_by`, `Listing.organization` |
+| Who may edit it | `partners.Membership` |
+| Whose feed record it is | `partners.SourceRecordMap` |
+
+- **Nothing CASCADEs from a person or company to inventory.** `owner` and
+  `managed_by` are `SET_NULL`; `ManagementAssignment.organization` is `PROTECT`.
+- **Handover:** `transfer_management()` closes the open `ManagementAssignment`,
+  opens a new one, repoints `managed_by`, and clears `media_rights_confirmed` —
+  display rights came from the previous partner's agreement (§14).
+- **Feed authority:** a partner may only import into properties they currently
+  manage, so a stale cron cannot overwrite the new manager's pricing.
+- Authorization helpers live in `listings/services/ownership.py`. Native
+  listings stay person-owned — individual landlords really do own theirs.

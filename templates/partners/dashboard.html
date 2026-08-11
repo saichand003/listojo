@@ -1,0 +1,112 @@
+{% extends 'partners/base.html' %}
+{% block title %} — Portfolio{% endblock %}
+{% block nav_dash %}active{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{{ organization.name }}</h1>
+  <p class="sub">Your inventory on Listojo.</p>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="n">{{ communities|length }}</div>
+    <div class="l">Communities</div>
+  </div>
+  <div class="stat">
+    <div class="n">{{ unit_total }}</div>
+    <div class="l">Available units</div>
+  </div>
+  <div class="stat">
+    <div class="n">{{ standalone|length }}</div>
+    <div class="l">Standalone rentals</div>
+  </div>
+  <div class="stat">
+    <div class="n">
+      {% if last_run %}{{ last_run.created_at|timesince|truncatechars:14 }}{% else %}—{% endif %}
+    </div>
+    <div class="l">
+      {% if last_run %}Since last refresh{% else %}Never refreshed{% endif %}
+    </div>
+  </div>
+</div>
+
+{% if not last_run %}
+  <div class="card">
+    <h2>Get your listings live</h2>
+    <p class="sub" style="margin-bottom:1rem;">
+      Upload a CSV to publish your inventory, or tell us what software you use and
+      we will connect it for you.
+    </p>
+    <a class="btn btn-primary" href="{% url 'partner_upload' %}">Upload inventory</a>
+    <a class="btn btn-ghost" href="{% url 'partner_onboarding' %}">Help me connect</a>
+  </div>
+{% endif %}
+
+{% if pending_deactivation %}
+  <div class="card" style="border-color:#fcd34d;">
+    <h2>{{ pending_deactivation }} listing(s) missing from your last upload</h2>
+    <p class="sub">
+      They are still visible to renters. If your next upload also leaves them out,
+      they will be closed. Re-send the full file if this was a partial export.
+    </p>
+  </div>
+{% endif %}
+
+<div class="card">
+  <h2>Communities</h2>
+  {% if communities %}
+    <table>
+      <thead>
+        <tr><th>Property</th><th>City</th><th>Floor plans</th><th>Available units</th><th>Media rights</th></tr>
+      </thead>
+      <tbody>
+        {% for c in communities %}
+          <tr>
+            <td><strong>{{ c.name }}</strong></td>
+            <td>{{ c.city }}</td>
+            <td>{{ c.floor_plans.count }}</td>
+            <td>{{ c.unit_total }}</td>
+            <td>
+              {% if c.media_rights_confirmed %}
+                <span class="pill pill-ok">Confirmed</span>
+              {% else %}
+                <span class="pill pill-warn">Needed</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No communities yet.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Standalone rentals</h2>
+  {% if standalone %}
+    <table>
+      <thead><tr><th>Title</th><th>Address</th><th>Rent</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for l in standalone %}
+          <tr>
+            <td><strong>{{ l.title }}</strong></td>
+            <td>{{ l.address_line }}{% if l.city %}, {{ l.city }}{% endif %}</td>
+            <td>${{ l.price|floatformat:0 }}{% if l.price_unit %}/{{ l.price_unit }}{% endif %}</td>
+            <td>
+              {% if l.deactivation_pending_since %}
+                <span class="pill pill-warn">Missing from last file</span>
+              {% else %}
+                <span class="pill pill-ok">{{ l.get_status_display }}</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No standalone rentals.</p>
+  {% endif %}
+</div>
+{% endblock %}

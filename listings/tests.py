@@ -1,3 +1,4 @@
+import io
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -212,3 +213,260 @@ class ListingWorkflowTests(TestCase):
         self.assertEqual(UserListingEvent.objects.filter(event_type='impression').count(), 2)
         self.assertTrue(UserListingEvent.objects.filter(community=self.community, listing__isnull=True).exists())
         self.assertTrue(UserListingEvent.objects.filter(listing=self.active_listing).exists())
+
+
+class PartnerCsvImportTests(TestCase):
+    """
+    Covers the two rules that make partner ingestion safe to re-run:
+    stable identity (upsert, never duplicate) and two-strike deactivation.
+    """
+
+    HEADER = ('source_listing_id,address_line,city,price,bedrooms,property_type\n')
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username='partner-owner', password='pw', email='pm@example.com')
+
+    def _org(self, slug='acme'):
+        from partners.models import Membership, Organization
+        org, created = Organization.objects.get_or_create(
+            slug=slug, defaults={'name': slug.title(), 'status': 'active'})
+        if created:
+            Membership.objects.create(user=self.owner, organization=org, role='owner')
+        return org
+
+    def _import(self, body, **kwargs):
+        from listings.services.partner_import import CsvAdapter, import_partner_inventory
+        slug = kwargs.pop('partner_ref', 'acme')
+        kwargs.setdefault('organization', self._org(slug))
+        kwargs.setdefault('fetch_photos', False)
+        return import_partner_inventory(CsvAdapter(io.StringIO(body)), **kwargs)
+
+    def test_import_creates_listings_from_csv(self):
+        result = self._import(
+            self.HEADER
+            + 'A-1,100 Main St,Dallas,1500,1,apartment\n'
+            + 'A-2,102 Main St,Dallas,1800,2,apartment\n')
+
+        self.assertEqual(result.created, 2)
+        self.assertEqual(Listing.objects.filter(organization=self._org('acme')).count(), 2)
+
+        listing = Listing.objects.get(source_listing_id='A-1')
+        self.assertEqual(listing.price, Decimal('1500'))
+        self.assertEqual(listing.source_type, 'partner_csv')
+        self.assertEqual(listing.title, '1BR Apartment in Dallas')
+
+    def test_reimport_updates_instead_of_duplicating(self):
+        self._import(self.HEADER + 'A-1,100 Main St,Dallas,1500,1,apartment\n')
+        result = self._import(self.HEADER + 'A-1,100 Main Street,Dallas,1595,1,apartment\n')
+
+        self.assertEqual(result.created, 0)
+        self.assertEqual(result.updated, 1)
+        self.assertEqual(Listing.objects.filter(organization=self._org('acme')).count(), 1)
+        # Address changed but identity held — the old bug would have made a second row.
+        self.assertEqual(Listing.objects.get(source_listing_id='A-1').price, Decimal('1595'))
+
+    def test_absent_listing_needs_two_runs_to_deactivate(self):
+        both = (self.HEADER
+                + 'A-1,100 Main St,Dallas,1500,1,apartment\n'
+                + 'A-2,102 Main St,Dallas,1800,2,apartment\n')
+        self._import(both)
+
+        # First run without A-2: pending, still visible.
+        result = self._import(self.HEADER + 'A-1,100 Main St,Dallas,1500,1,apartment\n',
+                              deactivation_ceiling=0.9)
+        self.assertEqual(result.pending_deactivation, 1)
+        self.assertEqual(result.deactivated, 0)
+        absent = Listing.objects.get(source_listing_id='A-2')
+        self.assertEqual(absent.status, 'active')
+        self.assertIsNotNone(absent.deactivation_pending_since)
+
+        # Second run without A-2: now closed.
+        result = self._import(self.HEADER + 'A-1,100 Main St,Dallas,1500,1,apartment\n',
+                              deactivation_ceiling=0.9)
+        self.assertEqual(result.deactivated, 1)
+        self.assertEqual(Listing.objects.get(source_listing_id='A-2').status, 'closed')
+
+    def test_returning_listing_clears_pending_deactivation(self):
+        both = (self.HEADER
+                + 'A-1,100 Main St,Dallas,1500,1,apartment\n'
+                + 'A-2,102 Main St,Dallas,1800,2,apartment\n')
+        self._import(both)
+        self._import(self.HEADER + 'A-1,100 Main St,Dallas,1500,1,apartment\n',
+                     deactivation_ceiling=0.9)
+        self._import(both)
+
+        restored = Listing.objects.get(source_listing_id='A-2')
+        self.assertIsNone(restored.deactivation_pending_since)
+        self.assertEqual(restored.status, 'active')
+
+    def test_truncated_file_aborts_instead_of_mass_deactivating(self):
+        rows = ''.join(
+            f'A-{n},{n} Main St,Dallas,1500,1,apartment\n' for n in range(10))
+        self._import(self.HEADER + rows)
+
+        # A file with one row would retire 9 of 10 — that is a broken upload.
+        result = self._import(self.HEADER + 'A-0,0 Main St,Dallas,1500,1,apartment\n')
+
+        self.assertFalse(result.ok)
+        self.assertIn('partial upload', result.aborted_reason)
+        self.assertEqual(
+            Listing.objects.filter(organization=self._org('acme')).exclude(status='closed').count(), 10)
+
+    def test_bad_rows_are_rejected_without_failing_the_file(self):
+        result = self._import(
+            self.HEADER
+            + 'A-1,100 Main St,Dallas,1500,1,apartment\n'
+            + 'A-2,102 Main St,Dallas,not-a-number,2,apartment\n'
+            + ',104 Main St,Dallas,1900,2,apartment\n')
+
+        self.assertEqual(result.created, 1)
+        self.assertEqual(len(result.rejections), 2)
+        reasons = ' '.join(r.reason for r in result.rejections)
+        self.assertIn('price', reasons)
+        self.assertIn('source_listing_id is required', reasons)
+
+    def test_missing_required_column_rejects_whole_file(self):
+        result = self._import('address_line,city,price\n100 Main St,Dallas,1500\n')
+
+        self.assertFalse(result.ok)
+        self.assertIn('source_listing_id', result.rejections[0].reason)
+        self.assertEqual(Listing.objects.count(), 0)
+
+    def test_partners_do_not_deactivate_each_others_listings(self):
+        self._import(self.HEADER + 'A-1,100 Main St,Dallas,1500,1,apartment\n',
+                     partner_ref='acme')
+        self._import(self.HEADER + 'B-1,200 Elm St,Plano,1600,1,apartment\n',
+                     partner_ref='globex')
+
+        acme = Listing.objects.get(organization=self._org('acme'))
+        self.assertEqual(acme.status, 'active')
+        self.assertIsNone(acme.deactivation_pending_since)
+
+    def test_pipe_separated_tags_become_comma_separated(self):
+        self._import('source_listing_id,address_line,city,price,tags\n'
+                     'A-1,100 Main St,Dallas,1500,pet-friendly|parking\n')
+
+        listing = Listing.objects.get(source_listing_id='A-1')
+        self.assertEqual(listing.tags, 'pet-friendly, parking')
+        self.assertEqual(listing.get_tags_list(), ['pet-friendly', 'parking'])
+
+
+class PartnerCommunityImportTests(TestCase):
+    """
+    Units inside a managed property must import as Community -> FloorPlan -> Unit,
+    because that is what renders the Community chip and the floor-plan tables.
+    """
+
+    HEADER = ('community_ref,community_name,community_city,floor_plan_name,'
+              'unit_number,bedrooms,bathrooms,square_footage,price\n')
+
+    ROWS = ('MAPLE,Maple Court,Dallas,A1 - 1 Bed,101,1,1,720,1450\n'
+            'MAPLE,Maple Court,Dallas,A1 - 1 Bed,104,1,1,720,1495\n'
+            'MAPLE,Maple Court,Dallas,B2 - 2 Bed,201,2,2,1040,1875\n')
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username='pm-owner', password='pw', email='pm2@example.com')
+
+    def _org(self, slug='acme'):
+        from partners.models import Membership, Organization
+        org, created = Organization.objects.get_or_create(
+            slug=slug, defaults={'name': slug.title(), 'status': 'active'})
+        if created:
+            Membership.objects.create(user=self.owner, organization=org, role='owner')
+        return org
+
+    def _import(self, body, **kwargs):
+        from listings.services.partner_import import CsvAdapter, import_partner_inventory
+        slug = kwargs.pop('partner_ref', 'acme')
+        kwargs.setdefault('organization', self._org(slug))
+        kwargs.setdefault('fetch_photos', False)
+        return import_partner_inventory(CsvAdapter(io.StringIO(body)), **kwargs)
+
+    def test_unit_rows_build_the_community_hierarchy(self):
+        result = self._import(self.HEADER + self.ROWS)
+
+        self.assertEqual(result.communities, 1)
+        self.assertEqual(result.floor_plans, 2)
+        self.assertEqual(result.units, 3)
+
+        community = Community.objects.get(name='Maple Court')
+        self.assertEqual(community.managed_by, self._org('acme'))
+        self.assertEqual(community.floor_plans.count(), 2)
+        # These three properties drive the search card.
+        self.assertEqual(community.available_unit_count, 3)
+        self.assertEqual(community.price_range, (Decimal('1450'), Decimal('1875')))
+        self.assertEqual(community.bedroom_types, [1, 2])
+
+    def test_repeated_community_columns_do_not_duplicate_the_community(self):
+        self._import(self.HEADER + self.ROWS)
+        result = self._import(self.HEADER + self.ROWS)
+
+        self.assertEqual(Community.objects.filter(managed_by=self._org('acme')).count(), 1)
+        self.assertEqual(FloorPlan.objects.count(), 2)
+        self.assertEqual(Unit.objects.count(), 3)
+        self.assertEqual(result.communities, 0)   # updated, not created
+
+    def test_absent_unit_needs_two_runs_to_withdraw(self):
+        self._import(self.HEADER + self.ROWS)
+        shorter = self.HEADER + ''.join(self.ROWS.splitlines(keepends=True)[:2])
+
+        result = self._import(shorter, deactivation_ceiling=0.9)
+        self.assertEqual(result.pending_deactivation, 1)
+        unit = Unit.objects.get(source_unit_id='201')
+        self.assertEqual(unit.status, 'available')
+
+        result = self._import(shorter, deactivation_ceiling=0.9)
+        self.assertEqual(result.deactivated, 1)
+        unit.refresh_from_db()
+        self.assertEqual(unit.status, 'withdrawn')
+
+    def test_withdrawn_unit_drops_out_of_the_community_card(self):
+        self._import(self.HEADER + self.ROWS)
+        shorter = self.HEADER + ''.join(self.ROWS.splitlines(keepends=True)[:2])
+        self._import(shorter, deactivation_ceiling=0.9)
+        self._import(shorter, deactivation_ceiling=0.9)
+
+        community = Community.objects.get(name='Maple Court')
+        self.assertEqual(community.available_unit_count, 2)
+        # The 2BR floor plan is gone from the chip row, and the top price with it.
+        self.assertEqual(community.price_range, (Decimal('1450'), Decimal('1495')))
+
+    def test_price_changes_update_the_existing_unit(self):
+        self._import(self.HEADER + self.ROWS)
+        bumped = self.ROWS.replace(',1450\n', ',1550\n')
+        self._import(self.HEADER + bumped)
+
+        self.assertEqual(Unit.objects.get(source_unit_id='101').price, Decimal('1550'))
+        self.assertEqual(Unit.objects.count(), 3)
+
+    def test_one_file_can_carry_communities_and_standalone_rentals(self):
+        body = ('community_ref,community_name,community_city,floor_plan_name,unit_number,'
+                'bedrooms,bathrooms,square_footage,price,source_listing_id,address_line,city\n'
+                'MAPLE,Maple Court,Dallas,A1 - 1 Bed,101,1,1,720,1450,,,\n'
+                ',,,,,,,,2400,SFH-1,1807 Cedar Ln,Plano\n')
+        result = self._import(body)
+
+        self.assertEqual(result.communities, 1)
+        self.assertEqual(result.units, 1)
+        self.assertEqual(Listing.objects.filter(organization=self._org('acme')).count(), 1)
+        self.assertEqual(Listing.objects.get(source_listing_id='SFH-1').city, 'Plano')
+
+    def test_community_row_missing_floor_plan_is_rejected(self):
+        result = self._import(
+            'community_ref,community_name,community_city,floor_plan_name,unit_number,bedrooms,price\n'
+            'MAPLE,Maple Court,Dallas,,101,1,1450\n')
+
+        self.assertFalse(result.ok)
+        self.assertIn('floor_plan_name is required', result.rejections[0].reason)
+
+    def test_units_from_one_partner_do_not_withdraw_anothers(self):
+        self._import(self.HEADER + self.ROWS, partner_ref='acme')
+        self._import('community_ref,community_name,community_city,floor_plan_name,'
+                     'unit_number,bedrooms,bathrooms,square_footage,price\n'
+                     'ELM,Elm Tower,Plano,C1,301,1,1,600,1300\n', partner_ref='globex')
+
+        for unit in Unit.objects.filter(floor_plan__community__managed_by=self._org('acme')):
+            self.assertEqual(unit.status, 'available')
+            self.assertIsNone(unit.deactivation_pending_since)

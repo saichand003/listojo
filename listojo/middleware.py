@@ -5,6 +5,7 @@ from django.shortcuts import render
 # Subdomain → portal home mapping
 _SUBDOMAIN_HOME = {
     'adminportal': '/portal/',
+    'partners': '/partners/',
     'agenthub':    '/portal/agent/',
 }
 

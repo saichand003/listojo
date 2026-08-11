@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listojo Partners{% block title %}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:    #2A7EF2;
+      --primary-dk: #1A5DD4;
+      --green:      #28b87c;
+      --amber:      #d97706;
+      --red:        #dc2626;
+      --bg:         #F4F7FC;
+      --surface:    #ffffff;
+      --surface-2:  #F8FAFC;
+      --border:     #E2E8F0;
+      --text:       #0F1C35;
+      --text-2:     #3D5280;
+      --muted:      #64748B;
+      --r:          12px;
+      --r-sm:       8px;
+      --shadow:     0 1px 6px rgba(15,28,53,.08), 0 1px 2px rgba(15,28,53,.04);
+      --sidebar-bg: #0B1526;
+      --sidebar-w:  240px;
+    }
+
+    body {
+      font-family: 'Sora', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; font-size: 14px; line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── SIDEBAR ────────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w); background: var(--sidebar-bg); color: #cbd5e1;
+      padding: 1.25rem 0; position: fixed; top: 0; bottom: 0; left: 0;
+      display: flex; flex-direction: column;
+    }
+    .brand {
+      font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.15rem;
+      color: #fff; padding: 0 1.25rem 1rem; letter-spacing: -.02em;
+    }
+    .brand span { color: var(--primary); }
+    .brand small {
+      display: block; font-family: 'Sora', sans-serif; font-size: .68rem;
+      font-weight: 500; color: #64748b; letter-spacing: .08em; text-transform: uppercase;
+    }
+    .nav-section {
+      font-size: .68rem; text-transform: uppercase; letter-spacing: .09em;
+      color: #475569; padding: .9rem 1.25rem .35rem;
+    }
+    .sidebar a {
+      display: block; padding: .55rem 1.25rem; color: #cbd5e1;
+      text-decoration: none; font-size: .88rem; border-left: 3px solid transparent;
+    }
+    .sidebar a:hover { background: rgba(255,255,255,.05); color: #fff; }
+    .sidebar a.active {
+      background: rgba(42,126,242,.14); color: #fff;
+      border-left-color: var(--primary); font-weight: 600;
+    }
+    .org-switch {
+      margin-top: auto; padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,.08);
+      font-size: .78rem; color: #94a3b8;
+    }
+    .org-switch select {
+      width: 100%; margin-top: .4rem; padding: .4rem .5rem; border-radius: var(--r-sm);
+      border: 1px solid rgba(255,255,255,.14); background: #16233b; color: #e2e8f0;
+      font-family: inherit; font-size: .8rem;
+    }
+
+    /* ── MAIN ───────────────────────────────────────────────────── */
+    main { margin-left: var(--sidebar-w); padding: 1.75rem 2rem 3rem; width: 100%; }
+    h1 { font-family: 'Montserrat', sans-serif; font-size: 1.5rem; letter-spacing: -.02em; }
+    .sub { color: var(--muted); font-size: .88rem; margin-top: .15rem; }
+    .page-head { margin-bottom: 1.5rem; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); box-shadow: var(--shadow);
+      padding: 1.25rem; margin-bottom: 1.25rem;
+    }
+    .card h2 {
+      font-family: 'Montserrat', sans-serif; font-size: 1rem;
+      margin-bottom: .9rem; letter-spacing: -.01em;
+    }
+
+    .stats { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .stat {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      padding: .9rem 1.15rem; min-width: 150px; box-shadow: var(--shadow);
+    }
+    .stat .n {
+      font-family: 'Montserrat', sans-serif; font-size: 1.5rem;
+      font-weight: 700; letter-spacing: -.02em;
+    }
+    .stat .l {
+      font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted);
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+    th {
+      text-align: left; font-size: .7rem; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--muted); font-weight: 600;
+      padding: .5rem .6rem; border-bottom: 1px solid var(--border);
+    }
+    td { padding: .6rem; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+
+    .pill {
+      display: inline-block; font-size: .7rem; font-weight: 600;
+      padding: .12rem .55rem; border-radius: 999px;
+    }
+    .pill-ok    { background: #dcfce7; color: #15803d; }
+    .pill-warn  { background: #fef3c7; color: #b45309; }
+    .pill-muted { background: var(--surface-2); color: var(--muted); }
+
+    .btn {
+      display: inline-block; padding: .55rem 1.05rem; border-radius: var(--r-sm);
+      font-family: inherit; font-size: .87rem; font-weight: 600;
+      border: 1px solid transparent; cursor: pointer; text-decoration: none;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dk); }
+    .btn-ghost { background: var(--surface); color: var(--text-2); border-color: var(--border); }
+    .btn-ghost:hover { background: var(--surface-2); }
+
+    .msg { padding: .7rem .95rem; border-radius: var(--r-sm); margin-bottom: 1rem; font-size: .87rem; }
+    .msg-success { background: #dcfce7; color: #15803d; }
+    .msg-error   { background: #fee2e2; color: #b91c1c; }
+
+    .field { margin-bottom: .95rem; }
+    .field label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: .3rem; }
+    .field input[type=text], .field input[type=email], .field select, .field textarea,
+    .field input[type=file] {
+      width: 100%; padding: .55rem .7rem; border: 1px solid var(--border);
+      border-radius: var(--r-sm); font-family: inherit; font-size: .88rem; background: #fff;
+    }
+    .field .help { font-size: .76rem; color: var(--muted); margin-top: .25rem; }
+    .errorlist { list-style: none; color: var(--red); font-size: .78rem; margin-top: .25rem; }
+    .empty { color: var(--muted); font-size: .87rem; padding: .6rem 0; }
+
+    @media (max-width: 760px) {
+      .sidebar { position: static; width: 100%; height: auto; }
+      body { flex-direction: column; }
+      main { margin-left: 0; padding: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="brand">Listo<span>jo</span><small>Partners</small></div>
+
+    <div class="nav-section">Inventory</div>
+    <a href="{% url 'partner_dashboard' %}" class="{% block nav_dash %}{% endblock %}">Portfolio</a>
+    <a href="{% url 'partner_upload' %}" class="{% block nav_upload %}{% endblock %}">Upload inventory</a>
+    <a href="{% url 'partner_history' %}" class="{% block nav_history %}{% endblock %}">Upload history</a>
+
+    <div class="nav-section">Setup</div>
+    <a href="{% url 'partner_onboarding' %}" class="{% block nav_connect %}{% endblock %}">Help me connect</a>
+
+    {% if organizations|length > 1 %}
+    <form class="org-switch" method="get">
+      Organization
+      <select name="org" onchange="this.form.submit()">
+        {% for o in organizations %}
+          <option value="{{ o.slug }}" {% if o.pk == organization.pk %}selected{% endif %}>{{ o.name }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    {% else %}
+    <div class="org-switch">{{ organization.name }}</div>
+    {% endif %}
+  </nav>
+
+  <main>
+    {% if messages %}
+      {% for m in messages %}
+        <div class="msg {% if m.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">{{ m }}</div>
+      {% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
