@@ -197,6 +197,17 @@ GOOGLE_GEOCODING_API_KEY = os.getenv('GOOGLE_GEOCODING_API_KEY', '') or GOOGLE_M
 # simply skipped; scores stay null and the UI section hides itself.
 WALKSCORE_API_KEY = os.getenv('WALKSCORE_API_KEY', '')
 
+# ── GreatSchools ─────────────────────────────────────────────────────────────
+# Server-side key from greatschools.org's partner API. Absent key = feature is
+# simply skipped; no schools are stored and the UI section hides itself.
+GREATSCHOOLS_API_KEY = os.getenv('GREATSCHOOLS_API_KEY', '')
+
+# ── Google Places (nearby grocery chains) ────────────────────────────────────
+# Server-side key with the Places API (New) enabled. Falls back to the geocoding
+# key, then the browser key, mirroring GOOGLE_GEOCODING_API_KEY above. Absent
+# key = feature is simply skipped; no stores are stored and the card hides.
+GOOGLE_PLACES_API_KEY = os.getenv('GOOGLE_PLACES_API_KEY', '')
+
 # ── Site ──────────────────────────────────────────────────────────────────────
 SITE_URL = os.getenv('SITE_URL', 'https://listojo.com')
 

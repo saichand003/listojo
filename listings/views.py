@@ -204,7 +204,8 @@ def listing_detail(request, pk):
         return _render_db_setup_page(request)
 
     listing = get_object_or_404(
-        Listing.objects.select_related('owner').prefetch_related('images', 'units__images'),
+        Listing.objects.select_related('owner', 'nearest_downtown').prefetch_related(
+            'images', 'units__images', 'nearby_schools__school', 'nearby_groceries__store'),
         pk=pk,
     )
 

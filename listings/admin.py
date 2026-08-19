@@ -1,6 +1,8 @@
 from django.contrib import admin
 
-from .models import CityWaitlist, Community, CommunityImage, FloorPlan, Listing, ListingInquiry, Unit, UserListingEvent
+from .models import (CityWaitlist, Community, CommunityImage, Downtown, FloorPlan, GroceryStore,
+                     Listing, ListingGroceryStore, ListingInquiry, ListingSchool, School, Unit,
+                     UserListingEvent)
 
 
 @admin.register(Listing)
@@ -55,3 +57,44 @@ class UserListingEventAdmin(admin.ModelAdmin):
     list_display = ('event_type', 'listing', 'community', 'user', 'created_at')
     list_filter = ('event_type', 'created_at')
     search_fields = ('listing__title', 'community__name', 'user__username', 'session_key')
+
+
+@admin.register(School)
+class SchoolAdmin(admin.ModelAdmin):
+    list_display  = ('name', 'level_label', 'grade_range', 'rating', 'city', 'state', 'updated_at')
+    list_filter   = ('level_rank', 'school_type', 'state', 'city')
+    search_fields = ('name', 'gs_id', 'city')
+    readonly_fields = ('updated_at',)
+    ordering      = ('level_rank', 'name')
+
+
+@admin.register(ListingSchool)
+class ListingSchoolAdmin(admin.ModelAdmin):
+    list_display  = ('listing', 'school', 'distance_miles')
+    list_filter   = ('school__level_rank',)
+    search_fields = ('listing__title', 'school__name')
+    # Both sides can run to thousands of rows — raw ids keep the form loadable.
+    raw_id_fields = ('listing', 'school')
+
+
+@admin.register(Downtown)
+class DowntownAdmin(admin.ModelAdmin):
+    list_display  = ('name', 'city', 'state', 'latitude', 'longitude', 'is_active')
+    list_filter   = ('is_active', 'state')
+    search_fields = ('name', 'city')
+
+
+@admin.register(GroceryStore)
+class GroceryStoreAdmin(admin.ModelAdmin):
+    list_display  = ('name', 'chain', 'address', 'updated_at')
+    list_filter   = ('chain',)
+    search_fields = ('name', 'address', 'place_id')
+
+
+@admin.register(ListingGroceryStore)
+class ListingGroceryStoreAdmin(admin.ModelAdmin):
+    list_display  = ('listing', 'store', 'distance_miles')
+    list_filter   = ('store__chain',)
+    search_fields = ('listing__title', 'store__name')
+    # Both sides can run to thousands of rows — raw ids keep the form loadable.
+    raw_id_fields = ('listing', 'store')

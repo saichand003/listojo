@@ -186,7 +186,21 @@ Set on **Railway → `listojo` service → Variables** (and locally in `.env`).
 |-----|-------|
 | `GOOGLE_MAPS_API_KEY` | Browser key (referrer-restricted). |
 | `GOOGLE_GEOCODING_API_KEY` | Server key (API-restricted, no referrer). |
+| `GOOGLE_PLACES_API_KEY` | Server key with **Places API (New)** enabled — nearby grocery chains. Falls back to the geocoding key, then the browser key. |
 | `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | Social login. |
+
+### Neighborhood data
+All three are optional. An absent key disables its feature cleanly: nothing is
+stored and the card hides itself, rather than erroring.
+
+| Var | Notes |
+|-----|-------|
+| `WALKSCORE_API_KEY` | walkscore.com/professional/api — walk / transit / bike scores. |
+| `GREATSCHOOLS_API_KEY` | greatschools.org/api. **Note:** the 1-10 rating and themed ratings shown on the school card need the Enterprise Data License, not the self-serve NearbySchools plans. |
+| `GOOGLE_PLACES_API_KEY` | See Google above — used by `fetch_groceries`. |
+
+Nearest-downtown needs no key at all: it is local maths over the curated
+`Downtown` table (`seed_downtowns`, then `assign_downtowns`).
 
 ### Bot protection (Turnstile)
 | Var | Notes |

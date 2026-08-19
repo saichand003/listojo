@@ -1,12 +1,22 @@
+import copy
 import io
 from datetime import date, timedelta
 from decimal import Decimal
+from unittest import mock
 
+import requests
 from django.contrib.auth.models import User
 from django.core import mail
-from django.test import Client, TestCase
+from django.core.cache import cache
+from django.test import Client, TestCase, override_settings
+from django.urls import reverse
 
-from listings.models import Community, FloorPlan, GuidedSearchEvent, Listing, ListingInquiry, Unit, UserListingEvent
+from django.core.management import call_command
+
+from listings.models import (Community, Downtown, FloorPlan, GroceryStore, GuidedSearchEvent,
+                             Listing, ListingInquiry, ListingSchool, School, Unit,
+                             UserListingEvent)
+from listings.services import distance, downtowns, greatschools, groceries
 from portal.models import Lead
 
 
@@ -470,3 +480,478 @@ class PartnerCommunityImportTests(TestCase):
         for unit in Unit.objects.filter(floor_plan__community__managed_by=self._org('acme')):
             self.assertEqual(unit.status, 'available')
             self.assertIsNone(unit.deactivation_pending_since)
+
+
+class NearbySchoolTests(TestCase):
+    """
+    Covers the GreatSchools sync and the card it feeds.
+
+    The API is never called: `_fake_response` stands in for it, so these tests
+    pin our mapping and write behaviour rather than GreatSchools' uptime.
+    """
+
+    # The three schools from the reference design, deliberately supplied out of
+    # display order and mixing the two field spellings the API has shipped.
+    PAYLOAD = {'schools': [
+        {'universal-id': 'gs-3', 'name': 'Central High School', 'level-codes': 'h',
+         'gradeRange': '9-12', 'rating': 6, 'test-score-rating': 7,
+         'college-readiness-rating': 6, 'student-progress-rating': 4, 'distance': 1.9},
+        {'universalId': 'gs-1', 'name': 'Freedom Elementary School', 'levelCodes': 'e',
+         'grade-range': 'PK-4', 'rating': 8, 'testScoreRating': 8,
+         'studentProgressRating': 8, 'distance': 1.42},
+        {'universal-id': 'gs-2', 'name': 'Hillwood Middle School', 'level-codes': 'm',
+         'gradeRange': '7, 8', 'rating': 8, 'test-score-rating': 8,
+         'student-progress-rating': 7, 'distance': 3.4},
+    ]}
+
+    def setUp(self):
+        # A pre_save signal geocodes every Listing.save(), and sync_instance
+        # saves. Stubbed for the whole class so these tests never call Google —
+        # including on the save that stamps schools_updated.
+        patcher = mock.patch('listings.services.geocoding.geocode_address',
+                             return_value=None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.owner = User.objects.create_user(username='schoolowner', password='pw')
+        self.listing = Listing.objects.create(
+            owner=self.owner,
+            title='Geocoded Rental',
+            description='Has coordinates',
+            category='rentals',
+            price=Decimal('1500'),
+            city='Keller',
+            state='TX',
+            status='active',
+            latitude=Decimal('32.914178'),
+            longitude=Decimal('-96.964342'),
+        )
+        cache.clear()  # the service caches per coordinate grid square
+
+    def _sync(self, payload=None, status=200, **kwargs):
+        body = self.PAYLOAD if payload is None else payload
+
+        class _Resp:
+            status_code = status
+
+            def raise_for_status(self):
+                if status >= 400:
+                    raise requests.HTTPError(f'{status}')
+
+            def json(self):
+                return body
+
+        with override_settings(GREATSCHOOLS_API_KEY='test-key'):
+            with mock.patch('listings.services.greatschools.requests.get',
+                            return_value=_Resp()) as get:
+                result = greatschools.sync_instance(self.listing, **kwargs)
+        return result, get
+
+    def test_sync_stores_schools_and_distances(self):
+        count, _ = self._sync()
+
+        self.assertEqual(count, 3)
+        self.assertEqual(School.objects.count(), 3)
+
+        freedom = School.objects.get(gs_id='gs-1')
+        self.assertEqual(freedom.name, 'Freedom Elementary School')
+        self.assertEqual(freedom.grade_range, 'PK-4')
+        self.assertEqual(freedom.rating, 8)
+        # 1.42 from the API rounds to the one decimal place the card shows.
+        link = ListingSchool.objects.get(listing=self.listing, school=freedom)
+        self.assertEqual(link.distance_miles, Decimal('1.4'))
+
+    def test_cards_read_elementary_then_middle_then_high(self):
+        self._sync()
+        self.assertEqual(
+            [l.school.name for l in self.listing.school_cards],
+            ['Freedom Elementary School', 'Hillwood Middle School', 'Central High School'],
+        )
+
+    def test_only_populated_rating_rows_are_offered(self):
+        self._sync()
+        elementary = School.objects.get(gs_id='gs-1')
+        high = School.objects.get(gs_id='gs-3')
+
+        # College readiness is a high-school measure — the elementary card must
+        # not show an empty row for it.
+        self.assertEqual([label for label, _ in elementary.rating_rows],
+                         ['Test Score Rating', 'Student Progress Rating'])
+        self.assertIn('College Readiness Rating', [label for label, _ in high.rating_rows])
+
+    def test_a_failed_lookup_leaves_stored_schools_alone(self):
+        self._sync()
+        self.assertEqual(self.listing.nearby_schools.count(), 3)
+
+        cache.clear()
+        count, _ = self._sync(status=500, force=True)
+
+        # A quota error or outage must not read as "this address has no schools".
+        self.assertIsNone(count)
+        self.assertEqual(self.listing.nearby_schools.count(), 3)
+
+    def test_a_school_that_leaves_the_radius_is_unlinked(self):
+        self._sync()
+        cache.clear()
+
+        shrunk = {'schools': [self.PAYLOAD['schools'][1]]}  # elementary only
+        count, _ = self._sync(payload=shrunk, force=True)
+
+        self.assertEqual(count, 1)
+        self.assertEqual([l.school.gs_id for l in self.listing.school_cards], ['gs-1'])
+        # The School rows survive — another listing may still be near them.
+        self.assertEqual(School.objects.count(), 3)
+
+    def test_fresh_listings_are_not_refetched_without_force(self):
+        self._sync()
+        cache.clear()
+
+        count, get = self._sync()
+        self.assertIsNone(count)
+        get.assert_not_called()
+
+    def test_repeat_sync_updates_rather_than_duplicates(self):
+        self._sync()
+        cache.clear()
+
+        rerated = copy.deepcopy(self.PAYLOAD)
+        rerated['schools'][0]['rating'] = 9  # GreatSchools re-rates Central High
+        self._sync(payload=rerated, force=True)
+
+        self.assertEqual(School.objects.count(), 3)
+        self.assertEqual(ListingSchool.objects.filter(listing=self.listing).count(), 3)
+        self.assertEqual(School.objects.get(gs_id='gs-3').rating, 9)
+
+    def test_rows_without_an_id_are_dropped(self):
+        # Storing these would create a duplicate School on every refresh.
+        count, _ = self._sync(payload={'schools': [{'name': 'Nameless School', 'rating': 5}]})
+        self.assertEqual(count, 0)
+        self.assertEqual(School.objects.count(), 0)
+
+    def test_no_api_key_means_no_call_and_no_schools(self):
+        with override_settings(GREATSCHOOLS_API_KEY=''):
+            with mock.patch('listings.services.greatschools.requests.get') as get:
+                count = greatschools.sync_instance(self.listing)
+
+        get.assert_not_called()
+        self.assertIsNone(count)
+        self.assertEqual(self.listing.nearby_schools.count(), 0)
+
+    def test_ungeocoded_listing_is_skipped(self):
+        bare = Listing.objects.create(
+            owner=self.owner, title='No coords', description='x',
+            category='rentals', price=Decimal('900'), city='Keller', status='active',
+        )
+        with override_settings(GREATSCHOOLS_API_KEY='test-key'):
+            with mock.patch('listings.services.greatschools.requests.get') as get:
+                self.assertIsNone(greatschools.sync_instance(bare))
+        get.assert_not_called()
+
+    def test_nearby_listings_share_one_api_call(self):
+        """Units in one community must not cost one call each."""
+        self._sync()
+        # ~20cm away: the same grid square, so the cached response should serve it.
+        twin = Listing.objects.create(
+            owner=self.owner, title='Same block', description='x', category='rentals',
+            price=Decimal('1600'), city='Keller', status='active',
+            latitude=Decimal('32.914180'), longitude=Decimal('-96.964340'),
+        )
+        with override_settings(GREATSCHOOLS_API_KEY='test-key'):
+            with mock.patch('listings.services.greatschools.requests.get') as get:
+                greatschools.sync_instance(twin)
+        get.assert_not_called()
+        self.assertEqual(twin.nearby_schools.count(), 3)
+
+    def test_detail_page_renders_the_card(self):
+        self._sync()
+        response = Client().get(reverse('listing_detail', args=[self.listing.pk]))
+        body = response.content.decode()
+
+        self.assertContains(response, 'Nearby schools in Keller')
+        self.assertContains(response, 'Freedom Elementary School')
+        self.assertContains(response, 'Grades 9-12')
+        # Attribution is a licence condition of showing the rating.
+        self.assertIn('GreatSchools', body)
+        # High school only, so exactly one such row on the page.
+        self.assertEqual(body.count('College Readiness Rating'), 1)
+
+    def test_card_is_absent_when_no_schools_are_stored(self):
+        response = Client().get(reverse('listing_detail', args=[self.listing.pk]))
+        self.assertNotContains(response, 'Nearby schools')
+
+    def test_rating_colors_band_the_way_the_design_does(self):
+        self.assertEqual(School(rating=8).rating_color, '#2b7c9e')   # blue
+        self.assertEqual(School(rating=6).rating_color, '#4c8c3f')   # green
+        self.assertEqual(School(rating=2).rating_color, '#c0642a')   # orange
+        self.assertEqual(School(rating=None).rating_color, '#6b7280')  # unrated
+
+    def test_multi_level_school_sorts_with_its_lowest_level(self):
+        # A K-8 campus belongs where a parent looking for an elementary school
+        # would scan, not after the middle schools.
+        self.assertEqual(School.rank_for_levels('e,m'), School.rank_for_levels('e'))
+
+
+class NearestDowntownTests(TestCase):
+    """Downtown matching is local maths over a curated table — no API involved."""
+
+    def setUp(self):
+        patcher = mock.patch('listings.services.geocoding.geocode_address', return_value=None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.owner = User.objects.create_user(username='dtowner', password='pw')
+        self.dallas = Downtown.objects.create(
+            name='Downtown Dallas', city='Dallas', state='TX',
+            latitude=Decimal('32.7767'), longitude=Decimal('-96.7970'))
+        self.fort_worth = Downtown.objects.create(
+            name='Downtown Fort Worth', city='Fort Worth', state='TX',
+            latitude=Decimal('32.7555'), longitude=Decimal('-97.3308'))
+
+    def _listing(self, lat, lng, **kwargs):
+        return Listing.objects.create(
+            owner=self.owner, title='L', description='x', category='rentals',
+            price=Decimal('1500'), city=kwargs.pop('city', 'Dallas'),
+            status='active', latitude=Decimal(str(lat)), longitude=Decimal(str(lng)), **kwargs)
+
+    def test_haversine_matches_a_known_distance(self):
+        # Dallas to Fort Worth city centres is a shade over 30 miles.
+        miles = distance.haversine_miles(32.7767, -96.7970, 32.7555, -97.3308)
+        self.assertAlmostEqual(miles, 31.0, delta=0.5)
+
+    def test_haversine_returns_none_on_missing_coordinates(self):
+        self.assertIsNone(distance.haversine_miles(None, -96.79, 32.77, -96.79))
+        self.assertIsNone(distance.haversine_miles(32.77, -96.79, 32.77, None))
+
+    def test_nearest_downtown_can_be_another_city(self):
+        # A listing in west Irving is nearer Fort Worth than its own city hall.
+        # Ignoring city boundaries is the point — this is a commute cue.
+        listing = self._listing(32.76, -97.20, city='Irving')
+        downtowns.assign_instance(listing)
+        self.assertEqual(listing.nearest_downtown, self.fort_worth)
+
+    def test_assign_sets_distance_to_one_decimal(self):
+        listing = self._listing(32.7767, -96.7970)
+        self.assertTrue(downtowns.assign_instance(listing))
+        self.assertEqual(listing.nearest_downtown, self.dallas)
+        self.assertEqual(listing.downtown_distance_miles, 0.0)
+
+    def test_inactive_downtowns_are_not_matched(self):
+        Downtown.objects.update(is_active=False)
+        listing = self._listing(32.7767, -96.7970)
+        self.assertFalse(downtowns.assign_instance(listing))
+        self.assertIsNone(listing.nearest_downtown)
+
+    def test_a_listing_that_stops_matching_is_cleared(self):
+        listing = self._listing(32.7767, -96.7970)
+        downtowns.assign_instance(listing)
+        listing.save()
+
+        Downtown.objects.update(is_active=False)
+        downtowns.assign_instance(listing)
+
+        # A stale downtown left behind would misreport the commute.
+        self.assertIsNone(listing.nearest_downtown)
+        self.assertIsNone(listing.downtown_distance_miles)
+
+    def test_ungeocoded_listing_matches_nothing(self):
+        bare = Listing.objects.create(
+            owner=self.owner, title='No coords', description='x', category='rentals',
+            price=Decimal('900'), city='Dallas', status='active')
+        self.assertFalse(downtowns.assign_instance(bare))
+
+    def test_seed_command_is_idempotent(self):
+        call_command('seed_downtowns', verbosity=0)
+        first = Downtown.objects.count()
+        call_command('seed_downtowns', verbosity=0)
+        self.assertEqual(Downtown.objects.count(), first)
+
+    def test_detail_page_shows_the_downtown_row(self):
+        listing = self._listing(32.7767, -96.7970)
+        downtowns.assign_instance(listing)
+        listing.save()
+
+        response = Client().get(reverse('listing_detail', args=[listing.pk]))
+        self.assertContains(response, 'Neighborhood')
+        self.assertContains(response, 'Downtown Dallas')
+        self.assertContains(response, 'nearest downtown')
+
+
+class NearbyGroceryTests(TestCase):
+    """
+    Covers the Places sync and, above all, what it refuses to store.
+
+    The API is never called — `_sync` stands in for it.
+    """
+
+    def _place(self, place_id, name, lat, lng, types=('supermarket',)):
+        return {'id': place_id, 'displayName': {'text': name}, 'types': list(types),
+                'formattedAddress': f'{name}, TX', 'location': {'latitude': lat, 'longitude': lng}}
+
+    def setUp(self):
+        patcher = mock.patch('listings.services.geocoding.geocode_address', return_value=None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.owner = User.objects.create_user(username='groceryowner', password='pw')
+        self.listing = Listing.objects.create(
+            owner=self.owner, title='Geocoded Rental', description='x', category='rentals',
+            price=Decimal('1500'), city='Keller', state='TX', status='active',
+            latitude=Decimal('32.9346'), longitude=Decimal('-97.2289'))
+        cache.clear()
+
+    def _sync(self, places, status=200, **kwargs):
+        class _Resp:
+            status_code = status
+
+            def raise_for_status(self):
+                if status >= 400:
+                    raise requests.HTTPError(f'{status}')
+
+            def json(self):
+                return {'places': places}
+
+        with override_settings(GOOGLE_PLACES_API_KEY='test-key'):
+            with mock.patch('listings.services.groceries.requests.post',
+                            return_value=_Resp()) as post:
+                result = groceries.sync_instance(self.listing, **kwargs)
+        return result, post
+
+    # ── the chain whitelist ───────────────────────────────────────────────
+
+    def test_known_chains_resolve_to_canonical_names(self):
+        for raw, expected in [
+            ('Walmart Supercenter', 'Walmart'),
+            ('Walmart Neighborhood Market', 'Walmart'),
+            ("Sam's Club", "Sam's Club"),
+            ('Costco Wholesale', 'Costco'),
+            ('Kroger', 'Kroger'),
+            ('H-E-B plus!', 'H-E-B'),
+            ('HEB', 'H-E-B'),
+            ('Sprouts Farmers Market', 'Sprouts'),
+        ]:
+            self.assertEqual(groceries.match_chain(raw), expected, raw)
+
+    def test_petrol_stations_are_never_groceries(self):
+        for name in ('Shell', '7-Eleven', 'QuikTrip', 'RaceTrac', 'Exxon', 'Buc-ee’s'):
+            self.assertIsNone(groceries.match_chain(name), name)
+
+    def test_chain_branded_fuel_and_pharmacy_outlets_are_excluded(self):
+        # The subtle case: these carry a real chain name but are not a grocery
+        # run, and Places returns them as separate places in the same car park.
+        for name in ("Sam's Club Gas", 'Costco Gasoline', 'Kroger Fuel Center',
+                     'Walmart Pharmacy', 'Walmart Auto Care Center', 'Costco Tire Center'):
+            self.assertIsNone(groceries.match_chain(name), name)
+
+    def test_a_place_typed_as_a_gas_station_is_dropped(self):
+        # Belt and braces: the type check catches what the name check misses.
+        count, _ = self._sync([self._place('p1', 'Kroger', 32.93, -97.22,
+                                           types=('gas_station', 'supermarket'))])
+        self.assertEqual(count, 0)
+        self.assertEqual(GroceryStore.objects.count(), 0)
+
+    def test_unknown_independents_are_dropped(self):
+        count, _ = self._sync([self._place('p1', 'Bobs Corner Store', 32.93, -97.22)])
+        self.assertEqual(count, 0)
+
+    # ── sync behaviour ────────────────────────────────────────────────────
+
+    def test_sync_stores_chains_with_distances(self):
+        count, _ = self._sync([
+            self._place('p1', 'Kroger', 32.9400, -97.2300),
+            self._place('p2', 'Costco Wholesale', 32.9800, -97.2800),
+        ])
+        self.assertEqual(count, 2)
+        self.assertEqual(
+            [(l.store.chain, float(l.distance_miles)) for l in self.listing.grocery_cards],
+            sorted([(l.store.chain, float(l.distance_miles)) for l in self.listing.grocery_cards],
+                   key=lambda p: p[1]))
+        self.assertEqual(self.listing.grocery_cards.first().store.chain, 'Kroger')
+
+    def test_only_the_nearest_branch_of_a_chain_is_kept(self):
+        # Three Walmarts must not fill the card.
+        count, _ = self._sync([
+            self._place('far', 'Walmart Supercenter', 33.10, -97.40),
+            self._place('near', 'Walmart Neighborhood Market', 32.9350, -97.2290),
+            self._place('mid', 'Walmart Supercenter', 33.00, -97.30),
+        ])
+        self.assertEqual(count, 1)
+        self.assertEqual(self.listing.grocery_cards.first().store.place_id, 'near')
+
+    def test_chain_count_is_capped(self):
+        places = [self._place(f'p{i}', chain, 32.93 + i / 100, -97.22)
+                  for i, chain in enumerate(['Kroger', 'Costco Wholesale', 'Target', 'Aldi',
+                                             'Tom Thumb', 'Whole Foods Market', 'Publix'])]
+        count, _ = self._sync(places, limit=3)
+        self.assertEqual(count, 3)
+
+    def test_a_failed_lookup_leaves_stored_stores_alone(self):
+        self._sync([self._place('p1', 'Kroger', 32.94, -97.23)])
+        cache.clear()
+
+        count, _ = self._sync([], status=500, force=True)
+
+        self.assertIsNone(count)
+        self.assertEqual(self.listing.nearby_groceries.count(), 1)
+
+    def test_a_store_that_closes_is_unlinked(self):
+        self._sync([self._place('p1', 'Kroger', 32.94, -97.23),
+                    self._place('p2', 'Aldi', 32.95, -97.24)])
+        cache.clear()
+
+        count, _ = self._sync([self._place('p1', 'Kroger', 32.94, -97.23)], force=True)
+
+        self.assertEqual(count, 1)
+        self.assertEqual([l.store.chain for l in self.listing.grocery_cards], ['Kroger'])
+
+    def test_fresh_listings_are_not_refetched_without_force(self):
+        self._sync([self._place('p1', 'Kroger', 32.94, -97.23)])
+        cache.clear()
+
+        count, post = self._sync([self._place('p1', 'Kroger', 32.94, -97.23)])
+        self.assertIsNone(count)
+        post.assert_not_called()
+
+    def test_nearby_listings_share_one_api_call(self):
+        self._sync([self._place('p1', 'Kroger', 32.94, -97.23)])
+        twin = Listing.objects.create(
+            owner=self.owner, title='Same block', description='x', category='rentals',
+            price=Decimal('1600'), city='Keller', status='active',
+            latitude=Decimal('32.934610'), longitude=Decimal('-97.228870'))
+
+        with override_settings(GOOGLE_PLACES_API_KEY='test-key'):
+            with mock.patch('listings.services.groceries.requests.post') as post:
+                groceries.sync_instance(twin)
+
+        post.assert_not_called()
+        self.assertEqual(twin.nearby_groceries.count(), 1)
+
+    def test_no_api_key_means_no_call(self):
+        with override_settings(GOOGLE_PLACES_API_KEY='', GOOGLE_GEOCODING_API_KEY='',
+                               GOOGLE_MAPS_API_KEY=''):
+            with mock.patch('listings.services.groceries.requests.post') as post:
+                count = groceries.sync_instance(self.listing)
+
+        post.assert_not_called()
+        self.assertIsNone(count)
+
+    def test_field_mask_requests_only_stored_fields(self):
+        # Places (New) bills by requested fields — an over-broad mask silently
+        # moves every call to a dearer SKU.
+        _, post = self._sync([self._place('p1', 'Kroger', 32.94, -97.23)])
+        mask = post.call_args.kwargs['headers']['X-Goog-FieldMask']
+        self.assertNotIn('places.rating', mask)
+        self.assertNotIn('*', mask)
+
+    def test_detail_page_shows_grocery_rows(self):
+        self._sync([self._place('p1', 'Kroger', 32.94, -97.23),
+                    self._place('p2', 'Costco Wholesale', 32.98, -97.28)])
+
+        response = Client().get(reverse('listing_detail', args=[self.listing.pk]))
+        self.assertContains(response, 'Grocery stores nearby')
+        self.assertContains(response, 'Kroger')
+        self.assertContains(response, 'Costco')
+
+    def test_card_is_absent_when_nothing_is_stored(self):
+        response = Client().get(reverse('listing_detail', args=[self.listing.pk]))
+        self.assertNotContains(response, 'Grocery stores nearby')
+        self.assertNotContains(response, 'Neighborhood')
