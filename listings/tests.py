@@ -1,5 +1,6 @@
 import copy
 import io
+import re
 from datetime import date, timedelta
 from decimal import Decimal
 from unittest import mock
@@ -1187,3 +1188,75 @@ class DriveTimeTests(TestCase):
         response = Client().get(reverse('listing_detail', args=[self.listing.pk]))
         self.assertNotContains(response, 'Driving distance and time')
         self.assertContains(response, 'Straight-line distance')
+
+
+class TemplateRenderHygieneTests(TestCase):
+    """
+    Guards against template syntax leaking into rendered pages.
+
+    Motivated by a real escape: a multi-line `{# ... #}` comment in base.html.
+    That form is single-line only, so Django never treated it as a comment and
+    the text rendered on every page — the browser hoists stray text out of
+    <head> into the visible body. Assertions on specific tags all passed while
+    the site displayed the comment, so this checks for absence, not presence.
+    """
+
+    # Any of these surviving into output means a tag or comment did not parse.
+    LEAK_MARKERS = ('{#', '#}', '{%', '%}', '{{', '}}')
+
+    def setUp(self):
+        patcher = mock.patch('listings.services.geocoding.geocode_address', return_value=None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.owner = User.objects.create_user(username='hygiene', password='pw')
+        self.listing = Listing.objects.create(
+            owner=self.owner, title='Rental', description='x', category='rentals',
+            price=Decimal('1200'), city='Irving', state='TX', status='active')
+
+    def _pages(self):
+        return [
+            reverse('home'),
+            reverse('listing_list'),
+            reverse('listing_detail', args=[self.listing.pk]),
+        ]
+
+    def test_no_template_syntax_leaks_into_any_page(self):
+        for path in self._pages():
+            body = Client().get(path).content.decode()
+            for marker in self.LEAK_MARKERS:
+                self.assertNotIn(
+                    marker, body,
+                    f'{path} leaked template syntax {marker!r} into the response')
+
+    def test_head_contains_no_stray_text(self):
+        """
+        Text directly inside <head> is the symptom users actually see, because
+        browsers move it into the body. Only the <title> and inline CSS/JS are
+        legitimate.
+        """
+        body = Client().get(reverse('home')).content.decode()
+        head = body[body.find('<head>'):body.find('</head>')]
+
+        # Drop the elements whose text content is meant to be there.
+        for tag in ('title', 'style', 'script'):
+            head = re.sub(rf'<{tag}\b.*?</{tag}>', '', head, flags=re.S)
+
+        stray = re.sub(r'<[^>]+>', '', head).strip()
+        self.assertEqual(stray, '', f'stray text in <head>: {stray[:200]!r}')
+
+    def test_title_and_description_are_within_search_limits(self):
+        body = Client().get(reverse('home')).content.decode()
+        title = re.search(r'<title>(.*?)</title>', body, re.S).group(1).strip()
+        desc = re.search(r'<meta name="description" content="(.*?)">', body, re.S).group(1).strip()
+
+        self.assertIn('Dallas', title)
+        # Google truncates past roughly these lengths.
+        self.assertLessEqual(len(title), 60, f'title too long: {title!r}')
+        self.assertLessEqual(len(desc), 160, f'description too long: {desc!r}')
+
+    def test_favicon_is_served_from_the_site_root(self):
+        # Crawlers probe /favicon.ico directly and ignore the <link> tags.
+        response = Client().get('/favicon.ico')
+        self.assertIn(response.status_code, (301, 302))
+        self.assertIn('favicon', response.headers['Location'])

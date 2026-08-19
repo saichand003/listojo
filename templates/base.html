@@ -4,16 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {# Overridable so individual pages can carry their own title. Google shows
-       this as the search result heading; keep it under ~60 chars or it gets
-       truncated. #}
+    {% comment %}
+      Overridable so individual pages can carry their own title. Google shows
+      this as the search result heading; keep it under ~60 chars or it gets
+      truncated. Use this block form for multi-line notes: the hash form is
+      single-line only, and renders as visible page text if it wraps.
+    {% endcomment %}
     <title>{% block title %}Listojo: Dallas–Fort Worth's Premier Home Search{% endblock %}</title>
     {# Without this Google scrapes arbitrary body copy for the snippet. #}
     <meta name="description" content="{% block meta_description %}Find your next home with confidence. Search rentals, roommates and homes for sale across Dallas–Fort Worth, and connect directly with owners and managers.{% endblock %}">
 
-    {# Favicons. The .ico is what Google probes and what older browsers want;
-       the SVG is what modern browsers prefer. See also the /favicon.ico route
-       in listojo/urls.py, which covers crawlers that ignore these tags. #}
+    {% comment %}
+      Favicons. The .ico is what Google probes and what older browsers want;
+      the SVG is what modern browsers prefer. See also the /favicon.ico route
+      in listojo/urls.py, which covers crawlers that ignore these tags.
+    {% endcomment %}
     <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
     <link rel="icon" type="image/svg+xml" href="{% static 'mark.svg' %}">
     <link rel="icon" type="image/png" sizes="96x96" href="{% static 'img/favicon-96.png' %}">
