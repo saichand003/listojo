@@ -765,6 +765,37 @@ class NearestDowntownTests(TestCase):
         call_command('seed_downtowns', verbosity=0)
         self.assertEqual(Downtown.objects.count(), first)
 
+    def test_missing_only_skips_already_assigned_rows(self):
+        """The deploy runs this on every boot — it must be a no-op once settled."""
+        assigned = self._listing(32.7767, -96.7970)
+        downtowns.assign_instance(assigned)
+        assigned.save()
+        unassigned = self._listing(32.7555, -97.3308)
+
+        call_command('assign_downtowns', '--missing-only', verbosity=0)
+
+        unassigned.refresh_from_db()
+        self.assertEqual(unassigned.nearest_downtown, self.fort_worth)
+        # Re-running changes nothing further.
+        call_command('assign_downtowns', '--missing-only', verbosity=0)
+        self.assertEqual(Listing.objects.filter(nearest_downtown__isnull=True).count(), 0)
+
+    def test_assign_does_not_trigger_the_geocoding_signal(self):
+        """
+        bulk_update, not save(). This command runs on every container boot, and
+        save() would fire pre_save -> geocode_on_save -> a Google call for any
+        row whose address drifted from geocoded_address.
+        """
+        listing = self._listing(32.7767, -96.7970)
+        Listing.objects.filter(pk=listing.pk).update(geocoded_address='stale mismatch')
+
+        with mock.patch('listings.services.geocoding.geocode_address') as geo:
+            call_command('assign_downtowns', verbosity=0)
+
+        geo.assert_not_called()
+        listing.refresh_from_db()
+        self.assertEqual(listing.nearest_downtown, self.dallas)
+
     def test_detail_page_shows_the_downtown_row(self):
         listing = self._listing(32.7767, -96.7970)
         downtowns.assign_instance(listing)

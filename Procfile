@@ -1,1 +1,1 @@
-web: python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn listojo.wsgi --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --log-file -
+web: python manage.py migrate --noinput && python manage.py collectstatic --noinput && (python manage.py seed_downtowns && python manage.py assign_downtowns --missing-only || echo "WARN: downtown seed/assign failed - starting web anyway") && gunicorn listojo.wsgi --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --log-file -

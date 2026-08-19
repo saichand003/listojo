@@ -59,7 +59,7 @@ Cloudflare R2 (media) · LightGBM (price valuation).
                            │  • Twilio        — phone OTP + SMS (optional) │
                            └──────────────────────────────────────────────┘
 
-  Source control + CI:  GitHub (branch: dangerously-allow-revamp) ──▶ Railway auto-deploy
+  Source control + CI:  GitHub (branch: New-MVP-PartnerPortal) ──▶ Railway auto-deploy
 ```
 
 ### Request lifecycle (typical page)
@@ -96,7 +96,7 @@ Key service modules:
 ### 4.1 Railway — hosting & deploy
 - **What it runs:** the `listojo` Docker service (Gunicorn) + managed **Postgres**.
 - **Configure:**
-  - **Settings → Source:** GitHub repo, branch = `dangerously-allow-revamp`.
+  - **Settings → Source:** GitHub repo, branch = `New-MVP-PartnerPortal`.
   - **Variables:** all env vars (see §5).
   - **Networking:** custom domains `listojo.com`, `adminportal.listojo.com`.
   - Deploys auto-trigger on push. Dockerfile `CMD` runs `migrate` +
@@ -154,8 +154,11 @@ One Cloud project holds three products. **APIs & Services → Credentials.**
   Verify OTP doesn't need a number). Set `TWILIO_*` vars.
 
 ### 4.8 GitHub — source & CI
-- Repo hosts the code; Railway watches the `dangerously-allow-revamp` branch and
+- Repo hosts the code; Railway watches the `New-MVP-PartnerPortal` branch and
   auto-deploys on push. Keep secrets out of commits.
+  (Verified 2026-08-18 against the live site: `dangerously-allow-revamp` is
+  stale and several commits behind. Re-check here if a deploy ever appears to
+  ship nothing.)
 
 ---
 
@@ -232,7 +235,7 @@ runs with any subset configured.
 
 ## 6. Deployment
 
-- **Trigger:** push to `dangerously-allow-revamp` → Railway rebuilds the Docker image.
+- **Trigger:** push to `New-MVP-PartnerPortal` → Railway rebuilds the Docker image.
 - **On boot** (Dockerfile `CMD`): `migrate --noinput` → `createcachetable` →
   Gunicorn (2 workers, preload, 120s timeout).
 - **Static:** collected at build time, served by WhiteNoise.
