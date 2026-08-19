@@ -4,7 +4,8 @@ Google Routes — typical driving time from a listing to its nearby places.
 Usage:
     from listings.services.drivetime import sync_instance
 
-    sync_instance(listing)   # one API call, fills downtown + every grocery row
+    sync_instance(listing)   # one API call: time AND road distance for
+                             # the downtown and every grocery row
 
 One call, not one per destination
 ---------------------------------
@@ -80,13 +81,25 @@ def _minutes(duration) -> int | None:
     return max(1, int(seconds / 60 + 0.5))
 
 
-def fetch_drive_minutes(origin, destinations) -> dict[int, int] | None:
+_METRES_PER_MILE = 1609.344
+
+
+def _miles(metres) -> float | None:
+    """Convert route distance in metres to miles, at the precision we display."""
+    try:
+        return round(float(metres) / _METRES_PER_MILE, 1)
+    except (TypeError, ValueError):
+        return None
+
+
+def fetch_drive_matrix(origin, destinations) -> dict[int, dict] | None:
     """
-    Drive minutes from one origin to many destinations, in a single call.
+    Drive time and road distance from one origin to many destinations, in one call.
 
     `origin` and each destination are (lat, lng) pairs. Returns a dict keyed by
-    the destination's index in the input list — destinations with no drivable
-    route are simply absent — or None if the whole call failed.
+    the destination's index in the input list, each value {'minutes', 'miles'} —
+    destinations with no drivable route are simply absent — or None if the whole
+    call failed.
 
     None means the lookup failed; an empty dict means it worked and nothing was
     reachable. Callers must not treat them alike, or an outage would wipe stored
@@ -97,7 +110,7 @@ def fetch_drive_minutes(origin, destinations) -> dict[int, int] | None:
                or getattr(settings, 'GOOGLE_GEOCODING_API_KEY', '')
                or getattr(settings, 'GOOGLE_MAPS_API_KEY', ''))
     if not api_key:
-        logger.warning('fetch_drive_minutes: no Google Routes key set — skipping')
+        logger.warning('fetch_drive_matrix: no Google Routes key set — skipping')
         return None
 
     if not destinations or origin[0] is None or origin[1] is None:
@@ -122,18 +135,21 @@ def fetch_drive_minutes(origin, destinations) -> dict[int, int] | None:
                 'X-Goog-Api-Key': api_key,
                 # Routes bills by the fields requested. `condition` is needed to
                 # tell "10 minutes away" from "no route found".
-                'X-Goog-FieldMask': ('originIndex,destinationIndex,duration,condition'),
+                # distanceMeters rides along on an element we are already
+                # paying for, so road distance costs nothing extra.
+                'X-Goog-FieldMask': ('originIndex,destinationIndex,duration,'
+                                     'distanceMeters,condition'),
             },
             timeout=_TIMEOUT,
         )
         resp.raise_for_status()
         data = resp.json()
     except (requests.RequestException, ValueError) as exc:
-        logger.warning('fetch_drive_minutes: request failed for %s: %s', origin, exc)
+        logger.warning('fetch_drive_matrix: request failed for %s: %s', origin, exc)
         return None
 
     if not isinstance(data, list):
-        logger.warning('fetch_drive_minutes: unexpected payload shape for %s', origin)
+        logger.warning('fetch_drive_matrix: unexpected payload shape for %s', origin)
         return None
 
     out = {}
@@ -149,7 +165,10 @@ def fetch_drive_minutes(origin, destinations) -> dict[int, int] | None:
         matrix_index = element.get('destinationIndex')
         if matrix_index is None or matrix_index >= len(usable):
             continue
-        out[usable[matrix_index][0]] = minutes
+        out[usable[matrix_index][0]] = {
+            'minutes': minutes,
+            'miles': _miles(element.get('distanceMeters')),
+        }
 
     return out
 
@@ -163,7 +182,8 @@ def is_stale(instance) -> bool:
 
 def sync_instance(instance, *, force: bool = False) -> int | None:
     """
-    Fill drive times for a Listing's downtown and grocery rows in one call.
+    Fill drive time and road distance for a Listing's downtown and grocery
+    rows, in one call.
 
     Returns how many times were written, or None when nothing was attempted or
     the call failed. Saves, like the other proximity syncs.
@@ -196,26 +216,31 @@ def sync_instance(instance, *, force: bool = False) -> int | None:
     if not targets:
         return None
 
-    results = fetch_drive_minutes(origin, targets)
+    results = fetch_drive_matrix(origin, targets)
     if results is None:
         return None
 
     written = 0
     with transaction.atomic():
         if downtown_slot is not None:
-            instance.downtown_drive_minutes = results.get(downtown_slot)
+            found = results.get(downtown_slot) or {}
+            instance.downtown_drive_minutes = found.get('minutes')
+            instance.downtown_drive_miles = found.get('miles')
             written += instance.downtown_drive_minutes is not None
 
         for slot, link in link_slots.items():
-            link.drive_minutes = results.get(slot)
+            found = results.get(slot) or {}
+            link.drive_minutes = found.get('minutes')
+            link.drive_miles = found.get('miles')
             written += link.drive_minutes is not None
 
         if link_slots:
-            type(links[0]).objects.bulk_update(links, ['drive_minutes'])
+            type(links[0]).objects.bulk_update(links, ['drive_minutes', 'drive_miles'])
 
         instance.drive_times_updated = timezone.now()
-        # bulk-safe field list: never re-save the whole row here, the pre_save
+        # Explicit field list: never re-save the whole row here, or the pre_save
         # geocoding signal would fire for nothing.
-        instance.save(update_fields=['downtown_drive_minutes', 'drive_times_updated'])
+        instance.save(update_fields=['downtown_drive_minutes', 'downtown_drive_miles',
+                                     'drive_times_updated'])
 
     return written

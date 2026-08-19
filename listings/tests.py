@@ -1040,9 +1040,9 @@ class DriveTimeTests(TestCase):
         self._store('p2', 'Costco', 4.3)
 
         count, post = self._sync([
-            {'originIndex': 0, 'destinationIndex': 0, 'condition': 'ROUTE_EXISTS', 'duration': '540s'},
-            {'originIndex': 0, 'destinationIndex': 1, 'condition': 'ROUTE_EXISTS', 'duration': '180s'},
-            {'originIndex': 0, 'destinationIndex': 2, 'condition': 'ROUTE_EXISTS', 'duration': '600s'},
+            {'originIndex': 0, 'destinationIndex': 0, 'condition': 'ROUTE_EXISTS', 'duration': '540s', 'distanceMeters': 8047},
+            {'originIndex': 0, 'destinationIndex': 1, 'condition': 'ROUTE_EXISTS', 'duration': '180s', 'distanceMeters': 1127},
+            {'originIndex': 0, 'destinationIndex': 2, 'condition': 'ROUTE_EXISTS', 'duration': '600s', 'distanceMeters': 9656},
         ])
 
         self.assertEqual(post.call_count, 1)
@@ -1068,6 +1068,43 @@ class DriveTimeTests(TestCase):
         self.assertEqual(self.listing.downtown_drive_minutes, 9)   # slot 0
         self.assertEqual(kroger.drive_minutes, 3)                  # slot 1
         self.assertEqual(costco.drive_minutes, 10)                 # slot 2
+
+    def test_road_distance_is_stored_and_preferred_over_straight_line(self):
+        """
+        The card must not mix measurements: showing a straight-line mileage
+        beside a driving time reads as one number and is two.
+        """
+        kroger = self._store('p1', 'Kroger', 0.4)   # 0.4 straight-line
+
+        self._sync([
+            {'originIndex': 0, 'destinationIndex': 0, 'condition': 'ROUTE_EXISTS',
+             'duration': '540s', 'distanceMeters': 8047},   # 5.0 road miles
+            {'originIndex': 0, 'destinationIndex': 1, 'condition': 'ROUTE_EXISTS',
+             'duration': '180s', 'distanceMeters': 1127},   # 0.7 road miles
+        ])
+
+        self.listing.refresh_from_db()
+        kroger.refresh_from_db()
+        # Straight-line values are preserved — they drive ranking and ordering.
+        self.assertEqual(kroger.distance_miles, Decimal('0.4'))
+        self.assertEqual(kroger.drive_miles, Decimal('0.7'))
+        self.assertEqual(kroger.display_miles, Decimal('0.7'))
+        self.assertEqual(self.listing.downtown_drive_miles, Decimal('5.0'))
+        self.assertEqual(self.listing.downtown_display_miles, Decimal('5.0'))
+
+    def test_display_falls_back_to_straight_line_without_a_route(self):
+        kroger = self._store('p1', 'Kroger', 0.4)
+        self._sync([{'originIndex': 0, 'destinationIndex': 1,
+                     'condition': 'ROUTE_NOT_FOUND'}])
+        kroger.refresh_from_db()
+        self.assertIsNone(kroger.drive_miles)
+        self.assertEqual(kroger.display_miles, Decimal('0.4'))
+
+    def test_distance_is_requested_in_the_field_mask(self):
+        self._store('p1', 'Kroger', 0.4)
+        _, post = self._sync([])
+        mask = post.call_args.kwargs['headers']['X-Goog-FieldMask']
+        self.assertIn('distanceMeters', mask)
 
     def test_traffic_unaware_is_requested(self):
         # Traffic-aware is a dearer SKU and would be stale by render time.
@@ -1142,10 +1179,11 @@ class DriveTimeTests(TestCase):
         response = Client().get(reverse('listing_detail', args=[self.listing.pk]))
         self.assertContains(response, '9 min drive')
         self.assertContains(response, '3 min')
-        self.assertContains(response, 'drive times in typical traffic')
+        self.assertContains(response, 'Driving distance and time in typical traffic')
+        self.assertNotContains(response, 'Straight-line distance')
 
     def test_footnote_omits_drive_wording_when_absent(self):
         self._store('p1', 'Kroger', 0.4)
         response = Client().get(reverse('listing_detail', args=[self.listing.pk]))
-        self.assertNotContains(response, 'drive times in typical traffic')
+        self.assertNotContains(response, 'Driving distance and time')
         self.assertContains(response, 'Straight-line distance')

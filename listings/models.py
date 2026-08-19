@@ -170,6 +170,11 @@ class Listing(models.Model):
     # Routes sync runs, or when no drivable route exists — the card falls back
     # to straight-line miles rather than hiding.
     downtown_drive_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
+    # Road distance from the same Routes call. Kept beside the straight-line
+    # value rather than replacing it: downtown_distance_miles is what matching
+    # and ordering use, and it is the fallback when no route resolves.
+    downtown_drive_miles = models.DecimalField(max_digits=5, decimal_places=1,
+                               null=True, blank=True)
 
     # ── Nearby groceries (Google Places) ──────────────────────────────────
     groceries_updated = models.DateTimeField(null=True, blank=True,
@@ -228,6 +233,11 @@ class Listing(models.Model):
         form that reuses a prefetch on the caller's queryset.
         """
         return self.nearby_groceries.all()
+
+    @property
+    def downtown_display_miles(self):
+        """Road miles when a route resolved, else the straight-line figure."""
+        return self.downtown_drive_miles or self.downtown_distance_miles
 
     @property
     def has_drive_times(self):
@@ -893,6 +903,10 @@ class ListingGroceryStore(models.Model):
     # replacing it: a route can fail to resolve, and a distance with no time
     # still reads fine.
     drive_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
+    # Road distance, from the same Routes call as drive_minutes. distance_miles
+    # stays straight-line because _nearest_per_chain ranks on it before any
+    # route is known, and Meta.ordering uses it.
+    drive_miles = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
 
     class Meta:
         ordering = ['distance_miles']
@@ -900,6 +914,11 @@ class ListingGroceryStore(models.Model):
             models.UniqueConstraint(fields=['listing', 'store'],
                                     name='uniq_listing_grocery_store'),
         ]
+
+    @property
+    def display_miles(self):
+        """Road miles when a route resolved, else the straight-line figure."""
+        return self.drive_miles or self.distance_miles
 
     def __str__(self):
         return f'{self.store.name} — {self.distance_miles} mi'
