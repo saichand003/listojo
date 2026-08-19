@@ -208,6 +208,12 @@ GREATSCHOOLS_API_KEY = os.getenv('GREATSCHOOLS_API_KEY', '')
 # key = feature is simply skipped; no stores are stored and the card hides.
 GOOGLE_PLACES_API_KEY = os.getenv('GOOGLE_PLACES_API_KEY', '')
 
+# ── Google Routes (drive times) ──────────────────────────────────────────────
+# Server-side key with the Routes API enabled. Falls back through the Places,
+# geocoding and browser keys. Absent key = drive times stay null and the card
+# quietly shows straight-line miles only.
+GOOGLE_ROUTES_API_KEY = os.getenv('GOOGLE_ROUTES_API_KEY', '')
+
 # ── Site ──────────────────────────────────────────────────────────────────────
 SITE_URL = os.getenv('SITE_URL', 'https://listojo.com')
 

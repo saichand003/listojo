@@ -556,7 +556,9 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                     <div>
                         <p style="font-size:.85rem;font-weight:600;margin:0;">{{ listing.nearest_downtown.name }}</p>
                         <p style="font-size:.78rem;color:var(--text-3);margin:0;">
-                            {{ listing.downtown_distance_miles|floatformat:1 }} miles away &middot; nearest downtown
+                            {{ listing.downtown_distance_miles|floatformat:1 }} miles
+                            {% if listing.downtown_drive_minutes %}&middot; {{ listing.downtown_drive_minutes }} min drive{% endif %}
+                            &middot; nearest downtown
                         </p>
                     </div>
                 </div>
@@ -574,11 +576,14 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                         <span style="color:var(--text-3);font-size:.76rem;">{{ link.store.name }}</span>
                         {% endif %}
                     </span>
-                    <span style="font-weight:700;white-space:nowrap;">{{ link.distance_miles|floatformat:1 }} mi</span>
+                    <span style="font-weight:700;white-space:nowrap;">
+                        {{ link.distance_miles|floatformat:1 }} mi{% if link.drive_minutes %}<span style="color:var(--text-3);font-weight:600;"> &middot; {{ link.drive_minutes }} min</span>{% endif %}
+                    </span>
                 </div>
                 {% endfor %}
                 <p style="font-size:.72rem;color:var(--text-3);margin:.6rem 0 0;">
-                    Straight-line distance &middot; places data from Google
+                    {% if listing.has_drive_times %}Straight-line distance &middot; drive times in typical traffic{% else %}Straight-line distance{% endif %}
+                    &middot; data from Google
                 </p>
                 {% endif %}
                 {% endwith %}

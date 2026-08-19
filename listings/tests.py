@@ -14,9 +14,9 @@ from django.urls import reverse
 from django.core.management import call_command
 
 from listings.models import (Community, Downtown, FloorPlan, GroceryStore, GuidedSearchEvent,
-                             Listing, ListingInquiry, ListingSchool, School, Unit,
-                             UserListingEvent)
-from listings.services import distance, downtowns, greatschools, groceries
+                             Listing, ListingGroceryStore, ListingInquiry, ListingSchool, School,
+                             Unit, UserListingEvent)
+from listings.services import distance, downtowns, drivetime, greatschools, groceries
 from portal.models import Lead
 
 
@@ -986,3 +986,166 @@ class NearbyGroceryTests(TestCase):
         response = Client().get(reverse('listing_detail', args=[self.listing.pk]))
         self.assertNotContains(response, 'Grocery stores nearby')
         self.assertNotContains(response, 'Neighborhood')
+
+
+class DriveTimeTests(TestCase):
+    """
+    Covers the Routes matrix sync.
+
+    The API is never called — `_sync` stands in for it. The behaviour most worth
+    pinning is that results are matched by index, not by position.
+    """
+
+    def setUp(self):
+        patcher = mock.patch('listings.services.geocoding.geocode_address', return_value=None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.owner = User.objects.create_user(username='driveowner', password='pw')
+        self.downtown = Downtown.objects.create(
+            name='Downtown Las Colinas', city='Irving', state='TX',
+            latitude=Decimal('32.8626'), longitude=Decimal('-96.9433'))
+        self.listing = Listing.objects.create(
+            owner=self.owner, title='Rental', description='x', category='rentals',
+            price=Decimal('1500'), city='Irving', state='TX', status='active',
+            latitude=Decimal('32.9346'), longitude=Decimal('-97.2289'),
+            nearest_downtown=self.downtown, downtown_distance_miles=Decimal('3.8'))
+
+    def _store(self, place_id, chain, miles, lat=32.94, lng=-97.23):
+        store = GroceryStore.objects.create(place_id=place_id, chain=chain, name=chain,
+                                            latitude=lat, longitude=lng)
+        return ListingGroceryStore.objects.create(
+            listing=self.listing, store=store, distance_miles=Decimal(str(miles)))
+
+    def _sync(self, elements, status=200, **kwargs):
+        class _Resp:
+            status_code = status
+
+            def raise_for_status(self):
+                if status >= 400:
+                    raise requests.HTTPError(f'{status}')
+
+            def json(self):
+                return elements
+
+        with override_settings(GOOGLE_ROUTES_API_KEY='test-key'):
+            with mock.patch('listings.services.drivetime.requests.post',
+                            return_value=_Resp()) as post:
+                result = drivetime.sync_instance(self.listing, **kwargs)
+        return result, post
+
+    def test_downtown_and_groceries_share_one_api_call(self):
+        """The whole point: one request, not one per destination."""
+        self._store('p1', 'Kroger', 0.4)
+        self._store('p2', 'Costco', 4.3)
+
+        count, post = self._sync([
+            {'originIndex': 0, 'destinationIndex': 0, 'condition': 'ROUTE_EXISTS', 'duration': '540s'},
+            {'originIndex': 0, 'destinationIndex': 1, 'condition': 'ROUTE_EXISTS', 'duration': '180s'},
+            {'originIndex': 0, 'destinationIndex': 2, 'condition': 'ROUTE_EXISTS', 'duration': '600s'},
+        ])
+
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(count, 3)
+        self.listing.refresh_from_db()
+        self.assertEqual(self.listing.downtown_drive_minutes, 9)
+
+    def test_results_are_matched_by_index_not_position(self):
+        # The matrix response is a stream and arrives out of order. Zipping by
+        # position here would silently give the downtown the Kroger's time.
+        kroger = self._store('p1', 'Kroger', 0.4)
+        costco = self._store('p2', 'Costco', 4.3)
+
+        self._sync([
+            {'originIndex': 0, 'destinationIndex': 2, 'condition': 'ROUTE_EXISTS', 'duration': '600s'},
+            {'originIndex': 0, 'destinationIndex': 0, 'condition': 'ROUTE_EXISTS', 'duration': '540s'},
+            {'originIndex': 0, 'destinationIndex': 1, 'condition': 'ROUTE_EXISTS', 'duration': '180s'},
+        ])
+
+        self.listing.refresh_from_db()
+        kroger.refresh_from_db()
+        costco.refresh_from_db()
+        self.assertEqual(self.listing.downtown_drive_minutes, 9)   # slot 0
+        self.assertEqual(kroger.drive_minutes, 3)                  # slot 1
+        self.assertEqual(costco.drive_minutes, 10)                 # slot 2
+
+    def test_traffic_unaware_is_requested(self):
+        # Traffic-aware is a dearer SKU and would be stale by render time.
+        self._store('p1', 'Kroger', 0.4)
+        _, post = self._sync([])
+        self.assertEqual(post.call_args.kwargs['json']['routingPreference'], 'TRAFFIC_UNAWARE')
+        self.assertEqual(post.call_args.kwargs['json']['travelMode'], 'DRIVE')
+
+    def test_one_origin_many_destinations(self):
+        self._store('p1', 'Kroger', 0.4)
+        self._store('p2', 'Costco', 4.3)
+        _, post = self._sync([])
+        body = post.call_args.kwargs['json']
+        self.assertEqual(len(body['origins']), 1)
+        self.assertEqual(len(body['destinations']), 3)  # downtown + 2 stores
+
+    def test_unroutable_destinations_are_skipped(self):
+        kroger = self._store('p1', 'Kroger', 0.4)
+        count, _ = self._sync([
+            {'originIndex': 0, 'destinationIndex': 0, 'condition': 'ROUTE_NOT_FOUND'},
+            {'originIndex': 0, 'destinationIndex': 1, 'condition': 'ROUTE_EXISTS', 'duration': '180s'},
+        ])
+        self.listing.refresh_from_db()
+        kroger.refresh_from_db()
+        self.assertEqual(count, 1)
+        self.assertIsNone(self.listing.downtown_drive_minutes)
+        self.assertEqual(kroger.drive_minutes, 3)
+
+    def test_sub_minute_hops_round_to_one_minute(self):
+        kroger = self._store('p1', 'Kroger', 0.1)
+        self._sync([{'originIndex': 0, 'destinationIndex': 1,
+                     'condition': 'ROUTE_EXISTS', 'duration': '25s'}])
+        kroger.refresh_from_db()
+        self.assertEqual(kroger.drive_minutes, 1)  # never "0 min"
+
+    def test_a_failed_lookup_leaves_stored_times_alone(self):
+        self._store('p1', 'Kroger', 0.4)
+        self._sync([{'originIndex': 0, 'destinationIndex': 0,
+                     'condition': 'ROUTE_EXISTS', 'duration': '540s'}])
+
+        count, _ = self._sync([], status=500, force=True)
+
+        self.assertIsNone(count)
+        self.listing.refresh_from_db()
+        self.assertEqual(self.listing.downtown_drive_minutes, 9)
+
+    def test_listing_with_nothing_to_measure_makes_no_call(self):
+        bare = Listing.objects.create(
+            owner=self.owner, title='No proximity', description='x', category='rentals',
+            price=Decimal('900'), city='Irving', status='active',
+            latitude=Decimal('32.9'), longitude=Decimal('-97.2'))
+        with override_settings(GOOGLE_ROUTES_API_KEY='test-key'):
+            with mock.patch('listings.services.drivetime.requests.post') as post:
+                self.assertIsNone(drivetime.sync_instance(bare))
+        post.assert_not_called()
+
+    def test_no_api_key_means_no_call(self):
+        self._store('p1', 'Kroger', 0.4)
+        with override_settings(GOOGLE_ROUTES_API_KEY='', GOOGLE_PLACES_API_KEY='',
+                               GOOGLE_GEOCODING_API_KEY='', GOOGLE_MAPS_API_KEY=''):
+            with mock.patch('listings.services.drivetime.requests.post') as post:
+                self.assertIsNone(drivetime.sync_instance(self.listing))
+        post.assert_not_called()
+
+    def test_detail_page_shows_drive_times(self):
+        self._store('p1', 'Kroger', 0.4)
+        self._sync([
+            {'originIndex': 0, 'destinationIndex': 0, 'condition': 'ROUTE_EXISTS', 'duration': '540s'},
+            {'originIndex': 0, 'destinationIndex': 1, 'condition': 'ROUTE_EXISTS', 'duration': '180s'},
+        ])
+
+        response = Client().get(reverse('listing_detail', args=[self.listing.pk]))
+        self.assertContains(response, '9 min drive')
+        self.assertContains(response, '3 min')
+        self.assertContains(response, 'drive times in typical traffic')
+
+    def test_footnote_omits_drive_wording_when_absent(self):
+        self._store('p1', 'Kroger', 0.4)
+        response = Client().get(reverse('listing_detail', args=[self.listing.pk]))
+        self.assertNotContains(response, 'drive times in typical traffic')
+        self.assertContains(response, 'Straight-line distance')

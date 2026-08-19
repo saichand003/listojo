@@ -166,10 +166,18 @@ class Listing(models.Model):
                            on_delete=models.SET_NULL, related_name='listings')
     downtown_distance_miles = models.DecimalField(max_digits=5, decimal_places=1,
                                   null=True, blank=True, db_index=True)
+    # Typical no-traffic drive, from listings.services.drivetime. Null until the
+    # Routes sync runs, or when no drivable route exists — the card falls back
+    # to straight-line miles rather than hiding.
+    downtown_drive_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
 
     # ── Nearby groceries (Google Places) ──────────────────────────────────
     groceries_updated = models.DateTimeField(null=True, blank=True,
                             help_text='When nearby groceries were last fetched — used to detect staleness')
+
+    # ── Drive times (Google Routes) ───────────────────────────────────────
+    drive_times_updated = models.DateTimeField(null=True, blank=True,
+                              help_text='When drive times were last fetched — used to detect staleness')
 
     INCOME_QUALIFIER_CATEGORIES = {'rentals', 'roommates'}
 
@@ -220,6 +228,13 @@ class Listing(models.Model):
         form that reuses a prefetch on the caller's queryset.
         """
         return self.nearby_groceries.all()
+
+    @property
+    def has_drive_times(self):
+        """True when any drive time is available — drives the card's footnote."""
+        if self.downtown_drive_minutes:
+            return True
+        return any(link.drive_minutes for link in self.grocery_cards)
 
     @property
     def has_neighborhood_card(self):
@@ -874,6 +889,10 @@ class ListingGroceryStore(models.Model):
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='nearby_groceries')
     store   = models.ForeignKey(GroceryStore, on_delete=models.CASCADE, related_name='listing_links')
     distance_miles = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    # Typical no-traffic drive. Kept alongside distance_miles rather than
+    # replacing it: a route can fail to resolve, and a distance with no time
+    # still reads fine.
+    drive_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ['distance_miles']

@@ -193,6 +193,7 @@ Set on **Railway → `listojo` service → Variables** (and locally in `.env`).
 | `GOOGLE_MAPS_API_KEY` | Browser key (referrer-restricted). |
 | `GOOGLE_GEOCODING_API_KEY` | Server key (API-restricted, no referrer). |
 | `GOOGLE_PLACES_API_KEY` | Server key with **Places API (New)** enabled — nearby grocery chains. Falls back to the geocoding key, then the browser key. |
+| `GOOGLE_ROUTES_API_KEY` | Server key with **Routes API** enabled — drive times. Falls back through the Places, geocoding and browser keys. |
 | `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | Social login. |
 
 ### Neighborhood data
@@ -243,9 +244,12 @@ runs with any subset configured.
   `seed_downtowns` → `assign_downtowns --missing-only` → Gunicorn (2 workers,
   preload, 120s timeout). The two proximity commands are free (no API calls)
   and idempotent; their failure is caught so it cannot stop the web server.
-- **Not on boot, by design:** `fetch_groceries` and `fetch_schools` cost money
-  per API call and would bill on every deploy and restart. Run them manually in
-  the Railway console, or add a cron service like `listojo-cron` above.
+- **Not on boot, by design:** `fetch_groceries`, `fetch_schools` and
+  `fetch_drive_times` cost money per API call and would bill on every deploy and
+  restart. Run them manually in the Railway console, or add a cron service like
+  `listojo-cron` above. Order matters: `assign_downtowns` and `fetch_groceries`
+  must run before `fetch_drive_times`, which only fills in times for places the
+  other two have already matched.
 - **Static:** collected at build time, served by WhiteNoise.
 - **Rollback:** Railway → Deployments → redeploy a previous successful build.
 
