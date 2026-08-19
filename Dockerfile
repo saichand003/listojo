@@ -24,8 +24,19 @@ RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
+# NOTE: railway.json selects the DOCKERFILE builder, so THIS is the start
+# command Railway runs. The Procfile is not used — keep it in sync if you like,
+# but any change that must take effect on deploy belongs here.
+#
+# seed_downtowns / assign_downtowns are free (no API calls) and idempotent, so
+# they run on every boot. fetch_groceries and fetch_schools are deliberately NOT
+# here: they cost money per call and would bill on every deploy and restart.
+# Their failure is caught so a seeding bug can never stop the web server.
 CMD python manage.py migrate --noinput && \
     python manage.py createcachetable && \
+    (python manage.py seed_downtowns && \
+     python manage.py assign_downtowns --missing-only || \
+     echo "WARN: downtown seed/assign failed - starting web anyway") && \
     gunicorn listojo.wsgi \
       --bind 0.0.0.0:$PORT \
       --workers 2 \

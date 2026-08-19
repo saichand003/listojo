@@ -100,7 +100,10 @@ Key service modules:
   - **Variables:** all env vars (see §5).
   - **Networking:** custom domains `listojo.com`, `adminportal.listojo.com`.
   - Deploys auto-trigger on push. Dockerfile `CMD` runs `migrate` +
-    `createcachetable` + Gunicorn on start.
+    `createcachetable` + `seed_downtowns` + `assign_downtowns` + Gunicorn.
+  - **The Dockerfile `CMD` is the start command — the Procfile is NOT used**
+    (railway.json selects the DOCKERFILE builder). Editing the Procfile alone
+    has no effect on deploys.
 - **Optional 2nd service `listojo-cron`:** same repo, **Cron Schedule**
   `0 14 * * *`, **Start Command** `python manage.py send_saved_search_alerts`.
   Needs the same env vars (DB + Resend).
@@ -237,7 +240,12 @@ runs with any subset configured.
 
 - **Trigger:** push to `New-MVP-PartnerPortal` → Railway rebuilds the Docker image.
 - **On boot** (Dockerfile `CMD`): `migrate --noinput` → `createcachetable` →
-  Gunicorn (2 workers, preload, 120s timeout).
+  `seed_downtowns` → `assign_downtowns --missing-only` → Gunicorn (2 workers,
+  preload, 120s timeout). The two proximity commands are free (no API calls)
+  and idempotent; their failure is caught so it cannot stop the web server.
+- **Not on boot, by design:** `fetch_groceries` and `fetch_schools` cost money
+  per API call and would bill on every deploy and restart. Run them manually in
+  the Railway console, or add a cron service like `listojo-cron` above.
 - **Static:** collected at build time, served by WhiteNoise.
 - **Rollback:** Railway → Deployments → redeploy a previous successful build.
 
