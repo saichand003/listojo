@@ -20,7 +20,7 @@ from listings.models import Downtown
 DOWNTOWNS = [
     ('Downtown Dallas',        'Dallas',       'TX', 32.7767, -96.7970),
     ('Downtown Fort Worth',    'Fort Worth',   'TX', 32.7555, -97.3308),
-    ('Las Colinas Urban Center', 'Irving',     'TX', 32.8626, -96.9433),
+    ('Downtown Las Colinas',    'Irving',       'TX', 32.8626, -96.9433),
     ('Downtown Plano',         'Plano',        'TX', 33.0198, -96.6989),
     ('Downtown Frisco',        'Frisco',       'TX', 33.1507, -96.8236),
     ('Downtown Arlington',     'Arlington',    'TX', 32.7357, -97.1081),
