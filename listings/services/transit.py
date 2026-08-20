@@ -42,29 +42,35 @@ DEFAULT_RADIUS_MILES = 5.0
 # modes get a much tighter radius than rail.
 SURFACE_RADIUS_MILES = 1.5
 
-# How many stations the card shows. Three is enough to say "two lines and a bus"
-# without the card turning into a timetable.
-DEFAULT_LIMIT = 3
+# How many of each kind the card shows. Separate limits, not one shared budget:
+# the card gives rail and bus their own sections, so a dense listing no longer
+# has to choose between showing a third rail station and showing any bus at all.
+DEFAULT_RAIL_LIMIT = 3
+DEFAULT_SURFACE_LIMIT = 3
 
-def nearest_stations(lat, lng, *, limit: int = DEFAULT_LIMIT):
+def nearest_stations(lat, lng, *, rail_limit: int = DEFAULT_RAIL_LIMIT,
+                     surface_limit: int = DEFAULT_SURFACE_LIMIT):
     """
-    Return [(TransitStation, miles)] for the closest stations, best first.
+    Return [(TransitStation, miles)] for the closest stations, rail first.
 
-    Rail comes before surface, and within each group the nearest wins. Rail is
-    searched to DEFAULT_RADIUS_MILES and surface stops only to
-    SURFACE_RADIUS_MILES.
+    Rail and surface get independent limits because the card shows them in
+    separate sections. An earlier version spent one shared budget of three and
+    held a single slot back for surface; that was already a fix for dense
+    listings filling every slot with rail, but it still capped a listing at one
+    bus stop however many it had.
 
-    One slot is held for the nearest surface stop whenever there is one in
-    range, even if that means dropping the furthest rail station. Without the
-    reservation, a listing in a dense part of the network fills every slot with
-    rail and the card never mentions the bus stop on the corner — and, worse,
-    the Commute Score's frequent-service component reads the stored links, so it
-    scored zero in exactly the neighbourhoods that earn it.
+    Rail is searched to DEFAULT_RADIUS_MILES and surface stops only to
+    SURFACE_RADIUS_MILES, since a bus stop you cannot walk to is not a fact
+    about the address.
 
     Distance is compared *within* a group and never across modes. Ranking by
     mode first is wrong by a mile, literally: commuter rail outranks light rail,
     so a listing at SMU/Mockingbird Station matched Victory Station 3.9 miles
     away on the strength of it being TRE, and scored 47 instead of 88.
+
+    Surface stops are ordered by distance alone, not by frequency. A frequent
+    stop further away is not more useful than the one outside the door; the card
+    prints each stop's headway so the reader can weigh that themselves.
 
     Returns [] when nothing is in range, which is the normal answer in the parts
     of the footprint no agency serves.
@@ -81,7 +87,10 @@ def nearest_stations(lat, lng, *, limit: int = DEFAULT_LIMIT):
                   .filter(agency__is_active=True,
                           latitude__gte=min_lat, latitude__lte=max_lat,
                           longitude__gte=min_lng, longitude__lte=max_lng)
-                  .select_related('agency'))
+                  .select_related('agency')
+                  # One extra query, and it is what `_distinct_by_route` needs
+                  # to compare route sets without a lookup per station.
+                  .prefetch_related('routes'))
 
     rail, surface = [], []
     for station in candidates:
@@ -96,11 +105,33 @@ def nearest_stations(lat, lng, *, limit: int = DEFAULT_LIMIT):
 
     rail.sort(key=lambda pair: pair[1])
     surface.sort(key=lambda pair: pair[1])
+    return rail[:rail_limit] + _distinct_by_route(surface)[:surface_limit]
 
-    # Hold back one slot for surface when both kinds are available.
-    rail_slots = limit - 1 if (surface and len(rail) >= limit) else limit
-    chosen = rail[:rail_slots]
-    return chosen + surface[:limit - len(chosen)]
+
+def _distinct_by_route(stations):
+    """
+    Drop a stop when every route it serves is already covered by a nearer one.
+
+    Bus stops are directional and come in pairs, so the two poles at one
+    intersection are two rows serving the same route — and a feed names them
+    from opposite streets, so they do not even look like duplicates. Valley
+    Ranch showed "Luna @ Valley View" and "Valley View @ Luna", both route 227,
+    as two of its three bus rows.
+
+    Keeping a stop only when it adds a route guarantees every row earns its
+    place. Same spirit as the grocery service showing one branch per chain.
+
+    `stations` must already be sorted nearest-first: the rule keeps whichever
+    stop for a route comes first.
+    """
+    covered, kept = set(), []
+    for station, miles in stations:
+        routes = {route.pk for route in station.routes.all()}
+        if routes and routes <= covered:
+            continue
+        covered |= routes
+        kept.append((station, miles))
+    return kept
 
 
 def is_stale(instance) -> bool:

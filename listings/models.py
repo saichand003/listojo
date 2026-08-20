@@ -254,13 +254,29 @@ class Listing(models.Model):
     @property
     def transit_cards(self):
         """
-        Nearby stations for display, rail first then nearest.
+        Every nearby station, rail first then nearest.
 
         A bare `.all()` for the same reason as `school_cards`: it is the only
         form that reuses a prefetch on the caller's queryset. Ordering comes
         from ListingTransitStation.Meta, not from a call here.
         """
         return self.nearby_transit.all()
+
+    @property
+    def rail_cards(self):
+        """
+        Rail stations only, for the card's first section.
+
+        Split in Python rather than with a `.filter()` so the caller's
+        prefetch is reused — a filter here re-queries once per listing on any
+        page showing more than one.
+        """
+        return [link for link in self.transit_cards if link.station.is_rail]
+
+    @property
+    def bus_cards(self):
+        """Surface stops only — the card's second section. See `rail_cards`."""
+        return [link for link in self.transit_cards if not link.station.is_rail]
 
     @property
     def transit_agencies(self):
@@ -1179,6 +1195,36 @@ class TransitStation(models.Model):
             # measures anything — see services.transit.nearest_stations.
             models.Index(fields=['latitude', 'longitude'], name='transit_station_latlng'),
         ]
+
+    @property
+    def is_frequent(self):
+        """
+        True when the stop sees enough weekday service to turn up without a
+        timetable. Derived, not stored — it is a threshold over a column we
+        already have, and a stored copy would need a migration the day the
+        threshold moves.
+        """
+        from listings.services.gtfs import FREQUENT_TRIPS_PER_WEEKDAY
+        return self.trips_per_weekday >= FREQUENT_TRIPS_PER_WEEKDAY
+
+    @property
+    def headway_label(self):
+        """
+        Rough service interval, e.g. 'every ~25 min', or '' for rail.
+
+        Rail is excluded because a rail line's value is the line, not its
+        headway, and the badge already says which line it is. Rounded to five
+        minutes: the span it divides by is an assumption, so a figure like
+        '26 min' would imply a precision this does not have.
+        """
+        if self.is_rail or not self.trips_per_weekday:
+            return ''
+
+        from listings.services.gtfs import SERVICE_SPAN_HOURS
+        minutes = SERVICE_SPAN_HOURS * 60 / self.trips_per_weekday
+        if minutes > 60:
+            return 'limited service'
+        return f'every ~{max(5, int(round(minutes / 5)) * 5)} min'
 
     @property
     def route_badges(self):

@@ -1347,16 +1347,54 @@ class GtfsParsingTests(TestCase):
         kwargs.setdefault('calendar', self.CALENDAR)
         return gtfs.parse_feed(_gtfs_zip(**kwargs))
 
-    def test_keeps_rail_and_frequent_stops_only(self):
-        feed = self._parse()
-        names = {s.name for s in feed.stations}
+    def test_keeps_every_served_stop_and_flags_the_frequent_ones(self):
+        """
+        Frequency labels a stop, it does not exclude one.
 
-        self.assertIn('12th Street Station', names)   # rail, kept regardless
-        self.assertIn('Main @ 1st', names)            # 80 trips — frequent
-        self.assertNotIn('Quiet @ 2nd', names)        # 10 trips — dropped
+        The card gives rail and bus separate sections, so a thin bus stop no
+        longer displaces a rail station and there is no reason to hide it.
+        Valley Ranch forced this: its only service is two Irving circulators at
+        ~32 trips a day, so the listing showed no bus at all rather than
+        "every ~25 min".
+        """
+        feed = self._parse()
+        by_name = {s.name: s for s in feed.stations}
+
+        self.assertIn('12th Street Station', by_name)  # rail, kept regardless
+        self.assertIn('Main @ 1st', by_name)           # 80 trips
+        self.assertIn('Quiet @ 2nd', by_name)          # 10 trips — kept, flagged
         # A yard limit is timed through but nobody boards there.
-        self.assertNotIn('East TEX Yard Limit', names)
-        self.assertNotIn('Ferry Dock', names)         # route_type 4 is unmapped
+        self.assertNotIn('East TEX Yard Limit', by_name)
+        self.assertNotIn('Ferry Dock', by_name)        # route_type 4 is unmapped
+
+        self.assertGreaterEqual(by_name['Main @ 1st'].trips_per_weekday,
+                                gtfs.FREQUENT_TRIPS_PER_WEEKDAY)
+        self.assertLess(by_name['Quiet @ 2nd'].trips_per_weekday,
+                        gtfs.FREQUENT_TRIPS_PER_WEEKDAY)
+
+    def test_drops_a_stop_with_no_weekday_service(self):
+        """A stop nothing calls at on a weekday is not somewhere you can go."""
+        feed = self._parse(
+            calendar='service_id,monday,tuesday,wednesday,thursday,friday,'
+                     'saturday,sunday,start_date,end_date\n'
+                     'WK,0,0,0,0,0,1,0,20260101,20261231\n')  # Saturday only
+
+        self.assertEqual([s.name for s in feed.stations], ['12th Street Station'])
+
+    def test_directional_suffixes_are_stripped_from_stop_names(self):
+        """
+        6,460 of DART's 6,976 stops end in a "- S - FS" operator code. It says
+        which pole to service and title-cases into the broken-looking "- S - Fs".
+        """
+        stops = ('stop_id,stop_name,stop_lat,stop_lon\n'
+                 'S2,LUNA @ VALLEY VIEW - S - FS,32.81,-96.81\n')
+        feed = gtfs.parse_feed(_gtfs_zip(
+            routes=self.ROUTES, stops=stops,
+            trips='route_id,service_id,trip_id\nB1,WK,t_busy\n',
+            stop_times=_stop_times([('t_busy', 'S2', 80)]),
+            calendar=self.CALENDAR))
+
+        self.assertEqual([s.name for s in feed.stations], ['Luna @ Valley View'])
 
     def test_station_carries_mode_and_routes(self):
         feed = self._parse()
@@ -1380,8 +1418,11 @@ class GtfsParsingTests(TestCase):
         self.assertEqual(busy.trips_per_weekday, 80)
         self.assertTrue(busy.is_frequent)
 
-        # B2's only stop was filtered out, so the route goes with it.
-        self.assertNotIn('B2', {r.source_id for r in feed.routes})
+        thin = next(r for r in feed.routes if r.source_id == 'B2')
+        self.assertEqual(thin.trips_per_weekday, 10)
+        self.assertFalse(thin.is_frequent)
+        # F1 is a ferry: no stop of its own survives, so the route goes too.
+        self.assertNotIn('F1', {r.source_id for r in feed.routes})
 
     def test_calendar_dates_only_feed_is_counted(self):
         """
@@ -1394,10 +1435,10 @@ class GtfsParsingTests(TestCase):
         feed = self._parse(calendar=None,
                            calendar_dates='service_id,date,exception_type\n'
                                           'WK,20260826,1\n')
-        names = {s.name for s in feed.stations}
+        by_name = {s.name: s for s in feed.stations}
 
-        self.assertIn('Main @ 1st', names)
-        self.assertNotIn('Quiet @ 2nd', names)
+        self.assertEqual(by_name['Main @ 1st'].trips_per_weekday, 80)
+        self.assertEqual(by_name['Quiet @ 2nd'].trips_per_weekday, 10)
 
     def test_holiday_weekend_service_does_not_inflate_a_weekday(self):
         """
@@ -1418,7 +1459,11 @@ class GtfsParsingTests(TestCase):
             # 20260907 is Labor Day, a Monday.
             calendar_dates='service_id,date,exception_type\nSU,20260907,1\n'))
 
-        self.assertNotIn('Quiet @ 2nd', {s.name for s in feed.stations})
+        by_name = {s.name: s for s in feed.stations}
+        # Weekday service only — not weekday plus a Sunday timetable on top.
+        self.assertEqual(by_name['Quiet @ 2nd'].trips_per_weekday, 10)
+        self.assertLess(by_name['Quiet @ 2nd'].trips_per_weekday,
+                        gtfs.FREQUENT_TRIPS_PER_WEEKDAY)
 
     def test_parent_station_platforms_collapse(self):
         """A four-platform station is one row, not four."""
@@ -1499,22 +1544,81 @@ class TransitProximityTests(TestCase):
         self.assertEqual(matches[0][0], near)
         self.assertLess(matches[0][1], 0.1)
 
-    def test_a_surface_stop_keeps_a_slot_among_rail_stations(self):
+    def test_rail_and_surface_have_independent_limits(self):
         """
-        Without a reserved slot, dense areas fill every slot with rail — and the
-        score's frequent-service component reads the stored links, so it scored
-        zero in exactly the neighbourhoods that earn it.
+        The card shows rail and bus in separate sections, so they do not compete
+        for slots. An earlier version spent one budget of three with a single
+        slot held for surface, which capped a listing at one bus stop however
+        many distinct routes it had.
         """
         for i in range(5):
             self._station(f'Rail {i}', 32.80 + i / 1000, -96.80, routes=[self.red])
-        bus = self._station('Bus Stop', 32.8008, -96.8000, mode='bus', rail=False)
+        buses = []
+        for i in range(4):
+            route = TransitRoute.objects.create(
+                agency=self.agency, source_id=f'B{i}', short_name=str(60 + i),
+                mode='bus', trips_per_weekday=90, is_frequent=True)
+            buses.append(self._station(f'Bus {i}', 32.8008 + i / 1000, -96.8000,
+                                       mode='bus', rail=False, routes=[route]))
 
         matches = transit.nearest_stations(Decimal('32.800000'), Decimal('-96.800000'))
+        rail = [st for st, _ in matches if st.is_rail]
+        surface = [st for st, _ in matches if not st.is_rail]
 
-        self.assertEqual(len(matches), transit.DEFAULT_LIMIT)
-        self.assertIn(bus, [station for station, _ in matches])
-        # Rail still leads.
+        self.assertEqual(len(rail), transit.DEFAULT_RAIL_LIMIT)
+        self.assertEqual(len(surface), transit.DEFAULT_SURFACE_LIMIT)
+        # Rail still leads the list.
         self.assertTrue(matches[0][0].is_rail)
+
+    def test_a_stop_adding_no_new_route_is_dropped(self):
+        """
+        Bus stops are directional and come in pairs, and feeds name the two
+        poles from opposite streets, so they do not look like duplicates.
+        Valley Ranch showed "Luna @ Valley View" and "Valley View @ Luna" —
+        both route 227 — as two of its three bus rows.
+        """
+        route = TransitRoute.objects.create(
+            agency=self.agency, source_id='B7', short_name='227',
+            mode='bus', trips_per_weekday=90, is_frequent=True)
+        near = self._station('Luna @ Valley View', 32.8008, -96.8000,
+                             mode='bus', rail=False, routes=[route])
+        self._station('Valley View @ Luna', 32.8009, -96.8000,
+                      mode='bus', rail=False, routes=[route])
+
+        surface = [st for st, _ in
+                   transit.nearest_stations(Decimal('32.800000'), Decimal('-96.800000'))
+                   if not st.is_rail]
+
+        self.assertEqual(surface, [near])
+
+    def test_an_infrequent_stop_is_discounted_against_a_frequent_one(self):
+        """
+        Every stop with weekday service is stored now, so showing one and
+        rewarding it have to be separate decisions — otherwise a listing beside
+        a twice-an-hour circulator scores like one beside a ten-minute route.
+        """
+        thin = TransitRoute.objects.create(
+            agency=self.agency, source_id='B8', short_name='227',
+            mode='bus', trips_per_weekday=32, is_frequent=False)
+        station = self._station('Circulator Stop', 32.8005, -96.8005,
+                                mode='bus', rail=False, routes=[thin])
+        TransitStation.objects.filter(pk=station.pk).update(trips_per_weekday=32)
+        transit.sync_instance(self.listing)
+        self.listing.refresh_from_db()
+
+        thin_score = commute_score.score_listing(self.listing)
+
+        # Same stop, same distance, but frequent.
+        TransitStation.objects.filter(pk=station.pk).update(trips_per_weekday=200)
+        self.listing.refresh_from_db()
+        frequent_score = commute_score.score_listing(self.listing)
+
+        self.assertLess(thin_score.components['transit_access'],
+                        frequent_score.components['transit_access'])
+        self.assertAlmostEqual(
+            thin_score.components['transit_access'],
+            round(frequent_score.components['transit_access']
+                  * commute_score.INFREQUENT_SERVICE_FACTOR, 1), places=1)
 
     def test_surface_stops_use_the_tighter_radius(self):
         """A frequent bus stop only counts if you could walk to it."""
@@ -1720,6 +1824,12 @@ class TransitProximityTests(TestCase):
     def test_detail_page_shows_the_commute_card_and_not_transit_score(self):
         self._station('Deep Ellum Station', 32.8005, -96.8005,
                       routes=[self.red, self.tre])
+        bus_route = TransitRoute.objects.create(
+            agency=self.agency, source_id='B5', short_name='227',
+            mode='bus', trips_per_weekday=32, is_frequent=False)
+        stop = self._station('Luna @ Valley View', 32.8008, -96.8000,
+                             mode='bus', rail=False, routes=[bus_route])
+        TransitStation.objects.filter(pk=stop.pk).update(trips_per_weekday=32)
         transit.sync_instance(self.listing)
         self.listing.refresh_from_db()
         commute_score.assign_instance(self.listing)
@@ -1736,8 +1846,15 @@ class TransitProximityTests(TestCase):
 
         self.assertIn('Commute Score', html)
         self.assertIn(self.listing.commute_score_label, html)
+        # Rail and bus are shown as separate sections.
+        self.assertIn('Rail stations', html)
+        self.assertIn('Bus stops', html)
         self.assertIn('Deep Ellum Station', html)
         self.assertIn('#FD3E3E', html)          # the Red Line badge
+        self.assertIn('Luna @ Valley View', html)
+        # A bus row carries its headway, which is what makes it judgeable.
+        self.assertIn('every ~25 min', html)
+        self.assertLess(html.index('Rail stations'), html.index('Bus stops'))
         # The Walk Score card is untouched; only its transit row is gone.
         self.assertIn('Walk Score', html)
         self.assertIn('Walker&#x27;s Paradise', html)  # escaped by the template

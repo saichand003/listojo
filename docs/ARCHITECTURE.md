@@ -213,7 +213,15 @@ Transit and the Commute Score need no key either, and make no API call at any
 point. Stations, lines and service frequency come from agency **GTFS** feeds —
 static zips published under an open licence — imported by `import_gtfs` into
 `TransitAgency` / `TransitRoute` / `TransitStation`. `fetch_transit` then matches
-listings against that table with local maths and computes the score. The feed URL
+listings against that table with local maths and computes the score.
+
+Every stop with weekday service is imported (~9,200 rows for DART + CapMetro),
+not only the frequent ones. Frequency is a *label*, not a filter: the listing
+card shows rail and bus in separate sections, so a thin bus stop no longer
+displaces a rail station. It still does real work in scoring — a stop short of
+`FREQUENT_TRIPS_PER_WEEKDAY` is discounted, and non-frequent bus routes are
+ignored entirely when counting network reach. Showing a stop and rewarding it
+are separate decisions. The feed URL
 lives on `TransitAgency` and is editable in admin, so a moved feed is not a
 deploy. Seeded agencies: DART (which also carries the TRE, putting Fort Worth on
 the map) and CapMetro.

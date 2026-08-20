@@ -565,8 +565,10 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 {% endif %}
 
                 {% if stations %}
-                <p style="font-size:.8rem;font-weight:600;margin:0 0 .5rem;">Transit nearby</p>
-                {% for link in stations %}
+                {% with rail=listing.rail_cards buses=listing.bus_cards %}
+                {% if rail %}
+                <p style="font-size:.8rem;font-weight:600;margin:0 0 .5rem;">Rail stations</p>
+                {% for link in rail %}
                 <div style="display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;font-size:.82rem;padding:.3rem 0;">
                     <span style="min-width:0;">
                         {% for route in link.station.route_badges %}
@@ -574,13 +576,38 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                         <span style="display:inline-block;padding:.05rem .34rem;border-radius:4px;font-size:.68rem;font-weight:700;background:{{ route.badge_color }};color:{{ route.badge_text_color }};margin-right:.15rem;">{{ route.label }}</span>
                         {% endfor %}
                         <strong style="font-weight:600;">{{ link.station.name }}</strong>
-                        <span style="color:var(--text-3);font-size:.76rem;">{{ link.station.agency.name }} &middot; {{ link.station.get_mode_display }}</span>
+                        <span style="color:var(--text-3);font-size:.76rem;">{{ link.station.agency.name }}{% if link.station.headway_label %} &middot; {{ link.station.headway_label }}{% else %} &middot; {{ link.station.get_mode_display }}{% endif %}</span>
                     </span>
                     <span style="font-weight:700;white-space:nowrap;">
                         {{ link.display_miles|floatformat:1 }} mi{% if link.walk_minutes %}<span style="color:var(--text-3);font-weight:600;"> &middot; {{ link.walk_minutes }} min walk</span>{% elif link.drive_minutes %}<span style="color:var(--text-3);font-weight:600;"> &middot; {{ link.drive_minutes }} min drive</span>{% endif %}
                     </span>
                 </div>
                 {% endfor %}
+                {% endif %}
+
+                {% if buses %}
+                {# Bus sits below rail and carries a headway rather than a mode #}
+                {# label, because "every ~25 min" is the fact that decides       #}
+                {# whether a stop is any use — see TransitStation.headway_label. #}
+                <p style="font-size:.8rem;font-weight:600;margin:{% if rail %}.85rem{% else %}0{% endif %} 0 .5rem;">Bus stops</p>
+                {% for link in buses %}
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;font-size:.82rem;padding:.3rem 0;">
+                    <span style="min-width:0;">
+                        {% for route in link.station.route_badges %}
+                        {# Colours come from the feed; the text colour is derived for contrast — see TransitRoute.badge_text_color. #}
+                        <span style="display:inline-block;padding:.05rem .34rem;border-radius:4px;font-size:.68rem;font-weight:700;background:{{ route.badge_color }};color:{{ route.badge_text_color }};margin-right:.15rem;">{{ route.label }}</span>
+                        {% endfor %}
+                        <strong style="font-weight:600;">{{ link.station.name }}</strong>
+                        <span style="color:var(--text-3);font-size:.76rem;">{{ link.station.agency.name }}{% if link.station.headway_label %} &middot; {{ link.station.headway_label }}{% else %} &middot; {{ link.station.get_mode_display }}{% endif %}</span>
+                    </span>
+                    <span style="font-weight:700;white-space:nowrap;">
+                        {{ link.display_miles|floatformat:1 }} mi{% if link.walk_minutes %}<span style="color:var(--text-3);font-weight:600;"> &middot; {{ link.walk_minutes }} min walk</span>{% elif link.drive_minutes %}<span style="color:var(--text-3);font-weight:600;"> &middot; {{ link.drive_minutes }} min drive</span>{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
                 <p style="font-size:.72rem;color:var(--text-3);margin:.6rem 0 0;">
                     Schedule data from {% for name in listing.transit_agencies %}{{ name }}{% if not forloop.last %}, {% endif %}{% endfor %}
                 </p>

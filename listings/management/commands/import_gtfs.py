@@ -23,7 +23,7 @@ from django.utils import timezone
 
 from listings.models import (StationRoute, TransitAgency, TransitRoute,
                              TransitStation)
-from listings.services.gtfs import load_feed
+from listings.services.gtfs import FREQUENT_TRIPS_PER_WEEKDAY, load_feed
 
 # Seeded by --seed. URLs verified reachable 2026-08-20; they live in the
 # database, so a moved feed is an admin edit rather than a deploy.
@@ -93,9 +93,12 @@ class Command(BaseCommand):
             return
 
         rail = sum(1 for s in feed.stations if s.is_rail)
+        frequent = sum(1 for s in feed.stations
+                       if not s.is_rail and s.trips_per_weekday >= FREQUENT_TRIPS_PER_WEEKDAY)
+        surface = len(feed.stations) - rail
         self.stdout.write(
             f'  {len(feed.routes)} route(s), {len(feed.stations)} station(s) '
-            f'({rail} rail, {len(feed.stations) - rail} frequent surface)')
+            f'({rail} rail, {surface} surface — {frequent} of them frequent)')
 
         if dry:
             for station in sorted(feed.stations, key=lambda s: (not s.is_rail, s.name))[:15]:

@@ -50,12 +50,28 @@ _MAX_ZIP_BYTES = 250 * 1024 * 1024  # refuse a feed large enough to exhaust memo
 # A stop qualifies as "frequent" at 60 trips on its busiest weekday.
 #
 # Bus stops are directional, so a stop sees one direction of a route. Sixty
-# trips over a 14-hour service span is a bus roughly every 15 minutes, which is
-# the usual threshold for service you can turn up to without consulting a
-# timetable. Measured against DART's feed it keeps 1,634 of 6,837 stops — the
-# ~24% that carry a genuine signal, instead of the 93% that clear 30 trips and
-# would put a near-identical row on every listing in the metro.
+# trips over a SERVICE_SPAN_HOURS day is a bus roughly every 15 minutes, which
+# is the usual threshold for service you can turn up to without consulting a
+# timetable. Against DART's feed, 1,634 of 6,837 stops clear it.
+#
+# This is now a *label*, not a filter. Every stop with weekday service is
+# imported and the flag rides along on the row, because the listing card shows
+# rail and bus in separate sections: a bus stop no longer displaces a rail
+# station, so there is no longer a reason to hide the ones that fall short.
+# Valley Ranch is the case that forced this — its only service is Irving
+# circulators 227 and 229 at ~32 trips a day, so a listing there showed no bus
+# at all rather than "every ~25 min", which is the more useful thing to say.
+#
+# The distinction still does real work: services.commute_score discounts a
+# non-frequent stop heavily, and network reach ignores non-frequent bus routes
+# outright. Showing a stop and rewarding it are different decisions.
 FREQUENT_TRIPS_PER_WEEKDAY = 60
+
+# Assumed span of a weekday service day, used only to turn a trip count into a
+# human headway ("every ~25 min"). Approximate by nature: a stop's real first
+# and last departure vary, and the label is rounded to five minutes to avoid
+# implying a precision the arithmetic does not have.
+SERVICE_SPAN_HOURS = 14
 
 # Non-passenger points that appear in stops.txt because trips are timed through
 # them. Left in, they would show up as stations nobody can board at: DART's feed
@@ -65,6 +81,14 @@ _NON_PASSENGER = re.compile(
     r'maintenance|shop\s*track|storage\s*track|wye|siding)\b',
     re.IGNORECASE,
 )
+
+# Trailing "- <direction> - <position>" on a stop name, e.g. the "- S - FS" in
+# "LUNA @ VALLEY VIEW - S - FS" (southbound, far side of the intersection).
+# 6,460 of DART's 6,976 stops carry one. It tells an operator which pole to
+# service and tells a renter nothing, and title-casing turns it into the
+# distinctly broken-looking "- S - Fs". The spacing is inconsistent in the feed
+# ("- E- NS" appears a dozen times), hence the loose separators.
+_STOP_SUFFIX = re.compile(r'\s*-\s*[NSEW]{1,2}\s*-\s*(NS|FS|MB)\s*$', re.IGNORECASE)
 
 _WEEKDAYS = ('monday', 'tuesday', 'wednesday', 'thursday', 'friday')
 
@@ -279,10 +303,9 @@ def parse_feed(data: bytes) -> FeedRecord | None:
     """
     Turn the bytes of a GTFS zip into a FeedRecord, or None if unreadable.
 
-    Stations are filtered to the ones worth showing: every rail stop, plus any
-    other stop clearing FREQUENT_TRIPS_PER_WEEKDAY. Rail is kept regardless of
-    frequency because a commuter line running eight times a day is still the
-    thing a renter is choosing the neighbourhood for.
+    Stations kept: every rail stop, plus every surface stop with any weekday
+    service. Frequency is recorded on the row rather than used to exclude it —
+    see FREQUENT_TRIPS_PER_WEEKDAY.
     """
     from listings.models import GTFS_ROUTE_TYPES, MODE_RANK, RAIL_MODES
 
@@ -354,6 +377,9 @@ def parse_feed(data: bytes) -> FeedRecord | None:
             name = _clean(row.get('stop_name'))
             if not name or _NON_PASSENGER.search(name):
                 continue
+            # Strip before title-casing: the suffix is upper-case in the feed,
+            # which is what the case check in `_title` keys on.
+            name = _STOP_SUFFIX.sub('', name).strip() or name
 
             try:
                 lat = float(_clean(row.get('stop_lat')))
@@ -371,7 +397,11 @@ def parse_feed(data: bytes) -> FeedRecord | None:
                 continue
             is_rail = mode in RAIL_MODES
             trips = stop_counts.get(stop_id, 0)
-            if not is_rail and trips < FREQUENT_TRIPS_PER_WEEKDAY:
+            # Rail is kept whatever its frequency — a commuter line running
+            # eight times a day is still why someone picks the neighbourhood.
+            # Surface stops need only some weekday service; a stop with none is
+            # a seasonal or on-request point nobody can plan around.
+            if not is_rail and trips <= 0:
                 continue
 
             feed.stations.append(StationRecord(

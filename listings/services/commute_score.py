@@ -46,10 +46,11 @@ So access is now one component scored on whichever station is *best*, where
 "best" already accounts for mode:
 
   * A bus stop earns 60% of what a rail station at the same distance earns
-    (MODE_ACCESS_FACTOR). Rail is still worth more — it is faster, it is not
-    stuck in the traffic you are trying to avoid, and it is what most renters
-    are actually choosing the address for — but the difference is a discount,
-    not a wall.
+    (MODE_ACCESS_FACTOR), and a stop short of the frequency threshold is
+    discounted again (INFREQUENT_SERVICE_FACTOR). Rail is still worth more — it
+    is faster, it is not stuck in the traffic you are trying to avoid, and it is
+    what most renters are actually choosing the address for — but the difference
+    is a discount, not a wall.
   * For network reach, a frequent bus route counts as half a rail line. Four
     frequent bus routes are a real network; they are not four rail lines.
 
@@ -89,6 +90,17 @@ MODE_ACCESS_FACTOR = {
     'streetcar':     0.8,
     'bus':           0.6,
 }
+
+# Applied on top of the mode factor when a surface stop falls short of
+# FREQUENT_TRIPS_PER_WEEKDAY.
+#
+# This exists because the card now shows every bus stop with weekday service,
+# not only the frequent ones — see services.gtfs. Showing a stop and rewarding
+# it are separate decisions: without this discount, a listing beside a
+# twice-an-hour circulator would score like one beside a route running every ten
+# minutes, and the whole point of weighting bus at 0.6 would be lost. A stop you
+# have to plan your day around is worth something, but not that.
+INFREQUENT_SERVICE_FACTOR = 0.55
 
 # Line-equivalents reachable → points. Flattens fast on purpose: the second line
 # is worth far more than the fourth, because it is the one that turns a single
@@ -162,6 +174,9 @@ def _access_points(link) -> float:
         full, zero = SURFACE_FULL_MI, SURFACE_ZERO_MI
 
     factor = MODE_ACCESS_FACTOR.get(station.mode, MODE_ACCESS_FACTOR['bus'])
+    if not station.is_rail and not station.is_frequent:
+        factor *= INFREQUENT_SERVICE_FACTOR
+
     return _falloff(link.distance_miles, full, zero, ACCESS_POINTS) * factor
 
 
