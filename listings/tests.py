@@ -14,10 +14,12 @@ from django.urls import reverse
 
 from django.core.management import call_command
 
-from listings.models import (Community, Downtown, FloorPlan, GroceryStore, GuidedSearchEvent,
-                             Listing, ListingGroceryStore, ListingInquiry, ListingSchool, School,
-                             Unit, UserListingEvent)
-from listings.services import distance, downtowns, drivetime, greatschools, groceries
+from listings.models import (MODE_BADGE_COLORS, Community, Downtown, FloorPlan, GroceryStore,
+                             GuidedSearchEvent, Listing, ListingGroceryStore, ListingInquiry,
+                             ListingSchool, ListingTransitStation, School, StationRoute,
+                             TransitAgency, TransitRoute, TransitStation, Unit, UserListingEvent)
+from listings.services import (commute_score, distance, downtowns, drivetime, greatschools,
+                               groceries, gtfs, transit)
 from portal.models import Lead
 
 
@@ -1260,3 +1262,484 @@ class TemplateRenderHygieneTests(TestCase):
         response = Client().get('/favicon.ico')
         self.assertIn(response.status_code, (301, 302))
         self.assertIn('favicon', response.headers['Location'])
+
+
+def _gtfs_zip(*, calendar=None, calendar_dates=None, routes=None,
+              stops=None, trips=None, stop_times=None, feed_info=True):
+    """
+    Build a GTFS zip in memory.
+
+    A real zip rather than a mocked parser: the parser's whole job is tolerating
+    the shapes agencies actually publish, so a test that stubbed it out would
+    pin nothing worth pinning.
+    """
+    files = {
+        'agency.txt': 'agency_id,agency_name\n1,TEST TRANSIT\n',
+        'routes.txt': routes if routes is not None else '',
+        'stops.txt': stops if stops is not None else '',
+        'trips.txt': trips if trips is not None else '',
+        'stop_times.txt': stop_times if stop_times is not None else '',
+    }
+    if calendar is not None:
+        files['calendar.txt'] = calendar
+    if calendar_dates is not None:
+        files['calendar_dates.txt'] = calendar_dates
+    if feed_info:
+        files['feed_info.txt'] = ('feed_publisher_name,feed_lang,feed_version\n'
+                                  'TEST,en,v1\n')
+
+    buf = io.BytesIO()
+    import zipfile
+    with zipfile.ZipFile(buf, 'w') as zf:
+        for name, body in files.items():
+            zf.writestr(name, body)
+    return buf.getvalue()
+
+
+def _stop_times(pairs):
+    """`pairs` is [(trip_id, stop_id, n_calls)] → a stop_times.txt body."""
+    rows = ['trip_id,arrival_time,departure_time,stop_id,stop_sequence']
+    seq = 0
+    for trip_id, stop_id, n in pairs:
+        for _ in range(n):
+            seq += 1
+            rows.append(f'{trip_id},08:00:00,08:00:00,{stop_id},{seq}')
+    return '\n'.join(rows) + '\n'
+
+
+class GtfsParsingTests(TestCase):
+    """
+    Covers services.gtfs — the shapes real agency feeds actually ship in.
+
+    Nothing here downloads anything: each test builds the zip it needs.
+    """
+
+    ROUTES = (
+        'route_id,route_short_name,route_long_name,route_type,route_color,route_text_color\n'
+        'R1,RED,RED LINE,0,FD3E3E,FFFFFF\n'          # light rail
+        'B1,101,MAIN STREET,3,,\n'                   # frequent bus
+        'B2,102,QUIET LANE,3,,\n'                    # infrequent bus
+        'F1,900,FERRY,4,,\n'                         # unmappable route_type
+    )
+    STOPS = (
+        'stop_id,stop_name,stop_lat,stop_lon\n'
+        'S1,12TH STREET STATION,32.800000,-96.800000\n'
+        'S2,MAIN @ 1ST,32.810000,-96.810000\n'
+        'S3,QUIET @ 2ND,32.820000,-96.820000\n'
+        'S4,EAST TEX YARD LIMIT,32.830000,-96.830000\n'
+        'S5,FERRY DOCK,32.840000,-96.840000\n'
+    )
+    TRIPS = ('route_id,service_id,trip_id\n'
+             'R1,WK,t_rail\nB1,WK,t_busy\nB2,WK,t_quiet\nF1,WK,t_ferry\n')
+    # 80 calls clears FREQUENT_TRIPS_PER_WEEKDAY (60); 10 does not.
+    TIMES = _stop_times([('t_rail', 'S1', 12), ('t_rail', 'S4', 12),
+                         ('t_busy', 'S2', 80), ('t_quiet', 'S3', 10),
+                         ('t_ferry', 'S5', 40)])
+    CALENDAR = ('service_id,monday,tuesday,wednesday,thursday,friday,'
+                'saturday,sunday,start_date,end_date\n'
+                'WK,1,1,1,1,1,0,0,20260101,20261231\n')
+
+    def _parse(self, **kwargs):
+        kwargs.setdefault('routes', self.ROUTES)
+        kwargs.setdefault('stops', self.STOPS)
+        kwargs.setdefault('trips', self.TRIPS)
+        kwargs.setdefault('stop_times', self.TIMES)
+        kwargs.setdefault('calendar', self.CALENDAR)
+        return gtfs.parse_feed(_gtfs_zip(**kwargs))
+
+    def test_keeps_rail_and_frequent_stops_only(self):
+        feed = self._parse()
+        names = {s.name for s in feed.stations}
+
+        self.assertIn('12th Street Station', names)   # rail, kept regardless
+        self.assertIn('Main @ 1st', names)            # 80 trips — frequent
+        self.assertNotIn('Quiet @ 2nd', names)        # 10 trips — dropped
+        # A yard limit is timed through but nobody boards there.
+        self.assertNotIn('East TEX Yard Limit', names)
+        self.assertNotIn('Ferry Dock', names)         # route_type 4 is unmapped
+
+    def test_station_carries_mode_and_routes(self):
+        feed = self._parse()
+        station = next(s for s in feed.stations if s.name == '12th Street Station')
+
+        self.assertEqual(station.mode, 'light_rail')
+        self.assertTrue(station.is_rail)
+        self.assertEqual(station.route_ids, ['R1'])
+
+        bus = next(s for s in feed.stations if s.name == 'Main @ 1st')
+        self.assertFalse(bus.is_rail)
+
+    def test_route_colours_and_frequency(self):
+        feed = self._parse()
+        red = next(r for r in feed.routes if r.source_id == 'R1')
+
+        self.assertEqual(red.color, 'FD3E3E')
+        self.assertEqual(red.mode, 'light_rail')
+
+        busy = next(r for r in feed.routes if r.source_id == 'B1')
+        self.assertEqual(busy.trips_per_weekday, 80)
+        self.assertTrue(busy.is_frequent)
+
+        # B2's only stop was filtered out, so the route goes with it.
+        self.assertNotIn('B2', {r.source_id for r in feed.routes})
+
+    def test_calendar_dates_only_feed_is_counted(self):
+        """
+        CapMetro ships no calendar.txt at all — service is entirely exceptions.
+
+        Reading only calendar.txt scored every one of its stops at zero trips,
+        which silently dropped every frequent bus stop in Austin.
+        """
+        # 20260826 is a Wednesday.
+        feed = self._parse(calendar=None,
+                           calendar_dates='service_id,date,exception_type\n'
+                                          'WK,20260826,1\n')
+        names = {s.name for s in feed.stations}
+
+        self.assertIn('Main @ 1st', names)
+        self.assertNotIn('Quiet @ 2nd', names)
+
+    def test_holiday_weekend_service_does_not_inflate_a_weekday(self):
+        """
+        DART adds its *Sunday* services on Labor Day, a Monday.
+
+        Folded in naively, Monday gets a weekday timetable plus a full Sunday
+        one; because the count takes the busiest weekday, that fabricated day
+        wins and more than doubles the stops clearing the threshold.
+        """
+        calendar = self.CALENDAR + 'SU,0,0,0,0,0,0,1,20260101,20261231\n'
+        trips = self.TRIPS + 'B2,SU,t_quiet_sun\n'
+        # On its own the Sunday trip is well under the threshold; added to
+        # Monday's weekday total it would carry S3 over it.
+        times = self.TIMES + _stop_times([('t_quiet_sun', 'S3', 55)])
+        feed = gtfs.parse_feed(_gtfs_zip(
+            routes=self.ROUTES, stops=self.STOPS, trips=trips,
+            stop_times=times, calendar=calendar,
+            # 20260907 is Labor Day, a Monday.
+            calendar_dates='service_id,date,exception_type\nSU,20260907,1\n'))
+
+        self.assertNotIn('Quiet @ 2nd', {s.name for s in feed.stations})
+
+    def test_parent_station_platforms_collapse(self):
+        """A four-platform station is one row, not four."""
+        stops = ('stop_id,stop_name,stop_lat,stop_lon,location_type,parent_station\n'
+                 'P0,UNION STATION,32.80,-96.80,1,\n'
+                 'P1,UNION STATION PLATFORM 1,32.80,-96.80,0,P0\n'
+                 'P2,UNION STATION PLATFORM 2,32.80,-96.80,0,P0\n')
+        times = _stop_times([('t_rail', 'P0', 6), ('t_rail', 'P1', 6),
+                             ('t_rail', 'P2', 6)])
+        feed = gtfs.parse_feed(_gtfs_zip(
+            routes=self.ROUTES, stops=stops,
+            trips='route_id,service_id,trip_id\nR1,WK,t_rail\n',
+            stop_times=times, calendar=self.CALENDAR))
+
+        self.assertEqual([s.name for s in feed.stations], ['Union Station'])
+
+    def test_shouted_names_are_title_cased(self):
+        self.assertEqual(gtfs._title('12TH STREET STATION'), '12th Street Station')
+        self.assertEqual(gtfs._title('MCKINNEY AVENUE TROLLEY'), 'McKinney Avenue Trolley')
+        self.assertEqual(gtfs._title('SMU/MOCKINGBIRD STATION'), 'SMU/Mockingbird Station')
+        # Already mixed case — the agency knew what it meant.
+        self.assertEqual(gtfs._title('CityLine/Bush'), 'CityLine/Bush')
+
+    def test_unreadable_payload_returns_none(self):
+        """None, not an exception and not an empty feed — see load_feed."""
+        self.assertIsNone(gtfs.parse_feed(b'not a zip'))
+
+
+class TransitProximityTests(TestCase):
+    """Covers services.transit and the Commute Score built on top of it."""
+
+    def setUp(self):
+        patcher = mock.patch('listings.services.geocoding.geocode_address',
+                             return_value=None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.agency = TransitAgency.objects.create(
+            slug='test', name='TEST', gtfs_url='https://example.com/gtfs.zip')
+        self.red = TransitRoute.objects.create(
+            agency=self.agency, source_id='R', short_name='RED',
+            mode='light_rail', color='FD3E3E', trips_per_weekday=200,
+            is_frequent=True)
+        self.tre = TransitRoute.objects.create(
+            agency=self.agency, source_id='T', short_name='TRE',
+            mode='commuter_rail', color='112458', trips_per_weekday=40)
+
+        self.owner = User.objects.create_user(username='transitowner', password='pw')
+        self.listing = Listing.objects.create(
+            owner=self.owner, title='Transit Rental', category='rentals',
+            price=Decimal('1500'), city='Dallas', state='TX', status='active',
+            latitude=Decimal('32.800000'), longitude=Decimal('-96.800000'))
+
+    def _station(self, name, lat, lng, *, mode='light_rail', routes=(), rail=True):
+        station = TransitStation.objects.create(
+            agency=self.agency, source_id=name, name=name,
+            latitude=Decimal(str(lat)), longitude=Decimal(str(lng)),
+            mode=mode, is_rail=rail, trips_per_weekday=120)
+        for route in routes:
+            StationRoute.objects.create(station=station, route=route)
+        return station
+
+    def test_nearest_rail_wins_over_a_higher_ranked_mode_further_away(self):
+        """
+        Distance decides between two rail stations; mode must not.
+
+        Ranking by mode first put a commuter-rail station 3.9 miles away ahead
+        of the light-rail station across the street, because commuter rail
+        outranks light rail. A listing on top of SMU/Mockingbird scored 47.
+        """
+        near = self._station('Near Light Rail', 32.8005, -96.8005,
+                             mode='light_rail', routes=[self.red])
+        self._station('Far Commuter Rail', 32.8600, -96.8600,
+                      mode='commuter_rail', routes=[self.tre])
+
+        matches = transit.nearest_stations(Decimal('32.800000'), Decimal('-96.800000'))
+
+        self.assertEqual(matches[0][0], near)
+        self.assertLess(matches[0][1], 0.1)
+
+    def test_a_surface_stop_keeps_a_slot_among_rail_stations(self):
+        """
+        Without a reserved slot, dense areas fill every slot with rail — and the
+        score's frequent-service component reads the stored links, so it scored
+        zero in exactly the neighbourhoods that earn it.
+        """
+        for i in range(5):
+            self._station(f'Rail {i}', 32.80 + i / 1000, -96.80, routes=[self.red])
+        bus = self._station('Bus Stop', 32.8008, -96.8000, mode='bus', rail=False)
+
+        matches = transit.nearest_stations(Decimal('32.800000'), Decimal('-96.800000'))
+
+        self.assertEqual(len(matches), transit.DEFAULT_LIMIT)
+        self.assertIn(bus, [station for station, _ in matches])
+        # Rail still leads.
+        self.assertTrue(matches[0][0].is_rail)
+
+    def test_surface_stops_use_the_tighter_radius(self):
+        """A frequent bus stop only counts if you could walk to it."""
+        self._station('Far Bus', 32.8500, -96.8000, mode='bus', rail=False)
+
+        self.assertEqual(transit.nearest_stations(Decimal('32.800000'),
+                                                  Decimal('-96.800000')), [])
+
+    def test_sync_writes_links_and_clears_stale_ones(self):
+        old = self._station('Old Station', 32.8005, -96.8005, routes=[self.red])
+        count = transit.sync_instance(self.listing)
+
+        self.assertEqual(count, 1)
+        self.assertEqual(self.listing.nearby_transit.count(), 1)
+
+        # The listing moves across town; the old link must not survive.
+        old.delete()
+        self._station('New Station', 32.9005, -96.9005, routes=[self.red])
+        self.listing.latitude = Decimal('32.900000')
+        self.listing.longitude = Decimal('-96.900000')
+        self.listing.save()
+        transit.sync_instance(self.listing, force=True)
+
+        self.assertEqual([l.station.name for l in self.listing.transit_cards],
+                         ['New Station'])
+
+    def test_score_is_none_until_the_listing_has_been_matched(self):
+        """
+        Unmatched is 'we do not know', not zero.
+
+        A hard zero on the card would read as a claim we cannot support.
+        """
+        self.assertIsNone(commute_score.score_listing(self.listing))
+
+        self.listing.latitude = None
+        self.assertIsNone(commute_score.score_listing(self.listing))
+
+    def test_score_rewards_rail_proximity_and_line_count(self):
+        self._station('Interchange', 32.8005, -96.8005, routes=[self.red, self.tre])
+        transit.sync_instance(self.listing)
+        self.listing.refresh_from_db()
+        self.listing.downtown_drive_minutes = 10
+
+        result = commute_score.score_listing(self.listing)
+
+        # Rail at the door takes the full access allocation, undiscounted.
+        self.assertEqual(result.components['transit_access'],
+                         commute_score.ACCESS_POINTS)
+        self.assertEqual(result.components['network_reach'],
+                         commute_score.REACH_POINTS[2])
+        self.assertEqual(result.components['downtown_drive'],
+                         commute_score.DOWNTOWN_POINTS)
+        self.assertEqual(result.score, 94)
+        self.assertEqual(result.label, 'Exceptional Transit')
+
+    def test_score_is_zero_but_present_where_nothing_is_in_range(self):
+        """A matched listing with no transit scores zero — that is a finding."""
+        transit.sync_instance(self.listing)
+        self.listing.refresh_from_db()
+
+        result = commute_score.score_listing(self.listing)
+
+        self.assertEqual(result.score, 0)
+        self.assertEqual(result.label, 'Car-Dependent')
+
+    def test_two_stations_on_one_line_count_as_one_line(self):
+        """Reach counts lines, not stations — a corridor is not an interchange."""
+        self._station('Stop A', 32.8005, -96.8005, routes=[self.red])
+        self._station('Stop B', 32.8105, -96.8105, routes=[self.red])
+        transit.sync_instance(self.listing)
+        self.listing.refresh_from_db()
+
+        result = commute_score.score_listing(self.listing)
+
+        self.assertEqual(result.components['network_reach'],
+                         commute_score.REACH_POINTS[1])
+
+    def test_a_bus_only_address_is_not_capped_below_the_rail_bands(self):
+        """
+        An earlier cut scored rail and bus as separate components and counted
+        only rail lines toward reach, so 65 of the 100 points were unreachable
+        without rail. A bus-only address was capped at 35 however good its
+        service — a corner with four frequent routes and a ten-minute drive
+        downtown was permanently "Some Transit".
+        """
+        routes = [TransitRoute.objects.create(
+            agency=self.agency, source_id=f'B{i}', short_name=str(50 + i),
+            mode='bus', trips_per_weekday=90, is_frequent=True) for i in range(4)]
+        self._station('Busy Corner', 32.8010, -96.8000,
+                      mode='bus', rail=False, routes=routes)
+        transit.sync_instance(self.listing)
+        self.listing.refresh_from_db()
+        self.listing.downtown_drive_minutes = 10
+
+        result = commute_score.score_listing(self.listing)
+
+        # A bus stop earns its mode's share of the access allocation, not all
+        # of it, and four frequent routes count as two line-equivalents.
+        self.assertEqual(result.components['transit_access'],
+                         round(commute_score.ACCESS_POINTS
+                               * commute_score.MODE_ACCESS_FACTOR['bus'], 1))
+        self.assertEqual(result.components['network_reach'],
+                         commute_score.REACH_POINTS[2])
+        self.assertEqual(result.label, 'Excellent Transit')
+        # Still short of what the same address would score with rail.
+        self.assertLess(result.score, 100)
+
+    def test_no_transit_at_all_cannot_claim_a_transit_band(self):
+        """
+        The downtown drive is the one component a listing earns with no transit
+        whatsoever, because it measures a car commute. Its ceiling is therefore
+        the ceiling for an address with nothing in range, and it must stay below
+        the "Some Transit" floor or that address claims a stop it does not have.
+        """
+        some_transit_floor = dict((label, floor) for floor, label
+                                  in commute_score.SCORE_BANDS)['Some Transit']
+        self.assertLess(commute_score.DOWNTOWN_POINTS, some_transit_floor)
+
+        transit.sync_instance(self.listing)
+        self.listing.refresh_from_db()
+        self.listing.downtown_drive_minutes = 1  # right next to downtown
+
+        result = commute_score.score_listing(self.listing)
+
+        self.assertEqual(result.components['transit_access'], 0.0)
+        self.assertEqual(result.label, 'Car-Dependent')
+
+    def test_reach_ignores_a_bus_route_that_is_not_itself_frequent(self):
+        """
+        A stop can clear the frequency threshold on the sum of several thin
+        routes, and none of those is a route you would plan a commute around.
+        """
+        thin = TransitRoute.objects.create(
+            agency=self.agency, source_id='B9', short_name='99',
+            mode='bus', trips_per_weekday=10, is_frequent=False)
+        self._station('Thin Corner', 32.8010, -96.8000,
+                      mode='bus', rail=False, routes=[thin])
+        transit.sync_instance(self.listing)
+        self.listing.refresh_from_db()
+
+        result = commute_score.score_listing(self.listing)
+
+        self.assertEqual(result.components['network_reach'], 0.0)
+        # The stop itself still counts for access — it is a real stop.
+        self.assertGreater(result.components['transit_access'], 0.0)
+
+    def test_assign_instance_clears_a_score_it_can_no_longer_support(self):
+        self.listing.commute_score = 88
+        self.listing.commute_score_label = 'Excellent Transit'
+        self.listing.latitude = None
+
+        self.assertIsNone(commute_score.assign_instance(self.listing))
+        self.assertIsNone(self.listing.commute_score)
+        self.assertEqual(self.listing.commute_score_label, '')
+
+    def test_badge_text_colour_is_derived_not_taken_from_the_feed(self):
+        """
+        DART publishes the Silver Line as C0C0C0 with FFFFFF text — white on
+        light grey. The feed does not get to ship us an illegible badge.
+        """
+        silver = TransitRoute.objects.create(
+            agency=self.agency, source_id='S', short_name='SILVER',
+            mode='commuter_rail', color='C0C0C0', text_color='FFFFFF')
+
+        self.assertEqual(silver.badge_color, '#C0C0C0')
+        self.assertEqual(silver.badge_text_color, '#111827')
+        self.assertEqual(self.tre.badge_text_color, '#ffffff')
+
+    def test_route_with_no_colour_falls_back_to_its_mode(self):
+        plain = TransitRoute.objects.create(
+            agency=self.agency, source_id='P', short_name='55', mode='bus')
+
+        self.assertEqual(plain.badge_color, MODE_BADGE_COLORS['bus'])
+
+    def test_walk_minutes_only_for_walkable_distances(self):
+        station = self._station('Walkable', 32.8005, -96.8005, routes=[self.red])
+        link = ListingTransitStation.objects.create(
+            listing=self.listing, station=station, distance_miles=Decimal('0.4'))
+        self.assertEqual(link.walk_minutes, 8)
+
+        link.distance_miles = Decimal('2.5')
+        self.assertIsNone(link.walk_minutes)
+
+    def test_drive_time_matrix_includes_stations(self):
+        """
+        Stations ride along in the downtown/grocery matrix rather than taking a
+        call of their own — Routes bills per element, so extra destinations on
+        an existing request are far cheaper than a second request.
+        """
+        station = self._station('Rail', 32.8005, -96.8005, routes=[self.red])
+        transit.sync_instance(self.listing)
+        self.listing.refresh_from_db()
+
+        with mock.patch('listings.services.drivetime.fetch_drive_matrix',
+                        return_value={0: {'minutes': 7, 'miles': 2.1}}) as matrix:
+            drivetime.sync_instance(self.listing, force=True)
+
+        _, targets = matrix.call_args[0]
+        self.assertEqual(len(targets), 1)  # one station, no downtown or grocery
+        link = self.listing.nearby_transit.get(station=station)
+        self.assertEqual(link.drive_minutes, 7)
+
+    def test_detail_page_shows_the_commute_card_and_not_transit_score(self):
+        self._station('Deep Ellum Station', 32.8005, -96.8005,
+                      routes=[self.red, self.tre])
+        transit.sync_instance(self.listing)
+        self.listing.refresh_from_db()
+        commute_score.assign_instance(self.listing)
+        self.listing.save()
+        # Populated but deliberately not rendered — see Listing.walk_score_rows.
+        Listing.objects.filter(pk=self.listing.pk).update(
+            walk_score=91, walk_score_description="Walker's Paradise",
+            # A description no band name could collide with — 'Good Transit'
+            # is itself a Commute Score band, so it proves nothing here.
+            transit_score=62, transit_description='WALKSCORE-TRANSIT-MARKER')
+
+        html = self.client.get(reverse('listing_detail',
+                                       args=[self.listing.pk])).content.decode()
+
+        self.assertIn('Commute Score', html)
+        self.assertIn(self.listing.commute_score_label, html)
+        self.assertIn('Deep Ellum Station', html)
+        self.assertIn('#FD3E3E', html)          # the Red Line badge
+        # The Walk Score card is untouched; only its transit row is gone.
+        self.assertIn('Walk Score', html)
+        self.assertIn('Walker&#x27;s Paradise', html)  # escaped by the template
+        self.assertNotIn('Transit Score', html)
+        self.assertNotIn('WALKSCORE-TRANSIT-MARKER', html)

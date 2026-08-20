@@ -209,6 +209,20 @@ stored and the card hides itself, rather than erroring.
 Nearest-downtown needs no key at all: it is local maths over the curated
 `Downtown` table (`seed_downtowns`, then `assign_downtowns`).
 
+Transit and the Commute Score need no key either, and make no API call at any
+point. Stations, lines and service frequency come from agency **GTFS** feeds —
+static zips published under an open licence — imported by `import_gtfs` into
+`TransitAgency` / `TransitRoute` / `TransitStation`. `fetch_transit` then matches
+listings against that table with local maths and computes the score. The feed URL
+lives on `TransitAgency` and is editable in admin, so a moved feed is not a
+deploy. Seeded agencies: DART (which also carries the TRE, putting Fort Worth on
+the map) and CapMetro.
+
+The **Commute Score** replaces Walk Score's Transit Score on the listing page.
+The `transit_score` column is still fetched and stored — it is licensed data we
+already pay for, and dropping the fetch would make it expensive to restore — it
+is simply no longer rendered. See `Listing.walk_score_rows`.
+
 ### Bot protection (Turnstile)
 | Var | Notes |
 |-----|-------|
@@ -246,10 +260,27 @@ runs with any subset configured.
   and idempotent; their failure is caught so it cannot stop the web server.
 - **Not on boot, by design:** `fetch_groceries`, `fetch_schools` and
   `fetch_drive_times` cost money per API call and would bill on every deploy and
-  restart. Run them manually in the Railway console, or add a cron service like
-  `listojo-cron` above. Order matters: `assign_downtowns` and `fetch_groceries`
-  must run before `fetch_drive_times`, which only fills in times for places the
-  other two have already matched.
+  restart. `import_gtfs` is free but downloads 8-15 MB per agency, which is not
+  something to repeat on every container restart. Run them manually in the
+  Railway console, or add a cron service like `listojo-cron` above.
+
+  Order matters across the whole proximity pipeline:
+
+  ```
+  geocode_listings
+    → assign_downtowns → fetch_groceries → import_gtfs → fetch_transit
+    → fetch_drive_times
+    → fetch_transit --score-only
+  ```
+
+  `fetch_drive_times` only fills in times for places the earlier commands have
+  already matched. The trailing `--score-only` pass exists because the downtown
+  drive is one of the Commute Score's three components, and `fetch_drive_times`
+  is what produces it — scoring before that runs leaves the component at zero.
+
+  Cadence: `import_gtfs` quarterly (agencies republish every few weeks, but the
+  station list barely moves); `fetch_transit --force` after any import that
+  changed the station table.
 - **Static:** collected at build time, served by WhiteNoise.
 - **Rollback:** Railway → Deployments → redeploy a previous successful build.
 

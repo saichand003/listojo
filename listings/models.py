@@ -184,6 +184,18 @@ class Listing(models.Model):
     drive_times_updated = models.DateTimeField(null=True, blank=True,
                               help_text='When drive times were last fetched — used to detect staleness')
 
+    # ── Transit + Commute Score (GTFS) ────────────────────────────────────
+    # Stations live in `TransitStation`, joined through `ListingTransitStation`.
+    transit_updated = models.DateTimeField(null=True, blank=True,
+                          help_text='When nearby stations were last matched — used to detect staleness')
+    # Listojo's own 0-100 commute measure, from listings.services.commute_score.
+    # Stored rather than computed per render so search can filter and order on
+    # it; db_index because that is the only reason to store it at all.
+    commute_score = models.PositiveSmallIntegerField(null=True, blank=True, db_index=True,
+                        help_text='0-100 composite: rail access, network reach, frequent service, downtown drive')
+    commute_score_label = models.CharField(max_length=40, blank=True, default='',
+                              help_text="Band name shown under the score, e.g. 'Excellent Transit'")
+
     INCOME_QUALIFIER_CATEGORIES = {'rentals', 'roommates'}
 
     @property
@@ -197,12 +209,17 @@ class Listing(models.Model):
         """
         (label, score, description) for each Walk Score metric that has data.
 
-        Transit and bike coverage is patchy outside dense metros, so rows with
-        no score are dropped here rather than guarded for in the template.
+        Transit Score is deliberately absent: `commute_score` is shown in its
+        place, and two transit numbers side by side invite a comparison neither
+        one wins. The column is still populated by services.walkscore — it is
+        licensed data we already fetch, and dropping the fetch would make it
+        expensive to bring back.
+
+        Bike coverage is patchy outside dense metros, so a row with no score is
+        dropped here rather than guarded for in the template.
         """
         rows = [
             ('Walk Score', self.walk_score, self.walk_score_description),
-            ('Transit Score', self.transit_score, self.transit_description),
             ('Bike Score', self.bike_score, self.bike_description),
         ]
         return [r for r in rows if r[1] is not None]
@@ -235,6 +252,55 @@ class Listing(models.Model):
         return self.nearby_groceries.all()
 
     @property
+    def transit_cards(self):
+        """
+        Nearby stations for display, rail first then nearest.
+
+        A bare `.all()` for the same reason as `school_cards`: it is the only
+        form that reuses a prefetch on the caller's queryset. Ordering comes
+        from ListingTransitStation.Meta, not from a call here.
+        """
+        return self.nearby_transit.all()
+
+    @property
+    def transit_agencies(self):
+        """
+        Distinct agency names behind the stations on show, for attribution.
+
+        GTFS feeds are published under licences that ask to be credited, and the
+        card has no other place that names who the data came from. Reads the
+        prefetched links rather than querying, so it costs nothing extra.
+        """
+        seen = []
+        for link in self.transit_cards:
+            name = link.station.agency.name
+            if name not in seen:
+                seen.append(name)
+        return seen
+
+    @property
+    def has_commute_score(self):
+        """True when a Commute Score has been computed for this listing."""
+        return self.commute_score is not None
+
+    @property
+    def commute_score_tone(self):
+        """
+        Palette band for the score dial: 'strong', 'fair' or 'weak'.
+
+        Named by band rather than by colour so the template picks the hex and
+        this stays a data question. Thresholds match the Walk Score card's
+        existing 70 / 50 split, so the two dials on the page read alike.
+        """
+        if self.commute_score is None:
+            return 'weak'
+        if self.commute_score >= 70:
+            return 'strong'
+        if self.commute_score >= 50:
+            return 'fair'
+        return 'weak'
+
+    @property
     def downtown_display_miles(self):
         """Road miles when a route resolved, else the straight-line figure."""
         return self.downtown_drive_miles or self.downtown_distance_miles
@@ -244,7 +310,9 @@ class Listing(models.Model):
         """True when any drive time is available — drives the card's footnote."""
         if self.downtown_drive_minutes:
             return True
-        return any(link.drive_minutes for link in self.grocery_cards)
+        if any(link.drive_minutes for link in self.grocery_cards):
+            return True
+        return any(link.drive_minutes for link in self.transit_cards)
 
     @property
     def has_neighborhood_card(self):
@@ -922,3 +990,271 @@ class ListingGroceryStore(models.Model):
 
     def __str__(self):
         return f'{self.store.name} — {self.distance_miles} mi'
+
+
+# ── Transit proximity (GTFS) ──────────────────────────────────────────────────
+
+class TransitAgency(models.Model):
+    """
+    A transit operator whose GTFS feed we import.
+
+    The feed URL lives here rather than in code so a moved feed is an admin
+    edit, not a deploy. Agencies publish these as a static zip under an open
+    licence, which is the whole reason this feature costs nothing per listing:
+    unlike groceries and schools, no request is made on behalf of a listing.
+    """
+
+    slug = models.SlugField(max_length=40, unique=True,
+               help_text="Short identifier used on the import command, e.g. 'dart'")
+    name = models.CharField(max_length=60,
+               help_text="Badge name shown on the card, e.g. 'DART'")
+    full_name = models.CharField(max_length=160, blank=True, default='',
+                    help_text="Legal name from the feed, e.g. 'Dallas Area Rapid Transit'")
+    gtfs_url = models.URLField(max_length=500,
+                   help_text='Direct link to the agency GTFS zip')
+    # Lets an agency be skipped by the importer without deleting the stations
+    # listings are already linked to.
+    is_active = models.BooleanField(default=True, db_index=True)
+    last_imported = models.DateTimeField(null=True, blank=True,
+                        help_text='When this feed was last imported')
+    # Straight from feed_info.txt. Worth storing because it is how you tell
+    # "the import ran and nothing changed" from "the import ran on stale data".
+    feed_version = models.CharField(max_length=120, blank=True, default='')
+
+    class Meta:
+        ordering = ['name']
+        verbose_name_plural = 'transit agencies'
+
+    def __str__(self):
+        return self.name
+
+
+# GTFS route_type → our mode. Only the values that appear in US urban feeds are
+# mapped; anything else is skipped rather than guessed at, because an unknown
+# mode would land in the card with no sensible badge or weight.
+#
+# Note that agencies are loose with 5 (cable tram): DART files the McKinney
+# Avenue Trolley and the Dallas Streetcar under it. Reading 5 as 'streetcar' is
+# what the rider means, even though the spec says otherwise.
+GTFS_ROUTE_TYPES = {
+    0: 'light_rail',
+    1: 'subway',
+    2: 'commuter_rail',
+    3: 'bus',
+    5: 'streetcar',
+    11: 'bus',     # trolleybus — a bus for every purpose the card has
+    12: 'subway',  # monorail
+}
+
+TRANSIT_MODES = [
+    ('commuter_rail', 'Commuter Rail'),
+    ('subway',        'Subway'),
+    ('light_rail',    'Light Rail'),
+    ('streetcar',     'Streetcar'),
+    ('bus',           'Bus'),
+]
+
+# Modes that count as rail for scoring and for the card's ordering. Streetcar
+# is deliberately excluded: it shares a lane with traffic and covers a mile or
+# two, so it is closer in use to a frequent bus than to a rail line.
+RAIL_MODES = ('commuter_rail', 'subway', 'light_rail')
+
+# How the card ranks two routes at the same station. Note this is NOT used to
+# rank stations against each other — see services.transit.nearest_stations for
+# why distance must win there.
+MODE_RANK = {'commuter_rail': 0, 'subway': 1, 'light_rail': 2, 'streetcar': 3, 'bus': 4}
+
+# Badge background when a feed omits route_color. Muted on purpose: a route
+# with no colour of its own should not out-shout one that has one.
+MODE_BADGE_COLORS = {
+    'commuter_rail': '#4b5563',
+    'subway':        '#1f2937',
+    'light_rail':    '#2a7ef2',
+    'streetcar':     '#7c3aed',
+    'bus':           '#6b7280',
+}
+
+
+class TransitRoute(models.Model):
+    """
+    One route (a named line or a numbered bus route) from an agency's feed.
+
+    `trips_per_weekday` is the count on the busiest weekday, which is what
+    decides whether the route is frequent. See services.gtfs for why the
+    busiest day rather than a nominal Monday.
+    """
+
+    agency = models.ForeignKey(TransitAgency, on_delete=models.CASCADE, related_name='routes')
+    # GTFS route_id. Unique per agency, not globally — two agencies both having
+    # a route '1' is normal, hence the composite constraint below.
+    source_id = models.CharField(max_length=120)
+    short_name = models.CharField(max_length=60, blank=True, default='',
+                    help_text="Badge text, e.g. 'RED' or '705'")
+    long_name = models.CharField(max_length=200, blank=True, default='')
+    mode = models.CharField(max_length=20, choices=TRANSIT_MODES, db_index=True)
+    # GTFS route_color / route_text_color, six hex digits with no '#'. Blank
+    # when the feed omits them, in which case the card falls back to the mode
+    # palette rather than rendering an invalid colour.
+    color = models.CharField(max_length=6, blank=True, default='')
+    text_color = models.CharField(max_length=6, blank=True, default='')
+    trips_per_weekday = models.PositiveIntegerField(default=0)
+    is_frequent = models.BooleanField(default=False, db_index=True,
+                      help_text='Runs often enough to be worth showing on its own')
+
+    class Meta:
+        ordering = ['agency', 'mode', 'short_name']
+        constraints = [
+            models.UniqueConstraint(fields=['agency', 'source_id'],
+                                    name='uniq_agency_transit_route'),
+        ]
+
+    @property
+    def label(self):
+        """Badge text — the short name when there is one, else the long name."""
+        return self.short_name or self.long_name
+
+    @property
+    def badge_color(self):
+        """Background for the route badge, '#rrggbb'."""
+        if self.color:
+            return f'#{self.color}'
+        return MODE_BADGE_COLORS.get(self.mode, MODE_BADGE_COLORS['bus'])
+
+    @property
+    def badge_text_color(self):
+        """
+        Foreground for the route badge, chosen for contrast rather than taken
+        from the feed.
+
+        route_text_color is ignored on purpose. DART publishes the Silver Line
+        as C0C0C0 with FFFFFF text, which is white on light grey and effectively
+        unreadable; several agencies have a pairing like it. Deriving the
+        foreground from the background's luminance means a feed cannot ship us
+        an illegible badge.
+        """
+        raw = self.badge_color.lstrip('#')
+        r, g, b = (int(raw[i:i + 2], 16) for i in (0, 2, 4))
+        # Rec. 601 luma — good enough to separate light from dark, and cheap.
+        return '#111827' if (0.299 * r + 0.587 * g + 0.114 * b) > 150 else '#ffffff'
+
+    def __str__(self):
+        return f'{self.agency.name} {self.label}'
+
+
+class TransitStation(models.Model):
+    """
+    A stop or station, kept only if it is rail or served frequently enough.
+
+    Filtered at import (see services.gtfs.FREQUENT_TRIPS_PER_WEEKDAY): DART
+    alone publishes ~6,800 bus stops with weekday service, so nearly every DFW
+    listing sits a quarter mile from one. Storing them all would put a row on
+    every listing that says nothing about it.
+    """
+
+    agency = models.ForeignKey(TransitAgency, on_delete=models.CASCADE, related_name='stations')
+    source_id = models.CharField(max_length=120)
+    name = models.CharField(max_length=200)
+    latitude  = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    # Best mode serving the station, by MODE_RANK — a stop where the Red Line
+    # meets a bus route is a rail station.
+    mode = models.CharField(max_length=20, choices=TRANSIT_MODES, db_index=True)
+    # Denormalised from `mode` so proximity queries can filter without an IN
+    # over RAIL_MODES on every row.
+    is_rail = models.BooleanField(default=False, db_index=True)
+    trips_per_weekday = models.PositiveIntegerField(default=0,
+                            help_text='All modes, busiest weekday')
+    routes = models.ManyToManyField(TransitRoute, through='StationRoute',
+                 related_name='stations')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['agency', 'name']
+        constraints = [
+            models.UniqueConstraint(fields=['agency', 'source_id'],
+                                    name='uniq_agency_transit_station'),
+        ]
+        indexes = [
+            # The proximity scan filters on a lat/lng bounding box before it
+            # measures anything — see services.transit.nearest_stations.
+            models.Index(fields=['latitude', 'longitude'], name='transit_station_latlng'),
+        ]
+
+    @property
+    def route_badges(self):
+        """
+        Routes to show as badges, best mode first.
+
+        A bare `.all()` so a `prefetch_related('...station__routes')` on the
+        caller's queryset is reused; ordering is done in Python for the same
+        reason, since a filter or order_by here would re-query per station.
+        """
+        return sorted(self.routes.all(), key=lambda r: (MODE_RANK.get(r.mode, 9), r.label))
+
+    def __str__(self):
+        return f'{self.name} ({self.agency.name})'
+
+
+class StationRoute(models.Model):
+    """Join row: this route calls at this station."""
+
+    station = models.ForeignKey(TransitStation, on_delete=models.CASCADE, related_name='route_links')
+    route   = models.ForeignKey(TransitRoute, on_delete=models.CASCADE, related_name='station_links')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['station', 'route'],
+                                    name='uniq_station_transit_route'),
+        ]
+
+    def __str__(self):
+        return f'{self.route.label} @ {self.station.name}'
+
+
+class ListingTransitStation(models.Model):
+    """
+    Links a listing to a nearby station and records the distance.
+
+    Same shape as ListingGroceryStore: straight-line miles computed locally at
+    match time, with drive figures filled in later by the shared Routes matrix
+    call. Walk minutes are derived rather than stored — see `walk_minutes`.
+    """
+
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='nearby_transit')
+    station = models.ForeignKey(TransitStation, on_delete=models.CASCADE, related_name='listing_links')
+    distance_miles = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    drive_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
+    drive_miles = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+
+    class Meta:
+        # Rail before bus at equal distance, then nearest first. Matches how the
+        # card reads: the line you can catch matters more than a stop 200 feet
+        # closer.
+        ordering = ['-station__is_rail', 'distance_miles']
+        constraints = [
+            models.UniqueConstraint(fields=['listing', 'station'],
+                                    name='uniq_listing_transit_station'),
+        ]
+
+    @property
+    def display_miles(self):
+        """Road miles when a route resolved, else the straight-line figure."""
+        return self.drive_miles or self.distance_miles
+
+    @property
+    def walk_minutes(self):
+        """
+        Rough walk time at 3 mph, for stations close enough that walking is the
+        realistic way there.
+
+        Derived rather than stored: it is a fixed multiple of a column we
+        already have, and a stored copy would be one more thing to migrate the
+        day the assumed pace changes. None beyond a mile, where quoting a walk
+        would be misleading.
+        """
+        if self.distance_miles is None or float(self.distance_miles) > 1.0:
+            return None
+        return max(1, round(float(self.distance_miles) * 20))
+
+    def __str__(self):
+        return f'{self.station.name} — {self.distance_miles} mi'

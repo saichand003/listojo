@@ -205,7 +205,10 @@ def listing_detail(request, pk):
 
     listing = get_object_or_404(
         Listing.objects.select_related('owner', 'nearest_downtown').prefetch_related(
-            'images', 'units__images', 'nearby_schools__school', 'nearby_groceries__store'),
+            'images', 'units__images', 'nearby_schools__school', 'nearby_groceries__store',
+            # Routes are prefetched too: the card renders a badge per route, so
+            # without this every station on every listing re-queries them.
+            'nearby_transit__station__agency', 'nearby_transit__station__routes'),
         pk=pk,
     )
 

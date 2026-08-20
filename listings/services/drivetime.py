@@ -182,15 +182,18 @@ def is_stale(instance) -> bool:
 
 def sync_instance(instance, *, force: bool = False) -> int | None:
     """
-    Fill drive time and road distance for a Listing's downtown and grocery
-    rows, in one call.
+    Fill drive time and road distance for a Listing's downtown, grocery and
+    transit rows, in one call.
 
     Returns how many times were written, or None when nothing was attempted or
     the call failed. Saves, like the other proximity syncs.
 
-    Run this *after* assign_downtowns and fetch_groceries — it fills in times
-    for whatever those two have already matched, and has nothing to do if they
-    have not run.
+    Run this *after* assign_downtowns, fetch_groceries and fetch_transit — it
+    fills in times for whatever those have already matched, and has nothing to
+    do if they have not run.
+
+    Note that the downtown time it writes here is an input to the Commute Score,
+    so `fetch_transit --score-only` should follow this to pick it up.
     """
     if instance.latitude is None or instance.longitude is None:
         return None
@@ -213,6 +216,16 @@ def sync_instance(instance, *, force: bool = False) -> int | None:
         link_slots[len(targets)] = link
         targets.append((link.store.latitude, link.store.longitude))
 
+    # Stations ride along in the same matrix rather than taking a call of their
+    # own. Routes bills per element, so three more destinations on an existing
+    # request costs three elements; a second request would cost three elements
+    # plus another origin.
+    transit_links = list(instance.nearby_transit.select_related('station'))
+    transit_slots = {}
+    for link in transit_links:
+        transit_slots[len(targets)] = link
+        targets.append((link.station.latitude, link.station.longitude))
+
     if not targets:
         return None
 
@@ -234,8 +247,18 @@ def sync_instance(instance, *, force: bool = False) -> int | None:
             link.drive_miles = found.get('miles')
             written += link.drive_minutes is not None
 
+        for slot, link in transit_slots.items():
+            found = results.get(slot) or {}
+            link.drive_minutes = found.get('minutes')
+            link.drive_miles = found.get('miles')
+            written += link.drive_minutes is not None
+
         if link_slots:
             type(links[0]).objects.bulk_update(links, ['drive_minutes', 'drive_miles'])
+
+        if transit_slots:
+            type(transit_links[0]).objects.bulk_update(
+                transit_links, ['drive_minutes', 'drive_miles'])
 
         instance.drive_times_updated = timezone.now()
         # Explicit field list: never re-save the whole row here, or the pre_save

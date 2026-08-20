@@ -1,7 +1,9 @@
 from django.contrib import admin
 
 from .models import (CityWaitlist, Community, CommunityImage, Downtown, FloorPlan, GroceryStore,
-                     Listing, ListingGroceryStore, ListingInquiry, ListingSchool, School, Unit,
+                     Listing, ListingGroceryStore, ListingInquiry, ListingSchool,
+                     ListingTransitStation, School, TransitAgency, TransitRoute,
+                     TransitStation, Unit,
                      UserListingEvent)
 
 
@@ -98,3 +100,40 @@ class ListingGroceryStoreAdmin(admin.ModelAdmin):
     search_fields = ('listing__title', 'store__name')
     # Both sides can run to thousands of rows — raw ids keep the form loadable.
     raw_id_fields = ('listing', 'store')
+
+
+@admin.register(TransitAgency)
+class TransitAgencyAdmin(admin.ModelAdmin):
+    list_display  = ('name', 'slug', 'is_active', 'last_imported', 'feed_version')
+    list_filter   = ('is_active',)
+    search_fields = ('name', 'slug', 'full_name')
+    # gtfs_url is editable on purpose: agencies move their feed, and that should
+    # be an admin edit rather than a deploy. See services.gtfs.
+    readonly_fields = ('last_imported', 'feed_version')
+
+
+@admin.register(TransitRoute)
+class TransitRouteAdmin(admin.ModelAdmin):
+    list_display  = ('label', 'agency', 'mode', 'trips_per_weekday', 'is_frequent')
+    list_filter   = ('agency', 'mode', 'is_frequent')
+    search_fields = ('short_name', 'long_name', 'source_id')
+
+
+@admin.register(TransitStation)
+class TransitStationAdmin(admin.ModelAdmin):
+    list_display  = ('name', 'agency', 'mode', 'is_rail', 'trips_per_weekday')
+    list_filter   = ('agency', 'mode', 'is_rail')
+    search_fields = ('name', 'source_id')
+    # Every field here is overwritten by the next import_gtfs run, so editing
+    # one would look like it worked and then silently revert.
+    readonly_fields = ('agency', 'source_id', 'name', 'latitude', 'longitude',
+                       'mode', 'is_rail', 'trips_per_weekday')
+
+
+@admin.register(ListingTransitStation)
+class ListingTransitStationAdmin(admin.ModelAdmin):
+    list_display  = ('listing', 'station', 'distance_miles', 'drive_minutes')
+    list_filter   = ('station__agency', 'station__mode')
+    search_fields = ('listing__title', 'station__name')
+    # Both sides can run to thousands of rows — raw ids keep the form loadable.
+    raw_id_fields = ('listing', 'station')
