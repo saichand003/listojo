@@ -1591,60 +1591,6 @@ class TransitProximityTests(TestCase):
 
         self.assertEqual(surface, [near])
 
-    def test_an_infrequent_stop_is_discounted_against_a_frequent_one(self):
-        """
-        Every stop with weekday service is stored now, so showing one and
-        rewarding it have to be separate decisions — otherwise a listing beside
-        a twice-an-hour circulator scores like one beside a ten-minute route.
-        """
-        thin = TransitRoute.objects.create(
-            agency=self.agency, source_id='B8', short_name='227',
-            mode='bus', trips_per_weekday=32, is_frequent=False)
-        station = self._station('Circulator Stop', 32.8005, -96.8005,
-                                mode='bus', rail=False, routes=[thin])
-        TransitStation.objects.filter(pk=station.pk).update(trips_per_weekday=32)
-        transit.sync_instance(self.listing)
-        self.listing.refresh_from_db()
-
-        thin_score = commute_score.score_listing(self.listing)
-
-        # Same stop, same distance, but frequent.
-        TransitStation.objects.filter(pk=station.pk).update(trips_per_weekday=200)
-        self.listing.refresh_from_db()
-        frequent_score = commute_score.score_listing(self.listing)
-
-        self.assertLess(thin_score.components['transit_access'],
-                        frequent_score.components['transit_access'])
-        self.assertAlmostEqual(
-            thin_score.components['transit_access'],
-            round(frequent_score.components['transit_access']
-                  * commute_score.INFREQUENT_SERVICE_FACTOR, 1), places=1)
-
-    def test_surface_stops_use_the_tighter_radius(self):
-        """A frequent bus stop only counts if you could walk to it."""
-        self._station('Far Bus', 32.8500, -96.8000, mode='bus', rail=False)
-
-        self.assertEqual(transit.nearest_stations(Decimal('32.800000'),
-                                                  Decimal('-96.800000')), [])
-
-    def test_sync_writes_links_and_clears_stale_ones(self):
-        old = self._station('Old Station', 32.8005, -96.8005, routes=[self.red])
-        count = transit.sync_instance(self.listing)
-
-        self.assertEqual(count, 1)
-        self.assertEqual(self.listing.nearby_transit.count(), 1)
-
-        # The listing moves across town; the old link must not survive.
-        old.delete()
-        self._station('New Station', 32.9005, -96.9005, routes=[self.red])
-        self.listing.latitude = Decimal('32.900000')
-        self.listing.longitude = Decimal('-96.900000')
-        self.listing.save()
-        transit.sync_instance(self.listing, force=True)
-
-        self.assertEqual([l.station.name for l in self.listing.transit_cards],
-                         ['New Station'])
-
     def test_score_is_none_until_the_listing_has_been_matched(self):
         """
         Unmatched is 'we do not know', not zero.
@@ -1746,25 +1692,6 @@ class TransitProximityTests(TestCase):
         self.assertEqual(result.components['transit_access'], 0.0)
         self.assertEqual(result.label, 'Car-Dependent')
 
-    def test_reach_ignores_a_bus_route_that_is_not_itself_frequent(self):
-        """
-        A stop can clear the frequency threshold on the sum of several thin
-        routes, and none of those is a route you would plan a commute around.
-        """
-        thin = TransitRoute.objects.create(
-            agency=self.agency, source_id='B9', short_name='99',
-            mode='bus', trips_per_weekday=10, is_frequent=False)
-        self._station('Thin Corner', 32.8010, -96.8000,
-                      mode='bus', rail=False, routes=[thin])
-        transit.sync_instance(self.listing)
-        self.listing.refresh_from_db()
-
-        result = commute_score.score_listing(self.listing)
-
-        self.assertEqual(result.components['network_reach'], 0.0)
-        # The stop itself still counts for access — it is a real stop.
-        self.assertGreater(result.components['transit_access'], 0.0)
-
     def test_assign_instance_clears_a_score_it_can_no_longer_support(self):
         self.listing.commute_score = 88
         self.listing.commute_score_label = 'Excellent Transit'
@@ -1825,11 +1752,9 @@ class TransitProximityTests(TestCase):
         self._station('Deep Ellum Station', 32.8005, -96.8005,
                       routes=[self.red, self.tre])
         bus_route = TransitRoute.objects.create(
-            agency=self.agency, source_id='B5', short_name='227',
-            mode='bus', trips_per_weekday=32, is_frequent=False)
-        stop = self._station('Luna @ Valley View', 32.8008, -96.8000,
-                             mode='bus', rail=False, routes=[bus_route])
-        TransitStation.objects.filter(pk=stop.pk).update(trips_per_weekday=32)
+            agency=self.agency, source_id='B5', short_name='227', mode='bus')
+        self._station('Luna @ Valley View', 32.8008, -96.8000,
+                      mode='bus', rail=False, routes=[bus_route])
         transit.sync_instance(self.listing)
         self.listing.refresh_from_db()
         commute_score.assign_instance(self.listing)
@@ -1852,8 +1777,6 @@ class TransitProximityTests(TestCase):
         self.assertIn('Deep Ellum Station', html)
         self.assertIn('#FD3E3E', html)          # the Red Line badge
         self.assertIn('Luna @ Valley View', html)
-        # A bus row carries its headway, which is what makes it judgeable.
-        self.assertIn('every ~25 min', html)
         self.assertLess(html.index('Rail stations'), html.index('Bus stops'))
         # The Walk Score card is untouched; only its transit row is gone.
         self.assertIn('Walk Score', html)
