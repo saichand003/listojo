@@ -11,6 +11,7 @@ from django.core import mail
 from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from django.core.management import call_command
 
@@ -1590,6 +1591,40 @@ class TransitProximityTests(TestCase):
                    if not st.is_rail]
 
         self.assertEqual(surface, [near])
+
+    def test_a_match_older_than_the_last_import_is_stale(self):
+        """
+        Stations only move when a feed is re-imported, so a match from before
+        the newest import is out of date however recent it is.
+
+        Without this the symptom is silent: `fetch_transit` reports "0 candidate
+        rows", exits successfully, and the card keeps showing the old set. It
+        cost two rounds of "the bus stops still aren't there".
+        """
+        cache.clear()
+        self._station('Rail', 32.8005, -96.8005, routes=[self.red])
+        transit.sync_instance(self.listing)
+        self.listing.refresh_from_db()
+        self.assertFalse(transit.is_stale(self.listing))
+
+        # A later import moves the station table under the existing match.
+        TransitAgency.objects.update(last_imported=timezone.now())
+        cache.clear()
+
+        self.assertTrue(transit.is_stale(self.listing))
+
+    def test_an_agency_never_imported_does_not_make_everything_stale(self):
+        """A null last_imported must not read as 'imported at the epoch'."""
+        cache.clear()
+        self._station('Rail', 32.8005, -96.8005, routes=[self.red])
+        transit.sync_instance(self.listing)
+        self.listing.refresh_from_db()
+
+        TransitAgency.objects.update(last_imported=None)
+        cache.clear()
+
+        self.assertIsNone(transit.latest_import_at())
+        self.assertFalse(transit.is_stale(self.listing))
 
     def test_score_is_none_until_the_listing_has_been_matched(self):
         """

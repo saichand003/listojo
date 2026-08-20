@@ -215,13 +215,15 @@ static zips published under an open licence — imported by `import_gtfs` into
 `TransitAgency` / `TransitRoute` / `TransitStation`. `fetch_transit` then matches
 listings against that table with local maths and computes the score.
 
-Every stop with weekday service is imported (~9,200 rows for DART + CapMetro),
-not only the frequent ones. Frequency is a *label*, not a filter: the listing
-card shows rail and bus in separate sections, so a thin bus stop no longer
-displaces a rail station. It still does real work in scoring — a stop short of
-`FREQUENT_TRIPS_PER_WEEKDAY` is discounted, and non-frequent bus routes are
-ignored entirely when counting network reach. Showing a stop and rewarding it
-are separate decisions. The feed URL
+Every stop with weekday service is imported (~9,200 rows for DART + CapMetro).
+The card shows rail and bus in separate sections, each listing the nearest stops
+by distance — one row per route, so the two poles of an intersection do not
+appear twice.
+
+Service frequency is **not** part of the score or the card. Only distance and
+mode are. Trip counts are still computed at import, but solely to drop stops
+with no weekday service at all; `trips_per_weekday` and `TransitRoute.is_frequent`
+are retained as admin-visible reference and affect nothing that renders. The feed URL
 lives on `TransitAgency` and is editable in admin, so a moved feed is not a
 deploy. Seeded agencies: DART (which also carries the TRE, putting Fort Worth on
 the map) and CapMetro.
@@ -287,8 +289,9 @@ runs with any subset configured.
   is what produces it — scoring before that runs leaves the component at zero.
 
   Cadence: `import_gtfs` quarterly (agencies republish every few weeks, but the
-  station list barely moves); `fetch_transit --force` after any import that
-  changed the station table.
+  station list barely moves), then `fetch_transit`. No `--force` needed: a
+  listing whose match predates the newest import counts as stale automatically,
+  so re-running the pair is always sufficient.
 - **Static:** collected at build time, served by WhiteNoise.
 - **Rollback:** Railway → Deployments → redeploy a previous successful build.
 

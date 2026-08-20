@@ -21,7 +21,9 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 
+from django.core.cache import cache
 from django.db import transaction
+from django.db.models import Max
 from django.utils import timezone
 
 from listings.services.distance import bounding_box, haversine_miles
@@ -134,11 +136,51 @@ def _distinct_by_route(stations):
     return kept
 
 
+# How long the newest-import timestamp is memoised for. One query a minute is
+# nothing, and it keeps `is_stale` from hitting the database once per listing
+# when the command walks the whole table.
+_IMPORT_STAMP_KEY = 'transit:last_import'
+_IMPORT_STAMP_TTL = 60
+
+
+def latest_import_at():
+    """
+    When any active agency's feed was last imported, or None.
+
+    Cached briefly — see _IMPORT_STAMP_TTL.
+    """
+    from listings.models import TransitAgency
+
+    cached = cache.get(_IMPORT_STAMP_KEY, 'miss')
+    if cached != 'miss':
+        return cached
+
+    stamp = (TransitAgency.objects.filter(is_active=True)
+             .aggregate(latest=Max('last_imported'))['latest'])
+    cache.set(_IMPORT_STAMP_KEY, stamp, _IMPORT_STAMP_TTL)
+    return stamp
+
+
 def is_stale(instance) -> bool:
-    """True when the instance has never been matched, or its match aged out."""
+    """
+    True when the instance has never been matched, its match aged out, or the
+    station table has been re-imported since.
+
+    That last clause matters more than the age one. Stations only move when a
+    feed is re-imported, so a match from before the newest import is out of date
+    however recent it is — and without this the symptom is silent: `fetch_transit`
+    reports "0 candidate rows", exits successfully, and the card keeps showing
+    the old set. That happened twice in a row on the same listing, once when
+    relaxing which stops get imported made bus stops appear near it and the
+    listing went on showing none.
+    """
     if instance.transit_updated is None:
         return True
-    return timezone.now() - instance.transit_updated > STALE_AFTER
+    if timezone.now() - instance.transit_updated > STALE_AFTER:
+        return True
+
+    imported = latest_import_at()
+    return imported is not None and instance.transit_updated < imported
 
 
 def sync_instance(instance, *, force: bool = False) -> int | None:

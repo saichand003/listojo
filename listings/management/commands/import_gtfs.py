@@ -17,6 +17,7 @@ can be shown on every listing without spend scaling with volume.
 After importing, run `fetch_transit` to re-match listings against the new
 station table.
 """
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
@@ -24,6 +25,7 @@ from django.utils import timezone
 from listings.models import (StationRoute, TransitAgency, TransitRoute,
                              TransitStation)
 from listings.services.gtfs import FREQUENT_TRIPS_PER_WEEKDAY, load_feed
+from listings.services.transit import _IMPORT_STAMP_KEY
 
 # Seeded by --seed. URLs verified reachable 2026-08-20; they live in the
 # database, so a moved feed is an admin edit rather than a deploy.
@@ -158,6 +160,10 @@ class Command(BaseCommand):
             if feed.agency_name and not agency.full_name:
                 agency.full_name = feed.agency_name[:160]
             agency.save(update_fields=['last_imported', 'feed_version', 'full_name'])
+
+        # Drop the memoised import stamp so a fetch_transit run started in the
+        # same minute sees this import rather than the cached older one.
+        cache.delete(_IMPORT_STAMP_KEY)
 
         self.stdout.write(self.style.SUCCESS(
             f'  ✓ imported (feed {feed.feed_version or "unversioned"}); '
