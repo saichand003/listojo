@@ -736,6 +736,11 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
       var price  = card.dataset.price ? '$'+Number(card.dataset.price).toLocaleString() : '—';
       var title  = card.dataset.title || 'Listing';
       var pk     = card.dataset.pk;
+      // A community pin must open the community, not /listing/<its pk>/ —
+      // the two id spaces are unrelated, so the wrong one 404s or, worse,
+      // opens somebody else's listing.
+      var isCommunity = card.dataset.kind === 'community';
+      var href   = isCommunity ? '/communities/'+pk+'/' : '/listing/'+pk+'/';
       var imgEl  = card.querySelector('.listing-thumb');
       var imgSrc = imgEl ? imgEl.src : '';
 
@@ -749,7 +754,8 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
           marker.setActive(true);
 
           var priceUnit = (DATA_CATEGORY === 'properties') ? '' : '<span>/mo</span>';
-          var iwLabel   = (DATA_CATEGORY === 'properties') ? 'View Property →' : 'View Listing →';
+          var iwLabel   = isCommunity ? 'View Community →'
+                        : (DATA_CATEGORY === 'properties') ? 'View Property →' : 'View Listing →';
           var iw = new google.maps.InfoWindow({
             content:
               '<div class="lj-iw">'+
@@ -758,7 +764,7 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
               '<div class="lj-iw-price">'+price+priceUnit+'</div>'+
               '<div class="lj-iw-title">'+title+'</div>'+
               '<div class="lj-iw-meta">📍 '+city+'</div>'+
-              '<a class="lj-iw-btn" href="/listing/'+pk+'/">'+iwLabel+'</a>'+
+              '<a class="lj-iw-btn" href="'+href+'">'+iwLabel+'</a>'+
               '</div></div>',
             position: latlng,
             pixelOffset: new google.maps.Size(0, -38),

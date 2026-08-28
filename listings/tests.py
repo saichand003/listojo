@@ -1878,3 +1878,39 @@ class SignInReturnsYouWhereYouWereTests(TestCase):
         self.assertRedirects(response, '/accounts/login/confirm/',
                              fetch_redirect_response=False)
         self.assertEqual(self.client.session['pw_otp_next'], '/')
+
+
+class CommunityMapMarkerTests(TestCase):
+    """
+    Community cards must carry the attributes the map reads.
+
+    `_placeMarkers` selects `.listing-card[data-city]`, so a community card
+    without those data-* attributes was silently skipped — the property showed
+    in the list and vanished on the map.
+    """
+
+    def setUp(self):
+        self.community = Community.objects.create(
+            name='Maple Court', description='', city='Dallas',
+            address_line='4521 Maple Ave', community_type='apartment_complex',
+            status='active', latitude='32.811871', longitude='-96.823574')
+        floor_plan = FloorPlan.objects.create(
+            community=self.community, name='A1', bedrooms=1, bathrooms=1)
+        Unit.objects.create(floor_plan=floor_plan, unit_number='101',
+                            price=1450, status='available')
+
+    def test_the_card_carries_the_coordinates_the_map_needs(self):
+        response = self.client.get('/listings/')
+        html = response.content.decode()
+
+        self.assertIn('data-city="Dallas"', html)
+        self.assertIn('data-lat="32.811871"', html)
+        self.assertIn('data-lng="-96.823574"', html)
+        self.assertIn('data-title="Maple Court"', html)
+        self.assertIn('data-price="1450', html)
+
+    def test_the_card_is_still_tagged_as_a_community(self):
+        """The pin builds its link from data-kind; listing pks are a different space."""
+        response = self.client.get('/listings/')
+
+        self.assertContains(response, 'data-kind="community"')

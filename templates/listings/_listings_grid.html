@@ -8,6 +8,11 @@
 {% with community.price_range as pr %}
 {% with community.available_unit_count as unit_count %}
     <article class="card listing-card community-card" data-kind="community" data-pk="{{ community.pk }}" data-rank="0" data-fmm=""
+             data-city="{{ community.city }}"
+             data-title="{{ community.name|escapejs }}"
+             data-price="{{ pr.0|default_if_none:'' }}"
+             data-address="{{ community.address_line|escapejs }}"
+             {% if community.latitude and community.longitude %}data-lat="{{ community.latitude }}" data-lng="{{ community.longitude }}"{% endif %}
              onclick="window.location='{% url 'community_detail' community.pk %}'" style="cursor:pointer;">
         <div class="listing-thumb-wrap">
             {% if hero %}
