@@ -162,6 +162,7 @@ class ImportResult:
     pending_deactivation: int = 0
     deactivated: int = 0
     photos_saved: int = 0
+    photos_removed: int = 0
     communities: int = 0
     floor_plans: int = 0
     units: int = 0
@@ -182,7 +183,8 @@ class ImportResult:
                          f'plans / {self.units} new units / {self.units_updated} units updated')
         parts += [f'{self.pending_deactivation} pending deactivation',
                   f'{self.deactivated} deactivated',
-                  f'{self.photos_saved} photos',
+                  (f'{self.photos_saved} photos'
+                   + (f' (+{self.photos_removed} removed)' if self.photos_removed else '')),
                   f'{len(self.rejections)} rejected']
         return ', '.join(parts)
 
@@ -445,11 +447,13 @@ def import_partner_inventory(
 
     with transaction.atomic():
         for record in records:
-            _created, photos = _upsert(record, organization=organization, owner=owner,
-                                       status=status, fetch_photos=fetch_photos)
+            _created, photos, removed = _upsert(
+                record, organization=organization, owner=owner,
+                status=status, fetch_photos=fetch_photos)
             result.created += int(_created)
             result.updated += int(not _created)
             result.photos_saved += photos
+            result.photos_removed += removed
 
         if unit_records:
             _import_units(unit_records, organization=organization, owner=owner,
@@ -536,9 +540,13 @@ def _import_units(unit_records: list[CanonicalUnit], *, organization: Organizati
         # about standalone listings so the two shapes never blur in the report.
         result.communities += int(created)
 
+        # An empty column is treated as "this export carried no photos", not
+        # as "delete them" — a partial export must not strip a property bare.
         photo_urls = _merged_photo_urls(rows)
-        if fetch_photos and photo_urls and not community.images.exists():
-            result.photos_saved += _save_community_photos(community, photo_urls)
+        if fetch_photos and photo_urls:
+            saved, removed = _sync_community_photos(community, photo_urls)
+            result.photos_saved += saved
+            result.photos_removed += removed
 
         for record in rows:
             floor_plan, fp_created = FloorPlan.objects.update_or_create(
@@ -568,7 +576,7 @@ def _merged_photo_urls(rows) -> list[str]:
     community data on every unit row, so partners spread photos across rows as
     a matter of course.
 
-    `save_remote_photos` still caps the download at MAX_PHOTOS.
+    `sync_remote_photos` still caps the download at MAX_PHOTOS.
     """
     merged: list[str] = []
     seen: set[str] = set()
@@ -580,9 +588,9 @@ def _merged_photo_urls(rows) -> list[str]:
     return merged
 
 
-def _save_community_photos(community, photo_urls) -> int:
-    from listings.services.media import save_remote_photos
-    return save_remote_photos(community, photo_urls, image_model=CommunityImage,
+def _sync_community_photos(community, photo_urls) -> tuple[int, int]:
+    from listings.services.media import sync_remote_photos
+    return sync_remote_photos(community, photo_urls, image_model=CommunityImage,
                               related_field='community', prefix='community')
 
 
@@ -631,7 +639,7 @@ def _reconcile_absent_units(organization: Organization,
 
 
 def _upsert(record: CanonicalListing, *, organization: Organization, owner, status: str,
-            fetch_photos: bool) -> tuple[bool, int]:
+            fetch_photos: bool) -> tuple[bool, int, int]:
     defaults = record.as_listing_fields()
     defaults.update(owner=owner, status=status, category='rentals',
                     source_type='partner_csv', deactivation_pending_since=None)
@@ -643,12 +651,12 @@ def _upsert(record: CanonicalListing, *, organization: Organization, owner, stat
         defaults=defaults,
     )
 
-    photos = 0
-    if fetch_photos and record.photo_urls and not listing.images.exists():
-        from listings.services.media import save_remote_photos
-        photos = save_remote_photos(listing, record.photo_urls)
+    photos = removed = 0
+    if fetch_photos and record.photo_urls:
+        from listings.services.media import sync_remote_photos
+        photos, removed = sync_remote_photos(listing, record.photo_urls)
 
-    return created, photos
+    return created, photos, removed
 
 
 def _reconcile_absent(organization: Organization, seen_ids: set[str]) -> tuple[int, int]:

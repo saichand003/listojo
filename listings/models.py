@@ -373,6 +373,9 @@ class ListingImage(models.Model):
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='images')
     image   = models.ImageField(upload_to='listing_images/')
     order   = models.PositiveSmallIntegerField(default=0)
+    #: The feed URL this came from. Blank means a person uploaded it, which is
+    #: what keeps an import from deleting hand-added photos.
+    source_url = models.URLField(max_length=500, blank=True, default='')
 
     class Meta:
         ordering = ['order', 'id']
@@ -641,6 +644,8 @@ class CommunityImage(models.Model):
     community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name='images')
     image     = models.ImageField(upload_to='community_images/')
     order     = models.PositiveSmallIntegerField(default=0)
+    #: See ListingImage.source_url.
+    source_url = models.URLField(max_length=500, blank=True, default='')
 
     class Meta:
         ordering = ['order', 'id']
