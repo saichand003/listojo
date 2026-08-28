@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from accounts.services.dashboard import owner_inquiries, owner_listing_overview, owner_performance, staff_agent_dashboard
 from .forms import RegistrationForm
@@ -12,10 +13,28 @@ from .forms import RegistrationForm
 REMEMBER_ME_AGE = 60 * 60 * 24 * 90  # 90 days
 
 
+def _safe_next(request) -> str:
+    """
+    The ?next= destination, or '' if it points off-site.
+
+    Unvalidated, this is an open redirect: a link to
+    /accounts/login/?next=https://evil.example sends the user there wearing a
+    fresh Listojo session.
+    """
+    candidate = request.POST.get('next') or request.GET.get('next') or ''
+    if candidate and url_has_allowed_host_and_scheme(
+            candidate, allowed_hosts={request.get_host()},
+            require_https=request.is_secure()):
+        return candidate
+    return ''
+
+
 def user_login(request):
     from accounts.services import security
     if request.user.is_authenticated:
-        return redirect('listing_list')
+        # Already signed in and asked for somewhere specific — honour it rather
+        # than bouncing them to the renter home.
+        return redirect(_safe_next(request) or 'listing_list')
 
     error = None
     if request.method == 'POST':
@@ -43,7 +62,7 @@ def user_login(request):
         if user is not None:
             security.clear_login_failures(request)
             from accounts.services import login_otp
-            next_url = request.POST.get('next') or request.GET.get('next') or ''
+            next_url = _safe_next(request)
             # Trusted device → skip OTP and log in directly.
             if login_otp.is_trusted_device(request, user):
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')

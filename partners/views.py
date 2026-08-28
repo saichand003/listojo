@@ -11,6 +11,7 @@ import functools
 import io
 
 from django.contrib import messages
+from django.contrib.auth.views import redirect_to_login
 from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -33,7 +34,10 @@ def partner_required(view_fn):
     @functools.wraps(view_fn)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect('login')
+            # Carry the destination through the login round-trip. A bare
+            # redirect('login') drops it, and the partner lands on the renter
+            # home after signing in — the one page they did not ask for.
+            return redirect_to_login(request.get_full_path())
 
         organizations = list(Organization.objects.filter(
             memberships__user=request.user).distinct())

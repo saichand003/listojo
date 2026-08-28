@@ -534,3 +534,74 @@ class PartnerApplicationAdminTests(TestCase):
         self.assertIsNotNone(self.application.organization)
         self.assertEqual(Membership.objects.count(), 1)
         self.assertEqual(len(mail.outbox), 1)
+
+
+class PartnerSignInRedirectTests(TestCase):
+    """
+    'Sign in to Listojo Partners' must end at the partner dashboard.
+
+    It once ended on the renter home: the decorator redirected to the login
+    page without ?next=, so the destination was gone by the time the partner
+    typed their password.
+    """
+
+    def test_signed_out_visitor_is_sent_to_login_carrying_the_destination(self):
+        response = self.client.get('/partners/')
+
+        self.assertRedirects(response, '/accounts/login/?next=/partners/',
+                             fetch_redirect_response=False)
+
+    def test_the_destination_survives_the_otp_step(self):
+        """Login is two-legged — ?next= has to outlive the code screen."""
+        from partners.models import PartnerApplication
+        from partners.services.approval import approve_application
+
+        application = PartnerApplication.objects.create(
+            company_name='Oaks Properties',
+            contact_name='Sai Chand',
+            contact_email='sai@oaks.com',
+        )
+        user = approve_application(application).user
+        user.set_password('pw')
+        user.save()
+
+        response = self.client.post('/accounts/login/', {
+            'username': user.get_username(),
+            'password': 'pw',
+            'next': '/partners/',
+        })
+
+        self.assertRedirects(response, '/accounts/login/confirm/',
+                             fetch_redirect_response=False)
+        self.assertEqual(self.client.session['pw_otp_next'], '/partners/')
+
+    def test_an_approved_partner_sees_their_portfolio(self):
+        from partners.models import PartnerApplication
+        from partners.services.approval import approve_application
+
+        application = PartnerApplication.objects.create(
+            company_name='Oaks Properties',
+            contact_name='Sai Chand',
+            contact_email='sai@oaks.com',
+        )
+        self.client.force_login(approve_application(application).user)
+
+        response = self.client.get('/partners/')
+
+        self.assertContains(response, 'Oaks Properties')
+
+    def test_already_signed_in_visitor_is_not_bounced_to_the_renter_home(self):
+        user = User.objects.create_user('someone', 'someone@example.com', 'pw')
+        self.client.force_login(user)
+
+        response = self.client.get('/accounts/login/?next=/partners/')
+
+        self.assertRedirects(response, '/partners/', fetch_redirect_response=False)
+
+    def test_offsite_next_is_ignored(self):
+        user = User.objects.create_user('someone', 'someone@example.com', 'pw')
+        self.client.force_login(user)
+
+        response = self.client.get('/accounts/login/?next=https://evil.example/')
+
+        self.assertRedirects(response, '/listings/', fetch_redirect_response=False)
