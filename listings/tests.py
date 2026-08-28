@@ -1818,3 +1818,63 @@ class TransitProximityTests(TestCase):
         self.assertIn('Walker&#x27;s Paradise', html)  # escaped by the template
         self.assertNotIn('Transit Score', html)
         self.assertNotIn('WALKSCORE-TRANSIT-MARKER', html)
+
+
+class SearchIncludesCommunitiesTests(TestCase):
+    """
+    The default /listings/ view must show community inventory.
+
+    `category` is blank unless a tab is chosen, and blank was being compared
+    against 'rentals' as a mismatch — so the page a renter lands on after
+    signing in showed standalone listings only, and communities appeared only
+    once a category landed in the URL.
+    """
+
+    def setUp(self):
+        self.community = Community.objects.create(
+            name='Maple Court', description='', city='Dallas',
+            community_type='apartment_complex', status='active')
+
+    def test_a_bare_search_includes_communities(self):
+        response = self.client.get('/listings/')
+
+        self.assertEqual(list(response.context['communities']), [self.community])
+
+    def test_the_rent_tab_includes_communities(self):
+        response = self.client.get('/listings/?category=rentals')
+
+        self.assertEqual(list(response.context['communities']), [self.community])
+
+    def test_the_buy_tab_excludes_communities(self):
+        response = self.client.get('/listings/?category=properties')
+
+        self.assertEqual(list(response.context['communities']), [])
+
+    def test_a_signed_in_renter_still_sees_them(self):
+        renter = User.objects.create_user('renter', 'r@example.com', 'pw')
+        self.client.force_login(renter)
+
+        response = self.client.get('/listings/')
+
+        self.assertEqual(list(response.context['communities']), [self.community])
+
+
+class SignInReturnsYouWhereYouWereTests(TestCase):
+    """Signing in from the home page landed you on /listings/ instead."""
+
+    def test_the_nav_sign_in_link_carries_the_current_page(self):
+        response = self.client.get('/')
+
+        self.assertContains(response, '/accounts/login/?next=/')
+
+    def test_signing_in_from_home_returns_to_home(self):
+        user = User.objects.create_user('renter', 'r@example.com', 'pw')
+
+        response = self.client.post('/accounts/login/', {
+            'username': 'renter', 'password': 'pw', 'next': '/',
+        })
+
+        # Login is two-legged; the destination has to outlive the OTP screen.
+        self.assertRedirects(response, '/accounts/login/confirm/',
+                             fetch_redirect_response=False)
+        self.assertEqual(self.client.session['pw_otp_next'], '/')

@@ -38,8 +38,10 @@
 .home-listing-card .card-img-wrap { overflow: hidden; }
 .home-listing-card .card-img-wrap img {
   transition: transform .45s cubic-bezier(.4,0,.2,1);
-  will-change: transform;
 }
+/* Promote on hover only — a permanent will-change holds a compositor layer
+   per image, and enough of them makes fast scrolling repaint white. */
+.home-listing-card:hover .card-img-wrap img { will-change: transform; }
 .home-listing-card:hover .card-img-wrap img { transform: scale(1.05); }
 
 /* ── Section headings ─────────────────────────────────────── */

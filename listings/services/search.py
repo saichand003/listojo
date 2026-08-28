@@ -161,7 +161,11 @@ def _matching_communities(user, params: SearchParams) -> list[Community]:
             floor_plans__units__price__lte=params.max_price_val,
             floor_plans__units__status='available',
         )
-    if params.category != 'rentals':
+    # Communities are rental inventory, so the Buy tab excludes them — but an
+    # unset category means "no filter", not "not rentals". Treating blank as a
+    # mismatch hid every community from the default /listings/ view, which is
+    # exactly where a renter lands after signing in.
+    if params.category and params.category != 'rentals':
         return []
 
     mapped_type = COMMUNITY_TYPE_BY_PROPERTY_TYPE.get(params.property_type)

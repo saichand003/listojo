@@ -140,7 +140,7 @@
           <button type="submit" class="nav-text-btn">Sign out</button>
         </form>
       {% else %}
-        <a href="{% url 'login' %}" class="nav-text-btn" style="font-weight:600;">Sign in</a>
+        <a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" class="nav-text-btn" style="font-weight:600;">Sign in</a>
         <a href="{% url 'register' %}" class="button" style="padding:.45rem 1.1rem;font-size:.85rem;">Get started</a>
       {% endif %}
     </div>
@@ -320,7 +320,7 @@
         <span>Profile</span>
     </a>
     {% else %}
-    <a href="{% url 'login' %}" class="mob-nav-item {% if request.resolver_match.url_name == 'login' %}mob-active{% endif %}">
+    <a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" class="mob-nav-item {% if request.resolver_match.url_name == 'login' %}mob-active{% endif %}">
         <span class="mob-nav-icon">👤</span>
         <span>Login</span>
     </a>

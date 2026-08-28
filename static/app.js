@@ -95,9 +95,10 @@ document.addEventListener('DOMContentLoaded', function () {
   /* Scroll reveal for listing cards */
   try {
     var cards = document.querySelectorAll('.listing-card');
-    cards.forEach(function(el) { el.classList.add('js-reveal'); });
 
-    var STAGGER = 0.055; /* seconds per column — same for every row */
+    var STAGGER = 0.055;  /* seconds per column — same for every row */
+    var MAX_STEPS = 6;    /* cap the cascade; an unbounded batch reads as a hang */
+    var SAFETY_MS = 1500; /* nothing stays invisible because an observer misfired */
 
     var revealObserver = new IntersectionObserver(function(entries) {
       /* Collect only newly-intersecting cards this tick */
@@ -112,13 +113,33 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
       incoming.forEach(function(el, i) {
-        el.style.transitionDelay = (i * STAGGER) + 's';
+        el.style.transitionDelay = (Math.min(i, MAX_STEPS) * STAGGER) + 's';
         el.classList.add('visible');
         revealObserver.unobserve(el);
       });
     }, { threshold: 0.05, rootMargin: '0px 0px 60px 0px' });
 
-    cards.forEach(function(el) { revealObserver.observe(el); });
+    /*
+     * This runs after first paint, so hiding a card the user can already see
+     * makes it blink out and fade back in — the page looks like it reloaded.
+     * Anything on screen right now is therefore marked revealed in the same
+     * frame it is hidden, which the browser collapses into no transition at
+     * all. Only off-screen cards animate, where the flip is invisible.
+     */
+    var viewportH = window.innerHeight || document.documentElement.clientHeight;
+    cards.forEach(function(el) {
+      el.classList.add('js-reveal');
+      if (el.getBoundingClientRect().top < viewportH) {
+        el.classList.add('visible');
+      } else {
+        revealObserver.observe(el);
+      }
+    });
+
+    /* Last resort: a card must never be left permanently invisible. */
+    setTimeout(function() {
+      cards.forEach(function(el) { el.classList.add('visible'); });
+    }, SAFETY_MS);
   } catch(e) {}
 
 
