@@ -14,6 +14,8 @@ from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
 from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from listings.models import Community, Listing
 from listings.services.partner_import import CsvAdapter, import_partner_inventory
@@ -156,6 +158,35 @@ def assisted_onboarding(request):
         'form': form,
         'open_cases': organization.onboarding_requests.exclude(status='resolved'),
     })
+
+
+@partner_required
+@require_POST
+def confirm_media_rights(request, pk):
+    """
+    The partner attests that they may publish a community's photos.
+
+    Blueprint §14 rights are the partner's claim about their own media, so the
+    partner makes it — staff ticking a box on their behalf records the wrong
+    party. Scoped to the caller's own organization: `managed_by` in the lookup
+    is the authorization check, not a filter.
+    """
+    community = get_object_or_404(Community, pk=pk,
+                                  managed_by=request.organization)
+
+    if community.media_rights_confirmed:
+        return redirect('partner_dashboard')
+
+    community.media_rights_confirmed = True
+    community.media_rights_confirmed_by = request.user
+    community.media_rights_confirmed_at = timezone.now()
+    community.save(update_fields=['media_rights_confirmed',
+                                  'media_rights_confirmed_by',
+                                  'media_rights_confirmed_at'])
+
+    messages.success(request, f'Media rights confirmed for {community.name}. '
+                              f'Photos in your next upload will be published.')
+    return redirect('partner_dashboard')
 
 
 @partner_required

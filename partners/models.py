@@ -280,6 +280,12 @@ def transfer_management(community, *, to_organization, note: str = '') -> Manage
 
     community.managed_by = to_organization
     community.media_rights_confirmed = False
-    community.save(update_fields=['managed_by', 'media_rights_confirmed'])
+    # Clear the attestation with the flag: the previous manager's confirmation
+    # must not read as though the new one made it.
+    community.media_rights_confirmed_by = None
+    community.media_rights_confirmed_at = None
+    community.save(update_fields=['managed_by', 'media_rights_confirmed',
+                                  'media_rights_confirmed_by',
+                                  'media_rights_confirmed_at'])
 
     return assignment

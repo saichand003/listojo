@@ -571,6 +571,12 @@ class Community(models.Model):
     # so they do not survive a change of manager.
     media_rights_confirmed = models.BooleanField(default=False,
                                  help_text='Partner has authorized Listojo to display this media.')
+    # Who asserted it and when. The claim is the partner's to make, so the
+    # record has to name a person — a lone boolean cannot answer "says who?"
+    # if a photo's use is ever challenged.
+    media_rights_confirmed_by = models.ForeignKey(User, null=True, blank=True,
+                                 on_delete=models.SET_NULL, related_name='+')
+    media_rights_confirmed_at = models.DateTimeField(null=True, blank=True)
     status   = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

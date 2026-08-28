@@ -48,7 +48,15 @@
           {% endfor %}
         </tbody>
       </table>
-      <p class="sub" style="margin-top:.6rem;">Everything else imported. Fix these rows and upload again.</p>
+      <p class="sub" style="margin-top:.6rem;">
+        {% if not result.ok %}
+          Nothing was imported. Fix the file and upload again.
+        {% elif was_preview %}
+          Nothing has been published yet. Fix these rows, or publish and add them later.
+        {% else %}
+          Everything else imported. Fix these rows and upload again.
+        {% endif %}
+      </p>
     {% endif %}
   </div>
 {% endif %}

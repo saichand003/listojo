@@ -605,3 +605,150 @@ class PartnerSignInRedirectTests(TestCase):
         response = self.client.get('/accounts/login/?next=https://evil.example/')
 
         self.assertRedirects(response, '/listings/', fetch_redirect_response=False)
+
+
+class InventoryUploadMessagingTests(TestCase):
+    """
+    A rejected file must not also claim it imported.
+
+    The footer under the rejection table used to read 'Everything else
+    imported' unconditionally — printed directly beneath 'No valid rows found —
+    nothing was changed'.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user('pm', 'pm@acme.com', 'pw')
+        self.organization = Organization.objects.create(name='Acme', slug='acme')
+        Membership.objects.create(user=self.user, organization=self.organization,
+                                  role='owner')
+        self.client.force_login(self.user)
+
+    def _upload(self, body, *, preview=True):
+        upload = io.BytesIO(body.encode())
+        upload.name = 'inventory.csv'
+        data = {'csv_file': upload, 'preview' if preview else 'publish': '1'}
+        return self.client.post('/partners/upload/', data)
+
+    def test_an_unreadable_file_does_not_claim_it_imported(self):
+        response = self._upload('photo_urls\nhttps://example.com/a.jpg\n')
+
+        self.assertContains(response, 'Rows we could not read')
+        self.assertContains(response, 'Nothing was imported')
+        self.assertNotContains(response, 'Everything else imported')
+
+    def test_a_preview_does_not_claim_it_imported(self):
+        body = (HEADER
+                + 'C1,Acme Place,Dallas,A1,101,1,1,700,1200\n'
+                + ',,,,,,,,\n')
+
+        response = self._upload(body)
+
+        # Guard against a vacuous pass: the footer only renders with rejections.
+        self.assertContains(response, 'Rows we could not read')
+        self.assertContains(response, 'Nothing has been published yet')
+        self.assertNotContains(response, 'Everything else imported')
+
+
+class MediaRightsConfirmationTests(TestCase):
+    """
+    Rights are the partner's claim, so the partner makes it.
+
+    Before this, the only writable surface was Django admin — which partners
+    cannot reach. Their dashboard showed 'Needed' with nothing to click, and a
+    staff member ticking the box recorded the wrong party as having asserted it.
+    """
+
+    def setUp(self):
+        self.organization = Organization.objects.create(name='Acme', slug='acme')
+        self.user = User.objects.create_user('pm', 'pm@acme.com', 'pw')
+        Membership.objects.create(user=self.user, organization=self.organization,
+                                  role='owner')
+        self.community = Community.objects.create(
+            name='Maple Court', description='', city='Dallas',
+            managed_by=self.organization)
+        self.client.force_login(self.user)
+
+    def _url(self, community=None):
+        return f'/partners/communities/{(community or self.community).pk}/media-rights/'
+
+    def test_confirming_records_who_and_when(self):
+        response = self.client.post(self._url())
+
+        self.assertRedirects(response, '/partners/')
+        self.community.refresh_from_db()
+        self.assertTrue(self.community.media_rights_confirmed)
+        self.assertEqual(self.community.media_rights_confirmed_by, self.user)
+        self.assertIsNotNone(self.community.media_rights_confirmed_at)
+
+    def test_dashboard_offers_the_button_then_shows_who_confirmed(self):
+        response = self.client.get('/partners/')
+        self.assertContains(response, 'Confirm rights')
+
+        self.client.post(self._url())
+
+        response = self.client.get('/partners/')
+        self.assertNotContains(response, 'Confirm rights')
+        self.assertContains(response, 'Confirmed')
+        self.assertContains(response, 'pm')
+
+    def test_a_partner_cannot_confirm_another_organizations_community(self):
+        other = Organization.objects.create(name='Globex', slug='globex')
+        theirs = Community.objects.create(name='Bishop Flats', description='',
+                                          city='Dallas', managed_by=other)
+
+        response = self.client.post(self._url(theirs))
+
+        self.assertEqual(response.status_code, 404)
+        theirs.refresh_from_db()
+        self.assertFalse(theirs.media_rights_confirmed)
+
+    def test_get_does_not_confirm(self):
+        response = self.client.get(self._url())
+
+        self.assertEqual(response.status_code, 405)
+        self.community.refresh_from_db()
+        self.assertFalse(self.community.media_rights_confirmed)
+
+    def test_signed_out_visitor_cannot_confirm(self):
+        self.client.logout()
+
+        response = self.client.post(self._url())
+
+        self.assertEqual(response.status_code, 302)
+        self.community.refresh_from_db()
+        self.assertFalse(self.community.media_rights_confirmed)
+
+    def test_confirming_twice_keeps_the_original_attestation(self):
+        self.client.post(self._url())
+        self.community.refresh_from_db()
+        first_at = self.community.media_rights_confirmed_at
+
+        other_user = User.objects.create_user('colleague', 'c@acme.com', 'pw')
+        Membership.objects.create(user=other_user, organization=self.organization)
+        self.client.force_login(other_user)
+        self.client.post(self._url())
+
+        self.community.refresh_from_db()
+        self.assertEqual(self.community.media_rights_confirmed_by, self.user)
+        self.assertEqual(self.community.media_rights_confirmed_at, first_at)
+
+    def test_confirming_unblocks_photo_fetching_on_the_next_upload(self):
+        """The whole point: `fetch_photos` keys off this flag."""
+        self.assertFalse(self.organization.communities.filter(
+            media_rights_confirmed=True).exists())
+
+        self.client.post(self._url())
+
+        self.assertTrue(self.organization.communities.filter(
+            media_rights_confirmed=True).exists())
+
+    def test_a_change_of_manager_clears_the_attestation(self):
+        self.client.post(self._url())
+        globex = Organization.objects.create(name='Globex', slug='globex')
+
+        transfer_management(self.community, to_organization=globex)
+
+        self.community.refresh_from_db()
+        self.assertFalse(self.community.media_rights_confirmed)
+        self.assertIsNone(self.community.media_rights_confirmed_by)
+        self.assertIsNone(self.community.media_rights_confirmed_at)

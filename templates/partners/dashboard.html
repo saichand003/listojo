@@ -2,6 +2,15 @@
 {% block title %} — Portfolio{% endblock %}
 {% block nav_dash %}active{% endblock %}
 
+{% block extra_css %}
+<style>
+  .btn-sm     { padding: .3rem .6rem; font-size: .8rem; }
+  .rights-form{ display: inline; }
+  .rights-by  { margin-top: .25rem; font-size: .75rem; color: var(--muted); }
+  .rights-note{ margin-top: .75rem; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-head">
   <h1>{{ organization.name }}</h1>
@@ -70,14 +79,29 @@
             <td>
               {% if c.media_rights_confirmed %}
                 <span class="pill pill-ok">Confirmed</span>
+                {% if c.media_rights_confirmed_at %}
+                  <div class="rights-by">
+                    {{ c.media_rights_confirmed_by.get_full_name|default:c.media_rights_confirmed_by.username|default:"—" }}
+                    · {{ c.media_rights_confirmed_at|date:"M j, Y" }}
+                  </div>
+                {% endif %}
               {% else %}
-                <span class="pill pill-warn">Needed</span>
+                <form method="post" class="rights-form"
+                      action="{% url 'partner_confirm_media_rights' c.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-ghost btn-sm">Confirm rights</button>
+                </form>
               {% endif %}
             </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
+    <p class="sub rights-note">
+      Confirming media rights means your company is authorized to publish that
+      property's photos on Listojo. We only download the photo URLs in your
+      uploads once you have confirmed. The person and date are recorded.
+    </p>
   {% else %}
     <p class="empty">No communities yet.</p>
   {% endif %}
