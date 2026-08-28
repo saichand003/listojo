@@ -270,7 +270,12 @@ def sync_instance(instance, *, force: bool = False,
     the fetch failed. Like the schools sync this saves, because the result is a
     set of related rows rather than a few scalar fields.
     """
-    from listings.models import GroceryStore, ListingGroceryStore  # local: cycle
+    from listings.models import (CommunityGroceryStore, GroceryStore,  # local: cycle
+                                 ListingGroceryStore)
+
+    link_model, owner_field = ((CommunityGroceryStore, 'community')
+                               if instance._meta.model_name == 'community'
+                               else (ListingGroceryStore, 'listing'))
 
     if instance.latitude is None or instance.longitude is None:
         return None
@@ -292,8 +297,8 @@ def sync_instance(instance, *, force: bool = False,
 
             store, _ = GroceryStore.objects.update_or_create(
                 place_id=place_id, defaults=store_data)
-            ListingGroceryStore.objects.update_or_create(
-                listing=instance, store=store,
+            link_model.objects.update_or_create(
+                **{owner_field: instance}, store=store,
                 defaults={'distance_miles': round(miles, 1)},
             )
             keep_ids.append(store.pk)

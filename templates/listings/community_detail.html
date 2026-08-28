@@ -175,6 +175,9 @@
       {% endif %}
       {% endwith %}
 
+      {# Same cards as a listing detail page — one definition, two pages. #}
+      {% include 'listings/_proximity_cards.html' with place=community %}
+
     </div>{# /left #}
 
     {# ── Right sidebar ── #}

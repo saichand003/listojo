@@ -11,7 +11,12 @@ from .services.event_tracker import log_community_event
 
 def community_detail(request, pk):
     community = get_object_or_404(
-        Community.objects.select_related('owner').prefetch_related('images'),
+        Community.objects
+        .select_related('owner', 'nearest_downtown')
+        # The proximity cards read these as bare `.all()` so a prefetch is
+        # reused — see ProximityDisplayMixin.
+        .prefetch_related('images', 'nearby_groceries__store',
+                          'nearby_transit__station__agency'),
         pk=pk, status='active',
     )
 

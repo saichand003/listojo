@@ -27,7 +27,7 @@ zero, which is a real answer for an unmeasured listing but not the final one.
 """
 from django.core.management.base import BaseCommand
 
-from listings.models import Listing
+from listings.models import Community, Listing
 from listings.services.commute_score import assign_instance
 from listings.services.transit import is_stale, sync_instance
 
@@ -49,15 +49,20 @@ class Command(BaseCommand):
         force, limit = opts['force'], opts['limit']
         score_only, dry = opts['score_only'], opts['dry_run']
 
-        qs = Listing.objects.filter(latitude__isnull=False, longitude__isnull=False)
+        # Communities are scored from their own centroid, the same way a
+        # listing is — see ProximityDisplayMixin for why the two stay in step.
+        querysets = [Listing.objects.filter(latitude__isnull=False, longitude__isnull=False),
+                     Community.objects.filter(latitude__isnull=False, longitude__isnull=False)]
         if score_only:
             # Only rows that have actually been matched can be scored; the rest
             # would score None and rewrite nothing.
-            candidates = list(qs.filter(transit_updated__isnull=False))
+            candidates = [obj for qs in querysets
+                          for obj in qs.filter(transit_updated__isnull=False)]
         else:
-            candidates = [obj for obj in qs.iterator() if force or is_stale(obj)]
+            candidates = [obj for qs in querysets for obj in qs.iterator()
+                          if force or is_stale(obj)]
 
-        self.stdout.write(f'\nListing: {len(candidates)} candidate row(s) with coordinates')
+        self.stdout.write(f'\nListings + communities: {len(candidates)} candidate row(s)')
 
         processed = matched = scored = 0
         for obj in candidates:

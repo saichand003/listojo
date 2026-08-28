@@ -11,9 +11,11 @@ first if scores come back as "0 candidate row(s)" unexpectedly.
 """
 import time
 
+from itertools import chain
+
 from django.core.management.base import BaseCommand
 
-from listings.models import Listing
+from listings.models import Community, Listing
 from listings.services.walkscore import is_stale, score_instance
 
 _FIELDS = [
@@ -41,10 +43,13 @@ class Command(BaseCommand):
         force, limit = opts['force'], opts['limit']
         sleep, dry = opts['sleep'], opts['dry_run']
 
-        qs = Listing.objects.filter(latitude__isnull=False, longitude__isnull=False)
-        candidates = [obj for obj in qs.iterator() if force or is_stale(obj)]
+        # Communities are scored from their own centroid, the same way a
+        # listing is — see ProximityDisplayMixin for why the two stay in step.
+        rows = chain(Listing.objects.filter(latitude__isnull=False, longitude__isnull=False).iterator(),
+                     Community.objects.filter(latitude__isnull=False, longitude__isnull=False).iterator())
+        candidates = [obj for obj in rows if force or is_stale(obj)]
 
-        self.stdout.write(f'\nListing: {len(candidates)} candidate row(s) with coordinates')
+        self.stdout.write(f'\nListings + communities: {len(candidates)} candidate row(s)')
 
         processed = 0
         succeeded = 0

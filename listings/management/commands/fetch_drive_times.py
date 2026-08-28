@@ -16,10 +16,12 @@ five stores is six elements in one request.
 """
 import time
 
+from itertools import chain
+
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 
-from listings.models import Listing
+from listings.models import Community, Listing
 from listings.services.drivetime import is_stale, sync_instance
 
 
@@ -42,13 +44,17 @@ class Command(BaseCommand):
 
         # Only listings with something to measure against — anything else would
         # be a wasted call.
-        qs = (Listing.objects
-              .filter(latitude__isnull=False, longitude__isnull=False)
-              .filter(Q(nearest_downtown__isnull=False) | Q(nearby_groceries__isnull=False))
-              .distinct())
-        candidates = [obj for obj in qs.iterator() if force or is_stale(obj)]
+        # Communities are scored from their own centroid, the same way a
+        # listing is — see ProximityDisplayMixin for why the two stay in step.
+        has_targets = Q(nearest_downtown__isnull=False) | Q(nearby_groceries__isnull=False)
+        rows = chain(
+            Listing.objects.filter(latitude__isnull=False, longitude__isnull=False).filter(has_targets).distinct().iterator(),
+            Community.objects.filter(latitude__isnull=False, longitude__isnull=False).filter(has_targets).distinct().iterator(),
+        )
+        candidates = [obj for obj in rows if force or is_stale(obj)]
 
-        self.stdout.write(f'\nListing: {len(candidates)} candidate row(s) with proximity data')
+        self.stdout.write(
+            f'\nListings + communities: {len(candidates)} candidate row(s) with proximity data')
 
         processed = succeeded = 0
         for obj in candidates:

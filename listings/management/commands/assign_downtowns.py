@@ -18,7 +18,9 @@ first if this reports "0 candidate row(s)" unexpectedly.
 """
 from django.core.management.base import BaseCommand
 
-from listings.models import Listing
+from itertools import chain
+
+from listings.models import Community, Listing
 from listings.services.downtowns import assign_instance
 
 _FIELDS = ['nearest_downtown', 'downtown_distance_miles']
@@ -28,6 +30,15 @@ _FIELDS = ['nearest_downtown', 'downtown_distance_miles']
 # row, but a row whose address changed without a re-geocode would call Google —
 # and this command runs on every container boot.
 _BATCH_SIZE = 500
+
+
+def _flush(rows):
+    """Write a mixed batch back, one bulk_update per model."""
+    by_model = {}
+    for obj in rows:
+        by_model.setdefault(type(obj), []).append(obj)
+    for model, batch in by_model.items():
+        model.objects.bulk_update(batch, _FIELDS, batch_size=_BATCH_SIZE)
 
 
 class Command(BaseCommand):
@@ -42,18 +53,21 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         dry, missing_only = opts['dry_run'], opts['missing_only']
 
-        qs = Listing.objects.filter(latitude__isnull=False, longitude__isnull=False)
+        # Communities get a downtown the same way listings do — the service
+        # only ever reads lat/lng off the instance.
+        querysets = [Listing.objects.filter(latitude__isnull=False, longitude__isnull=False),
+                     Community.objects.filter(latitude__isnull=False, longitude__isnull=False)]
         if missing_only:
-            qs = qs.filter(nearest_downtown__isnull=True)
+            querysets = [qs.filter(nearest_downtown__isnull=True) for qs in querysets]
 
         scope = 'unassigned' if missing_only else 'geocoded'
-        total = qs.count()
-        self.stdout.write(f'\nListing: {total} {scope} row(s) with coordinates')
+        total = sum(qs.count() for qs in querysets)
+        self.stdout.write(f'\nListings + communities: {total} {scope} row(s) with coordinates')
 
         matched = unmatched = 0
         pending = []
 
-        for obj in qs.iterator():
+        for obj in chain(*[qs.iterator() for qs in querysets]):
             if assign_instance(obj):
                 matched += 1
                 line = (f'  ✓ #{obj.pk} {obj.nearest_downtown.name} '
@@ -66,11 +80,11 @@ class Command(BaseCommand):
 
             pending.append(obj)
             if not dry and len(pending) >= _BATCH_SIZE:
-                Listing.objects.bulk_update(pending, _FIELDS, batch_size=_BATCH_SIZE)
+                _flush(pending)
                 pending = []
 
         if not dry and pending:
-            Listing.objects.bulk_update(pending, _FIELDS, batch_size=_BATCH_SIZE)
+            _flush(pending)
 
         self.stdout.write(self.style.SUCCESS(
             f'\nDone. Matched {matched}, unmatched {unmatched}.'))

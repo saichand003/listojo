@@ -3,7 +3,141 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 
-class Listing(models.Model):
+class ProximityDisplayMixin:
+    """
+    Read-only display helpers for anything with proximity data.
+
+    Listing and Community carry the same proximity columns on separate tables —
+    a building and a single rental are both a point on a map with a walk score,
+    a nearest downtown and stations around it. The columns have to be duplicated
+    because the tables are; this logic does not, and duplicating it is how the
+    two pages drift apart.
+
+    Every method here is a bare `.all()` or a Python filter over one, so a
+    caller's `prefetch_related` is reused rather than re-queried per row.
+    """
+
+    @property
+    def walk_score_rows(self):
+        """
+        (label, score, description) for each Walk Score metric that has data.
+
+        Transit Score is deliberately absent: `commute_score` is shown in its
+        place, and two transit numbers side by side invite a comparison neither
+        one wins. The column is still populated by services.walkscore — it is
+        licensed data we already fetch, and dropping the fetch would make it
+        expensive to bring back.
+
+        Bike coverage is patchy outside dense metros, so a row with no score is
+        dropped here rather than guarded for in the template.
+        """
+        rows = [
+            ('Walk Score', self.walk_score, self.walk_score_description),
+            ('Bike Score', self.bike_score, self.bike_description),
+        ]
+        return [r for r in rows if r[1] is not None]
+
+    @property
+    def has_walk_scores(self):
+        """True when at least one Walk Score metric is available to display."""
+        return bool(self.walk_score_rows)
+
+    @property
+    def grocery_cards(self):
+        """
+        Nearby grocery stores for display, nearest first.
+
+        A bare `.all()` for the same reason as `school_cards`: it is the only
+        form that reuses a prefetch on the caller's queryset.
+        """
+        return self.nearby_groceries.all()
+
+    @property
+    def transit_cards(self):
+        """
+        Every nearby station, rail first then nearest.
+
+        A bare `.all()` for the same reason as `school_cards`: it is the only
+        form that reuses a prefetch on the caller's queryset. Ordering comes
+        from ListingTransitStation.Meta, not from a call here.
+        """
+        return self.nearby_transit.all()
+
+    @property
+    def rail_cards(self):
+        """
+        Rail stations only, for the card's first section.
+
+        Split in Python rather than with a `.filter()` so the caller's
+        prefetch is reused — a filter here re-queries once per listing on any
+        page showing more than one.
+        """
+        return [link for link in self.transit_cards if link.station.is_rail]
+
+    @property
+    def bus_cards(self):
+        """Surface stops only — the card's second section. See `rail_cards`."""
+        return [link for link in self.transit_cards if not link.station.is_rail]
+
+    @property
+    def transit_agencies(self):
+        """
+        Distinct agency names behind the stations on show, for attribution.
+
+        GTFS feeds are published under licences that ask to be credited, and the
+        card has no other place that names who the data came from. Reads the
+        prefetched links rather than querying, so it costs nothing extra.
+        """
+        seen = []
+        for link in self.transit_cards:
+            name = link.station.agency.name
+            if name not in seen:
+                seen.append(name)
+        return seen
+
+    @property
+    def has_commute_score(self):
+        """True when a Commute Score has been computed for this listing."""
+        return self.commute_score is not None
+
+    @property
+    def commute_score_tone(self):
+        """
+        Palette band for the score dial: 'strong', 'fair' or 'weak'.
+
+        Named by band rather than by colour so the template picks the hex and
+        this stays a data question. Thresholds match the Walk Score card's
+        existing 70 / 50 split, so the two dials on the page read alike.
+        """
+        if self.commute_score is None:
+            return 'weak'
+        if self.commute_score >= 70:
+            return 'strong'
+        if self.commute_score >= 50:
+            return 'fair'
+        return 'weak'
+
+    @property
+    def downtown_display_miles(self):
+        """Road miles when a route resolved, else the straight-line figure."""
+        return self.downtown_drive_miles or self.downtown_distance_miles
+
+    @property
+    def has_drive_times(self):
+        """True when any drive time is available — drives the card's footnote."""
+        if self.downtown_drive_minutes:
+            return True
+        if any(link.drive_minutes for link in self.grocery_cards):
+            return True
+        return any(link.drive_minutes for link in self.transit_cards)
+
+    @property
+    def has_neighborhood_card(self):
+        """True when there is anything to put in the Neighborhood section."""
+        return bool(self.nearest_downtown_id) or bool(self.grocery_cards)
+
+
+class Listing(ProximityDisplayMixin, models.Model):
     CATEGORY_CHOICES = [
         ('roommates', 'Roommates'),
         ('rentals', 'Rentals'),
@@ -205,31 +339,6 @@ class Listing(models.Model):
         return ', '.join(p.strip() for p in parts if p and p.strip())
 
     @property
-    def walk_score_rows(self):
-        """
-        (label, score, description) for each Walk Score metric that has data.
-
-        Transit Score is deliberately absent: `commute_score` is shown in its
-        place, and two transit numbers side by side invite a comparison neither
-        one wins. The column is still populated by services.walkscore — it is
-        licensed data we already fetch, and dropping the fetch would make it
-        expensive to bring back.
-
-        Bike coverage is patchy outside dense metros, so a row with no score is
-        dropped here rather than guarded for in the template.
-        """
-        rows = [
-            ('Walk Score', self.walk_score, self.walk_score_description),
-            ('Bike Score', self.bike_score, self.bike_description),
-        ]
-        return [r for r in rows if r[1] is not None]
-
-    @property
-    def has_walk_scores(self):
-        """True when at least one Walk Score metric is available to display."""
-        return bool(self.walk_score_rows)
-
-    @property
     def school_cards(self):
         """
         Nearby schools for display, ordered elementary → middle → high.
@@ -240,100 +349,6 @@ class Listing(models.Model):
         listing on any page showing more than one.
         """
         return self.nearby_schools.all()
-
-    @property
-    def grocery_cards(self):
-        """
-        Nearby grocery stores for display, nearest first.
-
-        A bare `.all()` for the same reason as `school_cards`: it is the only
-        form that reuses a prefetch on the caller's queryset.
-        """
-        return self.nearby_groceries.all()
-
-    @property
-    def transit_cards(self):
-        """
-        Every nearby station, rail first then nearest.
-
-        A bare `.all()` for the same reason as `school_cards`: it is the only
-        form that reuses a prefetch on the caller's queryset. Ordering comes
-        from ListingTransitStation.Meta, not from a call here.
-        """
-        return self.nearby_transit.all()
-
-    @property
-    def rail_cards(self):
-        """
-        Rail stations only, for the card's first section.
-
-        Split in Python rather than with a `.filter()` so the caller's
-        prefetch is reused — a filter here re-queries once per listing on any
-        page showing more than one.
-        """
-        return [link for link in self.transit_cards if link.station.is_rail]
-
-    @property
-    def bus_cards(self):
-        """Surface stops only — the card's second section. See `rail_cards`."""
-        return [link for link in self.transit_cards if not link.station.is_rail]
-
-    @property
-    def transit_agencies(self):
-        """
-        Distinct agency names behind the stations on show, for attribution.
-
-        GTFS feeds are published under licences that ask to be credited, and the
-        card has no other place that names who the data came from. Reads the
-        prefetched links rather than querying, so it costs nothing extra.
-        """
-        seen = []
-        for link in self.transit_cards:
-            name = link.station.agency.name
-            if name not in seen:
-                seen.append(name)
-        return seen
-
-    @property
-    def has_commute_score(self):
-        """True when a Commute Score has been computed for this listing."""
-        return self.commute_score is not None
-
-    @property
-    def commute_score_tone(self):
-        """
-        Palette band for the score dial: 'strong', 'fair' or 'weak'.
-
-        Named by band rather than by colour so the template picks the hex and
-        this stays a data question. Thresholds match the Walk Score card's
-        existing 70 / 50 split, so the two dials on the page read alike.
-        """
-        if self.commute_score is None:
-            return 'weak'
-        if self.commute_score >= 70:
-            return 'strong'
-        if self.commute_score >= 50:
-            return 'fair'
-        return 'weak'
-
-    @property
-    def downtown_display_miles(self):
-        """Road miles when a route resolved, else the straight-line figure."""
-        return self.downtown_drive_miles or self.downtown_distance_miles
-
-    @property
-    def has_drive_times(self):
-        """True when any drive time is available — drives the card's footnote."""
-        if self.downtown_drive_minutes:
-            return True
-        if any(link.drive_minutes for link in self.grocery_cards):
-            return True
-        return any(link.drive_minutes for link in self.transit_cards)
-
-    @property
-    def has_neighborhood_card(self):
-        """True when there is anything to put in the Neighborhood section."""
-        return bool(self.nearest_downtown_id) or bool(self.grocery_cards)
 
     def get_tags_list(self):
         return [t.strip() for t in self.tags.split(',') if t.strip()]
@@ -516,7 +531,7 @@ class UserListingEvent(models.Model):
 
 # ── Community models ──────────────────────────────────────────────────────────
 
-class Community(models.Model):
+class Community(ProximityDisplayMixin, models.Model):
     STATUS_CHOICES = [
         ('active',   'Active'),
         ('draft',    'Draft'),
@@ -596,6 +611,41 @@ class Community(models.Model):
 
     def __str__(self):
         return self.name
+
+    # ── Proximity ─────────────────────────────────────────────────────────
+    # The same columns Listing carries, for the same reason: a community is a
+    # point on a map, and every proximity service already takes a bare
+    # instance. Duplicated here rather than shared because the tables are
+    # separate; the display logic is not — see ProximityDisplayMixin.
+    walk_score             = models.PositiveSmallIntegerField(null=True, blank=True, db_index=True)
+    walk_score_description = models.CharField(max_length=60, blank=True, default='')
+    transit_score          = models.PositiveSmallIntegerField(null=True, blank=True)
+    transit_description    = models.CharField(max_length=60, blank=True, default='')
+    bike_score             = models.PositiveSmallIntegerField(null=True, blank=True)
+    bike_description       = models.CharField(max_length=60, blank=True, default='')
+    walk_score_link        = models.URLField(max_length=500, blank=True, default='',
+                                 help_text="Attribution link back to Walk Score — required by their API terms")
+    walk_score_updated     = models.DateTimeField(null=True, blank=True,
+                                 help_text='When the scores were last fetched — used to detect staleness')
+
+    nearest_downtown = models.ForeignKey('Downtown', null=True, blank=True,
+                           on_delete=models.SET_NULL, related_name='communities')
+    downtown_distance_miles = models.DecimalField(max_digits=5, decimal_places=1,
+                                  null=True, blank=True, db_index=True)
+    downtown_drive_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
+    downtown_drive_miles = models.DecimalField(max_digits=5, decimal_places=1,
+                               null=True, blank=True)
+
+    groceries_updated = models.DateTimeField(null=True, blank=True,
+                            help_text='When nearby groceries were last fetched — used to detect staleness')
+    drive_times_updated = models.DateTimeField(null=True, blank=True,
+                              help_text='When drive times were last fetched — used to detect staleness')
+    transit_updated = models.DateTimeField(null=True, blank=True,
+                          help_text='When nearby stations were last matched — used to detect staleness')
+    commute_score = models.PositiveSmallIntegerField(null=True, blank=True, db_index=True,
+                        help_text='0-100 composite: rail access, network reach, frequent service, downtown drive')
+    commute_score_label = models.CharField(max_length=40, blank=True, default='',
+                              help_text="Band name shown under the score, e.g. 'Excellent Transit'")
 
     @property
     def full_address(self):
@@ -1285,3 +1335,59 @@ class ListingTransitStation(models.Model):
 
     def __str__(self):
         return f'{self.station.name} — {self.distance_miles} mi'
+
+
+class CommunityGroceryStore(models.Model):
+    """Community counterpart of ListingGroceryStore — same shape, own table."""
+
+    community = models.ForeignKey(Community, on_delete=models.CASCADE,
+                                  related_name='nearby_groceries')
+    store   = models.ForeignKey(GroceryStore, on_delete=models.CASCADE,
+                                related_name='community_links')
+    distance_miles = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    drive_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
+    drive_miles = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+
+    class Meta:
+        ordering = ['distance_miles']
+        constraints = [
+            models.UniqueConstraint(fields=['community', 'store'],
+                                    name='uniq_community_grocery_store'),
+        ]
+
+    def __str__(self):
+        return f'{self.store} near {self.community}'
+
+    @property
+    def display_miles(self):
+        """Road miles when a route resolved, else the straight-line figure."""
+        return self.drive_miles or self.distance_miles
+
+
+class CommunityTransitStation(models.Model):
+    """Community counterpart of ListingTransitStation — same shape, own table."""
+
+    community = models.ForeignKey(Community, on_delete=models.CASCADE,
+                                  related_name='nearby_transit')
+    station = models.ForeignKey(TransitStation, on_delete=models.CASCADE,
+                                related_name='community_links')
+    distance_miles = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    drive_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
+    drive_miles = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+
+    class Meta:
+        # Rail before bus at equal distance, then nearest first — same reason as
+        # ListingTransitStation: the line you can catch beats a nearer stop.
+        ordering = ['-station__is_rail', 'distance_miles']
+        constraints = [
+            models.UniqueConstraint(fields=['community', 'station'],
+                                    name='uniq_community_transit_station'),
+        ]
+
+    def __str__(self):
+        return f'{self.station} near {self.community}'
+
+    @property
+    def display_miles(self):
+        """Road miles when a route resolved, else the straight-line figure."""
+        return self.drive_miles or self.distance_miles

@@ -15,10 +15,7 @@ from django.utils import timezone
 
 from django.core.management import call_command
 
-from listings.models import (MODE_BADGE_COLORS, Community, Downtown, FloorPlan, GroceryStore,
-                             GuidedSearchEvent, Listing, ListingGroceryStore, ListingInquiry,
-                             ListingSchool, ListingTransitStation, School, StationRoute,
-                             TransitAgency, TransitRoute, TransitStation, Unit, UserListingEvent)
+from listings.models import (Community, CommunityGroceryStore, CommunityTransitStation, Downtown, FloorPlan, GroceryStore, GuidedSearchEvent, Listing, ListingGroceryStore, ListingInquiry, ListingSchool, ListingTransitStation, MODE_BADGE_COLORS, School, StationRoute, TransitAgency, TransitRoute, TransitStation, Unit, UserListingEvent)
 from listings.services import (commute_score, distance, downtowns, drivetime, greatschools,
                                groceries, gtfs, transit)
 from portal.models import Lead
@@ -1914,3 +1911,109 @@ class CommunityMapMarkerTests(TestCase):
         response = self.client.get('/listings/')
 
         self.assertContains(response, 'data-kind="community"')
+
+
+class CommunityProximityTests(TestCase):
+    """
+    A community carries the same proximity data as a listing.
+
+    The services were always written against a bare instance — they only ever
+    read lat/lng and write named fields — so this closes the gap by giving
+    Community the columns rather than by forking the pipeline.
+    """
+
+    def setUp(self):
+        self.community = Community.objects.create(
+            name='Maple Court', description='', city='Dallas',
+            address_line='4521 Maple Ave', state='TX',
+            community_type='apartment_complex', status='active',
+            latitude='32.811871', longitude='-96.823574')
+
+    def test_walk_scores_render_on_the_community_page(self):
+        self.community.walk_score = 54
+        self.community.walk_score_description = 'Somewhat Walkable'
+        self.community.bike_score = 44
+        self.community.bike_description = 'Somewhat Bikeable'
+        self.community.save()
+
+        response = self.client.get(f'/communities/{self.community.pk}/')
+
+        self.assertContains(response, 'Getting Around')
+        self.assertContains(response, 'Somewhat Walkable')
+        self.assertContains(response, 'Somewhat Bikeable')
+
+    def test_commute_score_and_rail_stations_render(self):
+        agency = TransitAgency.objects.create(slug='dart', name='DART', gtfs_url='https://example.com/g.zip')
+        station = TransitStation.objects.create(
+            agency=agency, source_id='belt-line', name='Belt Line Station',
+            latitude='32.90', longitude='-96.95', is_rail=True)
+        CommunityTransitStation.objects.create(
+            community=self.community, station=station,
+            distance_miles='3.5', drive_minutes=9)
+        self.community.commute_score = 73
+        self.community.commute_score_label = 'Excellent Transit'
+        self.community.save()
+
+        response = self.client.get(f'/communities/{self.community.pk}/')
+
+        self.assertContains(response, 'Commute')
+        self.assertContains(response, 'Excellent Transit')
+        self.assertContains(response, 'Belt Line Station')
+        self.assertContains(response, 'DART')
+
+    def test_downtown_and_groceries_render(self):
+        downtown = Downtown.objects.create(
+            name='Downtown Dallas', city='Dallas', state='TX',
+            latitude='32.7800', longitude='-96.7970')
+        self.community.nearest_downtown = downtown
+        self.community.downtown_distance_miles = '5.5'
+        self.community.downtown_drive_minutes = 11
+        self.community.save()
+        store = GroceryStore.objects.create(
+            place_id='p1', name='Kroger', chain='Kroger',
+            latitude='32.81', longitude='-96.82')
+        CommunityGroceryStore.objects.create(
+            community=self.community, store=store,
+            distance_miles='0.9', drive_minutes=3)
+
+        response = self.client.get(f'/communities/{self.community.pk}/')
+
+        self.assertContains(response, 'Neighborhood')
+        self.assertContains(response, 'Downtown Dallas')
+        self.assertContains(response, 'Kroger')
+
+    def test_a_community_with_no_proximity_data_renders_nothing_extra(self):
+        """Empty cards must not appear — the page has to survive a fresh import."""
+        response = self.client.get(f'/communities/{self.community.pk}/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Getting Around')
+        self.assertNotContains(response, 'Neighborhood')
+
+    def test_the_downtown_service_works_on_a_community_unchanged(self):
+        from listings.services.downtowns import assign_instance
+
+        Downtown.objects.create(name='Downtown Dallas', city='Dallas', state='TX',
+                                latitude='32.7800', longitude='-96.7970')
+
+        self.assertTrue(assign_instance(self.community))
+        self.assertEqual(self.community.nearest_downtown.name, 'Downtown Dallas')
+        self.assertIsNotNone(self.community.downtown_distance_miles)
+
+    def test_the_commute_score_service_works_on_a_community_unchanged(self):
+        from listings.services.commute_score import assign_instance
+
+        agency = TransitAgency.objects.create(slug='dart', name='DART', gtfs_url='https://example.com/g.zip')
+        station = TransitStation.objects.create(
+            agency=agency, source_id='s1', name='Belt Line Station',
+            latitude='32.812', longitude='-96.824', is_rail=True)
+        CommunityTransitStation.objects.create(
+            community=self.community, station=station, distance_miles='0.4')
+        # A score is only defined once stations have actually been matched —
+        # see commute_score.score_listing.
+        self.community.transit_updated = timezone.now()
+
+        score = assign_instance(self.community)
+
+        self.assertIsNotNone(score)
+        self.assertTrue(self.community.commute_score_label)

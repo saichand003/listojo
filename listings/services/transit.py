@@ -197,7 +197,11 @@ def sync_instance(instance, *, force: bool = False) -> int | None:
     figures are not preserved across a re-match: they belong to a listing-station
     pair, and services.drivetime refills them on its own schedule.
     """
-    from listings.models import ListingTransitStation
+    from listings.models import CommunityTransitStation, ListingTransitStation
+
+    link_model, owner_field = ((CommunityTransitStation, 'community')
+                               if instance._meta.model_name == 'community'
+                               else (ListingTransitStation, 'listing'))
 
     if instance.latitude is None or instance.longitude is None:
         return None
@@ -211,8 +215,8 @@ def sync_instance(instance, *, force: bool = False) -> int | None:
         instance.nearby_transit.exclude(station_id__in=keep_ids).delete()
 
         for station, miles in matches:
-            ListingTransitStation.objects.update_or_create(
-                listing=instance, station=station,
+            link_model.objects.update_or_create(
+                **{owner_field: instance}, station=station,
                 defaults={'distance_miles': round(miles, 1)},
             )
 
