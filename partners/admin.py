@@ -60,9 +60,9 @@ class PartnerApplicationAdmin(admin.ModelAdmin):
     """
     Inbound partner interest.
 
-    Use the Approve action rather than editing `status` to 'approved' by hand:
-    the status field is only a label, while the action is what actually creates
-    the organization, the account and the membership.
+    Approving here really does approve: both the bulk action and the plain
+    status dropdown create the organization, the account and the membership,
+    then email the invite. See `save_model` for why both paths matter.
     """
     list_display = ('company_name', 'contact_name', 'portfolio_size', 'pms_name',
                     'status', 'organization', 'created_at')
@@ -75,27 +75,44 @@ class PartnerApplicationAdmin(admin.ModelAdmin):
     @admin.action(description='Approve — create organization, account and send invite')
     def approve_and_invite(self, request, queryset):
         for application in queryset:
-            result = approve_application(application)
+            self._approve(request, application)
 
-            if result.already_approved:
-                self.message_user(
-                    request,
-                    f'{application.company_name} was already approved '
-                    f'(organization: {result.organization}). Nothing changed.',
-                    messages.WARNING)
-                continue
+    def save_model(self, request, obj, form, change):
+        """
+        Setting status to 'approved' by hand must not fake an approval.
 
-            account = ('created account' if result.created_user
-                       else 'linked existing account')
-            note = (f'{application.company_name} approved — organization '
-                    f'"{result.organization.slug}", {account} '
-                    f'{result.user.get_username()}.')
+        The dropdown is right there next to the action, and a status column that
+        silently means nothing is worse than no column at all — the applicant
+        looks approved to staff while no account exists. Django routes both the
+        change form and the `list_editable` dropdown through here, so this
+        catches every hand-edit and runs the same service the action does.
+        """
+        super().save_model(request, obj, form, change)
+        if obj.status == 'approved' and not obj.organization_id:
+            self._approve(request, obj)
 
-            if result.invite_sent:
-                self.message_user(request, f'{note} Invite emailed.', messages.SUCCESS)
-            else:
-                self.message_user(
-                    request,
-                    f'{note} The invite email FAILED to send — the account is fine, '
-                    f're-run this action to try again.',
-                    messages.ERROR)
+    def _approve(self, request, application):
+        result = approve_application(application)
+
+        if result.already_approved:
+            self.message_user(
+                request,
+                f'{application.company_name} was already approved '
+                f'(organization: {result.organization}). Nothing changed.',
+                messages.WARNING)
+            return
+
+        account = ('created account' if result.created_user
+                   else 'linked existing account')
+        note = (f'{application.company_name} approved — organization '
+                f'"{result.organization.slug}", {account} '
+                f'{result.user.get_username()}.')
+
+        if result.invite_sent:
+            self.message_user(request, f'{note} Invite emailed.', messages.SUCCESS)
+        else:
+            self.message_user(
+                request,
+                f'{note} The invite email FAILED to send — the account is fine, '
+                f're-run the Approve action to try again.',
+                messages.ERROR)

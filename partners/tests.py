@@ -438,3 +438,99 @@ class PartnerApprovalTests(TestCase):
 
         self.assertEqual(result.organization.slug, 'oaks-properties-2')
         self.assertEqual(Organization.objects.count(), 2)
+
+
+class PartnerApplicationAdminTests(TestCase):
+    """
+    Approving through the admin UI, not the service.
+
+    The status dropdown sits beside the bulk action and staff reach for it
+    first. It once only wrote a label — an application read 'approved' while no
+    organization, account or invite existed.
+    """
+
+    def setUp(self):
+        from partners.models import PartnerApplication
+        self.staff = User.objects.create_superuser(
+            'root', 'root@listojo.com', 'pw')
+        self.client.force_login(self.staff)
+        self.application = PartnerApplication.objects.create(
+            company_name='ABC Properties',
+            contact_name='Sai Chand',
+            contact_email='partner@abc.com',
+        )
+
+    def _set_status_via_changelist(self, status):
+        """The list_editable dropdown — exactly what staff click."""
+        return self.client.post('/admin/partners/partnerapplication/', {
+            'form-TOTAL_FORMS': '1',
+            'form-INITIAL_FORMS': '1',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+            'form-0-id': str(self.application.pk),
+            'form-0-status': status,
+            '_save': 'Save',
+        }, follow=True)
+
+    def test_status_dropdown_creates_the_account_and_sends_the_invite(self):
+        from django.core import mail
+
+        response = self._set_status_via_changelist('approved')
+        self.assertEqual(response.status_code, 200)
+
+        organization = Organization.objects.get()
+        self.assertEqual(organization.name, 'ABC Properties')
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.organization, organization)
+
+        membership = Membership.objects.get()
+        self.assertEqual(membership.organization, organization)
+        self.assertEqual(membership.user.email, 'partner@abc.com')
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('/accounts/reset/', mail.outbox[0].body)
+
+    def test_other_statuses_create_nothing(self):
+        from django.core import mail
+
+        self._set_status_via_changelist('contacted')
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, 'contacted')
+        self.assertIsNone(self.application.organization)
+        self.assertEqual(Organization.objects.count(), 0)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_bulk_action_approves_too(self):
+        from django.core import mail
+
+        self.client.post('/admin/partners/partnerapplication/', {
+            'action': 'approve_and_invite',
+            '_selected_action': [str(self.application.pk)],
+        }, follow=True)
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, 'approved')
+        self.assertIsNotNone(self.application.organization)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_an_application_stuck_at_approved_can_be_repaired(self):
+        """
+        The exact prod state after the bug: status says approved, nothing exists.
+        Re-running the action must finish the job rather than refuse.
+        """
+        from django.core import mail
+
+        self.application.status = 'approved'
+        self.application.save(update_fields=['status'])
+
+        self.client.post('/admin/partners/partnerapplication/', {
+            'action': 'approve_and_invite',
+            '_selected_action': [str(self.application.pk)],
+        }, follow=True)
+
+        self.application.refresh_from_db()
+        self.assertIsNotNone(self.application.organization)
+        self.assertEqual(Membership.objects.count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
