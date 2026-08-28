@@ -326,3 +326,115 @@ class PartnerApplicationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Application received')
         self.assertEqual(PartnerApplication.objects.count(), 0)
+
+
+class PartnerApprovalTests(TestCase):
+    """Approving is what creates the account — the status field is only a label."""
+
+    def setUp(self):
+        from partners.models import PartnerApplication
+        self.application = PartnerApplication.objects.create(
+            company_name='Oaks Properties',
+            contact_name='Sai Chand',
+            contact_email='Sai@Oaks.com',
+            markets='Dallas, Plano',
+        )
+
+    def test_approval_creates_org_account_and_membership(self):
+        from partners.services.approval import approve_application
+
+        result = approve_application(self.application)
+
+        organization = Organization.objects.get()
+        self.assertEqual(organization.name, 'Oaks Properties')
+        self.assertEqual(organization.slug, 'oaks-properties')
+        self.assertEqual(organization.contact_email, 'Sai@Oaks.com')
+
+        user = User.objects.get()
+        self.assertEqual(user.username, 'Sai@Oaks.com')
+        self.assertEqual(user.first_name, 'Sai')
+        # Listojo never picks a partner's password.
+        self.assertFalse(user.has_usable_password())
+
+        membership = Membership.objects.get()
+        self.assertEqual(membership.user, user)
+        self.assertEqual(membership.organization, organization)
+        self.assertEqual(membership.role, 'owner')
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, 'approved')
+        self.assertEqual(self.application.organization, organization)
+        self.assertTrue(result.created_user)
+
+    def test_approved_partner_reaches_the_dashboard(self):
+        from partners.services.approval import approve_application
+
+        result = approve_application(self.application)
+        # Access comes from Membership, never from is_staff.
+        self.assertFalse(result.user.is_staff)
+
+        self.client.force_login(result.user)
+        response = self.client.get('/partners/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Oaks Properties')
+
+    def test_invite_email_carries_a_working_reset_link(self):
+        from django.core import mail
+        from partners.services.approval import approve_application
+
+        approve_application(self.application)
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ['Sai@Oaks.com'])
+        self.assertIn('/accounts/reset/', message.body)
+        self.assertIn('Sai@Oaks.com', message.body)
+
+        link = [word for word in message.body.split()
+                if '/accounts/reset/' in word][0]
+        response = self.client.get(link[len('https://listojo.com'):], follow=True)
+        self.assertEqual(response.status_code, 200)
+
+    def test_approving_twice_does_not_duplicate_anything(self):
+        from django.core import mail
+        from partners.services.approval import approve_application
+
+        approve_application(self.application)
+        self.application.refresh_from_db()
+        second = approve_application(self.application)
+
+        self.assertTrue(second.already_approved)
+        self.assertEqual(Organization.objects.count(), 1)
+        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(Membership.objects.count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_existing_account_is_reused_not_duplicated(self):
+        from partners.services.approval import approve_application
+
+        existing = User.objects.create_user(
+            'renter', email='sai@oaks.com', password='pw')
+
+        result = approve_application(self.application)
+
+        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(result.user, existing)
+        self.assertFalse(result.created_user)
+        # Their existing password must survive being approved as a partner.
+        self.assertTrue(result.user.has_usable_password())
+
+    def test_second_company_with_the_same_name_gets_its_own_slug(self):
+        from partners.models import PartnerApplication
+        from partners.services.approval import approve_application
+
+        approve_application(self.application)
+        twin = PartnerApplication.objects.create(
+            company_name='Oaks Properties',
+            contact_name='Other Person',
+            contact_email='other@oaks2.com',
+        )
+
+        result = approve_application(twin)
+
+        self.assertEqual(result.organization.slug, 'oaks-properties-2')
+        self.assertEqual(Organization.objects.count(), 2)
