@@ -33,7 +33,7 @@ _CONTENT_TYPE_EXT = {
 
 def save_remote_photos(owner_obj, photo_urls, *, max_photos: int = MAX_PHOTOS,
                        prefix: str = 'partner', image_model=None,
-                       related_field: str = 'listing', upload_dir: str = 'listing_images') -> int:
+                       related_field: str = 'listing') -> int:
     """
     Download up to `max_photos` images and attach them to `owner_obj`.
 
@@ -57,7 +57,9 @@ def save_remote_photos(owner_obj, photo_urls, *, max_photos: int = MAX_PHOTOS,
                 continue
 
             image = image_model(**{related_field: owner_obj}, order=index)
-            image.image.save(f'{upload_dir}/{prefix}_{owner_obj.pk}_{index}.{ext}',
+            # Bare filename only — the field's own `upload_to` supplies the
+            # directory. Passing one here nested it twice.
+            image.image.save(f'{prefix}_{owner_obj.pk}_{index}.{ext}',
                              ContentFile(response.content), save=True)
             saved += 1
             time.sleep(0.1)      # be gentle with the partner's image host

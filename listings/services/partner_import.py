@@ -536,8 +536,9 @@ def _import_units(unit_records: list[CanonicalUnit], *, organization: Organizati
         # about standalone listings so the two shapes never blur in the report.
         result.communities += int(created)
 
-        if fetch_photos and rows[-1].photo_urls and not community.images.exists():
-            result.photos_saved += _save_community_photos(community, rows[-1].photo_urls)
+        photo_urls = _merged_photo_urls(rows)
+        if fetch_photos and photo_urls and not community.images.exists():
+            result.photos_saved += _save_community_photos(community, photo_urls)
 
         for record in rows:
             floor_plan, fp_created = FloorPlan.objects.update_or_create(
@@ -556,11 +557,33 @@ def _import_units(unit_records: list[CanonicalUnit], *, organization: Organizati
             result.units_updated += int(not unit_created)
 
 
+def _merged_photo_urls(rows) -> list[str]:
+    """
+    Every row's photos, de-duplicated, in first-seen order.
+
+    Other community fields take the last row of a group so a correction applied
+    across the file wins. Photos are the exception: they are fetched only when
+    a community has none, so 'last row wins' could never deliver a correction —
+    it just discarded the other rows' URLs silently. A PMS export repeats
+    community data on every unit row, so partners spread photos across rows as
+    a matter of course.
+
+    `save_remote_photos` still caps the download at MAX_PHOTOS.
+    """
+    merged: list[str] = []
+    seen: set[str] = set()
+    for record in rows:
+        for url in record.photo_urls:
+            if url not in seen:
+                seen.add(url)
+                merged.append(url)
+    return merged
+
+
 def _save_community_photos(community, photo_urls) -> int:
     from listings.services.media import save_remote_photos
     return save_remote_photos(community, photo_urls, image_model=CommunityImage,
-                              related_field='community', prefix='community',
-                              upload_dir='community_images')
+                              related_field='community', prefix='community')
 
 
 def _absent_units(organization: Organization, seen_units: set[tuple[str, str]]):

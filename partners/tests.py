@@ -5,13 +5,16 @@ The two failure modes that motivated this app:
   2. A community changes management company. It must keep its identity, not
      import a second time under the new manager's ID.
 """
+import base64
 import io
+import tempfile
 
 from decimal import Decimal
+from unittest import mock
 
 from django.contrib.auth.models import User
 from django.db.models import ProtectedError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from listings.models import Community, Unit
 from listings.services.ownership import can_edit_community, editable_communities
@@ -752,3 +755,96 @@ class MediaRightsConfirmationTests(TestCase):
         self.assertFalse(self.community.media_rights_confirmed)
         self.assertIsNone(self.community.media_rights_confirmed_by)
         self.assertIsNone(self.community.media_rights_confirmed_at)
+
+
+PHOTO_HEADER = ('community_ref,community_name,community_city,floor_plan_name,'
+                'unit_number,bedrooms,bathrooms,square_footage,price,photo_urls\n')
+
+# Smallest valid PNG — ImageField reads real bytes when it saves.
+_PNG = base64.b64decode(
+    b'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')
+
+
+def _fake_photo_response(*args, **kwargs):
+    response = mock.Mock()
+    response.headers = {'Content-Type': 'image/png'}
+    response.content = _PNG
+    response.raise_for_status = mock.Mock()
+    return response
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+@mock.patch('listings.services.media.time.sleep', lambda *_: None)
+@mock.patch('listings.services.media.requests.get', _fake_photo_response)
+class CommunityPhotoImportTests(TestCase):
+    """
+    A community's photos come from every row, not just the last one.
+
+    Community fields take the last row of a group so corrections propagate, but
+    photos are fetched only when a community has none — so that rule could
+    never deliver a correction, it only dropped rows 1..n-1 in silence.
+    """
+
+    def setUp(self):
+        self.organization = Organization.objects.create(name='Acme', slug='acme')
+        self.owner = User.objects.create_user('pm', 'pm@acme.com', 'pw')
+        Membership.objects.create(user=self.owner, organization=self.organization,
+                                  role='owner')
+
+    def _import(self, body):
+        return import_partner_inventory(CsvAdapter(io.StringIO(body)),
+                                        organization=self.organization,
+                                        fetch_photos=True)
+
+    def test_photos_spread_across_rows_all_arrive(self):
+        result = self._import(
+            PHOTO_HEADER
+            + 'MAPLE,Maple Court,Dallas,A1,101,1,1,700,1450,https://x/1.png|https://x/2.png\n'
+            + 'MAPLE,Maple Court,Dallas,A1,104,1,1,700,1495,https://x/3.png|https://x/4.png\n')
+
+        self.assertEqual(result.photos_saved, 4)
+        self.assertEqual(Community.objects.get().images.count(), 4)
+
+    def test_the_same_url_repeated_on_every_row_is_saved_once(self):
+        """A PMS export repeats community data per unit — that is not 3 photos."""
+        row = 'MAPLE,Maple Court,Dallas,A1,{},1,1,700,1450,https://x/hero.png\n'
+        result = self._import(PHOTO_HEADER + row.format(101) + row.format(104)
+                              + row.format(108))
+
+        self.assertEqual(result.photos_saved, 1)
+
+    def test_order_follows_first_appearance(self):
+        self._import(
+            PHOTO_HEADER
+            + 'MAPLE,Maple Court,Dallas,A1,101,1,1,700,1450,https://x/a.png\n'
+            + 'MAPLE,Maple Court,Dallas,A1,104,1,1,700,1495,https://x/b.png\n')
+
+        images = list(Community.objects.get().images.order_by('order'))
+        self.assertEqual([i.order for i in images], [0, 1])
+
+    def test_the_download_cap_still_holds(self):
+        urls = '|'.join(f'https://x/{n}.png' for n in range(10))
+        result = self._import(
+            PHOTO_HEADER
+            + f'MAPLE,Maple Court,Dallas,A1,101,1,1,700,1450,{urls}\n')
+
+        self.assertEqual(result.photos_saved, 6)      # MAX_PHOTOS
+
+    def test_stored_path_is_not_nested_twice(self):
+        """`upload_to` supplies the directory; the filename must not repeat it."""
+        self._import(
+            PHOTO_HEADER
+            + 'MAPLE,Maple Court,Dallas,A1,101,1,1,700,1450,https://x/1.png\n')
+
+        name = Community.objects.get().images.first().image.name
+        self.assertEqual(name.count('community_images/'), 1)
+        self.assertTrue(name.startswith('community_images/community_'))
+
+    def test_photos_are_still_skipped_without_media_rights(self):
+        result = import_partner_inventory(
+            CsvAdapter(io.StringIO(
+                PHOTO_HEADER
+                + 'MAPLE,Maple Court,Dallas,A1,101,1,1,700,1450,https://x/1.png\n')),
+            organization=self.organization, fetch_photos=False)
+
+        self.assertEqual(result.photos_saved, 0)
