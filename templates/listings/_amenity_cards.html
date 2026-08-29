@@ -1,0 +1,36 @@
+{% comment %}
+The two amenity catalogues for one place.
+
+`place` is a Listing or a Community. Both carry `community_amenities` and
+`in_unit_amenities` on their own tables and inherit AmenityDisplayMixin, which
+also decides the headings — see that mixin for why the first one is conditional.
+
+`card_style` says where the cards sit. With nothing passed they are `.card`
+blocks on the page background, which is the community detail layout; listing
+detail nests them inside a `.card`, so it passes a tinted panel style instead.
+`chip_bg` inverts with it: a chip has to contrast with whatever is behind it,
+and the tinted panel is the same colour the chips use by default.
+{% endcomment %}
+{% with shared=place.community_amenities_list private=place.in_unit_amenities_list %}
+
+{# ── Shared: what you queue for, book, or walk outside your door to reach ── #}
+{% if shared %}
+<div {% if card_style %}style="{{ card_style }}"{% else %}class="card"{% endif %}>
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">{{ place.shared_amenities_label }}</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:.45rem;">
+        {% for a in shared %}<span style="background:{{ chip_bg|default:"var(--surface-2)" }};border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;">{{ a }}</span>{% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{# ── Private: behind your own door, nobody else's ── #}
+{% if private %}
+<div {% if card_style %}style="{{ card_style }}"{% else %}class="card"{% endif %}>
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">{{ place.unit_amenities_label }}</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:.45rem;">
+        {% for a in private %}<span style="background:{{ chip_bg|default:"var(--surface-2)" }};border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;">{{ a }}</span>{% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endwith %}

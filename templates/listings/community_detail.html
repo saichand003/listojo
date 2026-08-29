@@ -152,28 +152,8 @@
       </div>
       {% endif %}
 
-      {# Amenities #}
-      {% with community.community_amenities_list as camp %}
-      {% if camp %}
-      <div class="card">
-        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">Community Amenities</h2>
-        <div style="display:flex;flex-wrap:wrap;gap:.45rem;">
-          {% for a in camp %}<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;">{{ a }}</span>{% endfor %}
-        </div>
-      </div>
-      {% endif %}
-      {% endwith %}
-
-      {% with community.in_unit_amenities_list as icamp %}
-      {% if icamp %}
-      <div class="card">
-        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">In-Unit Features</h2>
-        <div style="display:flex;flex-wrap:wrap;gap:.45rem;">
-          {% for a in icamp %}<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem;font-size:.8rem;">{{ a }}</span>{% endfor %}
-        </div>
-      </div>
-      {% endif %}
-      {% endwith %}
+      {# Amenities — same two cards as a listing detail page, one definition. #}
+      {% include 'listings/_amenity_cards.html' with place=community %}
 
       {# Same cards as a listing detail page — one definition, two pages. #}
       {% include 'listings/_proximity_cards.html' with place=community %}

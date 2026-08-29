@@ -33,6 +33,8 @@ class ListingForm(forms.ModelForm):
             'floor_plan_image',
             'virtual_tour_url',
             'tags',
+            'community_amenities',
+            'in_unit_amenities',
             # Properties-for-sale fields
             'year_built',
             'hoa_fee',
@@ -43,6 +45,19 @@ class ListingForm(forms.ModelForm):
                 'data-tag-input': 'true',
             }),
             'category': forms.Select(attrs={'required': True}),
+            'community_amenities': forms.TextInput(attrs={
+                'placeholder': 'Pool, Gym, Dog Park, Gated Entry'
+            }),
+            'in_unit_amenities': forms.TextInput(attrs={
+                'placeholder': 'Washer/Dryer, Dishwasher, Balcony, Walk-in Closet'
+            }),
+        }
+        # The detail page picks the heading from the property type; this form
+        # cannot, because the type is a select the seller is still filling in.
+        # So the labels here name both readings rather than guessing one.
+        labels = {
+            'community_amenities': 'Community / property amenities',
+            'in_unit_amenities': 'In-unit features',
         }
 
     ALLOWED_CATEGORIES = {'rentals', 'properties'}

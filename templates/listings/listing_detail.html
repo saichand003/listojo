@@ -522,6 +522,9 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
             {% endif %}
             {% endwith %}
 
+            {# Nested inside the card above, so tinted panels with white chips. #}
+            {% include 'listings/_amenity_cards.html' with place=listing chip_bg="var(--surface)" card_style="margin-top:1.5rem;border:1px solid var(--border);border-radius:10px;padding:1rem;background:var(--surface-2);" %}
+
             {% include 'listings/_proximity_cards.html' with place=listing card_bg="var(--surface-2)" card_shadow="none" %}
 
             {# ── Nearby schools — GreatSchools ── #}

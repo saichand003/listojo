@@ -111,8 +111,16 @@ def _apply_listing_filters(listings_qs, params: SearchParams, user):
     if params.bedrooms_int is not None:
         listings = listings.filter(bedrooms=params.bedrooms_int)
     if params.quality_tags and not params.fmm:
+        # Amenity columns join `tags` here for the same reason the community
+        # branch below searches them: the same fact can be typed as a filter
+        # tag or entered in a catalogue, and a renter searching "balcony"
+        # should not care which box the seller used.
         for qt in params.quality_tags:
-            listings = listings.filter(tags__icontains=qt)
+            listings = listings.filter(
+                Q(tags__icontains=qt)
+                | Q(community_amenities__icontains=qt)
+                | Q(in_unit_amenities__icontains=qt)
+            )
     if params.min_price_val is not None:
         listings = listings.filter(price__gte=params.min_price_val)
     if params.max_price_val is not None:

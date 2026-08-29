@@ -137,7 +137,67 @@ class ProximityDisplayMixin:
         return bool(self.nearest_downtown_id) or bool(self.grocery_cards)
 
 
-class Listing(ProximityDisplayMixin, models.Model):
+class AmenityDisplayMixin:
+    """
+    Read-only display helpers for the two amenity catalogues.
+
+    The split is shared-versus-private, not indoor-versus-outdoor: the first
+    card holds anything a resident shares with other residents or reaches
+    outside their own front door, the second holds what is behind that door and
+    theirs alone. That is the question a renter is actually asking — will I have
+    to book, queue for or share this? — so the same word can land in either
+    card: a laundry room is shared, a stacked unit in the closet is not.
+
+    The labels are conditional because `Listing` spans more than apartments.
+    "Community Amenities" is right for a complex and wrong for a single-family
+    house, where a pool is the owner's, so the label follows the property type.
+    `Community` is always a complex and always uses the community wording.
+    """
+
+    #: Property types where residents share facilities with other residents.
+    #: Everything else — house, single_family, ranch, basement, trailer, land —
+    #: has no community to speak of, so its first card is about the property.
+    SHARED_FACILITY_PROPERTY_TYPES = frozenset({
+        'apartment', 'condo', 'loft', 'studio', 'townhouse',
+    })
+
+    def get_amenities_list(self, field):
+        val = getattr(self, field, '') or ''
+        return [a.strip() for a in val.split(',') if a.strip()]
+
+    @property
+    def community_amenities_list(self):
+        return self.get_amenities_list('community_amenities')
+
+    @property
+    def in_unit_amenities_list(self):
+        return self.get_amenities_list('in_unit_amenities')
+
+    @property
+    def shared_amenities_label(self):
+        """Heading for the shared card — 'Community Amenities' or 'Property Features'."""
+        if getattr(self, 'property_type', None) in self.SHARED_FACILITY_PROPERTY_TYPES:
+            return 'Community Amenities'
+        return 'Property Features'
+
+    @property
+    def unit_amenities_label(self):
+        """
+        Heading for the private card.
+
+        A room rental is not a unit — the tenant gets a bedroom inside someone
+        else's home — so the wording follows what is actually being let.
+        """
+        if getattr(self, 'accommodation_type', None) == 'room':
+            return 'Room Features'
+        return 'In-Unit Features'
+
+    @property
+    def has_amenity_cards(self):
+        """True when either catalogue has something to show."""
+        return bool(self.community_amenities_list or self.in_unit_amenities_list)
+
+class Listing(AmenityDisplayMixin, ProximityDisplayMixin, models.Model):
     CATEGORY_CHOICES = [
         ('roommates', 'Roommates'),
         ('rentals', 'Rentals'),
@@ -222,6 +282,14 @@ class Listing(ProximityDisplayMixin, models.Model):
     image = models.ImageField(upload_to='listing_images/', blank=True, null=True)
     tags = models.CharField(max_length=1000, blank=True, default='',
                             help_text='Comma-separated tags, e.g. pet-friendly, parking, furnished')
+
+    # Displayed as two catalogues, not as search filters — `tags` stays the
+    # filterable field. The help text carries the shared/private split because
+    # there is no controlled vocabulary: whoever types the row decides.
+    community_amenities = models.CharField(max_length=2000, blank=True, default='',
+        help_text='Shared or outside your door, comma-separated: Pool, Gym, Dog Park, Gated Entry')
+    in_unit_amenities   = models.CharField(max_length=2000, blank=True, default='',
+        help_text='Yours alone, behind your door, comma-separated: Washer/Dryer, Dishwasher, Balcony')
     created_at = models.DateTimeField(auto_now_add=True)
     view_count = models.PositiveIntegerField(default=0)
     bedrooms   = models.PositiveSmallIntegerField(null=True, blank=True,
@@ -531,7 +599,7 @@ class UserListingEvent(models.Model):
 
 # ── Community models ──────────────────────────────────────────────────────────
 
-class Community(ProximityDisplayMixin, models.Model):
+class Community(AmenityDisplayMixin, ProximityDisplayMixin, models.Model):
     STATUS_CHOICES = [
         ('active',   'Active'),
         ('draft',    'Draft'),
@@ -653,17 +721,10 @@ class Community(ProximityDisplayMixin, models.Model):
         parts = [self.address_line, self.city, self.state, self.zip_code, self.country]
         return ', '.join(p.strip() for p in parts if p and p.strip())
 
-    def get_amenities_list(self, field):
-        val = getattr(self, field, '') or ''
-        return [a.strip() for a in val.split(',') if a.strip()]
-
     @property
-    def community_amenities_list(self):
-        return self.get_amenities_list('community_amenities')
-
-    @property
-    def in_unit_amenities_list(self):
-        return self.get_amenities_list('in_unit_amenities')
+    def shared_amenities_label(self):
+        """Always the community wording — a Community is by definition a complex."""
+        return 'Community Amenities'
 
     @property
     def price_range(self):
