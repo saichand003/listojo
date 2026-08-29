@@ -4,10 +4,14 @@ Walk Score, Commute Score and Neighborhood cards for one geocoded place.
 `place` is a Listing or a Community — both carry the same proximity columns and
 inherit ProximityDisplayMixin, so the two pages render from one definition
 rather than drifting apart every time a card changes.
+
+`card_bg`/`card_shadow` let the caller say where the cards sit. The default is a
+standalone white card on the page background (community detail); listing detail
+nests them inside a `.card`, so it passes a tint and no shadow instead.
 {% endcomment %}
 {# ── Getting Around — Walk Score ── #}
 {% if place.has_walk_scores %}
-<div style="margin-top:1.5rem;border:1px solid var(--border);border-radius:10px;padding:1rem;">
+<div style="margin-top:1.5rem;border:1px solid var(--border);border-radius:10px;padding:1rem;background:{{ card_bg|default:"var(--surface)" }};box-shadow:{{ card_shadow|default:"var(--shadow-sm)" }};">
     <p style="font-size:.78rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin:0 0 .85rem;">Getting Around</p>
     <div style="display:flex;flex-wrap:wrap;gap:1.5rem;">
         {% for label, score, desc in place.walk_score_rows %}
@@ -33,7 +37,7 @@ rather than drifting apart every time a card changes.
 {# Listing.walk_score_rows for why that row was removed.           #}
 {% with stations=place.transit_cards %}
 {% if place.has_commute_score or stations %}
-<div style="margin-top:1.5rem;border:1px solid var(--border);border-radius:10px;padding:1rem;">
+<div style="margin-top:1.5rem;border:1px solid var(--border);border-radius:10px;padding:1rem;background:{{ card_bg|default:"var(--surface)" }};box-shadow:{{ card_shadow|default:"var(--shadow-sm)" }};">
     <p style="font-size:.78rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin:0 0 .85rem;">Commute</p>
 
     {% if place.has_commute_score %}
@@ -99,7 +103,7 @@ rather than drifting apart every time a card changes.
 
 {# ── Neighborhood — nearest downtown + grocery chains ── #}
 {% if place.has_neighborhood_card %}
-<div style="margin-top:1.5rem;border:1px solid var(--border);border-radius:10px;padding:1rem;">
+<div style="margin-top:1.5rem;border:1px solid var(--border);border-radius:10px;padding:1rem;background:{{ card_bg|default:"var(--surface)" }};box-shadow:{{ card_shadow|default:"var(--shadow-sm)" }};">
     <p style="font-size:.78rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin:0 0 .85rem;">Neighborhood</p>
 
     {% if place.nearest_downtown %}

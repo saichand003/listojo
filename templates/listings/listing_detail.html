@@ -522,7 +522,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
             {% endif %}
             {% endwith %}
 
-            {% include 'listings/_proximity_cards.html' with place=listing %}
+            {% include 'listings/_proximity_cards.html' with place=listing card_bg="var(--surface-2)" card_shadow="none" %}
 
             {# ── Nearby schools — GreatSchools ── #}
             {# `school_cards` is the prefetched join; see Listing.school_cards. #}
