@@ -321,17 +321,29 @@
         <div class="cl-section-num">6</div>
         <div>
           <div class="cl-section-title">Amenities & Features</div>
-          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Tap to select — any number of tags</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Tap to select — any number</div>
         </div>
       </div>
+      {# `tags` stays the search filter and keeps receiving every selection.  #}
+      {# The two catalogue fields take the same picks, split by group, so the #}
+      {# detail page can show them as two cards without a second question.    #}
       <input type="hidden" name="tags" id="f-tags" value="{{ form.tags.value|default:'' }}">
+      <input type="hidden" name="community_amenities" id="f-community-amenities" value="{{ form.community_amenities.value|default:'' }}">
+      <input type="hidden" name="in_unit_amenities" id="f-in-unit-amenities" value="{{ form.in_unit_amenities.value|default:'' }}">
       {% if form.tags.errors %}<p class="cl-field-error">{{ form.tags.errors.0 }}</p>{% endif %}
-      <div class="cl-amenity-grid" id="amenity-grid">
-        {% for tag in "pet-friendly,parking,furnished,washer/dryer,gym,pool,balcony,utilities included,no deposit,near transit,AC,heating,wifi,dishwasher,hardwood floors,EV charging,storage,rooftop access"|split_csv %}
-        <button type="button" class="cl-amenity-btn" data-tag="{{ tag }}">{{ tag }}</button>
-        {% endfor %}
+      <div id="amenity-picker">
+      {% for group_label, group_tags in amenity_groups %}
+      <div class="cl-amenity-group">
+        <p class="cl-amenity-group-label">{{ group_label }}</p>
+        <div class="cl-amenity-grid">
+          {% for tag in group_tags %}
+          <button type="button" class="cl-amenity-btn" data-tag="{{ tag }}" data-group="{{ forloop.parentloop.counter0 }}">{{ tag }}</button>
+          {% endfor %}
+        </div>
       </div>
-      <p class="cl-hint" id="tags-count-hint" style="margin-top:.6rem;">0 / 5 selected</p>
+      {% endfor %}
+      </div>
+      <p class="cl-hint" id="tags-count-hint" style="margin-top:.6rem;">0 selected</p>
     </div>
 
     {# ══ SECTION 7 — Featured ══ #}
@@ -569,11 +581,20 @@
 
   /* ── Amenity chips ── */
 
+  /* Group 0 is shared, 1 is in-unit, 2 is lease terms — the order the server
+     sends them in. Lease terms are searchable but not catalogued, so they land
+     in `tags` only and in neither hidden catalogue field. */
   function syncAmenityUI() {
+    var buckets = [[], []];
     document.querySelectorAll('.cl-amenity-btn').forEach(function(btn) {
-      btn.classList.toggle('selected', selectedTags.indexOf(btn.dataset.tag) !== -1);
+      var on = selectedTags.indexOf(btn.dataset.tag) !== -1;
+      btn.classList.toggle('selected', on);
+      var g = parseInt(btn.dataset.group, 10);
+      if (on && buckets[g]) buckets[g].push(btn.dataset.tag);
     });
     document.getElementById('f-tags').value = selectedTags.join(',');
+    document.getElementById('f-community-amenities').value = buckets[0].join(', ');
+    document.getElementById('f-in-unit-amenities').value = buckets[1].join(', ');
     var hint = document.getElementById('tags-count-hint');
     hint.textContent = selectedTags.length + ' selected';
     hint.style.color = selectedTags.length > 0 ? 'var(--primary)' : '';
@@ -582,7 +603,7 @@
 
   syncAmenityUI(); /* pre-select on failed POST */
 
-  document.getElementById('amenity-grid').addEventListener('click', function(e) {
+  document.getElementById('amenity-picker').addEventListener('click', function(e) {
     var btn = e.target.closest('.cl-amenity-btn');
     if (!btn) return;
     var tag = btn.dataset.tag;

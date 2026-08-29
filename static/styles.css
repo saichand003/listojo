@@ -2305,6 +2305,17 @@ footer {
 
 /* Amenity chips */
 .cl-amenity-grid { display: flex; flex-wrap: wrap; gap: .45rem; }
+/* The picker is grouped so the seller sorts shared from private as they tick,
+   rather than being asked the same question twice in two text boxes. */
+.cl-amenity-group + .cl-amenity-group { margin-top: .9rem; }
+.cl-amenity-group-label {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin: 0 0 .45rem;
+}
 .cl-amenity-btn {
   border: 1.5px solid var(--border);
   border-radius: 20px;

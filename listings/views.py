@@ -15,6 +15,7 @@ from datetime import timedelta, date
 from listojo.services.notifications import send_listing_inquiry_email
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry, SavedSearch
+from listings.services.amenities import PICKER_GROUPS
 from listings.services.search import build_listing_search_context
 from listings.services.valuation import predict_price
 from listings.services.event_tracker import log_event, log_impression_batch
@@ -362,6 +363,10 @@ def create_listing(request):
         'form': form,
         'image_errors': image_errors,
         'max_images': 8,
+        # The picker's groups come from the vocabulary rather than a literal in
+        # the template, so the backfill command and the form cannot disagree
+        # about which bucket a tag belongs to.
+        'amenity_groups': PICKER_GROUPS,
     })
 
 
