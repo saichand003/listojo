@@ -1650,6 +1650,11 @@ footer {
   position: absolute; top: 1rem; right: 1.25rem;
   color: #fff; font-size: 2rem; cursor: pointer; background: none;
   border: none; line-height: 1; opacity: .8;
+  /* Above .lb-stage: the stage is positioned and comes later in the DOM, so
+     without this it paints over the close button and swallows the click. */
+  z-index: 2;
+  width: 2.5rem; height: 2.5rem;
+  display: flex; align-items: center; justify-content: center;
 }
 .lightbox-close:hover { opacity: 1; }
 .lightbox-prev, .lightbox-next {
