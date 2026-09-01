@@ -6,10 +6,10 @@ The two amenity catalogues for one place.
 also decides the headings — see that mixin for why the first one is conditional.
 
 `card_style` says where the cards sit. With nothing passed they are `.card`
-blocks on the page background, which is the community detail layout; listing
-detail nests them inside a `.card`, so it passes a tinted panel style instead.
+blocks on the page background, which is what both detail pages want; a caller
+that nests them inside another card passes a tinted panel style instead.
 `chip_bg` inverts with it: a chip has to contrast with whatever is behind it,
-and the tinted panel is the same colour the chips use by default.
+and a tinted panel is the same colour the chips use by default.
 {% endcomment %}
 {% with shared=place.community_amenities_list private=place.in_unit_amenities_list %}
 

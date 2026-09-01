@@ -6,8 +6,8 @@ inherit ProximityDisplayMixin, so the two pages render from one definition
 rather than drifting apart every time a card changes.
 
 `card_bg`/`card_shadow` let the caller say where the cards sit. The default is a
-standalone white card on the page background (community detail); listing detail
-nests them inside a `.card`, so it passes a tint and no shadow instead.
+standalone white card on the page background, which is what both detail pages
+use; a caller nesting them inside a `.card` passes a tint and no shadow instead.
 {% endcomment %}
 {# ── Getting Around — Walk Score ── #}
 {% if place.has_walk_scores %}
