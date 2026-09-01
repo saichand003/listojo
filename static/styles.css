@@ -386,7 +386,7 @@ p { line-height: 1.65; }
 .nav-text-btn:hover { background: rgba(42,126,242,.08); color: var(--primary); }
 
 /* ── BUTTONS ────────────────────────────────────────────────── */
-.button, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn) {
+.button, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -408,7 +408,7 @@ p { line-height: 1.65; }
   overflow: hidden;
 }
 /* Button shine sweep */
-.button::after, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn)::after {
+.button::after, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn)::after {
   content: '';
   position: absolute;
   top: 0; left: -75%;
@@ -418,14 +418,14 @@ p { line-height: 1.65; }
   transition: left .55s ease;
   pointer-events: none;
 }
-.button:hover::after, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):hover::after { left: 140%; }
+.button:hover::after, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):hover::after { left: 140%; }
 
-.button:hover, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):hover {
+.button:hover, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):hover {
   opacity: .93;
   transform: translateY(-1px);
   box-shadow: 0 6px 22px rgba(42,126,242,.38);
 }
-.button:active, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):active { transform: none; box-shadow: 0 2px 8px rgba(42,126,242,.2); }
+.button:active, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):active { transform: none; box-shadow: 0 2px 8px rgba(42,126,242,.2); }
 
 .button.secondary {
   background: transparent;
@@ -1539,76 +1539,113 @@ footer {
 .existing-img-item.marked-delete .existing-img-delete::after { content: '🗑'; font-size: 1.4rem; }
 
 /* ── LISTING GALLERY (detail page) ─────────────────────────── */
-/* ── Detail page gallery ── */
-.detail-gallery {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 1.25rem;
-  align-items: flex-start;
-}
-
-/* Vertical thumbnail strip */
-.detail-thumbs {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 72px;
-  flex-shrink: 0;
-  max-height: 420px;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-.detail-thumbs::-webkit-scrollbar { display: none; }
-
-.detail-thumb {
-  width: 72px;
-  height: 54px;
-  object-fit: cover;
-  border-radius: 7px;
-  cursor: pointer;
-  border: 2.5px solid transparent;
-  opacity: .72;
-  transition: opacity .15s, border-color .15s;
-  display: block;
-  flex-shrink: 0;
-}
-.detail-thumb:hover { opacity: 1; }
-.detail-thumb.active {
-  border-color: var(--primary);
-  opacity: 1;
-}
-
-/* Main image */
-.detail-main-wrap {
-  flex: 1;
+/* Collage: pages of a 4x2 mosaic that the arrows slide through. A tile's span
+   comes from how many photos are on its page — see Listing.COLLAGE_SPANS — so
+   every page covers all eight cells, including a short last one. Clicking any
+   tile opens the full-screen viewer on that photo. */
+.lj-collage {
   position: relative;
+  height: 420px;
   border-radius: 12px;
   overflow: hidden;
   background: var(--surface-2);
-  cursor: zoom-in;
 }
-.detail-main-img {
+.lj-collage-track {
+  display: flex;
+  height: 100%;
+  transition: transform .35s ease;
+}
+.lj-collage-page {
+  flex: 0 0 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 6px;
+  height: 100%;
+}
+.lj-tile {
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 4px;
+  overflow: hidden;
+  min-width: 0;
+  display: block;
+  cursor: zoom-in;
+  background: var(--surface-2);
+}
+.lj-tile img {
   width: 100%;
-  height: 420px;
+  height: 100%;
   object-fit: cover;
   display: block;
-  transition: opacity .2s;
+  transition: transform .35s ease, opacity .2s;
 }
-.detail-main-img.fading { opacity: 0; }
+.lj-tile:hover img { transform: scale(1.04); opacity: .93; }
 
-/* Single image (no thumbs) */
-.detail-gallery.solo .detail-main-wrap {
-  border-radius: 12px;
+.lj-collage-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px; height: 40px;
+  border: none; border-radius: 50%;
+  background: rgba(255,255,255,.92);
+  color: #1f2937;
+  font-size: 1.6rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; opacity: .88;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  transition: opacity .15s;
 }
-.detail-gallery.solo .detail-main-img { cursor: zoom-in; }
+.lj-collage-nav:hover { opacity: 1; }
+.lj-collage-nav.prev { left: .6rem; }
+.lj-collage-nav.next { right: .6rem; }
+
+/* Photo count — the shortcut into the viewer for anyone who does not want to
+   pick a specific photo first. */
+.lj-collage-count {
+  position: absolute;
+  bottom: .75rem; left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  color: var(--text);
+  border: none; border-radius: 999px;
+  padding: .45rem 1.15rem;
+  font-size: .85rem; font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,.22);
+}
+.lj-collage-count:hover { background: var(--surface-2); }
 
 /* Lightbox */
 .lightbox {
   display: none; position: fixed; inset: 0; z-index: 9999;
-  background: rgba(0,0,0,.9); align-items: center; justify-content: center;
+  background: rgba(0,0,0,.92); flex-direction: column;
 }
 .lightbox.open { display: flex; }
-.lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 12px; object-fit: contain; }
+.lb-stage {
+  position: relative; flex: 1; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 3rem 4.5rem 1rem;
+}
+.lb-stage img { max-width: 100%; max-height: 100%; border-radius: 10px; object-fit: contain; }
+
+/* Filmstrip — same role as the thumbnail rail the collage replaced: it shows
+   where you are in the gallery and lets you jump instead of stepping. */
+.lb-filmstrip { flex-shrink: 0; padding: .5rem .9rem 1rem; background: rgba(0,0,0,.55); }
+.lb-counter { color: #fff; font-size: .8rem; font-weight: 700; opacity: .9; text-align: right; margin: 0 .2rem .4rem; }
+.lb-thumbs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.lb-thumbs::-webkit-scrollbar { display: none; }
+.lb-thumb {
+  flex: 0 0 auto; width: 104px; height: 72px;
+  padding: 0; background: none; cursor: pointer;
+  border: 2.5px solid transparent; border-radius: 6px;
+  overflow: hidden; opacity: .6;
+  transition: opacity .15s, border-color .15s;
+}
+.lb-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lb-thumb:hover { opacity: 1; }
+.lb-thumb.active { border-color: var(--primary); opacity: 1; }
 .lightbox-close {
   position: absolute; top: 1rem; right: 1.25rem;
   color: #fff; font-size: 2rem; cursor: pointer; background: none;
@@ -2554,16 +2591,12 @@ footer {
   .site-footer-inner { flex-direction: column; align-items: flex-start; gap: .75rem; }
 
   /* ── Detail page gallery ── */
-  .detail-gallery { flex-direction: column-reverse; gap: 6px; }
-  .detail-thumbs {
-    flex-direction: row;
-    width: 100%;
-    max-height: none;
-    overflow-x: auto;
-    overflow-y: visible;
-  }
-  .detail-thumb { width: 58px; height: 44px; flex-shrink: 0; }
-  .detail-main-img { height: 240px; }
+  .lj-collage { height: 260px; }
+  .lj-collage-page { gap: 4px; }
+  .lj-collage-nav { width: 32px; height: 32px; font-size: 1.25rem; }
+  .lj-collage-count { font-size: .78rem; padding: .35rem .85rem; }
+  .lb-stage { padding: 3rem 1rem .5rem; }
+  .lb-thumb { width: 72px; height: 52px; }
 
   /* ── Forms ── */
   input, select, textarea {

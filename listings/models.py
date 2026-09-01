@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.functional import cached_property
 
 
 class ProximityDisplayMixin:
@@ -197,7 +198,77 @@ class AmenityDisplayMixin:
         """True when either catalogue has something to show."""
         return bool(self.community_amenities_list or self.in_unit_amenities_list)
 
-class Listing(AmenityDisplayMixin, ProximityDisplayMixin, models.Model):
+class GalleryDisplayMixin:
+    """
+    Read-only helpers for the photo collage on a detail page.
+
+    The collage is a mosaic paged left and right, so every page has to fill its
+    grid exactly — a half-empty page reads as a broken layout, not as "that was
+    all the photos". The grid is four columns by two rows, which is eight cells,
+    and `COLLAGE_SPANS` says how a page of `n` photos covers those eight: the
+    spans in each row always add up to eight cells, so the last page fills as
+    completely as the first no matter how many photos are left over.
+
+    Page sizes alternate 5, 8, 5, 8 …: a five-photo page is one big photo plus
+    four small, an eight-photo page is a plain grid, and alternating them keeps
+    a long gallery from looking like contact sheets.
+    """
+
+    #: Photos per collage page, cycled in order.
+    COLLAGE_PAGE_SIZES = (5, 8)
+
+    #: (column span, row span) per tile, keyed by how many photos are on the page.
+    #: Each list covers all 8 cells of the 4x2 grid.
+    COLLAGE_SPANS = {
+        1: [(4, 2)],
+        2: [(2, 2), (2, 2)],
+        3: [(2, 2), (2, 1), (2, 1)],
+        4: [(2, 1), (2, 1), (2, 1), (2, 1)],
+        5: [(2, 2), (1, 1), (1, 1), (1, 1), (1, 1)],
+        6: [(2, 1), (2, 1), (1, 1), (1, 1), (1, 1), (1, 1)],
+        7: [(2, 1)] + [(1, 1)] * 6,
+        8: [(1, 1)] * 8,
+    }
+
+    @cached_property
+    def gallery_urls(self):
+        """
+        Every photo URL for this place, in display order.
+
+        Falls back to the single legacy `image` field so a listing imported or
+        created before the gallery existed still has something to show.
+        """
+        urls = [img.image.url for img in self.images.all() if img.image]
+        if not urls:
+            legacy = getattr(self, 'image', None)
+            if legacy:
+                urls = [legacy.url]
+        return urls
+
+    @cached_property
+    def collage_pages(self):
+        """
+        The gallery cut into collage pages.
+
+        Each tile carries its index into `gallery_urls`, which is what the
+        viewer opens on when the tile is clicked.
+        """
+        urls = self.gallery_urls
+        pages, start, page_no = [], 0, 0
+        while start < len(urls):
+            size = self.COLLAGE_PAGE_SIZES[page_no % len(self.COLLAGE_PAGE_SIZES)]
+            chunk = urls[start:start + size]
+            spans = self.COLLAGE_SPANS[len(chunk)]
+            pages.append([
+                {'url': url, 'index': start + n, 'cols': spans[n][0], 'rows': spans[n][1]}
+                for n, url in enumerate(chunk)
+            ])
+            start += size
+            page_no += 1
+        return pages
+
+
+class Listing(GalleryDisplayMixin, AmenityDisplayMixin, ProximityDisplayMixin, models.Model):
     CATEGORY_CHOICES = [
         ('roommates', 'Roommates'),
         ('rentals', 'Rentals'),

@@ -388,40 +388,34 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
   <div style="display:flex;flex-direction:column;gap:1.25rem;min-width:0;">
 
     <article class="card" style="padding:0;overflow:hidden;">
-        {% with listing.images.all as imgs %}
-        {% if imgs %}
-            {% if imgs|length == 1 %}
-            <div class="detail-gallery solo" style="padding:.75rem .75rem 0;">
-                <div class="detail-main-wrap" id="detail-main-wrap">
-                    <img class="detail-main-img" id="detail-main-img" src="{{ imgs.0.image.url }}" alt="{{ listing.title }}" data-idx="0">
-                </div>
-            </div>
-            {% else %}
-            <div class="detail-gallery" style="padding:.75rem .75rem 0;">
-                <div class="detail-thumbs" id="detail-thumbs">
-                    {% for img in imgs %}
-                    <img class="detail-thumb {% if forloop.first %}active{% endif %}"
-                         src="{{ img.image.url }}"
-                         alt="Photo {{ forloop.counter }}"
-                         data-src="{{ img.image.url }}"
-                         data-idx="{{ forloop.counter0 }}">
+        {% with pages=listing.collage_pages urls=listing.gallery_urls %}
+        {% if pages %}
+            {# Collage: a 4x2 mosaic paged by the arrows. Tile spans come from #}
+            {# Listing.COLLAGE_SPANS; clicking any tile opens the viewer on it. #}
+            <div class="lj-collage" id="lj-collage" style="margin:.75rem .75rem 1.25rem;">
+                <div class="lj-collage-track" id="lj-collage-track">
+                    {% for page in pages %}
+                    <div class="lj-collage-page">
+                        {% for tile in page %}
+                        <button type="button" class="lj-tile" data-idx="{{ tile.index }}"
+                                aria-label="Open photo {{ tile.index|add:1 }} of {{ urls|length }}"
+                                style="grid-column:span {{ tile.cols }};grid-row:span {{ tile.rows }};">
+                            <img src="{{ tile.url }}" alt="{{ listing.title }} photo {{ tile.index|add:1 }}"
+                                 {% if not forloop.parentloop.first %}loading="lazy"{% endif %}>
+                        </button>
+                        {% endfor %}
+                    </div>
                     {% endfor %}
                 </div>
-                <div class="detail-main-wrap" id="detail-main-wrap">
-                    <img class="detail-main-img" id="detail-main-img" src="{{ imgs.0.image.url }}" alt="{{ listing.title }}" data-idx="0">
-                </div>
+                {% if pages|length > 1 %}
+                <button type="button" class="lj-collage-nav prev" id="lj-collage-prev" aria-label="Previous photos">&lsaquo;</button>
+                <button type="button" class="lj-collage-nav next" id="lj-collage-next" aria-label="Next photos">&rsaquo;</button>
+                {% endif %}
+                <button type="button" class="lj-collage-count" id="lj-collage-count">{{ urls|length }} Photo{{ urls|length|pluralize }}</button>
             </div>
-            {% endif %}
             <div id="gallery-data" style="display:none;">
-                {% for img in imgs %}<span data-src="{{ img.image.url }}"></span>{% endfor %}
+                {% for url in urls %}<span data-src="{{ url }}"></span>{% endfor %}
             </div>
-        {% elif listing.image %}
-            <div class="detail-gallery solo" style="padding:.75rem .75rem 0;">
-                <div class="detail-main-wrap" id="detail-main-wrap">
-                    <img class="detail-main-img" id="detail-main-img" src="{{ listing.image.url }}" alt="{{ listing.title }}" data-idx="0">
-                </div>
-            </div>
-            <div id="gallery-data" style="display:none;"><span data-src="{{ listing.image.url }}"></span></div>
         {% else %}
             <div style="width:100%;height:200px;background:linear-gradient(145deg,rgba(42,126,242,.1),rgba(98,194,255,.07),rgba(61,181,73,.07));display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:12px;margin:.75rem .75rem 0;">🏷️</div>
         {% endif %}
@@ -705,42 +699,104 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
 {# ── LIGHTBOX (regular listings only) ── #}
 {% if not render_as_community %}
 <div id="lightbox" class="lightbox">
-    <button class="lightbox-close" id="lb-close">✕</button>
-    <button class="lightbox-prev" id="lb-prev">‹</button>
-    <img id="lb-img" src="" alt="">
-    <button class="lightbox-next" id="lb-next">›</button>
+    <button class="lightbox-close" id="lb-close" aria-label="Close">&#10005;</button>
+    <div class="lb-stage">
+        <button class="lightbox-prev" id="lb-prev" aria-label="Previous photo">&lsaquo;</button>
+        <img id="lb-img" src="" alt="">
+        <button class="lightbox-next" id="lb-next" aria-label="Next photo">&rsaquo;</button>
+    </div>
+    <div class="lb-filmstrip">
+        <p class="lb-counter" id="lb-counter"></p>
+        <div class="lb-thumbs" id="lb-thumbs"></div>
+    </div>
 </div>
 <script>
 (function () {
-  var mainImg  = document.getElementById('detail-main-img');
-  var thumbs   = document.querySelectorAll('.detail-thumb');
-  thumbs.forEach(function(th) {
-    th.addEventListener('click', function() {
-      if (!mainImg) return;
-      mainImg.classList.add('fading');
-      setTimeout(function() { mainImg.src = th.dataset.src; mainImg.dataset.idx = th.dataset.idx; mainImg.classList.remove('fading'); }, 150);
-      thumbs.forEach(function(t) { t.classList.remove('active'); });
-      th.classList.add('active');
-    });
-  });
   var data = document.getElementById('gallery-data');
   if (!data) return;
   var srcs = Array.from(data.querySelectorAll('[data-src]')).map(function(el){ return el.dataset.src; });
   if (!srcs.length) return;
-  var lb    = document.getElementById('lightbox');
-  var lbImg = document.getElementById('lb-img');
-  var idx   = 0;
-  function open(i) { idx = i; lbImg.src = srcs[idx]; lb.classList.add('open'); }
-  function close()  { lb.classList.remove('open'); lbImg.src = ''; }
-  function prev()   { idx = (idx - 1 + srcs.length) % srcs.length; lbImg.src = srcs[idx]; }
-  function next()   { idx = (idx + 1) % srcs.length; lbImg.src = srcs[idx]; }
-  var mainWrap = document.getElementById('detail-main-wrap');
-  if (mainWrap) mainWrap.addEventListener('click', function() { open(mainImg ? parseInt(mainImg.dataset.idx || '0', 10) : 0); });
+
+  // ── Collage paging ──
+  var track = document.getElementById('lj-collage-track');
+  if (track) {
+    var pageCount = track.children.length;
+    var page = 0;
+    function goPage(n) {
+      page = (n + pageCount) % pageCount;          // wraps, so neither arrow dead-ends
+      track.style.transform = 'translateX(-' + (page * 100) + '%)';
+    }
+    var pPrev = document.getElementById('lj-collage-prev');
+    var pNext = document.getElementById('lj-collage-next');
+    if (pPrev) pPrev.addEventListener('click', function(){ goPage(page - 1); });
+    if (pNext) pNext.addEventListener('click', function(){ goPage(page + 1); });
+  }
+
+  // ── Full-screen viewer ──
+  var lb      = document.getElementById('lightbox');
+  var lbImg   = document.getElementById('lb-img');
+  var counter = document.getElementById('lb-counter');
+  var strip   = document.getElementById('lb-thumbs');
+  var idx     = 0;
+  var built   = false;
+
+  // Thumbs are built on first open, not on page load: a 60-photo gallery
+  // should not cost 60 extra requests for a viewer nobody opened.
+  function buildStrip() {
+    if (built) return;
+    built = true;
+    srcs.forEach(function(src, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'lb-thumb';
+      b.setAttribute('aria-label', 'Photo ' + (i + 1));
+      var im = document.createElement('img');
+      im.src = src;
+      im.loading = 'lazy';
+      im.alt = '';
+      b.appendChild(im);
+      b.addEventListener('click', function(){ show(i); });
+      strip.appendChild(b);
+    });
+  }
+
+  function show(i) {
+    idx = (i + srcs.length) % srcs.length;
+    lbImg.src = srcs[idx];
+    counter.textContent = (idx + 1) + '/' + srcs.length;
+    var thumbs = strip.children;
+    for (var t = 0; t < thumbs.length; t++) { thumbs[t].classList.toggle('active', t === idx); }
+    if (thumbs[idx]) thumbs[idx].scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+
+  function open(i) {
+    buildStrip();
+    show(i);
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    lb.classList.remove('open');
+    lbImg.src = '';
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.lj-tile').forEach(function(tile) {
+    tile.addEventListener('click', function(){ open(parseInt(tile.dataset.idx || '0', 10)); });
+  });
+  var countBtn = document.getElementById('lj-collage-count');
+  if (countBtn) countBtn.addEventListener('click', function(){ open(0); });
+
   document.getElementById('lb-close').addEventListener('click', close);
-  document.getElementById('lb-prev').addEventListener('click', prev);
-  document.getElementById('lb-next').addEventListener('click', next);
+  document.getElementById('lb-prev').addEventListener('click', function(){ show(idx - 1); });
+  document.getElementById('lb-next').addEventListener('click', function(){ show(idx + 1); });
   lb.addEventListener('click', function(e){ if (e.target === lb) close(); });
-  document.addEventListener('keydown', function(e){ if (!lb.classList.contains('open')) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowLeft') prev(); if (e.key === 'ArrowRight') next(); });
+  document.addEventListener('keydown', function(e){
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') show(idx - 1);
+    if (e.key === 'ArrowRight') show(idx + 1);
+  });
 })();
 </script>
 {% endif %}
