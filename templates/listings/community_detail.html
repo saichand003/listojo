@@ -34,30 +34,7 @@
 
       {# ── Hero ── #}
       <article class="card" style="padding:0;overflow:hidden;">
-      {% with community.images.all as imgs %}
-      {% if imgs %}
-        <div style="position:relative;height:420px;overflow:hidden;background:#111;border-radius:12px;margin:.75rem .75rem 1.25rem;">
-          {% for img in imgs %}
-            <img src="{{ img.image.url }}" alt="{{ community.name }}"
-                 style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:{% if forloop.first %}1{% else %}0{% endif %};transition:opacity .4s;"
-                 class="community-hero-img" data-idx="{{ forloop.counter0 }}">
-          {% endfor %}
-          {# Photo count badge #}
-          <span style="position:absolute;bottom:.85rem;right:1rem;background:rgba(0,0,0,.6);color:#fff;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;">
-            📷 {{ imgs|length }} photo{{ imgs|length|pluralize }}
-          </span>
-          {% if imgs|length > 1 %}
-          <button type="button" id="hero-prev" style="position:absolute;top:50%;left:1rem;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:2.2rem;height:2.2rem;font-size:1.1rem;cursor:pointer;z-index:2;">&#8249;</button>
-          <button type="button" id="hero-next" style="position:absolute;top:50%;right:1rem;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:2.2rem;height:2.2rem;font-size:1.1rem;cursor:pointer;z-index:2;">&#8250;</button>
-          <div style="position:absolute;bottom:.75rem;left:50%;transform:translateX(-50%);display:flex;gap:.4rem;" id="hero-dots">
-            {% for img in imgs %}<span style="width:.5rem;height:.5rem;border-radius:50%;background:{% if forloop.first %}#fff{% else %}rgba(255,255,255,.45){% endif %};display:block;cursor:pointer;" class="hero-dot" data-idx="{{ forloop.counter0 }}"></span>{% endfor %}
-          </div>
-          {% endif %}
-        </div>
-      {% else %}
-        <div style="width:100%;height:200px;background:linear-gradient(145deg,rgba(42,126,242,.1),rgba(98,194,255,.07),rgba(61,181,73,.07));display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:12px;margin:.75rem .75rem 0;">🏢</div>
-      {% endif %}
-      {% endwith %}
+      {% include 'listings/_photo_collage.html' with place=community label=community.name placeholder="🏢" %}
 
       <div style="padding:1.5rem;" id="hero-sentinel">
         <div class="cd-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:1.25rem;flex-wrap:wrap;">
@@ -290,25 +267,6 @@
 
 <script>
 (function(){
-  /* ── Photo carousel ── */
-  var imgs = document.querySelectorAll('.community-hero-img');
-  var dots = document.querySelectorAll('.hero-dot');
-  if (imgs.length) {
-    var cur = 0;
-    function go(n) {
-      imgs[cur].style.opacity = '0';
-      dots[cur] && (dots[cur].style.background = 'rgba(255,255,255,.45)');
-      cur = (n + imgs.length) % imgs.length;
-      imgs[cur].style.opacity = '1';
-      dots[cur] && (dots[cur].style.background = '#fff');
-    }
-    var prev = document.getElementById('hero-prev');
-    var next = document.getElementById('hero-next');
-    if (prev) prev.addEventListener('click', function(){ go(cur - 1); });
-    if (next) next.addEventListener('click', function(){ go(cur + 1); });
-    dots.forEach(function(d){ d.addEventListener('click', function(){ go(+d.dataset.idx); }); });
-  }
-
   /* ── Floor plan bedroom filter tabs ── */
   var cards = document.querySelectorAll('.fp-card');
   var tabContainer = document.getElementById('fp-filter-tabs');
@@ -375,4 +333,6 @@
   }
 })();
 </script>
+{# ── Photo viewer for the collage above ── #}
+{% include 'listings/_photo_lightbox.html' %}
 {% endblock %}

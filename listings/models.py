@@ -750,7 +750,7 @@ class UserListingEvent(models.Model):
 
 # ── Community models ──────────────────────────────────────────────────────────
 
-class Community(AmenityDisplayMixin, ProximityDisplayMixin, models.Model):
+class Community(GalleryDisplayMixin, AmenityDisplayMixin, ProximityDisplayMixin, models.Model):
     STATUS_CHOICES = [
         ('active',   'Active'),
         ('draft',    'Draft'),

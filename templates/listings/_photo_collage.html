@@ -1,0 +1,43 @@
+{% comment %}
+The photo mosaic that heads a detail page.
+
+`place` is a Listing or a Community — both carry GalleryDisplayMixin, which
+cuts the gallery into pages that fill the 4x2 grid exactly. `label` is the alt
+text prefix, `placeholder` the emoji shown when there are no photos at all.
+
+Pair it with `_photo_lightbox.html` near the end of the page body, not inside
+this card: `.card` takes a transform on hover, which would make it the
+containing block for the viewer's fixed-position overlay and clip it.
+{% endcomment %}
+{% with pages=place.collage_pages urls=place.gallery_urls %}
+{% if pages %}
+    {# Collage: a 4x2 mosaic paged by the arrows. Tile spans come from #}
+    {# COLLAGE_SPANS; clicking any tile opens the viewer on it. #}
+    <div class="lj-collage" id="lj-collage" style="margin:.75rem .75rem 1.25rem;">
+        <div class="lj-collage-track" id="lj-collage-track">
+            {% for page in pages %}
+            <div class="lj-collage-page">
+                {% for tile in page %}
+                <button type="button" class="lj-tile" data-idx="{{ tile.index }}"
+                        aria-label="Open photo {{ tile.index|add:1 }} of {{ urls|length }}"
+                        style="grid-column:span {{ tile.cols }};grid-row:span {{ tile.rows }};">
+                    <img src="{{ tile.url }}" alt="{{ label }} photo {{ tile.index|add:1 }}"
+                         {% if not forloop.parentloop.first %}loading="lazy"{% endif %}>
+                </button>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        {% if pages|length > 1 %}
+        <button type="button" class="lj-collage-nav prev" id="lj-collage-prev" aria-label="Previous photos">&lsaquo;</button>
+        <button type="button" class="lj-collage-nav next" id="lj-collage-next" aria-label="Next photos">&rsaquo;</button>
+        {% endif %}
+        <button type="button" class="lj-collage-count" id="lj-collage-count">{{ urls|length }} Photo{{ urls|length|pluralize }}</button>
+    </div>
+    <div id="gallery-data" style="display:none;">
+        {% for url in urls %}<span data-src="{{ url }}"></span>{% endfor %}
+    </div>
+{% else %}
+    <div style="width:100%;height:200px;background:linear-gradient(145deg,rgba(42,126,242,.1),rgba(98,194,255,.07),rgba(61,181,73,.07));display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:12px;margin:.75rem .75rem 0;">{{ placeholder|default:"🏷️" }}</div>
+{% endif %}
+{% endwith %}

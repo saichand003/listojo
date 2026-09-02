@@ -1,0 +1,110 @@
+{% comment %}
+The full-screen photo viewer the collage opens into, plus the collage's own
+paging. Include it once near the end of a page body that renders
+`_photo_collage.html` — outside the card, so the card's hover transform cannot
+become the containing block for this fixed overlay and clip it.
+
+It reads the gallery from `#gallery-data`, which the collage partial writes, so
+it needs no context of its own and no-ops on a page without photos.
+{% endcomment %}
+<div id="lightbox" class="lightbox">
+    <button class="lightbox-close" id="lb-close" aria-label="Close">&#10005;</button>
+    <div class="lb-stage">
+        <button class="lightbox-prev" id="lb-prev" aria-label="Previous photo">&lsaquo;</button>
+        <img id="lb-img" src="" alt="">
+        <button class="lightbox-next" id="lb-next" aria-label="Next photo">&rsaquo;</button>
+    </div>
+    <div class="lb-filmstrip">
+        <p class="lb-counter" id="lb-counter"></p>
+        <div class="lb-thumbs" id="lb-thumbs"></div>
+    </div>
+</div>
+<script>
+(function () {
+  var data = document.getElementById('gallery-data');
+  if (!data) return;
+  var srcs = Array.from(data.querySelectorAll('[data-src]')).map(function(el){ return el.dataset.src; });
+  if (!srcs.length) return;
+
+  // ── Collage paging ──
+  var track = document.getElementById('lj-collage-track');
+  if (track) {
+    var pageCount = track.children.length;
+    var page = 0;
+    function goPage(n) {
+      page = (n + pageCount) % pageCount;          // wraps, so neither arrow dead-ends
+      track.style.transform = 'translateX(-' + (page * 100) + '%)';
+    }
+    var pPrev = document.getElementById('lj-collage-prev');
+    var pNext = document.getElementById('lj-collage-next');
+    if (pPrev) pPrev.addEventListener('click', function(){ goPage(page - 1); });
+    if (pNext) pNext.addEventListener('click', function(){ goPage(page + 1); });
+  }
+
+  // ── Full-screen viewer ──
+  var lb      = document.getElementById('lightbox');
+  var lbImg   = document.getElementById('lb-img');
+  var counter = document.getElementById('lb-counter');
+  var strip   = document.getElementById('lb-thumbs');
+  var idx     = 0;
+  var built   = false;
+
+  // Thumbs are built on first open, not on page load: a 60-photo gallery
+  // should not cost 60 extra requests for a viewer nobody opened.
+  function buildStrip() {
+    if (built) return;
+    built = true;
+    srcs.forEach(function(src, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'lb-thumb';
+      b.setAttribute('aria-label', 'Photo ' + (i + 1));
+      var im = document.createElement('img');
+      im.src = src;
+      im.loading = 'lazy';
+      im.alt = '';
+      b.appendChild(im);
+      b.addEventListener('click', function(){ show(i); });
+      strip.appendChild(b);
+    });
+  }
+
+  function show(i) {
+    idx = (i + srcs.length) % srcs.length;
+    lbImg.src = srcs[idx];
+    counter.textContent = (idx + 1) + '/' + srcs.length;
+    var thumbs = strip.children;
+    for (var t = 0; t < thumbs.length; t++) { thumbs[t].classList.toggle('active', t === idx); }
+    if (thumbs[idx]) thumbs[idx].scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+
+  function open(i) {
+    buildStrip();
+    show(i);
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    lb.classList.remove('open');
+    lbImg.src = '';
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.lj-tile').forEach(function(tile) {
+    tile.addEventListener('click', function(){ open(parseInt(tile.dataset.idx || '0', 10)); });
+  });
+  var countBtn = document.getElementById('lj-collage-count');
+  if (countBtn) countBtn.addEventListener('click', function(){ open(0); });
+
+  document.getElementById('lb-close').addEventListener('click', close);
+  document.getElementById('lb-prev').addEventListener('click', function(){ show(idx - 1); });
+  document.getElementById('lb-next').addEventListener('click', function(){ show(idx + 1); });
+  lb.addEventListener('click', function(e){ if (e.target === lb) close(); });
+  document.addEventListener('keydown', function(e){
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') show(idx - 1);
+    if (e.key === 'ArrowRight') show(idx + 1);
+  });
+})();
+</script>
