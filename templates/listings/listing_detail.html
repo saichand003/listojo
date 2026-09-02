@@ -54,13 +54,13 @@
 .ld-contact-link:hover { text-decoration:underline; }
 .ld-contact-btns  { display:flex;flex-direction:column;gap:.5rem;margin-top:.35rem;max-width:260px; }
 .ld-contact-btn   { width:100%;text-align:center;justify-content:center; }
-.ld-contact-brand { text-align:center;min-width:130px; }
+.ld-contact-brand { grid-column:3;text-align:center;min-width:130px; }
 .ld-contact-monogram { width:56px;height:56px;margin:0 auto .5rem;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:var(--primary);background:rgba(42,126,242,.1);border:1px solid rgba(42,126,242,.2); }
 .ld-contact-brand-label { margin:0;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3); }
 .ld-contact-brand-name  { margin:.1rem 0 0;font-size:.92rem;font-weight:700;color:var(--text-2);word-break:break-word; }
 @media (max-width: 720px) {
   .ld-contact-grid  { grid-template-columns:1fr; }
-  .ld-contact-brand { text-align:left; }
+  .ld-contact-brand { grid-column:auto;text-align:left; }
   .ld-contact-monogram { margin-left:0; }
   .ld-contact-btns  { max-width:none; }
 }
@@ -641,25 +641,16 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 {% endif %}
             </div>
 
-            {# Know: location, timing, and what it takes to qualify #}
+            {# Know: timing. The address lives under the title in the top tile. #}
+            {% if listing.category != 'properties' %}
             <div class="ld-contact-facts">
-                <p class="ld-contact-line"><span>📍</span> {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %} &mdash; {{ listing.country }}</p>
-                {% if listing.category != 'properties' %}
-                    {% if listing.available_from %}
-                    <p class="ld-contact-line"><span>📅</span> Available from <strong style="color:var(--text-2);">{{ listing.available_from|date:"F j, Y" }}</strong></p>
-                    {% else %}
-                    <p class="ld-contact-line"><span>📅</span> <strong style="color:var(--accent);">Available now</strong></p>
-                    {% endif %}
+                {% if listing.available_from %}
+                <p class="ld-contact-line"><span>📅</span> Available from <strong style="color:var(--text-2);">{{ listing.available_from|date:"F j, Y" }}</strong></p>
+                {% else %}
+                <p class="ld-contact-line"><span>📅</span> <strong style="color:var(--accent);">Available now</strong></p>
                 {% endif %}
-                {% with listing.recommended_income as inc %}
-                {% if inc %}
-                <p class="ld-contact-line" style="background:rgba(42,126,242,.07);border:1px solid rgba(42,126,242,.18);border-radius:8px;padding:.45rem .7rem;font-size:.82rem;">
-                    <span>💼</span> Recommended monthly income: <strong style="color:var(--primary);">${{ inc|floatformat:0 }}+</strong>
-                    <span style="font-size:.72rem;margin-left:.3rem;">(3× monthly rent rule)</span>
-                </p>
-                {% endif %}
-                {% endwith %}
             </div>
+            {% endif %}
 
             {# Who: a monogram stands in for the management logo we do not have #}
             {% with org=listing.organization %}
