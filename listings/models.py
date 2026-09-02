@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -162,17 +164,95 @@ class AmenityDisplayMixin:
         'apartment', 'condo', 'loft', 'studio', 'townhouse',
     })
 
+    #: Free-text `tags` predates the two catalogues, so most listings still
+    #: carry their amenities there and nowhere else. Those tags are folded into
+    #: whichever card they belong to rather than shown as a loose chip row, so
+    #: every detail page reads the same way. The split follows the same
+    #: shared-versus-private question the cards ask; anything unrecognised
+    #: falls to the shared card, whose heading describes the property as a
+    #: whole and so still reads correctly for a stray descriptor.
+    #:
+    #: Short words are matched whole, not as substrings: "ac" is inside
+    #: "backyard" and "package lockers", both of which are shared.
+    PRIVATE_TAG_EXACT = frozenset({
+        'ac', 'a/c', 'heat', 'heating', 'furnished', 'unfurnished', 'balcony',
+        'patio', 'terrace', 'wifi', 'wi-fi', 'internet', 'cable', 'tile',
+        'carpet', 'storage', 'closet', 'fireplace', 'dishwasher', 'oven',
+        'stove', 'microwave', 'fridge', 'refrigerator', 'freezer', 'view',
+        'renovated', 'updated',
+    })
+
+    #: Longer, unambiguous phrases — matched anywhere in the tag, so "in-unit
+    #: washer/dryer" lands privately just like "washer/dryer".
+    PRIVATE_TAG_KEYWORDS = (
+        'washer', 'dryer', 'laundry in unit', 'in-unit laundry',
+        'air conditioning', 'central air', 'hardwood', 'granite', 'quartz',
+        'countertop', 'stainless', 'appliance', 'garbage disposal',
+        'walk-in', 'ceiling fan', 'high ceiling', 'private bath', 'ensuite',
+        'en-suite', 'natural light', 'updated kitchen', 'private entrance',
+    )
+
+    #: Acronyms and stylings a plain capitalisation would mangle. Tags are
+    #: typed lowercase; the catalogue columns are typed in title case, and the
+    #: two sit in the same card, so folded tags are cased to match.
+    TAG_DISPLAY_OVERRIDES = {
+        'ac': 'AC', 'a': 'A', 'c': 'C', 'hvac': 'HVAC', 'tv': 'TV', 'ev': 'EV',
+        'wifi': 'WiFi', 'fi': 'Fi', 'hoa': 'HOA', 'bbq': 'BBQ',
+    }
+
     def get_amenities_list(self, field):
         val = getattr(self, field, '') or ''
         return [a.strip() for a in val.split(',') if a.strip()]
 
+    @classmethod
+    def _display_tag(cls, tag):
+        """Title-case a tag across word, slash and hyphen boundaries."""
+        def cap(match):
+            word = match.group(0)
+            override = cls.TAG_DISPLAY_OVERRIDES.get(word.lower())
+            if override:
+                return override
+            # A word the owner already capitalised is left as they typed it.
+            return word if word != word.lower() else word.capitalize()
+
+        return re.sub(r'[A-Za-z]+', cap, tag)
+
+    @classmethod
+    def _tag_is_private(cls, tag):
+        low = tag.strip().lower()
+        if low in cls.PRIVATE_TAG_EXACT:
+            return True
+        return any(k in low for k in cls.PRIVATE_TAG_KEYWORDS)
+
+    def _tags_for_card(self, private):
+        """
+        The legacy `tags` that belong in one of the two cards.
+
+        `private` picks the side: True for what is behind the tenant's own
+        door, False for everything else. A tag already spelled out in either
+        catalogue column is dropped, so an owner who filled in the new fields
+        does not see the same amenity twice.
+        """
+        get_tags = getattr(self, 'get_tags_list', None)
+        if not callable(get_tags):
+            return []
+        already = {
+            a.strip().lower()
+            for a in self.get_amenities_list('community_amenities')
+                   + self.get_amenities_list('in_unit_amenities')
+        }
+        return [
+            self._display_tag(t) for t in get_tags()
+            if t.strip().lower() not in already and self._tag_is_private(t) == private
+        ]
+
     @property
     def community_amenities_list(self):
-        return self.get_amenities_list('community_amenities')
+        return self.get_amenities_list('community_amenities') + self._tags_for_card(private=False)
 
     @property
     def in_unit_amenities_list(self):
-        return self.get_amenities_list('in_unit_amenities')
+        return self.get_amenities_list('in_unit_amenities') + self._tags_for_card(private=True)
 
     @property
     def shared_amenities_label(self):

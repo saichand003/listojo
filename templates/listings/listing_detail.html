@@ -520,22 +520,12 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
         </div>
     </article>
 
-    {# About this property — description + tags, same shape as community detail. #}
-    {% if listing.description or listing.get_tags_list %}
+    {# About this property — description only. Tags are no longer a loose chip #}
+    {# row: they are folded into the two amenity cards below by the mixin. #}
+    {% if listing.description %}
     <div class="card">
         <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">About This Property</h2>
-        {% if listing.description %}
         <p style="color:var(--text-2);line-height:1.7;margin:0;">{{ listing.description }}</p>
-        {% endif %}
-        {% with listing.get_tags_list as tags %}
-        {% if tags %}
-        <div class="listing-tags" style="margin-top:1rem;">
-            {% for tag in tags %}
-            <a href="{% url 'listing_list' %}?tag={{ tag }}" class="tag-chip">{{ tag }}</a>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% endwith %}
     </div>
     {% endif %}
 
