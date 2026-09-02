@@ -43,6 +43,28 @@
   .ld-solo-header > div:last-child { text-align: left !important; }
   .ld-solo-header > div:last-child > div { justify-content: flex-start !important; }
 }
+
+/* ── Contact card — reach / know / who, side by side ── */
+.ld-contact-title { font-size:1.35rem;font-weight:700;margin:0 0 1rem; }
+.ld-contact-grid  { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:1.25rem 2rem;align-items:start; }
+.ld-contact-actions, .ld-contact-facts { display:flex;flex-direction:column;gap:.55rem;min-width:0; }
+.ld-contact-line  { display:flex;align-items:flex-start;gap:.5rem;margin:0;color:var(--text-3);font-size:.9rem;line-height:1.5; }
+.ld-contact-line > span:first-child { flex-shrink:0;line-height:1.4; }
+.ld-contact-link  { color:var(--primary);font-weight:600;text-decoration:none; }
+.ld-contact-link:hover { text-decoration:underline; }
+.ld-contact-btns  { display:flex;flex-direction:column;gap:.5rem;margin-top:.35rem;max-width:260px; }
+.ld-contact-btn   { width:100%;text-align:center;justify-content:center; }
+.ld-contact-brand { text-align:center;min-width:130px; }
+.ld-contact-monogram { width:56px;height:56px;margin:0 auto .5rem;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:var(--primary);background:rgba(42,126,242,.1);border:1px solid rgba(42,126,242,.2); }
+.ld-contact-brand-label { margin:0;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3); }
+.ld-contact-brand-name  { margin:.1rem 0 0;font-size:.92rem;font-weight:700;color:var(--text-2);word-break:break-word; }
+@media (max-width: 720px) {
+  .ld-contact-grid  { grid-template-columns:1fr; }
+  .ld-contact-brand { text-align:left; }
+  .ld-contact-monogram { margin-left:0; }
+  .ld-contact-btns  { max-width:none; }
+}
+
 /* Unit cards: image strip goes full-width on mobile */
 @media (max-width: 600px) {
   .ld-unit-img { width: 100% !important; min-width: 0 !important; max-height: 190px !important; }
@@ -587,49 +609,74 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
     {% endif %}
     {% endwith %}
 
+    {# ── Contact — three columns: how to reach, what to know, who is letting ── #}
     <div class="card">
-    <div style="display:flex;flex-direction:column;gap:.4rem;">
-        <p class="muted">📍 {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %} &mdash; {{ listing.country }}</p>
-        {% if listing.category != 'properties' %}
-            {% if listing.available_from %}
-            <p class="muted">📅 Available from <strong style="color:var(--text-2);">{{ listing.available_from|date:"F j, Y" }}</strong></p>
-            {% else %}
-            <p class="muted">📅 <strong style="color:var(--accent);">Available now</strong></p>
-            {% endif %}
-        {% endif %}
-        {% with listing.recommended_income as inc %}
-        {% if inc %}
-        <p class="muted" style="background:rgba(42,126,242,.07);border:1px solid rgba(42,126,242,.18);border-radius:8px;padding:.4rem .7rem;font-size:.82rem;">
-            💼 Recommended monthly income: <strong style="color:var(--primary);">${{ inc|floatformat:0 }}+</strong>
-            <span style="font-size:.72rem;margin-left:.3rem;">(3× monthly rent rule)</span>
-        </p>
-        {% endif %}
-        {% endwith %}
-        {% if listing.contact_phone %}
-            {% if user.is_authenticated %}
-            <p class="muted">📞 {{ listing.contact_phone }}</p>
-            {% else %}
-            <p class="muted">📞 <a href="{% url 'login' %}?next={{ request.path }}" style="color:var(--primary);">Login to view phone number</a></p>
-            {% endif %}
-        {% endif %}
-        <p class="muted">👤 Listed by <strong style="color:var(--text-2);">{{ listing.owner.username }}</strong></p>
-    </div>
+        <h2 class="ld-contact-title">Contact</h2>
+        <div class="ld-contact-grid">
 
-    {% if user != listing.owner %}
-    <div style="margin-top:1.5rem;">
-        {% if user.is_authenticated %}
-        <button type="button" class="button" id="open-chat-btn">💬 Open Live Chat</button>
-        {% else %}
-        <a href="{% url 'login' %}?next={{ request.path }}" class="button">💬 Login to Chat</a>
-        {% endif %}
-    </div>
-    {% endif %}
-    </div>{# /location + contact card #}
+            {# Reach: the links and the actions, in the order a renter uses them #}
+            <div class="ld-contact-actions">
+                {% if listing.contact_phone %}
+                    {% if user.is_authenticated %}
+                    <p class="ld-contact-line"><span>📞</span> <a href="tel:{{ listing.contact_phone }}" class="ld-contact-link">{{ listing.contact_phone }}</a></p>
+                    {% else %}
+                    <p class="ld-contact-line"><span>📞</span> <a href="{% url 'login' %}?next={{ request.path }}" class="ld-contact-link">Login to view phone number</a></p>
+                    {% endif %}
+                {% endif %}
+                {% if listing.virtual_tour_url %}
+                <p class="ld-contact-line"><span>🌐</span> <a href="{{ listing.virtual_tour_url }}" target="_blank" rel="noopener" class="ld-contact-link">View Property Tour</a></p>
+                {% endif %}
+
+                {% if user != listing.owner %}
+                <div class="ld-contact-btns">
+                    {% if listing.status != 'sold' %}
+                    <a href="#inquiry-form" class="button secondary ld-contact-btn">Send Inquiry</a>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <button type="button" class="button ld-contact-btn" id="open-chat-btn">💬 Open Live Chat</button>
+                    {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="button ld-contact-btn">💬 Login to Chat</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            {# Know: location, timing, and what it takes to qualify #}
+            <div class="ld-contact-facts">
+                <p class="ld-contact-line"><span>📍</span> {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %} &mdash; {{ listing.country }}</p>
+                {% if listing.category != 'properties' %}
+                    {% if listing.available_from %}
+                    <p class="ld-contact-line"><span>📅</span> Available from <strong style="color:var(--text-2);">{{ listing.available_from|date:"F j, Y" }}</strong></p>
+                    {% else %}
+                    <p class="ld-contact-line"><span>📅</span> <strong style="color:var(--accent);">Available now</strong></p>
+                    {% endif %}
+                {% endif %}
+                {% with listing.recommended_income as inc %}
+                {% if inc %}
+                <p class="ld-contact-line" style="background:rgba(42,126,242,.07);border:1px solid rgba(42,126,242,.18);border-radius:8px;padding:.45rem .7rem;font-size:.82rem;">
+                    <span>💼</span> Recommended monthly income: <strong style="color:var(--primary);">${{ inc|floatformat:0 }}+</strong>
+                    <span style="font-size:.72rem;margin-left:.3rem;">(3× monthly rent rule)</span>
+                </p>
+                {% endif %}
+                {% endwith %}
+            </div>
+
+            {# Who: a monogram stands in for the management logo we do not have #}
+            {% with org=listing.organization %}
+            <div class="ld-contact-brand">
+                <div class="ld-contact-monogram">{% if org %}{{ org.name|first|upper }}{% else %}{{ listing.owner.username|first|upper }}{% endif %}</div>
+                <p class="ld-contact-brand-label">Listed by</p>
+                <p class="ld-contact-brand-name">{% if org %}{{ org.name }}{% else %}{{ listing.owner.username }}{% endif %}</p>
+            </div>
+            {% endwith %}
+
+        </div>
+    </div>{# /contact card #}
 
   </div>{# /left column stack #}
 
     {% if user != listing.owner %}
-    <aside class="card" style="position:sticky;top:1.5rem;">
+    <aside class="card" id="inquiry-form" style="position:sticky;top:1.5rem;scroll-margin-top:1.5rem;">
         {% if listing.category == 'properties' %}
         <div style="background:linear-gradient(135deg,rgba(42,126,242,.08),rgba(98,194,255,.06));border:1px solid rgba(42,126,242,.2);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
             <p style="font-weight:700;font-size:.95rem;margin-bottom:.3rem;">Want expert help with this property?</p>
