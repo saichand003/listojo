@@ -39,6 +39,9 @@
   .ld-comm-grid   { grid-template-columns: 1fr !important; }
   .ld-comm-header { flex-direction: column !important; align-items: flex-start !important; }
   .ld-comm-header > div:last-child { text-align: left !important; }
+  .ld-solo-header { flex-direction: column !important; align-items: flex-start !important; }
+  .ld-solo-header > div:last-child { text-align: left !important; }
+  .ld-solo-header > div:last-child > div { justify-content: flex-start !important; }
 }
 /* Unit cards: image strip goes full-width on mobile */
 @media (max-width: 600px) {
@@ -436,13 +439,29 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 {% endif %}
             </div>
 
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.5rem;">
-                <h1 style="font-size:1.6rem;margin:0;">{{ listing.title }}</h1>
-                {% if user == listing.owner %}
-                <div style="display:flex;gap:.5rem;flex-shrink:0;">
-                    <a href="{% url 'edit_listing' listing.pk %}" class="nav-text-btn" style="white-space:nowrap;">✏️ Edit</a>
+            {# Title + address on the left, price on the right — same shape as community detail. #}
+            <div class="ld-solo-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:1.25rem;flex-wrap:wrap;margin-bottom:1rem;">
+                <div style="min-width:0;">
+                    <h1 style="font-size:1.6rem;margin:0 0 .3rem;">{{ listing.title }}</h1>
+                    <p style="color:var(--text-3);font-size:.9rem;margin:0;">
+                        📍 {% if listing.address_line %}{{ listing.address_line }}, {% endif %}{{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}{% if listing.zip_code %} {{ listing.zip_code }}{% endif %}
+                    </p>
                 </div>
-                {% endif %}
+                <div style="text-align:right;flex-shrink:0;">
+                    {% if listing.price %}
+                    <p style="font-size:1.5rem;font-weight:800;background:var(--price-gradient,linear-gradient(135deg,#2a7ef2,#8b5cf6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span style="font-size:.85rem;font-weight:500;-webkit-text-fill-color:var(--text-3);background:none;">{{ listing.get_price_unit_display }}</span>{% endif %}</p>
+                    {% else %}
+                    <p style="font-size:1rem;font-weight:600;color:var(--text-3);margin:0;">Contact for price</p>
+                    {% endif %}
+                    {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
+                    <p style="font-size:.85rem;color:var(--text-3);text-decoration:line-through;margin:.2rem 0 0;">${{ listing.original_price|floatformat:0|intcomma }}</p>
+                    {% endif %}
+                    {% if user == listing.owner %}
+                    <div style="display:flex;gap:.5rem;margin-top:.55rem;justify-content:flex-end;">
+                        <a href="{% url 'edit_listing' listing.pk %}" class="nav-text-btn" style="white-space:nowrap;">✏️ Edit</a>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
 
             {# Parent community breadcrumb #}
@@ -451,15 +470,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 Part of: <a href="{% url 'listing_detail' listing.parent.pk %}" style="color:var(--primary);font-weight:600;">{{ listing.parent.title }}</a>
             </div>
             {% endif %}
-
-            <div style="margin-bottom:1rem;">
-                <p class="price" style="font-size:1.4rem;margin:0;">
-                    {% if listing.price %}${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span class="price-unit">{{ listing.get_price_unit_display }}</span>{% endif %}{% else %}Contact for price{% endif %}
-                </p>
-                {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
-                <p style="font-size:.85rem;color:var(--text-3);text-decoration:line-through;margin:.2rem 0 0;">${{ listing.original_price|floatformat:0|intcomma }}</p>
-                {% endif %}
-            </div>
 
             {# Floor plan + tour details for unit listings #}
             {% if listing.bedrooms is not None or listing.bathrooms or listing.square_footage %}
@@ -507,20 +517,27 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 🏠 View 3D Tour
             </a>
             {% endif %}
-
-            <p style="color:var(--text-2);line-height:1.7;">{{ listing.description }}</p>
-
-            {% with listing.get_tags_list as tags %}
-            {% if tags %}
-            <div class="listing-tags" style="margin-top:1rem;">
-                {% for tag in tags %}
-                <a href="{% url 'listing_list' %}?tag={{ tag }}" class="tag-chip">{{ tag }}</a>
-                {% endfor %}
-            </div>
-            {% endif %}
-            {% endwith %}
         </div>
     </article>
+
+    {# About this property — description + tags, same shape as community detail. #}
+    {% if listing.description or listing.get_tags_list %}
+    <div class="card">
+        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">About This Property</h2>
+        {% if listing.description %}
+        <p style="color:var(--text-2);line-height:1.7;margin:0;">{{ listing.description }}</p>
+        {% endif %}
+        {% with listing.get_tags_list as tags %}
+        {% if tags %}
+        <div class="listing-tags" style="margin-top:1rem;">
+            {% for tag in tags %}
+            <a href="{% url 'listing_list' %}?tag={{ tag }}" class="tag-chip">{{ tag }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+    {% endif %}
 
     {# Standalone cards on the page background — the defaults, same as community detail. #}
     {% include 'listings/_amenity_cards.html' with place=listing %}
