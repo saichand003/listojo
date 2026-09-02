@@ -675,7 +675,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
             <a href="mailto:agents@listojo.com?subject=Agent help: {{ listing.title|urlencode }}&body=I am interested in: {{ listing.title }} — {{ request.build_absolute_uri }}" class="button" style="width:100%;text-align:center;display:block;">Connect with an Agent</a>
         </div>
         {% endif %}
-        <h2 style="margin-bottom:.25rem;">Send an Inquiry</h2>
+        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.25rem;">Send an Inquiry</h2>
         <p class="muted" style="margin-bottom:1rem;font-size:.82rem;">The lister will be notified by email.</p>
         {% if listing.status == 'sold' %}
         <p style="color:#dc2626;font-size:.85rem;font-weight:600;">This listing is marked as sold. Inquiries are disabled.</p>
