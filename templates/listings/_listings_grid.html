@@ -20,7 +20,7 @@
                     <img class="listing-thumb" src="{{ hero.image.url }}" alt="{{ community.name }}">
                 </div>
             {% else %}
-                <div class="listing-thumb listing-thumb-placeholder">🏢</div>
+                <div class="listing-thumb listing-thumb-placeholder" role="img" aria-label="No photo provided"></div>
             {% endif %}
             {% if community.featured %}<span class="featured-badge">★ Featured</span>{% endif %}
             <span class="category-badge" style="background:rgba(30,138,92,.85);">Community</span>
@@ -125,7 +125,7 @@
                     <img class="listing-thumb" src="{{ listing.image.url }}" alt="{{ listing.title }}">
                 </div>
             {% else %}
-                <div class="listing-thumb listing-thumb-placeholder">🏷️</div>
+                <div class="listing-thumb listing-thumb-placeholder" role="img" aria-label="No photo provided"></div>
             {% endif %}
             {% endwith %}
             {% if listing.featured %}<span class="featured-badge">★ Featured</span>{% endif %}

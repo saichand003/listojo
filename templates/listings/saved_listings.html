@@ -131,7 +131,7 @@
             {% elif listing.image %}
                 <img class="listing-thumb" src="{{ listing.image.url }}" alt="{{ listing.title }}">
             {% else %}
-                <div class="listing-thumb listing-thumb-placeholder">🏷️</div>
+                <div class="listing-thumb listing-thumb-placeholder" role="img" aria-label="No photo provided"></div>
             {% endif %}
             {% endwith %}
             {% if listing.featured %}<span class="featured-badge">★ Featured</span>{% endif %}

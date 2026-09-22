@@ -67,6 +67,10 @@
   --featured:   #F59E0B;
   --featured-2: #F97316;
 
+  /* Line-art house used as a mask for the no-photo placeholder, so it takes
+     its colour from the surrounding text and needs no separate dark asset. */
+  --ph-house: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 10.2 12 3.5l9 6.7V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z'/%3E%3Cpath d='M9.2 21v-6.2h5.6V21'/%3E%3C/svg%3E");
+
   /* Distance from the top of the viewport to the top of .site-body:
      .site-topbar's 1.25rem top padding + the 72px .navbar + its 2rem
      margin-bottom. The sidebar needs it to size itself so it does not
@@ -870,18 +874,42 @@ p { line-height: 1.65; }
   transform: scale(1.35);
 }
 
+/* No-photo state. This was a 3rem emoji (a key or a house) on a blue-green
+   gradient. Photos are the product on a listing site, so the fallback has two
+   jobs: say plainly that a photo is missing, and stay quiet enough that
+   listings which do have photos win the eye. A bright emoji did the opposite,
+   and emoji-as-imagery is one of the clearest generated-UI tells. */
 .listing-thumb-placeholder {
   width: 100%;
   height: 210px;
-  background: linear-gradient(145deg,
-    rgba(42,126,242,.09) 0%,
-    rgba(98,194,255,.07) 50%,
-    rgba(61,181,73,.06) 100%);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 3rem;
-  color: var(--border-2);
+  gap: var(--sp-2);
+  color: var(--text-3);
+  font-size: .75rem;
+  font-weight: 500;
+  /* Overrides the emoji left in any template not yet migrated. */
+  text-indent: -9999px;
+  overflow: hidden;
+}
+.listing-thumb-placeholder::before {
+  content: '';
+  width: 30px;
+  height: 30px;
+  opacity: .5;
+  background: currentColor;
+  /* Line-art house, masked so it inherits the text colour in both themes. */
+  -webkit-mask: var(--ph-house) center / contain no-repeat;
+  mask: var(--ph-house) center / contain no-repeat;
+}
+.listing-thumb-placeholder::after {
+  content: 'No photo yet';
+  text-indent: 0;
+  float: left;
 }
 
 /* Badges — both top */
@@ -2727,7 +2755,7 @@ footer {
   .listings-header-title { font-size: 1.1rem; }
   .listings-header-sub { font-size: .78rem; }
 
-  /* ── 2-column tile grid ── */
+  /* ── 2-column tile grid (481-600px only; see the 480px block below) ── */
   .grid-listings {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
@@ -2747,7 +2775,9 @@ footer {
     width: 100%;
     aspect-ratio: 1 / 1;
   }
-  .listing-thumb-placeholder { height: auto; aspect-ratio: 1/1; font-size: 2rem; }
+  /* font-size intentionally not overridden here: the placeholder is now a
+     masked icon plus a small label, not a 2rem emoji glyph. */
+  .listing-thumb-placeholder { height: auto; aspect-ratio: 1/1; }
 
   /* Tight body */
   .listing-body { padding: .45rem .5rem .5rem; }
@@ -2948,6 +2978,26 @@ footer {
     margin-bottom: 1px;
     color: #fff;
   }
+}
+
+/* ── Phone listing grid ─────────────────────────────────────────
+   The grid was locked to two columns for the whole range below 600px. At
+   390px that is ~175px per card: the photo, which is the thing people
+   actually judge a property on, became a thumbnail, titles wrapped to three
+   lines, amenity pills stacked one per line and "View Listing" wrapped onto
+   two. Zillow, Redfin, Apartments.com and Realtor.com all go single column on
+   phones for that reason. 481-600px keeps two columns, where the density
+   argument still holds. */
+@media (max-width: 480px) {
+  .grid-listings { grid-template-columns: 1fr; gap: var(--sp-3); }
+  /* The square crop existed to keep two tiles the same height. At full width a
+     property photo wants a landscape frame. */
+  .listing-thumb-track { aspect-ratio: 3 / 2; }
+  .listing-thumb { aspect-ratio: 3 / 2; }
+  .listing-thumb-placeholder { aspect-ratio: 3 / 2; }
+  /* Room for the pills and the action row to sit inline again. */
+  .listing-card .card-actions { display: flex; gap: var(--sp-2); }
+  .listing-card .card-actions > * { flex: 1; white-space: nowrap; }
 }
 
 /* The bottom-bar clearance below already exists inside the 600px block. Now
