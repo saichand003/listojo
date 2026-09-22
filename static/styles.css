@@ -60,6 +60,12 @@
 
   /* One focus ring for the whole product. */
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
+
+  /* Distance from the top of the viewport to the top of .site-body:
+     .site-topbar's 1.25rem top padding + the 72px .navbar + its 2rem
+     margin-bottom. The sidebar needs it to size itself so it does not
+     overflow the first screen. */
+  --topbar-h: 124px;
 }
 
 :root.dark {
@@ -195,63 +201,121 @@ p { line-height: 1.65; }
   max-width: 240px;
   flex-shrink: 0;
   background: var(--surface);
-  padding: 1.5rem 1rem 1rem;
+  padding: var(--sp-4) var(--sp-3) var(--sp-3);
   position: sticky;
-  top: 0;
-  height: 100vh;
+  /* Was top:0 with height:100vh. The sidebar starts 124px down the page
+     (below the floating topbar), so a full-viewport height overflowed the
+     screen by exactly that much and the bottom of the column — the user
+     block, Profile settings and Sign out — sat permanently below the fold.
+     Content height with a bounded max fixes it: the column is as tall as its
+     items, and only scrolls internally on genuinely short viewports.
+     dvh rather than vh so the mobile URL bar collapsing does not overflow it. */
+  top: var(--sp-3);
+  height: auto;
+  /* Bounded by the space actually left under the topbar on the first screen,
+     not by the full viewport: the column starts --topbar-h down the page, so
+     sizing it to 100dvh is what pushed its bottom off screen. */
+  max-height: calc(100dvh - var(--topbar-h) - var(--sp-4));
   overflow-y: auto;
+  /* Reaching the end of the sidebar should not start scrolling the page. */
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-right: 1px solid var(--border);
+  /* The sidebar and the content cards were both --surface, so the column read
+     as another card rather than as the app frame. A rounded panel with a soft
+     edge separates the chrome from the content it navigates. */
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-xs);
   z-index: 100;
 }
-:root.dark .app-sidebar { background: #111827; }
+:root.dark .app-sidebar {
+  /* Was a hardcoded #111827, the one dark override the sidebar had, which did
+     not match --surface (#101D35) and left the column a different dark from
+     every surface beside it. */
+  background: var(--surface);
+}
 
 .app-sidebar::-webkit-scrollbar { width: 4px; }
 .app-sidebar::-webkit-scrollbar-track { background: transparent; }
 .app-sidebar::-webkit-scrollbar-thumb { background: rgba(0,0,0,.1); border-radius: 4px; }
 
-.sb-section { margin-bottom: 1.75rem; }
+/* Was 1.75rem (28px). With 11 links, three section labels, the city switcher
+   and the footer, that ran the column to ~650px and pushed the footer off
+   screen on a 13in laptop. */
+.sb-section { margin-bottom: var(--sp-5); }
 
 .sb-label {
-  font-size: 10.5px;
+  /* Was 10.5px, the smallest type in the product, sitting directly above
+     16px links: a 1.52x jump that read as two unrelated components. */
+  font-size: 11px;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: .1em;
-  padding: 0 .5rem;
-  margin-bottom: .6rem;
+  /* Tracking is size-specific. Small uppercase text needs positive tracking
+     to stay legible, but .1em at this size was pulling the words apart. */
+  letter-spacing: .07em;
+  padding: 0 var(--sp-2);
+  margin-bottom: var(--sp-2);
   display: block;
 }
 
 .sb-link {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: .65rem;
-  padding: .5rem .65rem;
-  color: var(--text);
+  gap: var(--sp-3);
+  /* 1rem/16px labels on 42px rows gave a 12-item nav the density of a
+     marketing menu. Enterprise ILS sidebars (CoStar, Apartments.com's manager
+     portal) run ~14px on ~36px rows, which is what lets the whole nav plus the
+     user block fit one screen. */
+  padding: var(--sp-2) var(--sp-2);
+  min-height: 36px;
+  color: var(--text-2);
   text-decoration: none;
-  font-size: 1rem;
+  font-size: .875rem;
   font-weight: 500;
-  border-radius: 8px;
-  transition: background .15s, color .15s;
-  margin-bottom: 2px;
+  border-radius: var(--r-sm);
+  transition: background var(--dur-fast) var(--ease-out),
+              color      var(--dur-fast) var(--ease-out);
+  margin-bottom: 1px;
 }
-.sb-link:hover { background: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) {
+  .sb-link:hover { background: var(--surface-2); color: var(--text); }
+}
 .sb-link.sb-active {
   color: var(--primary);
   background: rgba(42,126,242,.09);
   font-weight: 600;
 }
+/* The active item was distinguished only by a pale tint. A left rail is the
+   convention for app sidebars because it is readable in peripheral vision,
+   so you can see where you are without looking directly at the nav. */
+.sb-link.sb-active::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--sp-3) * -1);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  border-radius: 0 3px 3px 0;
+  background: var(--primary);
+}
 .sb-icon {
-  width: 20px;
-  height: 20px;
+  /* Was 20px for nav links but 18px for Profile/Sign out and 13px/10px in the
+     city switcher: four icon sizes in one 240px column. */
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: .78;
 }
+.sb-link.sb-active .sb-icon { opacity: 1; }
+.sb-icon svg { width: 18px; height: 18px; }
 .sb-icon svg { display: block; }
 .sb-badge {
   margin-left: auto;
@@ -481,7 +545,7 @@ p { line-height: 1.65; }
 .nav-text-btn:hover { background: rgba(42,126,242,.08); color: var(--primary); }
 
 /* ── BUTTONS ────────────────────────────────────────────────── */
-.button, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn) {
+.button, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):not(.sb-city-btn):not(.sb-city-locate) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -503,7 +567,7 @@ p { line-height: 1.65; }
   overflow: hidden;
 }
 /* Button shine sweep */
-.button::after, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn)::after {
+.button::after, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):not(.sb-city-btn):not(.sb-city-locate)::after {
   content: '';
   position: absolute;
   top: 0; left: -75%;
@@ -513,14 +577,14 @@ p { line-height: 1.65; }
   transition: left .55s ease;
   pointer-events: none;
 }
-.button:hover::after, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):hover::after { left: 140%; }
+.button:hover::after, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):not(.sb-city-btn):not(.sb-city-locate):hover::after { left: 140%; }
 
-.button:hover, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):hover {
+.button:hover, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):not(.sb-city-btn):not(.sb-city-locate):hover {
   opacity: .93;
   transform: translateY(-1px);
   box-shadow: 0 6px 22px rgba(42,126,242,.38);
 }
-.button:active, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):active { transform: none; box-shadow: 0 2px 8px rgba(42,126,242,.2); }
+.button:active, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):not(.sb-city-btn):not(.sb-city-locate):active { transform: none; box-shadow: 0 2px 8px rgba(42,126,242,.2); }
 
 /* ── PRESS FEEDBACK & HOVER GATING ──────────────────────────────
    Touch devices have no hover, so the browser fakes one: the first tap
