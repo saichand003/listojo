@@ -110,6 +110,31 @@
   max-width: 34ch;
 }
 
+/* ── Horizontal card rows ─────────────────────────────────────
+   These scroll, but the only sign of it was a thin scrollbar and a card
+   sliced in half at the right edge, which reads as a broken layout rather
+   than as an invitation to scroll. A fade on the overflowing edge is the
+   convention: it says "more this way" without adding chrome. */
+.home-scroll-row-wrap { position: relative; }
+.home-scroll-row-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 56px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--bg));
+}
+.home-scroll-row {
+  /* Snap gives the row the browser's own physics instead of free scroll, so
+     cards come to rest framed rather than sliced. */
+  scroll-snap-type: x proximity;
+  /* A horizontal swipe here is ambiguous; pan-y keeps vertical with the
+     browser and gives this row the horizontal axis. */
+  touch-action: pan-y;
+  overscroll-behavior-x: contain;
+}
+.home-scroll-row > * { scroll-snap-align: start; }
+
 /* ── Testimonial card ─────────────────────────────────────── */
 .home-testimonial {
   padding: 1.4rem 1.25rem;
@@ -346,7 +371,7 @@
     </div>
     <a href="{% url 'listing_list' %}?category=rentals" class="section-link">See all &rarr;</a>
   </div>
-  <div class="home-scroll-row" style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
+  <div class="home-scroll-row-wrap"><div class="home-scroll-row" style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
     {% for listing in trending_rentals %}
     {% with listing.images.all as imgs %}
     <article class="card listing-card home-listing-card" style="min-width:275px;max-width:275px;flex-shrink:0;">
@@ -378,7 +403,7 @@
     </article>
     {% endwith %}
     {% endfor %}
-  </div>
+  </div></div>
 </section>
 {% endif %}
 
@@ -393,7 +418,7 @@
     </div>
     <a href="{% url 'listing_list' %}?category=properties" class="section-link" style="border-color:#1e8a5c;color:#1e8a5c;">See all &rarr;</a>
   </div>
-  <div class="home-scroll-row" style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
+  <div class="home-scroll-row-wrap"><div class="home-scroll-row" style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
     {% for listing in trending_properties %}
     {% with listing.images.all as imgs %}
     <article class="card listing-card home-listing-card" style="min-width:275px;max-width:275px;flex-shrink:0;">
@@ -425,7 +450,7 @@
     </article>
     {% endwith %}
     {% endfor %}
-  </div>
+  </div></div>
 </section>
 {% endif %}
 
