@@ -44,7 +44,7 @@
                   {{ community.city }}{% if community.state %}, {{ community.state }}{% endif %}
                 </span>
                 <span class="dom-chip {% if community.created_at|timesince|slice:'1:' == ' day ago' or community.created_at|timesince == '0 minutes ago' %}dom-chip-new{% endif %}">
-                  {{ community.created_at|timesince|truncatechars:12 }} ago
+                  {{ community.created_at|timesince|short_timesince }} ago
                 </span>
             </div>
             {% if unit_count %}
@@ -172,7 +172,7 @@
                 {% elif listing.created_at|timesince|slice:":1" == "0" %}
                 <span class="dom-chip dom-chip-new">✦ New</span>
                 {% else %}
-                <span class="dom-chip">{{ listing.created_at|timesince|truncatechars:10 }} ago</span>
+                <span class="dom-chip">{{ listing.created_at|timesince|short_timesince }} ago</span>
                 {% endif %}
             </div>
 
@@ -211,7 +211,7 @@
 
             {# Income qualifier hint #}
             {% with listing.recommended_income as inc %}
-            {% if inc %}<p class="card-income-hint">Income req. ~${{ inc|floatformat:0 }}/mo</p>{% endif %}
+            {% if inc %}<p class="card-income-hint">Income req. ~${{ inc|floatformat:0|intcomma }}/mo</p>{% endif %}
             {% endwith %}
 
             {# AI Match explanation #}

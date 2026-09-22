@@ -28,3 +28,17 @@ def category_icon(cat):
         'events':         '🎉',
     }
     return icons.get(cat, '📋')
+
+
+@register.filter
+def short_timesince(value):
+    """Coarsest single unit of Django's timesince, e.g. "2 hours", "1 day".
+
+    timesince() returns two units ("2 hours, 34 minutes"). Card chips only have
+    room for one, and the template-only workarounds both render badly:
+    truncatechars cuts mid-value ("2 hours, ... ago") and truncatewords appends
+    its own ellipsis ("2 hours ... ago"). Splitting on the comma is exact.
+    """
+    if not value:
+        return ''
+    return str(value).split(',')[0].strip()
