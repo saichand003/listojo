@@ -2696,7 +2696,12 @@ footer {
   display: none;
 }
 
-@media (max-width: 600px) {
+/* Shown from 900px down, matching the exact width at which .app-sidebar is
+   hidden. It previously appeared only at 600px, which left 601-900px — every
+   iPad in portrait, and any desktop window narrower than 900px — with the
+   sidebar gone, the bottom bar not yet arrived, and nothing but Theme and
+   Sign out in the top bar. No Home, Search, Saved or Messages at all. */
+@media (max-width: 900px) {
   .mob-nav {
     display: flex;
     position: fixed;
@@ -2719,10 +2724,12 @@ footer {
     gap: 2px;
     text-decoration: none;
     color: var(--muted);
-    font-size: .62rem;
+    /* Was .62rem (9.9px) — the smallest type in the product, on the primary
+       navigation for phones. 11.5px matches the platform tab-bar convention. */
+    font-size: .72rem;
     font-weight: 600;
     letter-spacing: .01em;
-    transition: color .15s;
+    transition: color var(--dur-fast) var(--ease-out);
     background: none;
     border: none;
     cursor: pointer;
@@ -2754,6 +2761,15 @@ footer {
     margin-bottom: 1px;
     color: #fff;
   }
+}
+
+/* The bottom-bar clearance below already exists inside the 600px block. Now
+   that the bar also shows from 601-900px, that band needs the same clearance
+   or the bar sits on top of the last row of content. */
+@media (max-width: 900px) and (min-width: 601px) {
+  .app-content  { padding-bottom: calc(var(--mob-nav-h) + var(--sp-5)); }
+  .site-footer  { margin-bottom: calc(var(--mob-nav-h) + var(--sp-2)); }
+  #back-to-top  { bottom: calc(var(--mob-nav-h) + 10px); }
 }
 
 /* ════════════════════════════════════════════════════════════════
