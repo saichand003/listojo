@@ -187,16 +187,22 @@ function dismissAgentCta() {
 </div>
 {% endif %}
 
-{# ── List / Map view toggle ── #}
+{# ── Map / List view toggle ── #}
+{% comment %}
+  Map sits first because it is the default view: the selected option reads
+  left-to-right first in a segmented control, so the order matches which one
+  is on when the page opens. The initial background/color on each button is
+  overwritten by setView() on boot, which owns the selected state.
+{% endcomment %}
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem;">
   <div id="view-toggle" style="display:flex;gap:.3rem;background:var(--border);border-radius:8px;padding:.2rem;">
-    <button id="btn-list-view" onclick="setView('list')" style="display:flex;align-items:center;gap:.4rem;padding:.35rem .75rem;border-radius:6px;border:none;cursor:pointer;font-size:.78rem;font-weight:700;background:#fff;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1);">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg>
-      List
-    </button>
-    <button id="btn-map-view" onclick="setView('map')" style="display:flex;align-items:center;gap:.4rem;padding:.35rem .75rem;border-radius:6px;border:none;cursor:pointer;font-size:.78rem;font-weight:700;background:transparent;color:var(--muted);">
+    <button id="btn-map-view" onclick="setView('map')" style="display:flex;align-items:center;gap:.4rem;padding:.35rem .75rem;border-radius:6px;border:none;cursor:pointer;font-size:.78rem;font-weight:700;background:#fff;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1);">
       <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
       Map
+    </button>
+    <button id="btn-list-view" onclick="setView('list')" style="display:flex;align-items:center;gap:.4rem;padding:.35rem .75rem;border-radius:6px;border:none;cursor:pointer;font-size:.78rem;font-weight:700;background:transparent;color:var(--muted);">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg>
+      List
     </button>
   </div>
 </div>
@@ -368,20 +374,6 @@ body.lj-map-active .trust-strip { display: none !important; }
 body.lj-map-active .hero { display: none !important; }
 /* The view row aligns to top so the sticky map can pin while the list scrolls */
 body.lj-map-active #view-wrapper { align-items: flex-start; }
-
-/* ── Map on the left, results on the right ──────────────────────
-   Zillow, Redfin and Realtor.com all put the map on the left and the
-   results beside it, so the map is what you land on and the list is what
-   you scan against it.
-
-   Done with flex order rather than by moving the markup: the list panel
-   holds the page heading and every listing, so it stays first in the DOM.
-   That keeps reading and tab order as content-then-map for screen readers
-   and keyboard users, while the map paints on the left. */
-@media (min-width: 900px) {
-  body.lj-map-active #map-panel  { order: -1; }
-  body.lj-map-active #list-panel { order: 0; }
-}
 
 /* ── Phones and small tablets: one panel at a time ──────────────
    A 50/50 split at 390px is 195px each, which is useless for both. Below
