@@ -7,7 +7,10 @@
   --surface-2:  #F7F9FF;
   --text:       #182B52;
   --text-2:     #3D5280;
-  --muted:      #7A8FB5;
+  /* Was #7A8FB5, which is 3.3:1 on white and fails AA everywhere it labels
+     small text (sidebar section headers, card captions). Darkened just enough
+     to clear 4.5:1 without changing the perceived tone. */
+  --muted:      #64779F;
   --primary:    #2A7EF2;
   --primary-2:  #62C2FF;
   --primary-dk: #1A5DD4;
@@ -23,6 +26,40 @@
   --r-lg: 28px;
   --r-sm: 10px;
   --r-xs:  6px;
+
+  /* Text ramp. --text-3 was referenced 87 times but never defined, so every
+     tertiary label silently inherited its parent colour and the hierarchy went
+     flat. These three are tuned to clear WCAG AA (4.5:1) on --surface. */
+  --text-1:    #0F1C35;   /* 16.4:1 — strongest, for headings */
+  --text-3:    #5C7099;   /*  4.9:1 — tertiary labels, captions */
+
+  /* Aliases that templates already reference. Kept as aliases rather than
+     new values so there is still one source of truth per surface. */
+  --card-bg:   var(--surface);
+  --surface-1: var(--surface);
+
+  /* Spacing scale (4px base). Replaces the ~90 hand-nudged rem values. */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+  --sp-10: 64px;
+
+  /* Motion. Built-in CSS easings are too weak to read as intentional; these
+     are the stronger curves. Durations stay under 300ms for UI. */
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-press: 140ms;
+  --dur-fast:  180ms;
+  --dur-base:  240ms;
+
+  /* One focus ring for the whole product. */
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
 }
 
 :root.dark {
@@ -43,6 +80,13 @@
   --shadow-sm:  0 2px 8px rgba(0,0,0,.35);
   --shadow-md:  0 8px 28px rgba(0,0,0,.42);
   --shadow-lg:  0 20px 52px rgba(0,0,0,.55);
+
+  /* Dark counterparts for the ramp added above. Text is off-white, never pure
+     white, so it does not vibrate against the dark surface. */
+  --text-1:    #F2F5FD;
+  --text-3:    #8195BC;
+  --card-bg:   var(--surface);
+  --surface-1: var(--surface);
 }
 
 /* ── RESET / BASE ───────────────────────────────────────────── */
