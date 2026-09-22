@@ -2685,7 +2685,17 @@ footer {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding-bottom: 2px;
+    /* A horizontal swipe here is ambiguous to the browser: it does not know
+       whether you mean the page or the chip row, so it guesses and the page
+       jitters vertically while the chips move. pan-y says the browser keeps
+       vertical and this row owns horizontal. Snap gives the row the browser's
+       own scroll physics, and contain stops reaching the end of the chips
+       from scrolling the page behind it. */
+    touch-action: pan-y;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
   }
+  .quality-chips-row > * { scroll-snap-align: start; }
   .quality-chips-row::-webkit-scrollbar { display: none; }
   .quality-chip { flex-shrink: 0; }
 
@@ -3343,30 +3353,15 @@ footer {
 .qfb-pill.active { font-weight: 700; }
 .qfb-divider { width: 1px; height: 20px; background: var(--border); margin: 0 .25rem; flex-shrink: 0; }
 
-/* ── TRUST SIGNAL STRIP (Zumper-inspired) ───────────────────── */
-.trust-strip {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: .65rem 1rem;
-  background: linear-gradient(135deg, rgba(42,126,242,.04), rgba(30,138,92,.03));
-  border: 1px solid rgba(42,126,242,.1);
-  border-radius: 12px;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-}
-.trust-item {
-  display: flex;
-  align-items: center;
-  gap: .4rem;
-  font-size: .78rem;
-  font-weight: 600;
-  color: var(--text-2);
-  white-space: nowrap;
-}
-.trust-item svg { opacity: .7; flex-shrink: 0; }
-.trust-item-green { color: #047857; }
-.trust-item-blue  { color: var(--primary); }
+/* A second, unrelated .trust-strip / .trust-item component lived here: an
+   inline row of small nowrap pills, with .trust-item-green and
+   .trust-item-blue modifiers. No template ever used it, but it shared class
+   names with the four-card strip defined around line 2139 and, being later in
+   the file, won. That turned the card grid into a nowrap flex row, so on a
+   390px phone each card computed to 411px and its text was clipped off the
+   right edge. Removed, which restores the grid definition that was intended.
+   The .trust-strip mobile override further up sets grid-template-columns,
+   which only makes sense against that grid. */
 
 /* ── VERIFIED OWNER BADGE (Zumper-inspired) ─────────────────── */
 .verified-owner-badge {
