@@ -569,45 +569,100 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 #list-panel.map-mode .fmm-market-strip,
 #list-panel.map-mode .fmm-near-matches .fmm-near-header { display: none !important; }
 
-/* ── Zillow-style map pins ── */
+/* ── Map price pins ──────────────────────────────────────────────
+   Measured against Zillow and Redfin. The previous pin was 11.5px type in a
+   ~25px pill with a shadow as its only separation from the map, no seen state,
+   and a detached CSS-triangle tail. */
+.lj-marker { --lj-pin-bg: var(--primary); }
+
 .lj-pin {
-  background: #2A7EF2;
-  color: #fff;
-  font-size: .72rem;
-  font-weight: 800;
-  font-family: 'Sora', sans-serif;
-  padding: .28rem .62rem;
-  border-radius: 6px;
-  white-space: nowrap;
-  box-shadow: 0 2px 10px rgba(42,126,242,.35);
-  transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s ease, background .12s;
-  transform-origin: center bottom;
-  user-select: none;
-  line-height: 1.4;
+  position: relative;
   display: inline-block;
+  background: var(--lj-pin-bg);
+  color: #fff;
+  /* 13px, up from 11.5px. Price is the one thing being scanned while panning,
+     and it has to stay legible in motion. */
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Sora', sans-serif;
+  /* font-variant-numeric keeps digits the same width so a cluster of prices
+     does not jitter as pins redraw on pan. */
+  font-variant-numeric: tabular-nums;
+  padding: 6px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  line-height: 1.25;
+  user-select: none;
+  /* The white ring is the part that was missing. The map's own palette puts
+     white roads (#ffffff) and pale water under these pins, so a blue pill with
+     only a soft shadow had no hard edge against them. The ring guarantees
+     separation over any tile; the shadow below it supplies depth. */
+  box-shadow:
+    0 0 0 2px #fff,
+    0 1px 2px rgba(16,32,64,.28),
+    0 4px 12px rgba(16,32,64,.22);
+  transition:
+    transform  var(--dur-fast, 180ms) var(--ease-out, cubic-bezier(0.23,1,0.32,1)),
+    background var(--dur-press, 140ms) var(--ease-out, cubic-bezier(0.23,1,0.32,1));
 }
-.lj-pin-tail {
-  width: 0; height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 7px solid #2A7EF2;
-  margin: 0 auto;
-  transition: border-top-color .12s;
+
+/* The tail is now drawn from the pill itself, so it inherits the same colour
+   and sits under the same white ring instead of reading as a separate notch. */
+.lj-pin::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 9px;
+  height: 9px;
+  background: var(--lj-pin-bg);
+  border-radius: 0 0 2px 0;
+  transform: translateX(-50%) rotate(45deg);
+  box-shadow: 2px 2px 0 0 #fff;
+  transition: background var(--dur-press, 140ms) var(--ease-out, cubic-bezier(0.23,1,0.32,1));
 }
-/* outer div hover/active — transform is already on outer div */
-[style*="translate(-50%"]:hover .lj-pin {
-  transform: scale(1.18);
-  box-shadow: 0 6px 20px rgba(42,126,242,.5);
+
+/* Hover gated: on touch the browser leaves :hover applied after a tap, which
+   would strand a pin at 1.12x until the user tapped elsewhere. */
+@media (hover: hover) and (pointer: fine) {
+  .lj-marker:hover { z-index: 3; }
+  .lj-marker:hover .lj-pin { transform: scale(1.12); }
 }
-[style*="translate(-50%"].lj-active .lj-pin {
-  background: #182B52;
-  box-shadow: 0 4px 16px rgba(24,43,82,.45);
+
+/* Active pin has to win the stacking order. Previously it changed colour but
+   kept its z-index, so the open pin could sit underneath a neighbour. */
+.lj-marker.lj-active { z-index: 4; }
+.lj-marker.lj-active  { --lj-pin-bg: var(--text); }
+.lj-marker.lj-active .lj-pin { transform: scale(1.06); }
+
+/* Seen state. Dimmed and outlined rather than filled, so opened listings
+   recede without disappearing. */
+.lj-marker.lj-seen:not(.lj-active) .lj-pin {
+  background: #fff;
+  color: var(--text-2);
+  font-weight: 600;
+  box-shadow:
+    0 0 0 1.5px var(--border-2),
+    0 1px 2px rgba(16,32,64,.18);
 }
-[style*="translate(-50%"].lj-active .lj-pin-tail {
-  border-top-color: #182B52;
+.lj-marker.lj-seen:not(.lj-active) .lj-pin::after {
+  background: #fff;
+  box-shadow: 1.5px 1.5px 0 0 var(--border-2);
 }
-[style*="translate(-50%"].lj-active:hover .lj-pin {
-  transform: scale(1.15);
+
+/* Keyboard focus. Markers are now tabbable, so they need a visible ring. */
+.lj-marker:focus-visible { outline: none; z-index: 5; }
+.lj-marker:focus-visible .lj-pin {
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 5px var(--primary),
+    0 4px 12px rgba(16,32,64,.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lj-pin, .lj-pin::after { transition: background 1ms linear; }
+  .lj-marker:hover .lj-pin,
+  .lj-marker.lj-active .lj-pin { transform: none; }
 }
 </style>
 <script>
@@ -668,17 +723,38 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
       this._latlng = new google.maps.LatLng(opts.position.lat, opts.position.lng);
       this._div    = null;
       this._price  = opts.price || '—';
+      this._label  = opts.label || '';
       this._click  = opts.onClick || null;
       this.setMap(opts.map);
     }
     Marker.prototype = Object.create(google.maps.OverlayView.prototype);
     Marker.prototype.onAdd = function(){
       var div = document.createElement('div');
+      // Carries a real class so the stylesheet can target it. The hover and
+      // active rules used to match on [style*="translate(-50%"], a substring of
+      // this very inline style: that broke silently on any change to how the
+      // transform is written, and matched any other centred element on the page.
+      div.className = 'lj-marker';
       div.style.cssText = 'position:absolute;cursor:pointer;transform:translate(-50%,calc(-100% - 7px));transform-origin:bottom center;';
-      div.innerHTML = '<div class="lj-pin">'+this._price+'</div><div class="lj-pin-tail"></div>';
-      div.addEventListener('click', this._click || function(){});
+      // Markers are the primary result affordance in map view and were
+      // previously unreachable by keyboard: no tabindex, no role, no label.
+      div.setAttribute('role', 'button');
+      div.setAttribute('tabindex', '0');
+      div.setAttribute('aria-label', (this._label || this._price) + ' — view listing');
+      div.innerHTML = '<div class="lj-pin">'+this._price+'</div>';
+      var fire = this._click || function(){};
+      div.addEventListener('click', fire);
+      div.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fire(e); }
+      });
       this._div = div;
       this.getPanes().overlayMouseTarget.appendChild(div);
+    };
+    // Zillow and Redfin both dim pins you have already opened. It is the
+    // highest-value affordance in map search — without it you re-click the same
+    // listings while panning — and it was missing entirely.
+    Marker.prototype.markSeen = function(){
+      if(this._div) this._div.classList.add('lj-seen');
     };
     Marker.prototype.draw = function(){
       var p = this.getProjection().fromLatLngToDivPixel(this._latlng);
@@ -726,11 +802,32 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
         // Real geocoded coordinates
         latlng = new google.maps.LatLng(parseFloat(card.dataset.lat), parseFloat(card.dataset.lng));
       } else {
-        // Fallback: city centroid + small jitter (un-geocoded listings)
+        // Fallback for un-geocoded listings: city centroid, offset around a
+        // ring so co-located pins separate instead of stacking into an
+        // unreadable pile. The offset is derived from the listing pk rather
+        // than Math.random() so a listing keeps the same spot between
+        // renders — with random jitter the same pin jumped to a new place
+        // every time the map redrew, which made the map feel untrustworthy.
         var base = DFW_COORDS[city] || DFW_COORDS['default'];
+        var seed = 0, pkStr = String(card.dataset.pk || '');
+        for (var si = 0; si < pkStr.length; si++) {
+          seed = (seed * 31 + pkStr.charCodeAt(si)) >>> 0;
+        }
+        // Avalanche the bits (MurmurHash3 fmix32). Without this, primary keys
+        // are short and sequential ("1".."5"), so seed lands in a 5-wide band:
+        // every angle came out within a few degrees and the radius term was
+        // identical for all of them, which stacked the pins into exactly the
+        // pile this offset exists to prevent.
+        seed ^= seed >>> 16; seed = Math.imul(seed, 0x85ebca6b) >>> 0;
+        seed ^= seed >>> 13; seed = Math.imul(seed, 0xc2b2ae35) >>> 0;
+        seed = (seed ^ (seed >>> 16)) >>> 0;
+        var ang  = (seed % 360) * (Math.PI / 180);
+        var ring = .010 + ((seed >>> 8) % 60) / 10000;   // ~1.1km to ~1.8km out
         latlng = new google.maps.LatLng(
-          base.lat + (Math.random()-.5)*.018,
-          base.lng + (Math.random()-.5)*.018
+          base.lat + Math.sin(ang) * ring,
+          // Longitude degrees shrink with latitude; widen so the visual
+          // spacing matches the vertical spacing at DFW's latitude.
+          base.lng + Math.cos(ang) * ring * 1.19
         );
       }
       var price  = card.dataset.price ? '$'+Number(card.dataset.price).toLocaleString() : '—';
@@ -747,11 +844,13 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
       var marker = new LjMarker({
         position: {lat: latlng.lat(), lng: latlng.lng()},
         price: price,
+        label: price + ' ' + title,
         map: gMap,
         onClick: function(){
           if(gOpenInfoWin){ gOpenInfoWin.close(); gOpenInfoWin = null; }
           gMarkers.forEach(function(m){ m.setActive(false); });
           marker.setActive(true);
+          marker.markSeen();
 
           var priceUnit = (DATA_CATEGORY === 'properties') ? '' : '<span>/mo</span>';
           var iwLabel   = isCommunity ? 'View Community →'
@@ -789,9 +888,14 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 
     if(!bounds.isEmpty()){
       gMap.fitBounds(bounds, {padding: 60});
-      // Cap zoom so tightly-clustered pins don't leave the map zoomed way in
+      // Cap zoom so a single result does not slam the map to street level.
+      // The cap was 12, which is metro-wide: a handful of results in one
+      // suburb rendered as an unreadable pile of overlapping pins over a map
+      // of the whole Metroplex. 15 is neighbourhood level, which is where
+      // Zillow and Redfin sit for a city search and where price pins have
+      // room to separate.
       google.maps.event.addListenerOnce(gMap, 'bounds_changed', function(){
-        if(gMap.getZoom() > 12) gMap.setZoom(12);
+        if(gMap.getZoom() > 15) gMap.setZoom(15);
       });
     }
   }
