@@ -359,8 +359,51 @@ function dismissAgentCta() {
 /* Hide marketing sections in map mode so it reads listings → footer */
 body.lj-map-active .city-browse-section,
 body.lj-map-active .trust-strip { display: none !important; }
+
+/* The promo hero too, now that map is the landing view. It is 378px of
+   marketing copy, and with the search card and toggle above it the map
+   started ~800px down: you arrived in "map view" and saw no map. This is a
+   results page, so it reads search → filters → map + results. The hero's
+   only unique action, Start guided search, is in the sidebar nav anyway. */
+body.lj-map-active .hero { display: none !important; }
 /* The view row aligns to top so the sticky map can pin while the list scrolls */
 body.lj-map-active #view-wrapper { align-items: flex-start; }
+
+/* ── Map on the left, results on the right ──────────────────────
+   Zillow, Redfin and Realtor.com all put the map on the left and the
+   results beside it, so the map is what you land on and the list is what
+   you scan against it.
+
+   Done with flex order rather than by moving the markup: the list panel
+   holds the page heading and every listing, so it stays first in the DOM.
+   That keeps reading and tab order as content-then-map for screen readers
+   and keyboard users, while the map paints on the left. */
+@media (min-width: 900px) {
+  body.lj-map-active #map-panel  { order: -1; }
+  body.lj-map-active #list-panel { order: 0; }
+}
+
+/* ── Phones and small tablets: one panel at a time ──────────────
+   A 50/50 split at 390px is 195px each, which is useless for both. Below
+   900px the panels take turns, which is what every major ILS does on a
+   phone, and the toggle switches between them. */
+@media (max-width: 899px) {
+  /* !important throughout: #view-wrapper and #map-panel both carry inline
+     style attributes (display:flex, flex:0 0 50%) that a stylesheet rule
+     cannot otherwise beat. Without it the panel stayed at 50% and rendered
+     183px wide on a 390px phone. */
+  body.lj-map-active #view-wrapper { display: block !important; }
+  body.lj-map-active #list-panel   { display: none !important; }
+  body.lj-map-active #map-panel {
+    display: block !important;
+    flex: none !important;
+    width: 100% !important;
+    /* dvh so a collapsing mobile URL bar does not leave the map short. */
+    height: calc(100dvh - var(--topbar-h, 124px) - var(--sp-5, 20px));
+    position: sticky;
+    top: var(--sp-3, 12px);
+  }
+}
 
 /* ── Airbnb-style 2-col map tiles ── */
 #list-panel.map-mode {
@@ -425,8 +468,11 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background: #f1f5f9 !important;
-  font-size: 2rem !important;
+  background: var(--surface-2) !important;
+  /* Was 2rem, sized for the emoji glyph this used to render. The placeholder
+     is now a masked icon plus a small label, and 2rem blew the label up to
+     32px across the whole results column. */
+  font-size: .75rem !important;
   border-radius: 0 !important;
 }
 
@@ -900,11 +946,28 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
     }
   }
 
-  window.setView = function(mode){
+  // Remembering the choice matters here because map is now the landing view:
+  // someone who deliberately switches to List should not be thrown back onto
+  // the map on every search. Wrapped because storage throws in private mode
+  // and when site data is blocked.
+  var VIEW_KEY = 'lj-listings-view';
+  function readView(){
+    try { return localStorage.getItem(VIEW_KEY); } catch(e){ return null; }
+  }
+  function saveView(v){
+    try { localStorage.setItem(VIEW_KEY, v); } catch(e){}
+  }
+
+  window.setView = function(mode, opts){
+    opts = opts || {};
     var listPanel = document.getElementById('list-panel');
     var mapPanel  = document.getElementById('map-panel');
     var btnList   = document.getElementById('btn-list-view');
     var btnMap    = document.getElementById('btn-map-view');
+
+    // Only remember a choice the user actually made, not the boot default,
+    // otherwise the first page view would pin everyone to map forever.
+    if(!opts.silent) saveView(mode);
 
     if(mode === 'map'){
       document.body.classList.add('lj-map-active');
@@ -947,6 +1010,19 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
       btnMap.style.boxShadow    = '';
     }
   };
+
+  // ── Boot view ────────────────────────────────────────────────
+  // Map is the default on desktop: it is the view people come to a listings
+  // site for, and the one the layout is now built around. Phones default to
+  // the list instead, because landing on a full-screen map with no visible
+  // results is a worse first frame on a small screen, and the toggle is
+  // right there. A stored choice beats both.
+  (function bootView(){
+    var stored = readView();
+    var initial = stored || (window.innerWidth >= 900 ? 'map' : 'list');
+    // silent: this is a default, not a decision, so it is not written back.
+    window.setView(initial, {silent: !stored});
+  })();
 })();
 </script>
 
