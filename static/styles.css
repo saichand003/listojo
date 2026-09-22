@@ -162,7 +162,11 @@ html {
 
 body {
   font-family: 'Sora', system-ui, sans-serif;
-  font-size: 15px;
+  /* 16px is the readability floor for body copy, and 15px sat under it on an
+     app people read listings on for long stretches. Safe to change here: the
+     type scale is in rem, which resolves against the html root (untouched at
+     16px), so this only moves text that was inheriting from body. */
+  font-size: 16px;
   line-height: 1.65;
   background: var(--bg);
   color: var(--text);
