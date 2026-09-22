@@ -90,8 +90,59 @@
 }
 
 /* ── RESET / BASE ───────────────────────────────────────────── */
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  /* The translucent grey box iOS and Android paint over anything tappable.
+     It is the loudest "this is a website" tell, and it fights the :active
+     feedback defined below, which replaces it. */
+  -webkit-tap-highlight-color: transparent;
+  /* Stops Safari inflating body text when the phone is rotated. */
+  -webkit-text-size-adjust: 100%;
+}
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── FOCUS ──────────────────────────────────────────────────────
+   There was no focus system: zero :focus-visible rules in the whole
+   stylesheet and eight bare `outline: none`, two of them on the homepage
+   search inputs. Keyboard users had no way to see where they were.
+
+   :focus-visible rather than :focus so the ring appears for keyboard and
+   assistive navigation but never on a mouse click. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--r-xs);
+  /* Above neighbouring cards so the ring is never clipped. */
+  position: relative;
+  z-index: 1;
+}
+
+/* ── TOUCH ──────────────────────────────────────────────────────
+   Removes the legacy ~300ms tap delay and stops a long press from
+   selecting a control's label or raising the iOS copy callout. Controls
+   are chrome, not content; body copy stays selectable. */
+:where(button, a, [role="button"], .button, .chip, .pill, .nav-tab, .sb-link) {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ── MOTION PREFERENCE ──────────────────────────────────────────
+   There was no prefers-reduced-motion rule anywhere in styles.css, against
+   143 transitions and several looping animations. Reduced motion means
+   gentler, not none: colour and opacity still resolve so state changes stay
+   legible, but nothing moves or scales. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Keep the properties that carry meaning rather than motion. */
+  *, *::before, *::after { transition-property: opacity, color, background-color, border-color !important; }
+}
 
 body {
   font-family: 'Sora', system-ui, sans-serif;
@@ -470,6 +521,33 @@ p { line-height: 1.65; }
   box-shadow: 0 6px 22px rgba(42,126,242,.38);
 }
 .button:active, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):active { transform: none; box-shadow: 0 2px 8px rgba(42,126,242,.2); }
+
+/* ── PRESS FEEDBACK & HOVER GATING ──────────────────────────────
+   Touch devices have no hover, so the browser fakes one: the first tap
+   applies :hover and leaves it stuck until the user taps elsewhere. The
+   button lift above (translateY(-1px) plus a deeper shadow) therefore stayed
+   applied after every tap on a phone. Undo it where hover is not real. */
+@media (hover: none) {
+  .button:hover,
+  .sb-link:hover,
+  .nav-tab:hover,
+  .listing-card:hover {
+    transform: none;
+  }
+}
+
+/* Native controls respond the instant a finger lands; a web button that only
+   reacts on click responds when the finger leaves, which reads as lag even at
+   0ms. 140ms ease-out, and a 0.97 scale subtle enough to feel like pressure
+   rather than a bounce. */
+.button:active,
+.hero-search-btn:active,
+.home-quick-search-btn:active,
+.nav-tab:active,
+.quality-chip:active {
+  transform: scale(.97);
+  transition-duration: var(--dur-press);
+}
 
 .button.secondary {
   background: transparent;
@@ -923,13 +1001,27 @@ input, select, textarea {
   color: var(--text);
   font: inherit;
   font-size: .88rem;
-  transition: border-color .17s, box-shadow .17s, background .17s;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              box-shadow   var(--dur-fast) var(--ease-out),
+              background   var(--dur-fast) var(--ease-out);
+}
+/* iOS Safari zooms the page whenever focus lands on an input under 16px, and
+   it does not zoom back out on blur: the user is left on a cropped, drifted
+   layout. .88rem is 14.08px, so every field on the site did this. Raising it
+   only for coarse pointers keeps the tighter desktop scale, and fixes the
+   cause rather than reaching for user-scalable=no. */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: 16px; }
 }
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(42,126,242,.11);
   background: var(--surface);
+}
+/* Keyboard focus gets the full ring on top of the field's own treatment. */
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  box-shadow: var(--focus-ring);
 }
 input::placeholder, textarea::placeholder { color: var(--muted); }
 form p { margin-bottom: 1rem; }
@@ -3097,6 +3189,11 @@ footer {
   width: 100%;
 }
 .hero-search-input::placeholder { color: #9CA3AF; }
+/* The row is overflow:hidden to clip the pill's corners, which would also clip
+   an outset focus ring. An inset ring stays inside the clip and still reads. */
+.hero-search-input:focus-visible {
+  box-shadow: inset 0 0 0 2.5px var(--primary);
+}
 .hero-search-btn {
   padding: .9rem 1.5rem;
   background: linear-gradient(135deg, #1A5DD4, #2A7EF2);
@@ -3705,6 +3802,10 @@ footer {
   background: #fff;
 }
 .home-quick-search-input::placeholder { color: #9CA3AF; }
+/* Same clipped-ring problem as .hero-search-input above. */
+.home-quick-search-input:focus-visible {
+  box-shadow: inset 0 0 0 2.5px var(--primary);
+}
 .home-quick-search-divider { width: 1px; height: 28px; background: #E5E7EB; flex-shrink: 0; }
 .home-quick-search-btn {
   padding: 1rem 1.5rem;

@@ -3,7 +3,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% comment %}
+      viewport-fit=cover lets the page paint under the notch and home indicator
+      instead of being letterboxed. The stylesheet already pads the bottom tab
+      bar with env(safe-area-inset-bottom), but without this flag every
+      env(safe-area-inset-*) resolves to 0px, so that padding did nothing.
+      interactive-widget makes the Android software keyboard shrink the layout
+      viewport the way iOS already does, so bottom-pinned UI reacts to it.
+      Zoom is deliberately left enabled: the input font-size fix in styles.css
+      removes the reason people reach for user-scalable=no.
+    {% endcomment %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+    {% comment %}
+      Status bar / browser chrome colour. One value per scheme, matched to the
+      colour at the very top of the page rather than to the brand blue.
+    {% endcomment %}
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#EEF2FB">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B1422">
+    <meta name="color-scheme" content="light dark">
     {% comment %}
       Overridable so individual pages can carry their own title. Google shows
       this as the search result heading; keep it under ~60 chars or it gets
