@@ -52,13 +52,62 @@
   margin: 0 0 .2rem;
 }
 
-/* ── How-it-works step card accent lines ──────────────────── */
-.hiw-card { padding: 1.5rem 1.25rem; }
-.hiw-card-icon {
-  width: 40px; height: 40px;
+/* ── How it works ─────────────────────────────────────────────
+   Was three cards, each with a coloured top border, a numbered circle and an
+   icon inside a tinted circle, in blue / violet / green. That is the most
+   recognisable AI-generated layout there is, and the violet (#7c3aed) was not
+   in the palette at all. It is a three-step sequence, so it is now built as
+   one: numbered steps on a connecting rule, in the brand blue only. The steps
+   carry the meaning, so the card chrome and the icon circles come off. */
+.hiw-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--sp-6) var(--sp-7);
+  position: relative;
+}
+/* Clears the 26px number circle above it, with breathing room. */
+.hiw-step { position: relative; padding-top: var(--sp-8); }
+/* The rule that turns three items into a sequence. Drawn from the number
+   outward, and only between steps, so it never dangles past the last one. */
+.hiw-step::before {
+  content: '';
+  position: absolute;
+  top: 13px;
+  left: 32px;
+  right: calc(var(--sp-7) * -1);
+  height: 1px;
+  background: var(--border-2);
+}
+.hiw-step:last-child::before { display: none; }
+@media (max-width: 760px) {
+  .hiw-step::before { display: none; }
+}
+.hiw-step-n {
+  position: absolute;
+  top: 0; left: 0;
+  width: 26px; height: 26px;
   border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--primary);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 1rem;
+}
+.hiw-step h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: var(--sp-2);
+  font-family: 'Montserrat', sans-serif;
+  color: var(--text);
+}
+.hiw-step p {
+  font-size: .875rem;
+  color: var(--text-3);
+  line-height: 1.6;
+  /* 45-75 characters is the readable measure; unconstrained these ran long. */
+  max-width: 34ch;
 }
 
 /* ── Testimonial card ─────────────────────────────────────── */
@@ -103,7 +152,7 @@
 
 /* ── Mobile responsive ─────────────────────────────────────── */
 @media (max-width: 600px) {
-  .home-how-grid { grid-template-columns: 1fr !important; gap: .75rem !important; }
+  .hiw-steps { grid-template-columns: 1fr !important; gap: .75rem !important; }
   .home-sec-hdr { flex-direction: column !important; align-items: flex-start !important; gap: .5rem !important; }
   .home-scroll-row { gap: .75rem !important; padding-bottom: .5rem !important; }
   .home-scroll-row article { min-width: 220px !important; max-width: 220px !important; }
@@ -122,7 +171,7 @@
   #home-landlord-cta .hero-ghost-btn { width: 100% !important; text-align: center !important; }
 }
 @media (max-width: 860px) and (min-width: 601px) {
-  .home-how-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .hiw-steps { grid-template-columns: repeat(2, 1fr) !important; }
   .home-testimonials-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
 </style>
@@ -263,33 +312,24 @@
     </div>
     <a href="{% url 'guided_search' %}" class="section-link">Start now &rarr;</a>
   </div>
-  <div class="home-how-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem;">
+  <div class="hiw-steps">
 
-    <div class="card hiw-card" style="border-top:3px solid #2A7EF2;">
-      <div class="hiw-step-num" style="background:#2A7EF2;">1</div>
-      <div class="hiw-card-icon" style="background:rgba(42,126,242,.1);margin-bottom:.6rem;">
-        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="#2A7EF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      </div>
-      <div style="font-weight:800;font-size:1rem;margin-bottom:.45rem;font-family:'Montserrat',sans-serif;">Tell us what you need</div>
-      <div style="font-size:.82rem;color:var(--muted);line-height:1.65;">Budget, city, bedrooms, must-haves. Our guided search saves your preferences automatically.</div>
+    <div class="hiw-step">
+      <div class="hiw-step-n" aria-hidden="true">1</div>
+      <h3>Tell us what you need</h3>
+      <p>Budget, city, bedrooms, must-haves. Our guided search saves your preferences automatically.</p>
     </div>
 
-    <div class="card hiw-card" style="border-top:3px solid #7c3aed;">
-      <div class="hiw-step-num" style="background:#7c3aed;">2</div>
-      <div class="hiw-card-icon" style="background:rgba(124,58,237,.1);margin-bottom:.6rem;">
-        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="#7c3aed" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-      </div>
-      <div style="font-weight:800;font-size:1rem;margin-bottom:.45rem;font-family:'Montserrat',sans-serif;">We score every match</div>
-      <div style="font-size:.82rem;color:var(--muted);line-height:1.65;">Every listing gets a match % and a plain-English reason — so you know exactly why it fits your criteria.</div>
+    <div class="hiw-step">
+      <div class="hiw-step-n" aria-hidden="true">2</div>
+      <h3>We score every match</h3>
+      <p>Every listing gets a match % and a plain-English reason, so you know exactly why it fits.</p>
     </div>
 
-    <div class="card hiw-card" style="border-top:3px solid #1e8a5c;">
-      <div class="hiw-step-num" style="background:#1e8a5c;">3</div>
-      <div class="hiw-card-icon" style="background:rgba(30,138,92,.1);margin-bottom:.6rem;">
-        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" stroke="#1e8a5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      </div>
-      <div style="font-weight:800;font-size:1rem;margin-bottom:.45rem;font-family:'Montserrat',sans-serif;">Connect with the owner</div>
-      <div style="font-size:.82rem;color:var(--muted);line-height:1.65;">Message directly, request a tour, or get a free local agent. No middlemen, no agency fees ever.</div>
+    <div class="hiw-step">
+      <div class="hiw-step-n" aria-hidden="true">3</div>
+      <h3>Connect with the owner</h3>
+      <p>Message directly, request a tour, or get a free local agent. No middlemen, no agency fees.</p>
     </div>
 
   </div>
@@ -406,7 +446,7 @@
       <div class="testimonial-stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
       <p class="testimonial-quote">"Found my apartment in Irving in 3 days. The AI match score explained exactly why each place fit my budget — I didn't have to guess or scroll endlessly."</p>
       <div class="testimonial-author">
-        <div class="testimonial-avatar" style="background:linear-gradient(135deg,#2A7EF2,#62C2FF);">P</div>
+        <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--primary-dk),var(--primary));">P</div>
         <div>
           <div class="testimonial-name">Priya M.</div>
           <div class="testimonial-role">Renter &middot; Irving, TX</div>
@@ -418,7 +458,7 @@
       <div class="testimonial-stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
       <p class="testimonial-quote">"The guided search is brilliant. It saved my preferences and when I came back a week later, it remembered exactly what I needed. No other platform does this."</p>
       <div class="testimonial-author">
-        <div class="testimonial-avatar" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">M</div>
+        <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--primary),var(--primary-2));">M</div>
         <div>
           <div class="testimonial-name">Marcus T.</div>
           <div class="testimonial-role">Renter &middot; Las Colinas, TX</div>
@@ -430,7 +470,7 @@
       <div class="testimonial-stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
       <p class="testimonial-quote">"Listed my condo and had serious inquiries within 48 hours. Zero agency fees, zero headaches. I'm in direct contact with every renter. This is how it should work."</p>
       <div class="testimonial-author">
-        <div class="testimonial-avatar" style="background:linear-gradient(135deg,#1e8a5c,#7ecbaa);">R</div>
+        <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--accent),var(--accent-2));">R</div>
         <div>
           <div class="testimonial-name">Rohan K.</div>
           <div class="testimonial-role">Landlord &middot; Frisco, TX</div>

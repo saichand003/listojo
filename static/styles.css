@@ -61,6 +61,12 @@
   /* One focus ring for the whole product. */
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
 
+  /* Featured / promoted placement. Warm is the right semantic here — it marks
+     paid placement apart from organic results, which is what every ILS does —
+     but it was three loose hex literals rather than a token. */
+  --featured:   #F59E0B;
+  --featured-2: #F97316;
+
   /* Distance from the top of the viewport to the top of .site-body:
      .site-topbar's 1.25rem top padding + the 72px .navbar + its 2rem
      margin-bottom. The sidebar needs it to size itself so it does not
@@ -595,7 +601,12 @@ p { line-height: 1.65; }
   .button:hover,
   .sb-link:hover,
   .nav-tab:hover,
-  .listing-card:hover {
+  .listing-card:hover,
+  .testimonial-v2:hover,
+  .home-city-pill:hover,
+  .card:hover,
+  .fmm-cta-btn:hover,
+  .hero-ghost-btn:hover {
     transform: none;
   }
 }
@@ -877,7 +888,7 @@ p { line-height: 1.65; }
 .featured-badge {
   position: absolute;
   top: .75rem; right: .75rem;
-  background: linear-gradient(135deg, #F59E0B, #F97316);
+  background: linear-gradient(135deg, var(--featured), var(--featured-2));
   color: #fff;
   padding: .28rem .75rem;
   border-radius: 999px;
@@ -888,7 +899,7 @@ p { line-height: 1.65; }
 }
 .inline-featured-badge {
   display: inline-flex; align-items: center; gap: .25rem;
-  background: linear-gradient(135deg, #F59E0B, #F97316);
+  background: linear-gradient(135deg, var(--featured), var(--featured-2));
   color: #fff; padding: .22rem .65rem; border-radius: 999px;
   font-size: .72rem; font-weight: 700; letter-spacing: .03em;
   box-shadow: 0 2px 8px rgba(249,115,22,.4); vertical-align: middle;
@@ -1963,17 +1974,27 @@ footer {
 /* ── HERO INLINE STATS ──────────────────────────────────────── */
 /* Hero CTAs */
 .hero-ctas { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; margin-bottom: 0; }
+/* The primary hero CTA was the same orange as the Featured badge. That made
+   orange mean two unrelated things, and put a third brand colour next to a
+   blue-and-green logo. Brand green keeps the contrast that made orange
+   attractive against the blue hero, stays in the palette, and matches the
+   "Go" in the wordmark. Worth an A/B before taking as final: this is a
+   conversion surface, and the old colour may have been chosen for pop. */
 .fmm-cta-btn {
   display: inline-flex; align-items: center; gap: .5rem;
-  background: linear-gradient(135deg, #F59E0B, #F97316);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #fff; font-size: 1rem; font-weight: 700;
   padding: .85rem 1.9rem; border-radius: 12px;
   text-decoration: none; border: none; cursor: pointer;
-  box-shadow: 0 4px 20px rgba(249,115,22,.45);
-  transition: opacity .15s, transform .15s;
+  box-shadow: 0 4px 20px rgba(30,138,92,.42);
+  transition: opacity var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
   white-space: nowrap;
 }
-.fmm-cta-btn:hover { opacity: .93; transform: translateY(-1px); color: #fff; }
+@media (hover: hover) and (pointer: fine) {
+  .fmm-cta-btn:hover { opacity: .93; transform: translateY(-1px); color: #fff; }
+}
+.fmm-cta-btn:active { transform: scale(.97); transition-duration: var(--dur-press); }
 .hero-ghost-btn {
   display: inline-flex; align-items: center; gap: .5rem;
   background: rgba(255,255,255,.1); color: #fff;
