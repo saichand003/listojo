@@ -7,6 +7,7 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('listings/', views.listing_list, name='listing_list'),
     path('post/', views.create_listing, name='create_listing'),
+    path('post/market/', views.posting_market_stats, name='posting_market_stats'),
     path('saved/', views.saved_listings, name='saved_listings'),
     path('saved/bulk-message/', views.bulk_message_landlords, name='bulk_message_landlords'),
     path('listing/<int:pk>/', views.listing_detail, name='listing_detail'),

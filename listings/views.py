@@ -330,13 +330,63 @@ def saved_listings(request):
     })
 
 
+def _posting_market_stats(city: str = '', category: str = '') -> dict:
+    """
+    Real market context for the posting sidebar: how many active listings a
+    landlord is about to compete with, and what they are asking.
+
+    Deliberately not an estimate. The reference design showed a "demand
+    estimator" with a renter count we do not collect, so this reports what the
+    database actually knows instead of inventing a number.
+    """
+    qs = Listing.objects.filter(status='active', parent__isnull=True)
+    if city:
+        qs = qs.filter(city__iexact=city.strip())
+    if category:
+        qs = qs.filter(category=category)
+
+    # The median is only meaningful within one category: a mixed set of
+    # $950/month rooms and $475,000 houses has a median that describes nothing.
+    # Without a category chosen there is no comparable set, so there is no
+    # number to report.
+    median = None
+    if category:
+        prices = sorted(
+            p for p in qs.exclude(price__isnull=True).values_list('price', flat=True) if p
+        )
+        if prices:
+            mid = len(prices) // 2
+            median = prices[mid] if len(prices) % 2 else (prices[mid - 1] + prices[mid]) / 2
+
+    return {
+        'city': city.strip().title(),
+        'active_count': qs.count(),
+        'owner_count': qs.values('owner').distinct().count(),
+        'median_price': int(median) if median is not None else None,
+        'with_photos': qs.filter(images__isnull=False).distinct().count(),
+    }
+
+
+@login_required
+def posting_market_stats(request):
+    """JSON feed for the posting sidebar, refreshed as the city field changes."""
+    if not _listings_table_ready():
+        return JsonResponse({'ok': False}, status=503)
+    stats = _posting_market_stats(
+        city=request.GET.get('city', '')[:100],
+        category=request.GET.get('category', '')[:32],
+    )
+    return JsonResponse({'ok': True, **stats})
+
+
 @login_required
 def create_listing(request):
     if not _listings_table_ready():
         return _render_db_setup_page(request)
 
     if request.method == 'POST':
-        form = ListingForm(request.POST)
+        is_draft = request.POST.get('save_draft') == '1'
+        form = ListingForm(request.POST, draft=is_draft)
         new_files = request.FILES.getlist('images')
         image_errors = validate_uploaded_images(new_files)
 
@@ -351,9 +401,17 @@ def create_listing(request):
         if form.is_valid() and not image_errors:
             listing = form.save(commit=False)
             listing.owner = request.user
+            # "Save draft for later" parks the listing instead of submitting it
+            # for review, so a half-finished post is not lost and does not go
+            # into the queue. Only the owner can see a draft.
+            if is_draft:
+                listing.status = 'draft'
             listing.save()
             for i, f in enumerate(new_files):
                 ListingImage.objects.create(listing=listing, image=f, order=i)
+            if is_draft:
+                messages.success(request, 'Draft saved. It stays private until you publish it.')
+                return redirect('my_listings')
             return redirect('listing_detail', pk=listing.pk)
     else:
         form = ListingForm()
@@ -363,6 +421,9 @@ def create_listing(request):
         'form': form,
         'image_errors': image_errors,
         'max_images': 8,
+        'market': _posting_market_stats(
+            city=(request.POST.get('city', '') if request.method == 'POST' else ''),
+        ),
         # The picker's groups come from the vocabulary rather than a literal in
         # the template, so the backfill command and the form cannot disagree
         # about which bucket a tag belongs to.

@@ -1,16 +1,94 @@
 {% extends 'base.html' %}
-{% load listing_extras %}
+{% load listing_extras humanize %}
 {% block content %}
-<div style="max-width:700px;margin:0 auto;">
 
-  <div style="margin-bottom:1.25rem;">
-    <h1 style="font-size:1.7rem;margin-bottom:.25rem;">Create a Listing</h1>
-    <p class="muted">Fill in the details below — the more you share, the faster you'll connect.</p>
+{% comment %}
+  POSTING HERO. The page opened straight onto field one with no statement of
+  what listing here costs or what you get. The reference design leads with
+  that, because it is the objection a landlord arrives with.
+{% endcomment %}
+<section class="post-hero">
+  <div class="post-hero-wash" aria-hidden="true"></div>
+  <div class="post-hero-inner">
+    <p class="post-hero-eyebrow">
+      <span class="post-hero-dot" aria-hidden="true"></span>
+      Zero broker surcharges &middot; Verified owner direct
+    </p>
+    <h1 class="post-hero-title">
+      List your DFW property with <span class="post-hero-accent">zero fees</span> &amp; zero middlemen
+    </h1>
+    <p class="post-hero-sub">
+      Direct access to renters and buyers across Dallas, Collin and Tarrant counties.
+      No gatekeeping, no placement commission, no tenant-messaging fees.
+    </p>
   </div>
+
+  <div class="post-hero-kinds" role="group" aria-label="What are you listing?">
+    <span class="post-kind is-on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M3 10.2 12 3.5l9 6.7V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9.2 21v-6.2h5.6V21"/></svg>
+      Single property &amp; room
+    </span>
+    <a class="post-kind" href="{% url 'create_community' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M4 21V5.5A1.5 1.5 0 0 1 5.5 4h6A1.5 1.5 0 0 1 13 5.5V21"/><path d="M13 10h5.5A1.5 1.5 0 0 1 20 11.5V21"/><path d="M2.5 21h19"/></svg>
+      Multi-family community
+    </a>
+    <a class="post-kind" href="{% url 'my_listings' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M8.5 6H21M8.5 12H21M8.5 18H21"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
+      My portfolio
+    </a>
+  </div>
+</section>
+
+{% comment %}
+  STEP RAIL. The form is one page, so these are not wizard steps — each one is
+  a link to its section, and each lights up once that section has what it
+  needs. It answers "how much is left", which the single completeness bar
+  could only answer as a percentage.
+{% endcomment %}
+<nav class="post-steps" id="post-steps" aria-label="Listing sections">
+  <a class="post-step" href="#cl-sec-1" data-step="basics">
+    <span class="post-step-n">1</span>
+    <span class="post-step-body">
+      <span class="post-step-title">Property details</span>
+      <span class="post-step-state">Type, title, location</span>
+    </span>
+  </a>
+  <a class="post-step" href="#cl-sec-4" data-step="pricing">
+    <span class="post-step-n">2</span>
+    <span class="post-step-body">
+      <span class="post-step-title">Pricing &amp; terms</span>
+      <span class="post-step-state">Rent, deposit, availability</span>
+    </span>
+  </a>
+  <a class="post-step" href="#cl-sec-8" data-step="photos">
+    <span class="post-step-n">3</span>
+    <span class="post-step-body">
+      <span class="post-step-title">Photos &amp; media</span>
+      <span class="post-step-state">Listings with photos get 3&times; the views</span>
+    </span>
+  </a>
+  <a class="post-step" href="#cl-sec-6" data-step="amenities">
+    <span class="post-step-n">4</span>
+    <span class="post-step-body">
+      <span class="post-step-title">Amenities &amp; match</span>
+      <span class="post-step-state">What the match score reads</span>
+    </span>
+  </a>
+  <a class="post-step" href="#publish-btn" data-step="publish">
+    <span class="post-step-n">5</span>
+    <span class="post-step-body">
+      <span class="post-step-title">Review &amp; go live</span>
+      <span class="post-step-state">Published instantly</span>
+    </span>
+  </a>
+</nav>
+
+<div class="post-layout">
+  <div class="post-form-col">
 
   {# ── Completion bar ── #}
   <div class="cl-completion-bar">
-    <span class="cl-comp-label">Profile completeness</span>
+    <span class="cl-comp-label">Listing completeness</span>
     <div class="cl-comp-track"><div class="cl-comp-fill" id="comp-fill" style="width:0%"></div></div>
     <span class="cl-comp-pct" id="comp-pct">0%</span>
   </div>
@@ -24,7 +102,7 @@
     {% endif %}
 
     {# ══ SECTION 1 — Category ══ #}
-    <div class="cl-section">
+    <div class="cl-section" id="cl-sec-1">
       <div class="cl-section-head">
         <div class="cl-section-num">1</div>
         <div>
@@ -170,6 +248,50 @@
         </div>
       </div>
 
+      {% comment %}
+        Core specs. ListingForm has declared bedrooms, bathrooms and
+        square_footage all along, but this template never rendered them, so
+        every listing posted here was saved with all three blank — and then
+        could not match a "2+ beds" filter on the results page. The steppers
+        are the reference design's control for them.
+      {% endcomment %}
+      <div class="cl-specs" style="margin-top:1.1rem;">
+        <div class="cl-spec-field">
+          <label class="cl-label" for="f-bedrooms">Bedrooms</label>
+          <div class="cl-stepper">
+            <button type="button" class="cl-step-btn" data-step-for="f-bedrooms" data-delta="-1" aria-label="One fewer bedroom">&minus;</button>
+            <input type="number" id="f-bedrooms" name="bedrooms" min="0" max="20" step="1"
+                   inputmode="numeric" placeholder="—"
+                   value="{{ form.bedrooms.value|default_if_none:'' }}">
+            <button type="button" class="cl-step-btn" data-step-for="f-bedrooms" data-delta="1" aria-label="One more bedroom">+</button>
+          </div>
+          <p class="cl-spec-hint">0 for a studio</p>
+        </div>
+
+        <div class="cl-spec-field">
+          <label class="cl-label" for="f-bathrooms">Bathrooms</label>
+          <div class="cl-stepper">
+            <button type="button" class="cl-step-btn" data-step-for="f-bathrooms" data-delta="-0.5" aria-label="Half a bathroom fewer">&minus;</button>
+            <input type="number" id="f-bathrooms" name="bathrooms" min="0" max="20" step="0.5"
+                   inputmode="decimal" placeholder="—"
+                   value="{{ form.bathrooms.value|default_if_none:'' }}">
+            <button type="button" class="cl-step-btn" data-step-for="f-bathrooms" data-delta="0.5" aria-label="Half a bathroom more">+</button>
+          </div>
+          <p class="cl-spec-hint">Half steps, e.g. 2.5</p>
+        </div>
+
+        <div class="cl-spec-field">
+          <label class="cl-label" for="f-square-footage">Square footage</label>
+          <div class="cl-stepper cl-stepper-plain">
+            <input type="number" id="f-square-footage" name="square_footage" min="0" step="1"
+                   inputmode="numeric" placeholder="e.g. 1,285"
+                   value="{{ form.square_footage.value|default_if_none:'' }}">
+            <span class="cl-spec-unit">sq ft</span>
+          </div>
+          <p class="cl-spec-hint">Optional</p>
+        </div>
+      </div>
+
       {# Bills included — rentals only #}
       <div id="cl-bills-wrap" style="display:none;margin-top:1.1rem;">
         <label class="cl-bills-label">
@@ -194,7 +316,7 @@
     </div>
 
     {# ══ SECTION 2 — Title & Description ══ #}
-    <div class="cl-section">
+    <div class="cl-section" id="cl-sec-2">
       <div class="cl-section-head">
         <div class="cl-section-num">2</div>
         <div>
@@ -222,7 +344,7 @@
     </div>
 
     {# ══ SECTION 3 — Location ══ #}
-    <div class="cl-section">
+    <div class="cl-section" id="cl-sec-3">
       <div class="cl-section-head">
         <div class="cl-section-num">3</div>
         <div>
@@ -266,7 +388,7 @@
     </div>
 
     {# ══ SECTION 4 — Pricing ══ #}
-    <div class="cl-section">
+    <div class="cl-section" id="cl-sec-4">
       <div class="cl-section-head">
         <div class="cl-section-num">4</div>
         <div>
@@ -293,7 +415,7 @@
     </div>
 
     {# ══ SECTION 5 — Availability & Contact ══ #}
-    <div class="cl-section">
+    <div class="cl-section" id="cl-sec-5">
       <div class="cl-section-head">
         <div class="cl-section-num">5</div>
         <div>
@@ -316,7 +438,7 @@
     </div>
 
     {# ══ SECTION 6 — Amenities & Tags ══ #}
-    <div class="cl-section">
+    <div class="cl-section" id="cl-sec-6">
       <div class="cl-section-head">
         <div class="cl-section-num">6</div>
         <div>
@@ -347,7 +469,7 @@
     </div>
 
     {# ══ SECTION 7 — Featured ══ #}
-    <div class="cl-section">
+    <div class="cl-section" id="cl-sec-7">
       <div class="cl-section-head" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">
         <div class="cl-section-num">7</div>
         <div style="flex:1;">
@@ -364,7 +486,7 @@
     </div>
 
     {# ══ SECTION 8 — Photos ══ #}
-    <div class="cl-section">
+    <div class="cl-section" id="cl-sec-8">
       <div class="cl-section-head">
         <div class="cl-section-num">8</div>
         <div>
@@ -387,11 +509,116 @@
       </div>
     </div>
 
-    <button type="submit" class="button accent" style="width:100%;padding:.9rem;font-size:1rem;border-radius:14px;margin-top:.25rem;" id="publish-btn">
-      ✦ Publish Listing
-    </button>
+    <div class="cl-actions">
+      <input type="hidden" name="save_draft" id="f-save-draft" value="">
+      <button type="submit" formnovalidate class="cl-draft-btn" id="draft-btn">
+        Save draft for later
+      </button>
+      <button type="submit" class="cl-publish-btn" id="publish-btn">
+        Publish listing live now &rarr;
+      </button>
+    </div>
   </form>
-</div>
+  </div>{# /post-form-col #}
+
+  {% comment %}
+    LIVE PREVIEW RAIL. The form gave no sense of what the listing would look
+    like until after it was published. This card is the same shape as a search
+    result and updates from the form as it is filled in, so the thing being
+    edited is visible while it is edited.
+  {% endcomment %}
+  <aside class="post-rail" aria-label="Listing preview and market context">
+
+    <section class="post-rail-card">
+      <header class="post-rail-head">
+        <span class="post-rail-title">
+          <span class="post-rail-live" aria-hidden="true"></span>
+          Live renter view
+        </span>
+        <span class="post-rail-note">Updates as you type</span>
+      </header>
+
+      <article class="post-preview" id="post-preview">
+        <div class="post-preview-media">
+          <img id="pv-photo" alt="" hidden>
+          <span class="post-preview-empty" id="pv-empty" role="img" aria-label="No photo added yet"></span>
+          <span class="post-preview-chip" id="pv-kind">For rent</span>
+          <span class="post-preview-count" id="pv-count" hidden>0 photos</span>
+        </div>
+
+        <div class="post-preview-body">
+          <div class="post-preview-pricerow">
+            <span class="post-preview-price" id="pv-price">Price not set</span>
+            <span class="post-preview-deposit" id="pv-deposit" hidden></span>
+          </div>
+          <p class="post-preview-title" id="pv-title">Your listing title</p>
+          <p class="post-preview-addr" id="pv-addr">Address, city</p>
+          <ul class="post-preview-specs" id="pv-specs" hidden></ul>
+          <div class="post-preview-cta" aria-hidden="true">
+            <span class="post-preview-btn">Request tour / apply</span>
+            <span class="post-preview-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M21 14.5a2 2 0 0 1-2 2H7.5L3 21V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    {% comment %}
+      Market context. The reference design put a renter-demand estimate here;
+      we do not collect renter counts, so this reports what the database
+      actually knows about the competition instead of inventing a figure.
+      It refreshes from /post/market/ as the city field changes.
+    {% endcomment %}
+    <section class="post-rail-card" id="post-market"
+             data-url="{% url 'posting_market_stats' %}">
+      <header class="post-rail-head">
+        <span class="post-rail-title">Your market</span>
+        <span class="post-rail-note" id="pm-scope">{{ market.city|default:"All DFW" }}</span>
+      </header>
+
+      <div class="post-market-figure">
+        <span class="post-market-num" id="pm-count">{{ market.active_count }}</span>
+        <span class="post-market-lbl">active listings you'd be competing with</span>
+      </div>
+
+      <ul class="post-market-rows">
+        <li>
+          <span class="post-market-row-k" id="pm-median-k">Median asking price</span>
+          <span class="post-market-row-v" id="pm-median">
+            {% if market.median_price %}${{ market.median_price|intcomma }}{% else %}&mdash;{% endif %}
+          </span>
+        </li>
+        <li>
+          <span class="post-market-row-k">Listings with photos</span>
+          <span class="post-market-row-v" id="pm-photos">{{ market.with_photos }}</span>
+        </li>
+        <li>
+          <span class="post-market-row-k">Owners posting directly</span>
+          <span class="post-market-row-v" id="pm-owners">{{ market.owner_count }}</span>
+        </li>
+      </ul>
+
+      <p class="post-market-foot">
+        Counted from live Listojo listings, not an estimate. Enter a city above
+        to narrow it.
+      </p>
+    </section>
+
+    <section class="post-rail-card post-rail-guarantee">
+      <span class="post-rail-guarantee-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z"/><path d="m8.8 12.2 2.2 2.2 4.2-4.4"/></svg>
+      </span>
+      <div>
+        <p class="post-rail-guarantee-title">100% commission-free</p>
+        <p class="post-rail-guarantee-body">
+          Listojo takes no placement commission and charges no fee to message a
+          prospective tenant. You keep the relationship and the money.
+        </p>
+      </div>
+    </section>
+  </aside>
+</div>{# /post-layout #}
 
 <script>
 (function () {
@@ -416,10 +643,16 @@
     .split(',').map(function(t){ return t.trim(); }).filter(Boolean);
 
   function updateCount() {
-    var ok = files.filter(function(f){ return !f.error; }).length;
+    var valid = files.filter(function(f){ return !f.error; });
+    var ok = valid.length;
     countLbl.textContent = ok + ' / ' + MAX + ' photos added';
     countLbl.classList.toggle('at-limit', ok >= MAX);
     updateCompletion();
+    // Publish the count and the cover shot so the live preview rail can show
+    // them without reaching into this widget's file list.
+    window.dispatchEvent(new CustomEvent('listojo:photos', {
+      detail: { count: ok, url: ok ? valid[0].url : null }
+    }));
   }
 
   function render() {
@@ -473,7 +706,22 @@
   zone.addEventListener('drop', function(e) {
     e.preventDefault(); zone.classList.remove('drag-over'); addFiles(e.dataTransfer.files);
   });
+  // Which button was pressed, recorded before the submit event so it survives
+  // the phone gate's form.submit() re-entry.
+  var draftFlag = document.getElementById('f-save-draft');
+  var draftBtn  = document.getElementById('draft-btn');
+  var pubBtn    = document.getElementById('publish-btn');
+  if (draftBtn) draftBtn.addEventListener('click', function(){ draftFlag.value = '1'; });
+  if (pubBtn)   pubBtn.addEventListener('click',   function(){ draftFlag.value = '';  });
+
   form.addEventListener('submit', function(e) {
+    // A draft is deliberately allowed to be incomplete, so the image check is
+    // the only gate it has to clear.
+    if (draftFlag && draftFlag.value === '1') {
+      var draftImgErrors = files.some(function(f){ return f.error; });
+      if (draftImgErrors) { e.preventDefault(); alert('Please remove invalid images before saving.'); }
+      return;
+    }
     var hasErrors = files.some(function(f){ return f.error; });
     if (hasErrors) { e.preventDefault(); alert('Please remove invalid images before publishing.'); return; }
     // Progressive verification: confirm the lister's phone before publishing.
@@ -495,6 +743,7 @@
       document.getElementById('f-category').value = card.dataset.val;
       updateDetailPanel();
       updateCompletion();
+      window.dispatchEvent(new Event('listojo:form-sync'));
     });
   });
 
@@ -551,6 +800,7 @@
       tab.classList.add('selected');
       document.getElementById('f-price-unit').value = tab.dataset.val;
       fetchPriceHint();
+      window.dispatchEvent(new Event('listojo:form-sync'));
     });
   });
 
@@ -841,4 +1091,234 @@
   })();
 })();
 </script>
+
+{% comment %}
+  Live preview, step rail and market context. All three read the same form, so
+  they are driven from one change handler rather than three listeners each
+  reaching for the same fields.
+{% endcomment %}
+<script>
+(function () {
+  var form = document.getElementById('create-listing-form');
+  if (!form) return;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  var fields = {
+    title:    $('f-title'),
+    price:    $('f-price'),
+    unit:     $('f-price-unit'),
+    category: $('f-category'),
+    address:  $('f-address-line'),
+    city:     $('f-city'),
+    state:    $('f-state'),
+    beds:     $('f-bedrooms'),
+    baths:    $('f-bathrooms'),
+    sqft:     $('f-square-footage'),
+    deposit:  $('f-security-deposit'),
+    desc:     $('f-description'),
+    tags:     $('f-tags')
+  };
+
+  var pv = {
+    photo:   $('pv-photo'),
+    empty:   $('pv-empty'),
+    kind:    $('pv-kind'),
+    count:   $('pv-count'),
+    price:   $('pv-price'),
+    deposit: $('pv-deposit'),
+    title:   $('pv-title'),
+    addr:    $('pv-addr'),
+    specs:   $('pv-specs')
+  };
+
+  function val(el) { return el && el.value ? el.value.trim() : ''; }
+
+  function money(n) {
+    var num = parseFloat(n);
+    if (!isFinite(num)) return '';
+    return '$' + Math.round(num).toLocaleString('en-US');
+  }
+
+  var KIND_LABEL = {
+    rentals: 'For rent',
+    properties: 'For sale',
+    roommates: 'Room'
+  };
+
+  var UNIT_LABEL = {
+    mo: '/month', wk: '/week', day: '/day', hr: '/hour'
+  };
+
+  function renderPreview() {
+    // Category chip
+    var cat = val(fields.category);
+    pv.kind.textContent = KIND_LABEL[cat] || 'Listing';
+
+    // Price
+    var price = money(val(fields.price));
+    if (price) {
+      var unit = UNIT_LABEL[val(fields.unit)] || '';
+      pv.price.innerHTML = price + (unit ? '<span class="pv-per">' + unit + '</span>' : '');
+      pv.price.classList.remove('is-empty');
+    } else {
+      pv.price.textContent = 'Price not set';
+      pv.price.classList.add('is-empty');
+    }
+
+    // Deposit
+    var dep = money(val(fields.deposit));
+    pv.deposit.hidden = !dep;
+    if (dep) pv.deposit.textContent = dep + ' deposit';
+
+    // Title
+    var title = val(fields.title);
+    pv.title.textContent = title || 'Your listing title';
+    pv.title.classList.toggle('is-empty', !title);
+
+    // Address
+    var parts = [val(fields.address), val(fields.city), val(fields.state)].filter(Boolean);
+    pv.addr.textContent = parts.length ? parts.join(', ') : 'Address, city';
+    pv.addr.classList.toggle('is-empty', !parts.length);
+
+    // Specs
+    var specs = [];
+    var beds = val(fields.beds);
+    if (beds !== '') specs.push(beds === '0' ? 'Studio' : beds + ' bed' + (beds === '1' ? '' : 's'));
+    var baths = val(fields.baths);
+    if (baths) specs.push(baths + ' bath' + (parseFloat(baths) === 1 ? '' : 's'));
+    var sqft = val(fields.sqft);
+    if (sqft) specs.push(parseInt(sqft, 10).toLocaleString('en-US') + ' sqft');
+
+    pv.specs.hidden = !specs.length;
+    pv.specs.innerHTML = specs.map(function (t) {
+      var li = document.createElement('li');
+      li.textContent = t;
+      return li.outerHTML;
+    }).join('');
+  }
+
+  // ── Step rail ──
+  // A step is done when the fields that step is responsible for are filled.
+  var steps = {
+    basics:    function () { return val(fields.category) && val(fields.title) && val(fields.city); },
+    pricing:   function () { return !!val(fields.price); },
+    photos:    function () { return previewPhotoCount > 0; },
+    amenities: function () { return !!val(fields.tags); },
+    publish:   function () {
+      return steps.basics() && steps.pricing() && !!val(fields.desc);
+    }
+  };
+
+  function renderSteps() {
+    document.querySelectorAll('.post-step').forEach(function (el) {
+      var fn = steps[el.dataset.step];
+      el.classList.toggle('is-done', !!(fn && fn()));
+    });
+  }
+
+  // ── Market context ──
+  // Refreshed from the server as the city changes, because the numbers are
+  // counted from live listings rather than estimated in the browser.
+  var marketEl = $('post-market');
+  var marketTimer = null;
+  var lastMarketKey = null;
+
+  function refreshMarket() {
+    if (!marketEl) return;
+    var city = val(fields.city);
+    var cat  = val(fields.category);
+    var key  = city.toLowerCase() + '|' + cat;
+    if (key === lastMarketKey) return;
+    lastMarketKey = key;
+
+    var url = marketEl.dataset.url +
+      '?city=' + encodeURIComponent(city) +
+      '&category=' + encodeURIComponent(cat);
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.ok) return;
+        $('pm-scope').textContent  = d.city || 'All DFW';
+        $('pm-count').textContent  = d.active_count;
+        // Blank until a listing type is chosen: see the view for why a median
+        // across mixed categories is not a number worth showing.
+        $('pm-median').textContent = d.median_price ? money(d.median_price) : '—';
+        $('pm-median-k').textContent = (d.median_price || val(fields.category))
+          ? 'Median asking price'
+          : 'Median asking price (pick a type)';
+        $('pm-photos').textContent = d.with_photos;
+        $('pm-owners').textContent = d.owner_count;
+      })
+      .catch(function () { /* the card keeps its last good numbers */ });
+  }
+
+  function scheduleMarket() {
+    clearTimeout(marketTimer);
+    marketTimer = setTimeout(refreshMarket, 450);
+  }
+
+  // ── Photos ──
+  // The upload widget owns the file list; it publishes the count here so the
+  // preview and the step rail do not have to reach into its internals.
+  var previewPhotoCount = 0;
+  window.addEventListener('listojo:photos', function (e) {
+    previewPhotoCount = (e.detail && e.detail.count) || 0;
+    pv.count.hidden = previewPhotoCount === 0;
+    pv.count.textContent = previewPhotoCount + ' photo' + (previewPhotoCount === 1 ? '' : 's');
+
+    var url = e.detail && e.detail.url;
+    if (url) {
+      pv.photo.src = url;
+      pv.photo.hidden = false;
+      pv.empty.hidden = true;
+    } else {
+      pv.photo.hidden = true;
+      pv.photo.removeAttribute('src');
+      pv.empty.hidden = false;
+    }
+    renderSteps();
+  });
+
+  function onChange(e) {
+    renderPreview();
+    renderSteps();
+    if (e && e.target === fields.city) scheduleMarket();
+    if (e && e.target === fields.category) scheduleMarket();
+  }
+
+  // ── Spec steppers ──
+  // Clamped to the input's own min/max/step so the buttons and typing cannot
+  // disagree about what is valid.
+  document.querySelectorAll('.cl-step-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = $(btn.dataset.stepFor);
+      if (!input) return;
+      var step  = parseFloat(btn.dataset.delta) || 1;
+      var min   = input.min !== '' ? parseFloat(input.min) : -Infinity;
+      var max   = input.max !== '' ? parseFloat(input.max) :  Infinity;
+      // An empty field counts as zero and still takes the step, so the first
+      // "+" lands on 1 rather than on 0 and needing a second press.
+      var cur = parseFloat(input.value);
+      if (!isFinite(cur)) cur = 0;
+      cur = Math.min(max, Math.max(min, cur + step));
+      // Avoid 2.5000000000000004 from repeated half steps.
+      input.value = Math.round(cur * 100) / 100;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  });
+
+  form.addEventListener('input', onChange);
+  form.addEventListener('change', onChange);
+
+  // The category and price-unit pickers write to hidden inputs, which do not
+  // fire input events, so they announce themselves instead.
+  window.addEventListener('listojo:form-sync', onChange);
+
+  renderPreview();
+  renderSteps();
+})();
+</script>
+
 {% endblock %}

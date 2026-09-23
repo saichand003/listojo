@@ -62,7 +62,12 @@ class ListingForm(forms.ModelForm):
 
     ALLOWED_CATEGORIES = {'rentals', 'properties'}
 
-    def __init__(self, *args, **kwargs):
+    # A draft is a parking space, not a submission, so it only needs enough to
+    # tell one draft from another in the owner's list. Everything else is
+    # re-validated when the draft is published.
+    DRAFT_REQUIRED = {'title'}
+
+    def __init__(self, *args, draft=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['category'].choices = [('', '— Select a category —')] + [
             c for c in self.fields['category'].choices if c[0] in self.ALLOWED_CATEGORIES
@@ -71,6 +76,10 @@ class ListingForm(forms.ModelForm):
         # Make property-specific fields optional and clearly labelled
         for f in ('square_footage', 'year_built', 'hoa_fee'):
             self.fields[f].required = False
+
+        if draft:
+            for name, field in self.fields.items():
+                field.required = name in self.DRAFT_REQUIRED
 
 
 ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
