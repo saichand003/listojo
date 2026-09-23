@@ -387,7 +387,24 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
 </div>
 
 {% else %}
-<div class="grid" style="grid-template-columns:2fr 1fr;align-items:start;gap:1.25rem;">
+{% comment %}
+  Breadcrumbs. The page could only be left by the browser's back button or the
+  header, so a listing arrived at from a search had no route back to that
+  search, or up to the city.
+{% endcomment %}
+<nav class="ld-crumbs" aria-label="Breadcrumb">
+  <a href="{% url 'home' %}">Home</a>
+  <span aria-hidden="true">/</span>
+  <a href="{% url 'listing_list' %}?category={{ listing.category }}">{{ listing.get_category_display }}</a>
+  {% if listing.city %}
+  <span aria-hidden="true">/</span>
+  <a href="{% url 'listing_list' %}?city={{ listing.city|urlencode }}">{{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}</a>
+  {% endif %}
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">{{ listing.title|truncatechars:48 }}</span>
+</nav>
+
+<div class="grid ld-layout" style="grid-template-columns:2fr 1fr;align-items:start;gap:1.25rem;">
 
   {# Left column is a stack of cards on the page background, not one long card — #}
   {# same shape as community detail, so the catalogues read as separate sections. #}
@@ -421,9 +438,9 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 </div>
                 <div style="text-align:right;flex-shrink:0;">
                     {% if listing.price %}
-                    <p style="font-size:1.5rem;font-weight:800;background:var(--price-gradient,linear-gradient(135deg,var(--primary),#8b5cf6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span style="font-size:.85rem;font-weight:500;-webkit-text-fill-color:var(--text-3);background:none;">{{ listing.get_price_unit_display }}</span>{% endif %}</p>
+                    <p class="ld-price">${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span class="ld-price-per">{{ listing.get_price_unit_display }}</span>{% endif %}</p>
                     {% else %}
-                    <p style="font-size:1rem;font-weight:600;color:var(--text-3);margin:0;">Contact for price</p>
+                    <p class="ld-price ld-price-ask">Contact for price</p>
                     {% endif %}
                     {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
                     <p style="font-size:.85rem;color:var(--text-3);text-decoration:line-through;margin:.2rem 0 0;">${{ listing.original_price|floatformat:0|intcomma }}</p>
@@ -445,29 +462,29 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
 
             {# Floor plan + tour details for unit listings #}
             {% if listing.bedrooms is not None or listing.bathrooms or listing.square_footage %}
-            <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem;">
+            <div class="ld-specs">
                 {% if listing.bedrooms is not None %}
-                <div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
-                    <div style="font-size:1.2rem;font-weight:700;">{% if listing.bedrooms == 0 %}Studio{% else %}{{ listing.bedrooms }}{% endif %}</div>
-                    <div style="font-size:.72rem;color:var(--text-3);">Bed{% if listing.bedrooms != 1 and listing.bedrooms != 0 %}s{% endif %}</div>
+                <div class="ld-spec">
+                    <div class="ld-spec-num">{% if listing.bedrooms == 0 %}Studio{% else %}{{ listing.bedrooms }}{% endif %}</div>
+                    <div class="ld-spec-lbl">Bed{% if listing.bedrooms != 1 and listing.bedrooms != 0 %}s{% endif %}</div>
                 </div>
                 {% endif %}
                 {% if listing.bathrooms %}
-                <div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
-                    <div style="font-size:1.2rem;font-weight:700;">{{ listing.bathrooms }}</div>
-                    <div style="font-size:.72rem;color:var(--text-3);">Bath{% if listing.bathrooms > 1 %}s{% endif %}</div>
+                <div class="ld-spec">
+                    <div class="ld-spec-num">{{ listing.bathrooms }}</div>
+                    <div class="ld-spec-lbl">Bath{% if listing.bathrooms > 1 %}s{% endif %}</div>
                 </div>
                 {% endif %}
                 {% if listing.square_footage %}
-                <div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
-                    <div style="font-size:1.2rem;font-weight:700;">{{ listing.square_footage|intcomma }}</div>
-                    <div style="font-size:.72rem;color:var(--text-3);">Sq Ft</div>
+                <div class="ld-spec">
+                    <div class="ld-spec-num">{{ listing.square_footage|intcomma }}</div>
+                    <div class="ld-spec-lbl">Sq Ft</div>
                 </div>
                 {% endif %}
                 {% if listing.year_built %}
-                <div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
-                    <div style="font-size:1.2rem;font-weight:700;">{{ listing.year_built }}</div>
-                    <div style="font-size:.72rem;color:var(--text-3);">Built</div>
+                <div class="ld-spec">
+                    <div class="ld-spec-num">{{ listing.year_built }}</div>
+                    <div class="ld-spec-lbl">Built</div>
                 </div>
                 {% endif %}
             </div>
@@ -617,7 +634,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
   </div>{# /left column stack #}
 
     {% if user != listing.owner %}
-    <aside class="card" id="inquiry-form" style="position:sticky;top:1.5rem;scroll-margin-top:1.5rem;">
+    <aside class="card" id="inquiry-form" style="position:sticky;top:calc(var(--topbar-h) + 1.25rem);scroll-margin-top:calc(var(--topbar-h) + 1.25rem);">
         {% if listing.category == 'properties' %}
         <div style="background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(98,194,255,.06));border:1px solid rgba(37,99,235,.2);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
             <p style="font-weight:700;font-size:.95rem;margin-bottom:.3rem;">Want expert help with this property?</p>

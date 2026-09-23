@@ -602,39 +602,31 @@ p { line-height: 1.65; }
   align-items: center;
   justify-content: center;
   gap: .4rem;
-  background: linear-gradient(135deg, var(--primary-dk) 0%, var(--primary) 60%, var(--primary-2) 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: var(--r-sm);
-  padding: .5rem 1.1rem;
-  font-family: inherit;
+  padding: .55rem 1.1rem;
+  font-family: var(--font-head);
   font-size: .875rem;
   font-weight: 700;
   cursor: pointer;
-  letter-spacing: .01em;
-  transition: opacity .17s, transform .15s, box-shadow .17s;
-  box-shadow: 0 2px 10px rgba(37,99,235,.28);
+  letter-spacing: 0;
+  transition: background var(--dur-fast) var(--ease-out), transform var(--dur-press) var(--ease-out);
+  box-shadow: 0 1px 2px rgba(11,28,48,.08);
   white-space: nowrap;
   position: relative;
   overflow: hidden;
 }
 /* Button shine sweep */
 .button::after, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):not(.sb-city-btn):not(.sb-city-locate):not(.nav-market-btn):not(.nav-icon-btn):not(.nav-avatar):not(.nav-menu-signout):not(.results-view-btn):not(.results-search-btn)::after {
-  content: '';
-  position: absolute;
-  top: 0; left: -75%;
-  width: 50%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
-  transform: skewX(-20deg);
-  transition: left .55s ease;
-  pointer-events: none;
+  /* The sweeping highlight went with the gradient it was lighting. */
+  content: none;
 }
-.button:hover::after, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):not(.sb-city-btn):not(.sb-city-locate):not(.nav-market-btn):not(.nav-icon-btn):not(.nav-avatar):not(.nav-menu-signout):not(.results-view-btn):not(.results-search-btn):hover::after { left: 140%; }
 
 .button:hover, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):not(.sb-city-btn):not(.sb-city-locate):not(.nav-market-btn):not(.nav-icon-btn):not(.nav-avatar):not(.nav-menu-signout):not(.results-view-btn):not(.results-search-btn):hover {
-  opacity: .93;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 22px rgba(37,99,235,.38);
+  background: var(--primary-dk);
+  box-shadow: 0 2px 6px rgba(11,28,48,.12);
 }
 .button:active, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):not(.sb-city-btn):not(.sb-city-locate):not(.nav-market-btn):not(.nav-icon-btn):not(.nav-avatar):not(.nav-menu-signout):not(.results-view-btn):not(.results-search-btn):active { transform: none; box-shadow: 0 2px 8px rgba(37,99,235,.2); }
 
@@ -1137,7 +1129,13 @@ p { line-height: 1.65; }
 }
 
 /* ── FORMS ──────────────────────────────────────────────────── */
-input, select, textarea {
+/* Checkboxes, radios and the button-like input types are excluded: the
+   `width: 100%` below is meant for text fields, and on a checkbox it stretches
+   the box to the width of its container. A visually-hidden absolutely
+   positioned one then stretched the document itself — that is what was giving
+   the post-listing page 400px of horizontal overflow. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]):not([type="color"]),
+select, textarea {
   width: 100%;
   padding: .65rem .9rem;
   border-radius: var(--r-sm);
@@ -5519,4 +5517,83 @@ footer {
   max-height: 4.5rem;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LISTING DETAIL
+   ═══════════════════════════════════════════════════════════════ */
+.ld-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem;
+  margin-bottom: var(--sp-4);
+  font-size: .8125rem;
+  color: var(--muted);
+}
+.ld-crumbs a {
+  color: var(--text-2);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+@media (hover:hover) and (pointer:fine) {
+  .ld-crumbs a:hover { color: var(--primary); }
+}
+.ld-crumbs [aria-current="page"] { color: var(--text); font-weight: 600; }
+
+/* Price. Was a violet-to-blue gradient clipped to the glyphs — the one colour
+   on the page outside the palette, applied to the single number people came
+   for. Solid ink reads faster and lets the qualifier sit next to it. */
+.ld-price {
+  font-family: var(--font-head);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -.035em;
+  line-height: 1.1;
+  color: var(--text);
+  margin: 0;
+}
+.ld-price-per {
+  font-family: var(--font-body);
+  font-size: .9375rem;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: .1rem;
+}
+.ld-price-ask { font-size: 1.0625rem; font-weight: 600; color: var(--text-3); }
+
+/* Spec strip */
+.ld-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: var(--sp-4);
+}
+.ld-spec {
+  /* Grows to share the row, but capped so a listing with one known spec
+     does not render a single 900px tile. */
+  flex: 1 1 104px;
+  max-width: 220px;
+  padding: .7rem .85rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.ld-spec-num {
+  font-family: var(--font-head);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: var(--text);
+  line-height: 1.2;
+}
+.ld-spec-lbl {
+  font-size: .75rem;
+  color: var(--text-3);
+  margin-top: .1rem;
+}
+
+@media (max-width: 900px) {
+  .ld-layout { grid-template-columns: 1fr !important; }
 }
