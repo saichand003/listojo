@@ -27,7 +27,7 @@
 .action-btns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .btn-sm{padding:4px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:inline-block}
 .btn-outline{background:transparent;border:1.5px solid #E5E7EB;color:#374151}
-.btn-primary-sm{background:#2A7EF2;color:#fff}
+.btn-primary-sm{background:var(--primary);color:#fff}
 </style>
 
 <div style="max-width:900px;margin:0 auto;padding:24px 16px">
@@ -66,7 +66,7 @@
     <div class="card-box">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <div class="section-title" style="margin:0">My Listings</div>
-        <a href="{% url 'profile' %}" style="font-size:12px;color:#2A7EF2;text-decoration:none;font-weight:600">View all →</a>
+        <a href="{% url 'profile' %}" style="font-size:12px;color:var(--primary);text-decoration:none;font-weight:600">View all →</a>
       </div>
       {% for l in my_listings|slice:":8" %}
       <div class="listing-row">
@@ -95,7 +95,7 @@
         </div>
       </div>
       {% empty %}
-      <p style="color:#9CA3AF;font-size:13px;text-align:center;padding:24px 0">No listings yet. <a href="{% url 'create_listing' %}" style="color:#2A7EF2">Create one →</a></p>
+      <p style="color:#9CA3AF;font-size:13px;text-align:center;padding:24px 0">No listings yet. <a href="{% url 'create_listing' %}" style="color:var(--primary)">Create one →</a></p>
       {% endfor %}
     </div>
 

@@ -10,10 +10,10 @@
   padding:.6rem 1rem; margin-bottom:1.25rem;
 }
 .sl-select-bar.visible { display:flex; }
-.sl-select-count { font-size:.82rem; font-weight:700; color:#2A7EF2; }
+.sl-select-count { font-size:.82rem; font-weight:700; color:var(--primary); }
 .sl-msg-btn {
   display:inline-flex; align-items:center; gap:.4rem;
-  background:#2A7EF2; color:#fff; border:none; border-radius:8px;
+  background:var(--primary); color:#fff; border:none; border-radius:8px;
   padding:.42rem .9rem; font-size:.8rem; font-weight:700; cursor:pointer;
   transition:background .15s;
 }
@@ -27,9 +27,9 @@
 .sl-card-wrap { position:relative; }
 .sl-checkbox {
   position:absolute; top:.65rem; left:.65rem; z-index:10;
-  width:18px; height:18px; cursor:pointer; accent-color:#2A7EF2;
+  width:18px; height:18px; cursor:pointer; accent-color:var(--primary);
 }
-.sl-card-wrap.sl-selected article { outline:2.5px solid #2A7EF2; box-shadow:0 0 0 4px rgba(42,126,242,.1); }
+.sl-card-wrap.sl-selected article { outline:2.5px solid var(--primary); box-shadow:0 0 0 4px rgba(37,99,235,.1); }
 .sl-modal-overlay {
   display:none; position:fixed; inset:0; background:rgba(0,0,0,.45);
   z-index:1000; align-items:center; justify-content:center; padding:1rem;
@@ -61,7 +61,7 @@
   font-family:inherit; resize:vertical; min-height:140px;
   transition:border-color .15s; outline:none; color:#111827;
 }
-.sl-textarea:focus { border-color:#2A7EF2; }
+.sl-textarea:focus { border-color:var(--primary); }
 .sl-modal-actions { display:flex; align-items:center; justify-content:flex-end; gap:.6rem; margin-top:1rem; }
 .sl-cancel-btn {
   background:none; border:1.5px solid #E5E7EB; border-radius:8px;
@@ -70,7 +70,7 @@
 .sl-cancel-btn:hover { background:#F9FAFB; }
 .sl-send-btn {
   display:inline-flex; align-items:center; gap:.4rem;
-  background:#2A7EF2; color:#fff; border:none; border-radius:8px;
+  background:var(--primary); color:#fff; border:none; border-radius:8px;
   padding:.42rem 1.1rem; font-size:.82rem; font-weight:700; cursor:pointer;
   transition:background .15s;
 }

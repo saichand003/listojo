@@ -74,7 +74,7 @@
 <a href="{% url 'agent_lead_detail' lead.pk %}" style="text-decoration:none;display:block;">
 <div class="lead-card">
   <div class="lead-avatar" style="background:
-    {% if forloop.counter0|divisibleby:6 %}#2A7EF2
+    {% if forloop.counter0|divisibleby:6 %}var(--primary)
     {% elif forloop.counter == 2 %}#28b87c
     {% elif forloop.counter == 3 %}#d97706
     {% elif forloop.counter == 4 %}#7c3aed

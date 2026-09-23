@@ -3,8 +3,8 @@
 {% block content %}
 
 <style>
-.back-nav-link { display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(42,126,242,.08);border:1px solid rgba(42,126,242,.18);transition:background .15s,color .15s;margin-bottom:.75rem; }
-.back-nav-link:hover { background:rgba(42,126,242,.18); }
+.back-nav-link { display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.18);transition:background .15s,color .15s;margin-bottom:.75rem; }
+.back-nav-link:hover { background:rgba(37,99,235,.18); }
 
 /* ── Owner management bar ── */
 .ld-mgmt { background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
@@ -55,7 +55,7 @@
 .ld-contact-btns  { display:flex;flex-direction:column;gap:.5rem;margin-top:.35rem;max-width:260px; }
 .ld-contact-btn   { width:100%;text-align:center;justify-content:center; }
 .ld-contact-brand { grid-column:3;text-align:center;min-width:130px; }
-.ld-contact-monogram { width:56px;height:56px;margin:0 auto .5rem;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:var(--primary);background:rgba(42,126,242,.1);border:1px solid rgba(42,126,242,.2); }
+.ld-contact-monogram { width:56px;height:56px;margin:0 auto .5rem;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:var(--primary);background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2); }
 .ld-contact-brand-label { margin:0;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3); }
 .ld-contact-brand-name  { margin:.1rem 0 0;font-size:.92rem;font-weight:700;color:var(--text-2);word-break:break-word; }
 @media (max-width: 720px) {
@@ -189,12 +189,12 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
     <div style="text-align:right;flex-shrink:0;">
       {% with listing.units.all as all_units %}
       {% if listing.price %}
-      <p style="font-size:1.6rem;font-weight:800;background:var(--price-gradient,linear-gradient(135deg,#2a7ef2,#8b5cf6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">
+      <p style="font-size:1.6rem;font-weight:800;background:var(--price-gradient,linear-gradient(135deg,var(--primary),#8b5cf6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">
         ${{ listing.price|floatformat:0|intcomma }}<span style="font-size:.9rem;font-weight:500;-webkit-text-fill-color:var(--text-3);background:none;">/mo</span>
       </p>
       {% endif %}
       {% if all_units %}
-      <p style="font-size:.85rem;color:#1e8a5c;font-weight:600;margin:.15rem 0 0;">
+      <p style="font-size:.85rem;color:var(--accent);font-weight:600;margin:.15rem 0 0;">
         {{ all_units|length }} unit{{ all_units|length|pluralize }} listed
       </p>
       {% endif %}
@@ -283,7 +283,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                   {% else %}
                   <p style="font-size:.9rem;font-weight:600;color:var(--text-3);margin:0;">Contact for price</p>
                   {% endif %}
-                  <p style="font-size:.78rem;color:{% if unit.available_from %}var(--text-2){% else %}#1e8a5c{% endif %};margin:.15rem 0 0;font-weight:600;">
+                  <p style="font-size:.78rem;color:{% if unit.available_from %}var(--text-2){% else %}var(--accent){% endif %};margin:.15rem 0 0;font-weight:600;">
                     {% if unit.available_from %}Avail. {{ unit.available_from|date:"M j, Y" }}{% else %}Available Now{% endif %}
                   </p>
                 </div>
@@ -292,7 +292,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
               {% if unit.get_tags_list %}
               <div style="display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.75rem;">
                 {% for t in unit.get_tags_list|slice:":5" %}
-                <span style="background:rgba(42,126,242,.07);border:1px solid rgba(42,126,242,.15);border-radius:999px;padding:.2rem .65rem;font-size:.75rem;color:var(--primary);">{{ t }}</span>
+                <span style="background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.15);border-radius:999px;padding:.2rem .65rem;font-size:.75rem;color:var(--primary);">{{ t }}</span>
                 {% endfor %}
               </div>
               {% endif %}
@@ -407,7 +407,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 <span class="chip">{{ listing.get_category_display }}</span>
                 {% if listing.featured %}<span class="inline-featured-badge">★ Featured</span>{% endif %}
                 {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
-                <span style="background:#1e8a5c;color:#fff;font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;">Price Reduced</span>
+                <span style="background:var(--accent);color:#fff;font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;">Price Reduced</span>
                 {% endif %}
             </div>
 
@@ -421,7 +421,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 </div>
                 <div style="text-align:right;flex-shrink:0;">
                     {% if listing.price %}
-                    <p style="font-size:1.5rem;font-weight:800;background:var(--price-gradient,linear-gradient(135deg,#2a7ef2,#8b5cf6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span style="font-size:.85rem;font-weight:500;-webkit-text-fill-color:var(--text-3);background:none;">{{ listing.get_price_unit_display }}</span>{% endif %}</p>
+                    <p style="font-size:1.5rem;font-weight:800;background:var(--price-gradient,linear-gradient(135deg,var(--primary),#8b5cf6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span style="font-size:.85rem;font-weight:500;-webkit-text-fill-color:var(--text-3);background:none;">{{ listing.get_price_unit_display }}</span>{% endif %}</p>
                     {% else %}
                     <p style="font-size:1rem;font-weight:600;color:var(--text-3);margin:0;">Contact for price</p>
                     {% endif %}
@@ -447,25 +447,25 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
             {% if listing.bedrooms is not None or listing.bathrooms or listing.square_footage %}
             <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem;">
                 {% if listing.bedrooms is not None %}
-                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
+                <div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
                     <div style="font-size:1.2rem;font-weight:700;">{% if listing.bedrooms == 0 %}Studio{% else %}{{ listing.bedrooms }}{% endif %}</div>
                     <div style="font-size:.72rem;color:var(--text-3);">Bed{% if listing.bedrooms != 1 and listing.bedrooms != 0 %}s{% endif %}</div>
                 </div>
                 {% endif %}
                 {% if listing.bathrooms %}
-                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
+                <div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
                     <div style="font-size:1.2rem;font-weight:700;">{{ listing.bathrooms }}</div>
                     <div style="font-size:.72rem;color:var(--text-3);">Bath{% if listing.bathrooms > 1 %}s{% endif %}</div>
                 </div>
                 {% endif %}
                 {% if listing.square_footage %}
-                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
+                <div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
                     <div style="font-size:1.2rem;font-weight:700;">{{ listing.square_footage|intcomma }}</div>
                     <div style="font-size:.72rem;color:var(--text-3);">Sq Ft</div>
                 </div>
                 {% endif %}
                 {% if listing.year_built %}
-                <div style="background:rgba(42,126,242,.06);border:1px solid rgba(42,126,242,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
+                <div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:.45rem .85rem;text-align:center;min-width:80px;">
                     <div style="font-size:1.2rem;font-weight:700;">{{ listing.year_built }}</div>
                     <div style="font-size:.72rem;color:var(--text-3);">Built</div>
                 </div>
@@ -619,7 +619,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
     {% if user != listing.owner %}
     <aside class="card" id="inquiry-form" style="position:sticky;top:1.5rem;scroll-margin-top:1.5rem;">
         {% if listing.category == 'properties' %}
-        <div style="background:linear-gradient(135deg,rgba(42,126,242,.08),rgba(98,194,255,.06));border:1px solid rgba(42,126,242,.2);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
+        <div style="background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(98,194,255,.06));border:1px solid rgba(37,99,235,.2);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
             <p style="font-weight:700;font-size:.95rem;margin-bottom:.3rem;">Want expert help with this property?</p>
             <p class="muted" style="font-size:.8rem;margin-bottom:.75rem;">Connect with a Listojo agent who can guide you through the buying process.</p>
             <a href="mailto:agents@listojo.com?subject=Agent help: {{ listing.title|urlencode }}&body=I am interested in: {{ listing.title }} — {{ request.build_absolute_uri }}" class="button" style="width:100%;text-align:center;display:block;">Connect with an Agent</a>

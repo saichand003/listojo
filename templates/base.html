@@ -18,8 +18,8 @@
       Status bar / browser chrome colour. One value per scheme, matched to the
       colour at the very top of the page rather than to the brand blue.
     {% endcomment %}
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#EEF2FB">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B1422">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F8F9FF">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#080D18">
     <meta name="color-scheme" content="light dark">
     {% comment %}
       Overridable so individual pages can carry their own title. Google shows
@@ -54,29 +54,20 @@
     body.auth-fullscreen .site-body{ display:block; }
     body.auth-fullscreen .app-content{ padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; }
 
-    /* ── Sidebar city switcher ── */
-    /* Market selector. It was inheriting the global primary-button gradient by
-       accident (it is a <button> and was not in that rule's :not() list), so a
-       context selector rendered as a saturated blue pill that shouted louder
-       than the active nav item below it. It is chrome: it states which market
-       you are browsing and lets you change it, so it reads as a quiet control
-       and lets the nav own the emphasis. */
-    .sb-city-switcher{position:relative;padding:0 0 .85rem;margin-bottom:.6rem;border-bottom:1px solid var(--border);}
-    .sb-city-btn{display:flex;align-items:center;gap:.5rem;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.5rem .6rem;cursor:pointer;font-size:.8rem;font-weight:600;color:var(--text);letter-spacing:0;text-transform:none;font-family:inherit;text-align:left;transition:background var(--dur-fast) var(--ease-out),border-color var(--dur-fast) var(--ease-out);}
-    @media (hover:hover) and (pointer:fine){.sb-city-btn:hover{background:var(--surface);border-color:var(--border-2);}}
-    .sb-city-btn svg:last-child{margin-left:auto;transition:transform .2s;}
-    .sb-city-btn[aria-expanded="true"] svg:last-child{transform:rotate(180deg);}
-    .sb-city-dropdown{position:absolute;top:calc(100% - .5rem);left:0;right:0;background:var(--surface,#fff);border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;padding:.5rem 0;min-width:170px;}
-    .sb-city-search{display:block;width:calc(100% - 1.2rem);margin:.3rem .6rem .4rem;padding:.35rem .6rem;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;outline:none;background:var(--bg,#f8fafc);color:var(--text);}
-    .sb-city-search:focus{border-color:var(--primary);}
-    .sb-city-list{list-style:none;margin:0;padding:0;max-height:200px;overflow-y:auto;}
-    .sb-city-list li{padding:.38rem .9rem;font-size:.8rem;font-weight:600;color:var(--text);cursor:pointer;transition:background .1s;}
-    .sb-city-list li:hover,.sb-city-list li.sb-city-active{background:rgba(42,126,242,.08);color:var(--primary);}
-    .sb-city-list .sb-city-all{font-size:.75rem;color:var(--muted);font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border);margin-bottom:.2rem;padding-bottom:.5rem;}
-    .sb-city-locate{display:flex;align-items:center;gap:.45rem;width:calc(100% - 1.2rem);margin:.1rem .6rem .4rem;padding:.45rem .6rem;border:1.5px solid var(--primary);border-radius:7px;background:rgba(42,126,242,.06);color:var(--primary);font-size:.78rem;font-weight:700;cursor:pointer;transition:background .12s;font-family:inherit;}
-    .sb-city-locate:hover{background:rgba(42,126,242,.12);}
+    /* ── Market switcher dropdown ──
+       The button and its positioning now live in styles.css alongside the
+       rest of the header; what stays here is the panel's interior, which is
+       specific enough to this one control not to earn a place there. */
+    .sb-city-search{display:block;width:calc(100% - 1.2rem);margin:.35rem .6rem .45rem;padding:.45rem .6rem;border:1px solid var(--border);border-radius:var(--r-sm);font-size:.8125rem;font-family:inherit;outline:none;background:var(--surface-2);color:var(--text);}
+    .sb-city-search:focus{border-color:var(--primary);background:var(--surface);}
+    .sb-city-list{list-style:none;margin:0;padding:0;max-height:240px;overflow-y:auto;overscroll-behavior:contain;}
+    .sb-city-list li{padding:.45rem .9rem;font-size:.875rem;font-weight:500;color:var(--text);cursor:pointer;transition:background .12s;}
+    .sb-city-list li:hover,.sb-city-list li.sb-city-active{background:var(--primary-soft);color:var(--primary);}
+    .sb-city-list .sb-city-all{font-size:.6875rem;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);margin-bottom:.25rem;padding-bottom:.5rem;}
+    .sb-city-locate{display:flex;align-items:center;gap:.45rem;width:calc(100% - 1.2rem);margin:.15rem .6rem .45rem;padding:.5rem .6rem;border:1px solid var(--primary);border-radius:var(--r-sm);background:var(--primary-soft);color:var(--primary);font-size:.8125rem;font-weight:600;cursor:pointer;transition:background .12s;font-family:inherit;}
+    .sb-city-locate:hover{background:var(--primary-soft-2);}
     .sb-city-locate:disabled{opacity:.6;cursor:default;}
-    .sb-city-locate-msg{margin:0 .6rem .5rem;padding:.5rem .6rem;border-radius:7px;font-size:.74rem;line-height:1.4;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;}
+    .sb-city-locate-msg{margin:0 .6rem .5rem;padding:.5rem .6rem;border-radius:var(--r-sm);font-size:.75rem;line-height:1.4;background:#FFF7ED;border:1px solid #FED7AA;color:#9A3412;}
     .sb-city-locate-msg a{color:var(--primary);font-weight:700;text-decoration:none;}
     </style>
 </head>
@@ -115,195 +106,147 @@
           </text>
         </svg>
       </a>
+
+      {% comment %}
+        Market selector. Same IDs as before so the existing switcher JS keeps
+        driving it; it just lives in the header now that the left sidebar is gone.
+      {% endcomment %}
+      <div class="nav-market" id="sb-city-switcher">
+        <button class="nav-market-btn" id="sb-city-btn" aria-haspopup="listbox" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
+          <span id="sb-city-label">Dallas–Fort Worth</span>
+          <svg class="nav-market-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="sb-city-dropdown" id="sb-city-dropdown" hidden>
+          <button type="button" class="sb-city-locate" id="sb-city-locate">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="flex-shrink:0"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+            <span id="sb-city-locate-label">Use my location</span>
+          </button>
+          <div class="sb-city-locate-msg" id="sb-city-locate-msg" hidden></div>
+          <input class="sb-city-search" type="text" id="sb-city-search" placeholder="Search city…" autocomplete="off">
+          <ul class="sb-city-list" id="sb-city-list">
+            <li class="sb-city-all" data-city="">All DFW</li>
+            <li data-city="Irving">Irving</li>
+            <li data-city="Dallas">Dallas</li>
+            <li data-city="Frisco">Frisco</li>
+            <li data-city="Plano">Plano</li>
+            <li data-city="Fort Worth">Fort Worth</li>
+            <li data-city="Arlington">Arlington</li>
+            <li data-city="Garland">Garland</li>
+            <li data-city="McKinney">McKinney</li>
+            <li data-city="Denton">Denton</li>
+            <li data-city="Allen">Allen</li>
+            <li data-city="Carrollton">Carrollton</li>
+            <li data-city="Grand Prairie">Grand Prairie</li>
+          </ul>
+        </div>
+      </div>
     </div>
 
-    {# ── Rent / Buy centered tab switcher ── #}
-    <div class="nav-tabs">
+    {# ── Primary discovery nav ── #}
+    <nav class="nav-tabs" aria-label="Browse">
       <a href="{% url 'listing_list' %}?category=rentals"
-         class="nav-tab {% if request.GET.category == 'rentals' or not request.GET.category and request.resolver_match.url_name == 'listing_list' %}nav-tab-active{% endif %}">
-        <span class="nav-tab-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" role="img" width="18" height="18"
-               stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="15.5" cy="8.5" r="3.5"></circle>
-            <path d="M13 11 4 20"></path>
-            <path d="M6.5 17.5 9 20"></path>
-            <path d="M8.8 15.2 11.3 17.7"></path>
-          </svg>
-        </span>
-        <span class="nav-tab-label">Rent</span>
-      </a>
+         class="nav-tab {% if request.GET.category == 'rentals' or not request.GET.category and request.resolver_match.url_name == 'listing_list' %}nav-tab-active{% endif %}">Rent</a>
       <a href="{% url 'listing_list' %}?category=properties"
-         class="nav-tab {% if request.GET.category == 'properties' %}nav-tab-active{% endif %}">
-        <span class="nav-tab-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" role="img" width="18" height="18"
-               stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 10.5 12 4l8 6.5"></path>
-            <path d="M6.5 9.5V20h11V9.5"></path>
-            <path d="M10 20v-5h4v5"></path>
-          </svg>
-        </span>
-        <span class="nav-tab-label">Buy</span>
+         class="nav-tab {% if request.GET.category == 'properties' %}nav-tab-active{% endif %}">Buy</a>
+      <a href="{% url 'listing_list' %}?category=roommates"
+         class="nav-tab {% if request.GET.category == 'roommates' %}nav-tab-active{% endif %}">Roommates</a>
+      <a href="{% url 'guided_search' %}"
+         class="nav-tab nav-tab-ai {% if request.resolver_match.url_name == 'guided_search' %}nav-tab-active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9zM18.5 14l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg>
+        AI Guided Search
       </a>
-    </div>
+    </nav>
 
     <div class="nav-links">
-      <button type="button" class="nav-text-btn" data-theme-toggle title="Toggle dark/light mode">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
-        Theme
+      <button type="button" class="nav-icon-btn" data-theme-toggle title="Toggle dark/light mode" aria-label="Toggle dark or light mode">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
       </button>
-      {% if user.is_authenticated %}
-        {% if user.is_superuser %}
-        <a href="{% url 'portal_dashboard' %}" style="font-weight:700;color:var(--primary);font-size:.82rem;padding:.4rem .75rem;border-radius:8px;background:rgba(42,126,242,.08);">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="vertical-align:middle;margin-right:2px" aria-hidden="true"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
-          Admin
-        </a>
-        {% endif %}
-        <form method="post" action="{% url 'logout' %}" style="display:inline;">
-          {% csrf_token %}
-          <button type="submit" class="nav-text-btn">Sign out</button>
-        </form>
-      {% else %}
-        <a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" class="nav-text-btn" style="font-weight:600;">Sign in</a>
-        <a href="{% url 'register' %}" class="button" style="padding:.45rem 1.1rem;font-size:.85rem;">Get started</a>
+
+      {% if not user.is_authenticated %}
+        <a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" class="nav-signin">Sign in</a>
       {% endif %}
+
+      <a href="{% url 'create_listing' %}" class="nav-cta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M3 10.2 12 3.5l9 6.7V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M12 10.5v6M9 13.5h6"/></svg>
+        Post Listing
+      </a>
+
+      {% comment %}
+        Account menu. This is where the old left sidebar went: every destination
+        it held is reachable from here.
+      {% endcomment %}
+      <div class="nav-account">
+        <button type="button" class="nav-avatar" id="nav-account-btn" aria-haspopup="menu" aria-expanded="false"
+                aria-label="{% if user.is_authenticated %}Account menu{% else %}Sign in menu{% endif %}">
+          {% if user.is_authenticated %}{{ user.get_full_name|default:user.username|first|upper }}{% else %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="17" height="17" aria-hidden="true"><path d="M20 21v-1.8a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7.2" r="4.2"/></svg>
+          {% endif %}
+        </button>
+
+        <div class="nav-menu" id="nav-account-menu" role="menu" hidden>
+          {% if user.is_authenticated %}
+            <div class="nav-menu-id">
+              <div class="nav-menu-avatar">{{ user.get_full_name|default:user.username|first|upper }}</div>
+              <div>
+                <span class="nav-menu-name">{{ user.get_full_name|default:user.username }}</span>
+                <span class="nav-menu-role">{% if user.is_superuser %}Admin{% elif user.is_staff %}Agent{% else %}Member{% endif %}</span>
+              </div>
+            </div>
+
+            <div class="nav-menu-group">
+              <span class="nav-menu-label">Discover</span>
+              <a role="menuitem" href="{% url 'home' %}">Home</a>
+              <a role="menuitem" href="{% url 'guided_search' %}">Guided Search</a>
+              <a role="menuitem" href="{% url 'saved_listings' %}">Saved</a>
+              <a role="menuitem" href="{% url 'inbox' %}">Messages{% if sb_unread_message_count %}<span class="nav-menu-badge">{{ sb_unread_message_count }}</span>{% endif %}</a>
+            </div>
+
+            <div class="nav-menu-group">
+              <span class="nav-menu-label">Listings</span>
+              <a role="menuitem" href="{% url 'my_listings' %}">My Listings</a>
+              <a role="menuitem" href="{% url 'create_listing' %}">Post a Listing</a>
+              <a role="menuitem" href="{% url 'create_community' %}">List a Community</a>
+              <a role="menuitem" href="{% url 'my_communities' %}">My Communities</a>
+              <a role="menuitem" href="{% url 'inquiries_overview' %}">Inquiries{% if sb_inquiry_count %}<span class="nav-menu-badge">{{ sb_inquiry_count }}</span>{% endif %}</a>
+              <a role="menuitem" href="{% url 'performance' %}">Performance</a>
+              {% if user.is_staff and not user.is_superuser %}
+              <a role="menuitem" href="{% url 'agent_dashboard' %}">Agent Dashboard</a>
+              {% endif %}
+            </div>
+
+            <div class="nav-menu-group">
+              <span class="nav-menu-label">Account</span>
+              <a role="menuitem" href="{% url 'profile' %}">Profile settings</a>
+              {% if user.is_superuser %}<a role="menuitem" href="{% url 'portal_dashboard' %}">Admin portal</a>{% endif %}
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" role="menuitem" class="nav-menu-signout">Sign out</button>
+              </form>
+            </div>
+          {% else %}
+            <div class="nav-menu-group">
+              <span class="nav-menu-label">Discover</span>
+              <a role="menuitem" href="{% url 'home' %}">Home</a>
+              <a role="menuitem" href="{% url 'guided_search' %}">Guided Search</a>
+              <a role="menuitem" href="{% url 'listing_list' %}?category=rentals">Rentals</a>
+              <a role="menuitem" href="{% url 'listing_list' %}?category=properties">Homes for Sale</a>
+              <a role="menuitem" href="{% url 'listing_list' %}?category=roommates">Roommates</a>
+            </div>
+            <div class="nav-menu-group">
+              <span class="nav-menu-label">Account</span>
+              <a role="menuitem" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Sign in</a>
+              <a role="menuitem" href="{% url 'register' %}">Create an account</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </nav>
 </div>
 
 {# ── SITE BODY: sidebar + main ── #}
 <div class="site-body">
-
-  {# ── LEFT SIDEBAR ── #}
-  <aside class="app-sidebar" id="app-sidebar" aria-label="Site navigation">
-
-    {# DFW city switcher #}
-    <div class="sb-city-switcher">
-      <button class="sb-city-btn" id="sb-city-btn" aria-haspopup="listbox" aria-expanded="false">
-        {% comment %}
-          Both icons were filled Material glyphs at 13px and 10px, against the
-          18px stroked set the nav below now uses: four icon sizes and two
-          families in one 240px column. Matched to the nav set.
-        {% endcomment %}
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="color:var(--primary);flex-shrink:0" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
-        <span id="sb-city-label">Dallas–Fort Worth</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-      </button>
-      <div class="sb-city-dropdown" id="sb-city-dropdown" hidden>
-        <button type="button" class="sb-city-locate" id="sb-city-locate">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="flex-shrink:0"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
-          <span id="sb-city-locate-label">Use my location</span>
-        </button>
-        <div class="sb-city-locate-msg" id="sb-city-locate-msg" hidden></div>
-        <input class="sb-city-search" type="text" id="sb-city-search" placeholder="🔍 Search city…" autocomplete="off">
-        <ul class="sb-city-list" id="sb-city-list">
-          <li class="sb-city-all" data-city="">All DFW</li>
-          <li data-city="Irving">Irving</li>
-          <li data-city="Dallas">Dallas</li>
-          <li data-city="Frisco">Frisco</li>
-          <li data-city="Plano">Plano</li>
-          <li data-city="Fort Worth">Fort Worth</li>
-          <li data-city="Arlington">Arlington</li>
-          <li data-city="Garland">Garland</li>
-          <li data-city="McKinney">McKinney</li>
-          <li data-city="Denton">Denton</li>
-          <li data-city="Allen">Allen</li>
-          <li data-city="Carrollton">Carrollton</li>
-          <li data-city="Grand Prairie">Grand Prairie</li>
-        </ul>
-      </div>
-    </div>
-
-    {# Discover section #}
-    <div class="sb-section">
-      <span class="sb-label">Discover</span>
-      <a href="{% url 'home' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'home' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M3 9.8 12 3l9 6.8V20a1 1 0 0 1-1 1h-4.5v-6.2h-7V21H4a1 1 0 0 1-1-1z"/></svg></span> Home
-      </a>
-      <a href="{% url 'guided_search' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'guided_search' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4-4"/></svg></span> Guided Search
-      </a>
-{% if user.is_authenticated %}
-      <a href="{% url 'saved_listings' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'saved_listings' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M19 13.6c1.4-1.4 2.8-3 2.8-5.2A5.2 5.2 0 0 0 16.6 3c-1.7 0-2.9.5-4.6 2.1C10.3 3.5 9.1 3 7.4 3A5.2 5.2 0 0 0 2.2 8.4c0 2.2 1.4 3.8 2.8 5.2L12 20.8z"/></svg></span> Saved
-      </a>
-      <a href="{% url 'inbox' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'inbox' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M21 14.5a2 2 0 0 1-2 2H7.5L3 21V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span> Messages
-        {% if sb_unread_message_count %}<span class="sb-badge">{{ sb_unread_message_count }}</span>{% endif %}
-      </a>
-      {% endif %}
-    </div>
-
-    {# Listings section — authenticated users only #}
-    {% if user.is_authenticated %}
-    <div class="sb-section">
-      <span class="sb-label">Listings</span>
-      <a href="{% url 'my_listings' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'my_listings' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M8.5 6H21M8.5 12H21M8.5 18H21"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></span> My Listings
-      </a>
-      <a href="{% url 'create_listing' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'create_listing' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8.2v7.6M8.2 12h7.6"/></svg></span> Post a Listing
-      </a>
-      <a href="{% url 'create_community' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'create_community' or request.resolver_match.url_name == 'edit_community' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M4 21V5.5A1.5 1.5 0 0 1 5.5 4h6A1.5 1.5 0 0 1 13 5.5V21"/><path d="M13 10h5.5A1.5 1.5 0 0 1 20 11.5V21"/><path d="M2.5 21h19"/><path d="M7 8h2.5M7 12h2.5M7 16h2.5M16 14h1.5M16 17.5h1.5"/></svg></span> List a Community
-      </a>
-      <a href="{% url 'my_communities' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'my_communities' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg></span> My Communities
-      </a>
-      <a href="{% url 'inquiries_overview' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'inquiries_overview' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M14.5 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7.5z"/><path d="M14.5 2.5v5h5"/><path d="M8.5 13h7M8.5 17h4.5"/></svg></span>
-        Inquiries
-        {% if sb_inquiry_count %}<span class="sb-badge">{{ sb_inquiry_count }}</span>{% endif %}
-      </a>
-      {% if user.is_staff and not user.is_superuser %}
-      <a href="{% url 'agent_dashboard' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'agent_dashboard' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M3.5 3.5v17h17"/><path d="M7.5 16.5v-4M12 16.5v-8M16.5 16.5v-5.5"/></svg></span> Agent Dashboard
-      </a>
-      {% endif %}
-    </div>
-    <div class="sb-section">
-      <span class="sb-label">Analytics</span>
-      <a href="{% url 'performance' %}"
-         class="sb-link {% if request.resolver_match.url_name == 'performance' %}sb-active{% endif %}">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="m22 7.5-7.5 7.5-4-4L2 19.5"/><path d="M16 7.5h6v6"/></svg></span> Performance
-      </a>
-    </div>
-    {% endif %}
-
-    {# Sidebar footer: authenticated user info only #}
-    {% if user.is_authenticated %}
-    <div class="sb-footer">
-      <div class="sb-footer-user">
-        <div class="sb-avatar">{{ user.get_full_name|default:user.username|first|upper }}</div>
-        <div class="sb-footer-user-info">
-          <span class="sb-footer-name">{{ user.get_full_name|default:user.username }}</span>
-          <span class="sb-footer-role">{% if user.is_superuser %}Admin{% elif user.is_staff %}Agent{% else %}Member{% endif %}</span>
-        </div>
-      </div>
-      <a href="{% url 'profile' %}" class="sb-link" style="margin-bottom:2px;">
-        <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M20 21v-1.8a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7.2" r="4.2"/></svg></span>
-        Profile settings
-      </a>
-      <form method="post" action="{% url 'logout' %}">
-        {% csrf_token %}
-        <button type="submit" class="sb-link" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;font-size:1rem;color:var(--text);padding:.5rem .65rem;border-radius:8px;display:flex;align-items:center;gap:.65rem;">
-          <span class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M9.5 21H5.5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16.5 16.5 4.5-4.5-4.5-4.5"/><path d="M21 12H9.5"/></svg></span>
-          Sign out
-        </button>
-      </form>
-    </div>
-    {% endif %}
-
-  </aside>
 
   {# ── MAIN CONTENT ── #}
   <div class="app-content">
@@ -359,72 +302,77 @@
   <div class="site-footer-inner">
     <div class="site-footer-top">
 
-      {# Brand column #}
+      {# Brand column — spans two so the tagline gets a readable measure. #}
       <div class="site-footer-brand-col">
-        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">
-          <svg width="20" height="26" viewBox="0 0 345 420" fill="none" aria-hidden="true">
+        <div class="site-footer-brand">
+          <svg width="22" height="28" viewBox="0 0 345 420" fill="none" aria-hidden="true">
             <path d="M210 55 C130 55 85 115 85 175 C85 270 165 335 200 370 C205 375 210 378 215 378 C220 378 225 375 230 370 C265 335 345 270 345 175 C345 115 290 55 210 55Z" fill="url(#fp2)"/>
             <path d="M190 135 C190 110 205 95 225 95 L225 225 L280 225 C278 245 258 265 220 280 L175 280 L175 145 C175 120 182 105 190 100Z" fill="white"/>
             <defs><linearGradient id="fp2" x1="330" y1="70" x2="110" y2="310" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#62C2FF"/><stop offset="52%" stop-color="#2A7EF2"/><stop offset="100%" stop-color="#1A5DD4"/></linearGradient></defs>
           </svg>
           <span class="site-footer-logo">Listo<em>jo</em></span>
         </div>
-        <p class="site-footer-tagline">DFW's AI-powered home search. Real listings. Smart matching. Zero agency fees.</p>
-        <div class="site-footer-badges">
-          <span class="site-footer-badge">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11" style="color:#5DC228"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Verified listings
-          </span>
-          <span class="site-footer-badge">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11" style="color:#2A7EF2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            AI Match Scores
-          </span>
-        </div>
+        <p class="site-footer-tagline">
+          Dallas–Fort Worth's home search and verified rental exchange. Discover
+          apartments, homes for sale, and curated co-living without commission friction.
+        </p>
+        <span class="site-footer-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="m9 12.5 2.2 2.2L15.5 10"/><circle cx="12" cy="12" r="9"/></svg>
+          Verified listings &amp; direct owners
+        </span>
       </div>
 
-      {# Search column #}
       <div class="site-footer-col">
-        <div class="site-footer-col-title">Search</div>
-        <a href="{% url 'listing_list' %}?category=rentals">Rentals</a>
+        <div class="site-footer-col-title">Rentals</div>
+        <a href="{% url 'listing_list' %}?category=rentals">All DFW Rentals</a>
+        <a href="{% url 'listing_list' %}?category=rentals&amp;bedrooms=1">1-Bedroom Apartments</a>
+        <a href="{% url 'listing_list' %}?category=rentals&amp;max_price=1500">Under $1,500/mo</a>
+        <a href="{% url 'listing_list' %}?category=roommates">Rooms &amp; Co-Living</a>
+      </div>
+
+      <div class="site-footer-col">
+        <div class="site-footer-col-title">Buy &amp; Invest</div>
         <a href="{% url 'listing_list' %}?category=properties">Homes for Sale</a>
-        <a href="{% url 'listing_list' %}?category=roommates">Roommates</a>
-        <a href="{% url 'guided_search' %}">Guided Search</a>
-        <a href="{% url 'listing_list' %}?city=Irving">Irving, TX</a>
-        <a href="{% url 'listing_list' %}?city=Dallas">Dallas, TX</a>
-        <a href="{% url 'listing_list' %}?city=Frisco">Frisco, TX</a>
+        <a href="{% url 'listing_list' %}?category=properties&amp;bedrooms=3">3+ Bedroom Homes</a>
+        <a href="{% url 'listing_list' %}?category=properties&amp;sort=newest">New to Market</a>
+        <a href="{% url 'guided_search' %}">Find My Match</a>
       </div>
 
-      {# List column #}
       <div class="site-footer-col">
-        <div class="site-footer-col-title">For Landlords</div>
+        <div class="site-footer-col-title">DFW Metroplex</div>
+        <a href="{% url 'listing_list' %}?city=Dallas">Dallas Urban Core</a>
+        <a href="{% url 'listing_list' %}?city=Fort Worth">Fort Worth</a>
+        <a href="{% url 'listing_list' %}?city=Plano">Plano &amp; Frisco</a>
+        <a href="{% url 'listing_list' %}?city=Irving">Irving &amp; Las Colinas</a>
+      </div>
+
+      <div class="site-footer-col">
+        <div class="site-footer-col-title">Landlords &amp; AI</div>
         <a href="{% url 'create_listing' %}">Post a Listing</a>
         <a href="{% url 'create_community' %}">List a Community</a>
+        <a href="{% url 'guided_search' %}">AI Match Engine</a>
         {% if user.is_authenticated %}
-        <a href="{% url 'my_listings' %}">My Listings</a>
         <a href="{% url 'inquiries_overview' %}">Inquiries</a>
-        <a href="{% url 'performance' %}">Performance</a>
+        {% else %}
+        <a href="{% url 'register' %}">Create an account</a>
         {% endif %}
       </div>
 
-      {# Company column #}
       <div class="site-footer-col">
         <div class="site-footer-col-title">Company</div>
         <a href="{% url 'about' %}">About Listojo</a>
-        <a href="#">How it Works</a>
-        <a href="#">DFW Coverage</a>
         <a href="{% url 'terms' %}">Terms of Service</a>
         <a href="{% url 'privacy' %}">Privacy Policy</a>
-        <a href="#">Contact Us</a>
       </div>
 
     </div>
 
     <div class="site-footer-bottom">
-      <span class="site-footer-copy">© 2026 Listojo, Inc. Dallas–Fort Worth, TX. All rights reserved.</span>
-      <nav style="display:flex;gap:1rem;" aria-label="Footer legal links">
-        <a href="{% url 'terms' %}" style="font-size:.72rem;color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Terms</a>
-        <a href="{% url 'privacy' %}" style="font-size:.72rem;color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Privacy</a>
-        <a href="#" style="font-size:.72rem;color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Sitemap</a>
+      <span class="site-footer-copy">© 2026 Listojo, Inc. Dallas–Fort Worth, TX. All rights reserved. Equal Housing Opportunity.</span>
+      <nav class="site-footer-legal" aria-label="Footer legal links">
+        <a href="{% url 'privacy' %}">Privacy Policy</a>
+        <a href="{% url 'terms' %}">Terms of Service</a>
+        <a href="{% url 'about' %}">Fair Housing Notice</a>
       </nav>
     </div>
   </div>
@@ -665,6 +613,44 @@
     });
     wrap.addEventListener('click', function() { textInput.focus(); });
     renderChips();
+  });
+})();
+</script>
+<script>
+/* ── Account menu ──
+   The header dropdown that replaced the left sidebar. Click to open, and it
+   closes on outside click, on Escape and on focus leaving it, so it never
+   strands a keyboard user inside an invisible panel. */
+(function(){
+  var btn  = document.getElementById('nav-account-btn');
+  var menu = document.getElementById('nav-account-menu');
+  if (!btn || !menu) return;
+
+  function open(){
+    menu.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+  }
+  function close(){
+    menu.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+  }
+  function isOpen(){ return !menu.hidden; }
+
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    isOpen() ? close() : open();
+  });
+
+  document.addEventListener('click', function(e){
+    if (isOpen() && !menu.contains(e.target) && e.target !== btn) close();
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && isOpen()) { close(); btn.focus(); }
+  });
+
+  menu.addEventListener('focusout', function(e){
+    if (isOpen() && !menu.contains(e.relatedTarget) && e.relatedTarget !== btn) close();
   });
 })();
 </script>

@@ -10,14 +10,14 @@
   box-sizing: border-box;
   padding: .55rem;
   border-radius: 8px;
-  background: #182B52;
+  background: var(--text);
   color: #fff;
   font-size: .85rem;
   font-weight: 700;
   text-decoration: none;
   transition: background .18s ease;
 }
-.card-btn-rent:hover { background: #2A7EF2; color: #fff; }
+.card-btn-rent:hover { background: var(--primary); color: #fff; }
 .card-btn-sale {
   display: block;
   text-align: center;
@@ -25,7 +25,7 @@
   box-sizing: border-box;
   padding: .55rem;
   border-radius: 8px;
-  background: #182B52;
+  background: var(--text);
   color: #fff;
   font-size: .85rem;
   font-weight: 700;
@@ -161,7 +161,7 @@
 .home-city-pill:hover {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(42,126,242,.06);
+  background: rgba(37,99,235,.06);
 }
 
 /* ── Landlord CTA hero ────────────────────────────────────── */
@@ -201,131 +201,213 @@
 }
 </style>
 
-{# ── HERO CAROUSEL ─────────────────────────────────────────────── #}
-<section id="home-hero-carousel" aria-label="Featured properties">
+{% comment %}
+  HERO. Was a full-bleed dark photo carousel with the copy laid over it. The
+  reference design puts the search console itself in the hero on a light
+  surface, with one honest listing card beside it as proof, so the first thing
+  on the page is the thing people came to do rather than a slideshow.
+{% endcomment %}
+<section class="hero-split" aria-label="Search Dallas–Fort Worth homes">
 
-  {# Slides — all 12 photos, 5s each = 60s full cycle #}
-  <div class="hc-slide hc-active" style="background-image:url('{% static 'images/hero/sean-pollock-PhYq704ffdA-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/avi-waxman-f9qZuKoZYoY-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/francesca-tosolini-tHkJAMcO3QE-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/zac-gudakov-UPbYh3A5cdg-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/breno-assis-r3WAWU5Fi5Q-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/minh-pham-OtXADkUh3-I-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/dillon-kydd-2keCPb73aQY-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/lotus-design-n-print-wRzBarqn3hs-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/spacejoy-9M66C_w_ToM-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/lotus-design-n-print-0sDzRgrN_pI-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/francesca-tosolini-qnSTxcs0EEs-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/maria-ziegler-jJnZg7vBfMs-unsplash.jpg' %}');"></div>
+  {# Soft colour wash. Purely decorative, sits behind everything. #}
+  <div class="hero-wash hero-wash-a" aria-hidden="true"></div>
+  <div class="hero-wash hero-wash-b" aria-hidden="true"></div>
 
-  {# Dark gradient overlay #}
-  <div class="hc-overlay" aria-hidden="true"></div>
+  <div class="hero-split-inner">
 
-  {# Hero text content #}
-  <div class="hc-content">
-    <p class="hc-eyebrow">Dallas–Fort Worth's Premier Home Search</p>
-    <h1 class="hc-headline">Find your next home<br>with confidence.</h1>
-    <p class="hc-subline">Real listings. Smart match scoring. No noise.<br>We show you why each home fits — so you decide fast.</p>
+    {# ── Left: copy + search console ── #}
+    <div class="hero-lead">
 
-    <div class="hc-ctas">
-      <a href="{% url 'guided_search' %}" class="hc-btn-primary">
-        Start guided search &rarr;
-      </a>
-      <a href="{% url 'listing_list' %}?category=rentals" class="hc-btn-ghost">
-        <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="15.5" cy="8.5" r="3.5"/><path d="M13 11 4 20"/><path d="M6.5 17.5 9 20"/><path d="M8.8 15.2 11.3 17.7"/></svg>
-        Rentals
-      </a>
-      <a href="{% url 'listing_list' %}?category=properties" class="hc-btn-ghost">
-        <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5"/><path d="M6.5 9.5V20h11V9.5"/><path d="M10 20v-5h4v5"/></svg>
-        Homes for Sale
-      </a>
+      <p class="hero-eyebrow">
+        <span class="hero-eyebrow-dot" aria-hidden="true"></span>
+        Dallas–Fort Worth's Premier Home Search
+      </p>
+
+      <h1 class="hero-display">
+        Find your next home<br>
+        <span class="hero-display-accent">with confidence.</span>
+      </h1>
+
+      <p class="hero-split-sub">
+        Real listings. Smart match scoring. No noise. We show you exactly why each
+        home fits your lifestyle — so you decide fast.
+      </p>
+
+      {# ── Search console ── #}
+      <form class="hero-console" action="{% url 'listing_list' %}" method="get" role="search">
+
+        <div class="hero-console-tabs" role="tablist" aria-label="What are you looking for?">
+          <label class="hero-tab">
+            <input type="radio" name="category" value="rentals" checked>
+            <span>Rentals</span>
+          </label>
+          <label class="hero-tab">
+            <input type="radio" name="category" value="properties">
+            <span>Homes for Sale</span>
+          </label>
+          <label class="hero-tab">
+            <input type="radio" name="category" value="roommates">
+            <span>Rooms</span>
+          </label>
+        </div>
+
+        <div class="hero-console-row">
+          <div class="hero-field hero-field-loc">
+            <svg class="hero-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
+            <span class="hero-field-body">
+              <label class="hero-field-label" for="hero-city">Metroplex / City</label>
+              <input class="hero-field-input" id="hero-city" type="text" name="city"
+                     placeholder="Dallas, Irving, Frisco, Plano…" autocomplete="off">
+            </span>
+          </div>
+
+          <div class="hero-field">
+            <span class="hero-field-body">
+              <label class="hero-field-label" for="hero-budget">Max Budget</label>
+              <select class="hero-field-select" id="hero-budget" name="max_price">
+                <option value="">Any budget</option>
+                <option value="1500">$1,500/mo</option>
+                <option value="2500" selected>$2,500/mo</option>
+                <option value="4000">$4,000/mo</option>
+              </select>
+            </span>
+          </div>
+
+          <div class="hero-field">
+            <span class="hero-field-body">
+              <label class="hero-field-label" for="hero-beds">Bedrooms</label>
+              <select class="hero-field-select" id="hero-beds" name="bedrooms">
+                <option value="">Any beds</option>
+                <option value="1">1+ Bed</option>
+                <option value="2">2+ Beds</option>
+                <option value="3">3+ Beds</option>
+              </select>
+            </span>
+          </div>
+
+          <button type="submit" class="hero-console-submit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4-4"/></svg>
+            Search homes
+          </button>
+        </div>
+
+        <a class="hero-console-ai" href="{% url 'guided_search' %}">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9zM18.5 14l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg>
+          Or let AI Guided Search narrow it for you
+          <span aria-hidden="true">&rarr;</span>
+        </a>
+      </form>
+
+      {# ── Quick search chips ── #}
+      <div class="hero-chips">
+        <span class="hero-chips-label">Quick search:</span>
+        <a href="{% url 'listing_list' %}?category=rentals" class="hero-chip">Rentals</a>
+        <a href="{% url 'listing_list' %}?category=properties" class="hero-chip">For Sale</a>
+        <a href="{% url 'listing_list' %}?category=roommates" class="hero-chip">Rooms</a>
+        <a href="{% url 'listing_list' %}?bedrooms=1" class="hero-chip">1 Bed</a>
+        <a href="{% url 'listing_list' %}?bedrooms=2" class="hero-chip">2 Bed</a>
+        <a href="{% url 'listing_list' %}?bedrooms=3" class="hero-chip">3+ Bed</a>
+        <a href="{% url 'listing_list' %}?max_price=1500" class="hero-chip">Under $1,500</a>
+        <a href="{% url 'listing_list' %}?max_price=2500" class="hero-chip">Under $2,500</a>
+      </div>
     </div>
 
-    <div class="hc-stats">
-      <div>
-        <span class="hc-stat-num">{{ stats.listing_count|default:0 }}+</span>
-        <span class="hc-stat-lbl">Active listings</span>
-      </div>
-      <div>
-        <span class="hc-stat-num">{{ stats.city_count|default:0 }}</span>
-        <span class="hc-stat-lbl">DFW cities</span>
-      </div>
-      <div>
-        <span class="hc-stat-num">{{ stats.landlord_count|default:0 }}+</span>
-        <span class="hc-stat-lbl">Verified owners</span>
-      </div>
-      <div>
-        <span class="hc-stat-num" style="font-size:.9rem;line-height:1.3;color:rgba(255,255,255,.85);">No agency<br>fees. Ever.</span>
-        <span class="hc-stat-lbl">&nbsp;</span>
-      </div>
-    </div>
-  </div>
+    {% comment %}
+      Right: one real listing, not a stock illustration. It is the first
+      trending rental, so the card on the marketing page and the card in the
+      results are the same listing with the same price.
+    {% endcomment %}
+    {% with feature=trending_rentals.0 %}
+    {% if feature %}
+    <aside class="hero-feature" aria-label="Featured listing">
+      <a class="hero-feature-card" href="{% url 'listing_detail' feature.pk %}">
 
-  {# Navigation dots — one per slide #}
-  <div class="hc-dots" role="tablist" aria-label="Slide navigation">
-    <button class="hc-dot hc-dot-active" data-slide="0" role="tab" aria-label="Slide 1" aria-selected="true"></button>
-    <button class="hc-dot" data-slide="1" role="tab" aria-label="Slide 2"></button>
-    <button class="hc-dot" data-slide="2" role="tab" aria-label="Slide 3"></button>
-    <button class="hc-dot" data-slide="3" role="tab" aria-label="Slide 4"></button>
-    <button class="hc-dot" data-slide="4" role="tab" aria-label="Slide 5"></button>
-    <button class="hc-dot" data-slide="5" role="tab" aria-label="Slide 6"></button>
-    <button class="hc-dot" data-slide="6" role="tab" aria-label="Slide 7"></button>
-    <button class="hc-dot" data-slide="7" role="tab" aria-label="Slide 8"></button>
-    <button class="hc-dot" data-slide="8" role="tab" aria-label="Slide 9"></button>
-    <button class="hc-dot" data-slide="9" role="tab" aria-label="Slide 10"></button>
-    <button class="hc-dot" data-slide="10" role="tab" aria-label="Slide 11"></button>
-    <button class="hc-dot" data-slide="11" role="tab" aria-label="Slide 12"></button>
-  </div>
+        {% with img=feature.images.all.0 %}
+        {% if img %}
+          <img class="hero-feature-photo" src="{{ img.image.url }}" alt="{{ feature.title }}" loading="eager">
+        {% elif feature.image %}
+          <img class="hero-feature-photo" src="{{ feature.image.url }}" alt="{{ feature.title }}" loading="eager">
+        {% else %}
+          <span class="hero-feature-photo hero-feature-photo-empty" role="img" aria-label="No photo provided"></span>
+        {% endif %}
+        {% endwith %}
 
-  {# Progress bar #}
-  <div class="hc-progress" aria-hidden="true"><div class="hc-progress-bar" id="hc-progress-bar"></div></div>
+        <span class="hero-feature-scrim" aria-hidden="true"></span>
+
+        <span class="hero-feature-badge">
+          <span class="hero-feature-badge-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="m9 12.5 2.2 2.2L15.5 10"/><circle cx="12" cy="12" r="9"/></svg>
+          </span>
+          <span class="hero-feature-badge-text">
+            <span class="hero-feature-badge-title">AI Match Engine<span class="hero-feature-pulse" aria-hidden="true"></span></span>
+            <span class="hero-feature-badge-sub">Real-time compatibility index</span>
+          </span>
+          <span class="hero-feature-fit">Verified</span>
+        </span>
+
+        <span class="hero-feature-foot">
+          <span class="hero-feature-foot-top">
+            <span class="hero-feature-price">
+              ${{ feature.price|floatformat:0|intcomma }}{% if feature.price_unit %}<span class="hero-feature-per">{{ feature.get_price_unit_display }}</span>{% endif %}
+            </span>
+            <span class="hero-feature-avail">Available now</span>
+          </span>
+          <span class="hero-feature-title">{{ feature.title }}</span>
+          <span class="hero-feature-foot-bottom">
+            <span class="hero-feature-verified">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z" opacity=".22"/><path d="m8.6 12.2 2.3 2.3 4.5-4.6" stroke="currentColor" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Verified owner
+            </span>
+            <span class="hero-feature-loc">{{ feature.city }}{% if feature.state %}, {{ feature.state }}{% endif %}</span>
+          </span>
+        </span>
+      </a>
+    </aside>
+    {% endif %}
+    {% endwith %}
+
+  </div>
 </section>
 
-{# ── QUICK FILTER BAR (Zumper-style) ─────────────────────────── #}
-<div class="qfb-wrap">
-  <span class="qfb-label">Quick search:</span>
-  <a href="{% url 'listing_list' %}?category=rentals" class="qfb-pill">
-    <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="opacity:.7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
-    Rentals
-  </a>
-  <a href="{% url 'listing_list' %}?category=properties" class="qfb-pill">
-    <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="opacity:.7"><path d="M4 10.5 12 4l8 6.5"/><path d="M6.5 9.5V20h11V9.5"/></svg>
-    For Sale
-  </a>
-  <a href="{% url 'listing_list' %}?category=roommates" class="qfb-pill">🚪 Rooms</a>
-  <div class="qfb-divider" aria-hidden="true"></div>
-  <a href="{% url 'listing_list' %}?bedrooms=1" class="qfb-pill">1 Bed</a>
-  <a href="{% url 'listing_list' %}?bedrooms=2" class="qfb-pill">2 Bed</a>
-  <a href="{% url 'listing_list' %}?bedrooms=3" class="qfb-pill">3+ Bed</a>
-  <div class="qfb-divider" aria-hidden="true"></div>
-  <a href="{% url 'listing_list' %}?max_price=1500" class="qfb-pill">Under $1,500</a>
-  <a href="{% url 'listing_list' %}?max_price=2500" class="qfb-pill">Under $2,500</a>
-  <a href="{% url 'guided_search' %}" class="qfb-pill" style="border-color:var(--primary);color:var(--primary);background:rgba(42,126,242,.07);">✦ AI Match</a>
-</div>
-
-{# ── MARKET STATS (DFW snapshot) ──────────────────────────────── #}
-<div class="market-strip" style="margin-bottom:2rem;">
-  <div class="market-stat-cell">
-    <span class="market-stat-num">{{ stats.listing_count|default:0 }}+</span>
-    <span class="market-stat-lbl">Active listings</span>
-    <span class="market-stat-trend trend-up">↑ Live now</span>
+{% comment %}
+  METRICS BAR. Same four numbers as before, rebuilt as the reference design's
+  card grid so the figure leads and the qualifier sits under it, instead of
+  three same-weight lines stacked in a strip.
+{% endcomment %}
+<section class="metrics-bar" aria-label="Dallas–Fort Worth market snapshot">
+  <div class="metric-card">
+    <div class="metric-top">
+      <span class="metric-num">{{ stats.listing_count|default:0 }}+</span>
+      <span class="metric-flag metric-flag-up">&uarr; Live now</span>
+    </div>
+    <span class="metric-label">Active Listings</span>
+    <span class="metric-note">Posted directly by verified property owners</span>
   </div>
-  <div class="market-stat-cell">
-    <span class="market-stat-num">{{ stats.city_count|default:"20" }}</span>
-    <span class="market-stat-lbl">DFW cities covered</span>
-    <span class="market-stat-trend trend-flat">DFW metroplex</span>
+  <div class="metric-card">
+    <div class="metric-top">
+      <span class="metric-num metric-num-primary">{{ stats.city_count|default:0 }}</span>
+      <span class="metric-flag">DFW metroplex</span>
+    </div>
+    <span class="metric-label">Cities Covered</span>
+    <span class="metric-note">Irving, Dallas, Frisco, Plano, Fort Worth &amp; more</span>
   </div>
-  <div class="market-stat-cell">
-    <span class="market-stat-num">{{ stats.landlord_count|default:0 }}+</span>
-    <span class="market-stat-lbl">Verified owners</span>
-    <span class="market-stat-trend trend-down">✓ Direct contact</span>
+  <div class="metric-card">
+    <div class="metric-top">
+      <span class="metric-num metric-num-accent">{{ stats.landlord_count|default:0 }}+</span>
+      <span class="metric-flag metric-flag-ok">&check; Direct</span>
+    </div>
+    <span class="metric-label">Verified Owners</span>
+    <span class="metric-note">No anonymous spam or ghost duplicate posts</span>
   </div>
-  <div class="market-stat-cell">
-    <span class="market-stat-num">$0</span>
-    <span class="market-stat-lbl">Agency fees — ever</span>
-    <span class="market-stat-trend trend-down">No commissions</span>
+  <div class="metric-card">
+    <div class="metric-top">
+      <span class="metric-num">$0</span>
+      <span class="metric-flag metric-flag-ok">Guaranteed</span>
+    </div>
+    <span class="metric-label">Agency Fees, Ever</span>
+    <span class="metric-note">Renters and buyers connect without agent markups</span>
   </div>
-</div>
+</section>
 
 {# ── HOW IT WORKS ───────────────────────────────────────────────── #}
 <section style="margin-bottom:2.5rem;">
@@ -362,95 +444,43 @@
 
 {# ── TRENDING RENTALS ─────────────────────────────────────────── #}
 {% if trending_rentals %}
-<section style="margin-bottom:2.5rem;">
-  <div class="section-header home-sec-hdr" style="margin-bottom:1rem;">
+<section class="home-section">
+  <div class="section-header home-sec-hdr">
     <div class="section-header-left">
       <div class="section-eyebrow eyebrow-blue">Hot in DFW</div>
       <h2 class="section-title-xl">Trending Rentals</h2>
       <p class="section-sub">Most-viewed rentals in the metroplex right now</p>
     </div>
-    <a href="{% url 'listing_list' %}?category=rentals" class="section-link">See all &rarr;</a>
+    <a href="{% url 'listing_list' %}?category=rentals" class="section-link">See all rentals &rarr;</a>
   </div>
-  <div class="home-scroll-row-wrap"><div class="home-scroll-row" style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
-    {% for listing in trending_rentals %}
-    {% with listing.images.all as imgs %}
-    <article class="card listing-card home-listing-card" style="min-width:275px;max-width:275px;flex-shrink:0;">
-      <div class="card-img-wrap" style="position:relative;height:190px;overflow:hidden;flex-shrink:0;border-radius:var(--r) var(--r) 0 0;">
-        {% if imgs %}
-          <img src="{{ imgs.0.image.url }}" alt="{{ listing.title }}" loading="lazy" style="width:100%;height:190px;object-fit:cover;display:block;">
-        {% elif listing.image %}
-          <img src="{{ listing.image.url }}" alt="{{ listing.title }}" loading="lazy" style="width:100%;height:190px;object-fit:cover;display:block;">
-        {% else %}
-          <div class="listing-thumb-placeholder" style="height:190px;" role="img" aria-label="No photo provided"></div>
-        {% endif %}
-        <span style="position:absolute;top:.65rem;left:.65rem;background:rgba(42,126,242,.9);color:#fff;font-size:.68rem;font-weight:700;padding:.25rem .6rem;border-radius:999px;letter-spacing:.04em;">FOR RENT</span>
-        {% if listing.view_count > 20 %}
-        <span style="position:absolute;top:.65rem;right:.65rem;background:rgba(245,158,11,.92);color:#fff;font-size:.66rem;font-weight:700;padding:.25rem .55rem;border-radius:999px;">🔥 Popular</span>
-        {% endif %}
-      </div>
-      <div style="padding:1rem 1rem .9rem;flex:1;display:flex;flex-direction:column;gap:.25rem;">
-        <h3 style="font-size:.9rem;font-weight:700;margin:0;line-height:1.35;font-family:'Montserrat',sans-serif;">
-          <a href="{% url 'listing_detail' listing.pk %}" style="color:var(--text);text-decoration:none;">{{ listing.title|truncatechars:50 }}</a>
-        </h3>
-        <p style="font-size:.76rem;color:var(--text-3);margin:0;">{{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}</p>
-        <p style="font-size:1.15rem;font-weight:800;margin:.15rem 0 0;font-family:'Montserrat',sans-serif;color:var(--primary);">
-          ${{ listing.price|floatformat:0|intcomma }}<span style="font-size:.72rem;font-weight:600;color:var(--text-3);margin-left:.2rem;">/mo</span>
-        </p>
-        <div style="margin-top:auto;padding-top:.6rem;">
-          <a href="{% url 'listing_detail' listing.pk %}" class="card-btn-rent">View listing &rarr;</a>
-        </div>
-      </div>
-    </article>
-    {% endwith %}
-    {% endfor %}
-  </div></div>
+  <div class="home-scroll-row-wrap">
+    <div class="home-scroll-row trend-row">
+      {% for listing in trending_rentals %}
+        {% include 'listings/_trend_card.html' %}
+      {% endfor %}
+    </div>
+  </div>
 </section>
 {% endif %}
 
 {# ── TRENDING PROPERTIES ─────────────────────────────────────── #}
 {% if trending_properties %}
-<section style="margin-bottom:2.5rem;">
-  <div class="section-header home-sec-hdr" style="margin-bottom:1rem;">
+<section class="home-section">
+  <div class="section-header home-sec-hdr">
     <div class="section-header-left">
       <div class="section-eyebrow eyebrow-green">DFW Market</div>
       <h2 class="section-title-xl">Homes for Sale</h2>
       <p class="section-sub">Top-viewed homes on the DFW market</p>
     </div>
-    <a href="{% url 'listing_list' %}?category=properties" class="section-link" style="border-color:#1e8a5c;color:#1e8a5c;">See all &rarr;</a>
+    <a href="{% url 'listing_list' %}?category=properties" class="section-link">See all homes &rarr;</a>
   </div>
-  <div class="home-scroll-row-wrap"><div class="home-scroll-row" style="display:flex;gap:1.1rem;overflow-x:auto;padding-bottom:.75rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
-    {% for listing in trending_properties %}
-    {% with listing.images.all as imgs %}
-    <article class="card listing-card home-listing-card" style="min-width:275px;max-width:275px;flex-shrink:0;">
-      <div class="card-img-wrap" style="position:relative;height:190px;overflow:hidden;flex-shrink:0;border-radius:var(--r) var(--r) 0 0;">
-        {% if imgs %}
-          <img src="{{ imgs.0.image.url }}" alt="{{ listing.title }}" loading="lazy" style="width:100%;height:190px;object-fit:cover;display:block;">
-        {% elif listing.image %}
-          <img src="{{ listing.image.url }}" alt="{{ listing.title }}" loading="lazy" style="width:100%;height:190px;object-fit:cover;display:block;">
-        {% else %}
-          <div class="listing-thumb-placeholder" style="height:190px;" role="img" aria-label="No photo provided"></div>
-        {% endif %}
-        <span style="position:absolute;top:.65rem;left:.65rem;background:rgba(30,138,92,.9);color:#fff;font-size:.68rem;font-weight:700;padding:.25rem .6rem;border-radius:999px;letter-spacing:.04em;">FOR SALE</span>
-        {% if listing.view_count > 20 %}
-        <span style="position:absolute;top:.65rem;right:.65rem;background:rgba(245,158,11,.92);color:#fff;font-size:.66rem;font-weight:700;padding:.25rem .55rem;border-radius:999px;">🔥 Popular</span>
-        {% endif %}
-      </div>
-      <div style="padding:1rem 1rem .9rem;flex:1;display:flex;flex-direction:column;gap:.25rem;">
-        <h3 style="font-size:.9rem;font-weight:700;margin:0;line-height:1.35;font-family:'Montserrat',sans-serif;">
-          <a href="{% url 'listing_detail' listing.pk %}" style="color:var(--text);text-decoration:none;">{{ listing.title|truncatechars:50 }}</a>
-        </h3>
-        <p style="font-size:.76rem;color:var(--text-3);margin:0;">{{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}</p>
-        <p style="font-size:1.15rem;font-weight:800;margin:.15rem 0 0;font-family:'Montserrat',sans-serif;color:#1e8a5c;">
-          ${{ listing.price|floatformat:0|intcomma }}
-        </p>
-        <div style="margin-top:auto;padding-top:.6rem;">
-          <a href="{% url 'listing_detail' listing.pk %}" class="card-btn-sale">View listing &rarr;</a>
-        </div>
-      </div>
-    </article>
-    {% endwith %}
-    {% endfor %}
-  </div></div>
+  <div class="home-scroll-row-wrap">
+    <div class="home-scroll-row trend-row">
+      {% for listing in trending_properties %}
+        {% include 'listings/_trend_card.html' with sale=True %}
+      {% endfor %}
+    </div>
+  </div>
 </section>
 {% endif %}
 
@@ -491,7 +521,7 @@
       </div>
     </div>
 
-    <div class="testimonial-v2" style="border-left:3px solid #1e8a5c;">
+    <div class="testimonial-v2" style="border-left:3px solid var(--accent);">
       <div class="testimonial-stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
       <p class="testimonial-quote">"Listed my condo and had serious inquiries within 48 hours. Zero agency fees, zero headaches. I'm in direct contact with every renter. This is how it should work."</p>
       <div class="testimonial-author">
@@ -507,144 +537,81 @@
   </div>
 </section>
 
-{# ── EXPLORE BY CITY ──────────────────────────────────────────── #}
+{% comment %}
+  EXPLORE BY CITY. Was a row of loose pills. Rebuilt as the reference design's
+  card grid so each city is a target with room to breathe. The "Active" chip is
+  literal: the view only lists cities that have active listings in them.
+{% endcomment %}
 {% if cities %}
-<section style="margin-bottom:2.5rem;">
-  <div class="section-header" style="margin-bottom:1rem;">
+<section class="home-section">
+  <div class="section-header">
     <div class="section-header-left">
       <div class="section-eyebrow eyebrow-blue">DFW Metroplex</div>
       <h2 class="section-title-xl">Explore by City</h2>
-      <p class="section-sub">Listings across the Dallas–Fort Worth area</p>
+      <p class="section-sub">Browse verified listings across the Dallas–Fort Worth metroplex</p>
     </div>
+    <span class="city-grid-count">{{ cities|length }} connected {{ cities|length|pluralize:"city,cities" }}</span>
   </div>
-  <div class="home-cities-row" style="display:flex;flex-wrap:wrap;gap:.5rem;">
+
+  <div class="city-grid">
     {% for city in cities %}
-    <a href="{% url 'listing_list' %}?city={{ city|urlencode }}" class="city-card">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="flex-shrink:0;color:var(--primary);opacity:.7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-      {{ city|title }}
+    <a href="{% url 'listing_list' %}?city={{ city|urlencode }}" class="city-tile">
+      <span class="city-tile-top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
+        <span class="city-tile-flag">Active</span>
+      </span>
+      <span class="city-tile-name">{{ city|title }}</span>
+      <span class="city-tile-sub">Dallas–Fort Worth, TX</span>
     </a>
     {% endfor %}
   </div>
 </section>
 {% endif %}
 
-{# ── PROPERTY ALERT BANNER (Redfin-inspired) ─────────────────── #}
+{# ── SAVED-SEARCH ALERTS ──────────────────────────────────────── #}
 {% if not user.is_authenticated %}
-<div class="alert-setup-strip" style="margin-bottom:2rem;">
-  <span class="alert-setup-icon">🔔</span>
-  <div>
-    <div class="alert-setup-text">Get notified when new DFW listings match your criteria</div>
-    <div class="alert-setup-sub">Create a free account and we'll alert you the moment a perfect match appears</div>
+<section class="alerts-band">
+  <span class="alerts-band-mark" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M18 8.6a6 6 0 1 0-12 0c0 6.4-2.5 8.2-2.5 8.2h17S18 15 18 8.6"/><path d="M13.7 20.5a2 2 0 0 1-3.4 0"/></svg>
+  </span>
+  <div class="alerts-band-copy">
+    <p class="alerts-band-title">Get notified when new DFW listings match your criteria</p>
+    <p class="alerts-band-sub">Create a free search profile and we'll alert you the minute a verified listing meets your parameters.</p>
   </div>
-  <a href="{% url 'register' %}" class="alert-setup-btn">Set up alerts &rarr;</a>
-</div>
+  <a href="{% url 'register' %}" class="alerts-band-btn">Set up alerts &rarr;</a>
+</section>
 {% endif %}
 
-{# ── LANDLORD CTA ─────────────────────────────────────────────── #}
-<section id="home-landlord-cta" class="hero">
-  <div aria-hidden="true" style="position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;pointer-events:none;">
-    <svg viewBox="0 0 1200 180" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" fill="rgba(255,255,255,.05)" style="position:absolute;bottom:0;left:0;width:100%;">
+{% comment %}
+  LANDLORD CTA. Same two actions as before on the reference design's near-black
+  band, with the three reasons to list spelled out rather than implied.
+{% endcomment %}
+<section class="landlord-cta">
+  <div class="landlord-cta-skyline" aria-hidden="true">
+    <svg viewBox="0 0 1200 180" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" fill="rgba(255,255,255,.05)">
       <path d="M 0 180 L 0 158 L 30 158 L 30 148 L 50 148 L 50 155 L 66 155 L 66 122 L 86 122 L 86 110 L 105 110 L 105 122 L 148 122 L 148 130 L 162 130 L 162 108 L 190 108 L 190 118 L 208 118 L 208 95 L 240 95 L 240 108 L 258 108 L 258 85 L 266 85 L 266 38 L 274 38 L 274 25 L 284 25 L 284 16 L 294 16 L 294 11 L 300 11 L 300 16 L 308 16 L 308 25 L 318 25 L 318 38 L 326 38 L 326 85 L 338 85 L 338 96 L 354 96 L 354 72 L 402 72 L 402 90 L 410 90 L 410 12 L 420 12 L 423 4 L 429 4 L 429 12 L 468 12 L 468 65 L 482 65 L 482 50 L 516 50 L 516 65 L 524 65 L 544 28 L 564 65 L 578 65 L 578 55 L 618 55 L 618 70 L 636 70 L 636 44 L 678 44 L 678 60 L 698 60 L 698 74 L 722 74 L 722 90 L 760 90 L 760 102 L 792 102 L 792 84 L 830 84 L 830 98 L 860 98 L 860 112 L 896 112 L 896 124 L 930 124 L 930 110 L 964 110 L 964 122 L 999 122 L 999 134 L 1033 134 L 1033 120 L 1068 120 L 1068 136 L 1103 136 L 1103 146 L 1138 146 L 1138 134 L 1172 134 L 1172 152 L 1200 152 L 1200 180 Z"/>
       <rect x="123" y="40" width="12" height="88"/><circle cx="129" cy="28" r="22"/><rect x="128" y="4" width="2" height="27"/>
     </svg>
   </div>
-  <div style="position:relative;z-index:1;max-width:480px;">
-    <p style="font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#62C2FF;margin:0 0 .6rem;">For landlords &amp; sellers</p>
-    <h2 style="font-size:1.6rem;font-weight:800;margin:0 0 .75rem;line-height:1.2;color:#fff;font-family:'Montserrat',sans-serif;">Have a property to rent or sell?</h2>
-    <p style="font-size:.92rem;color:rgba(255,255,255,.75);margin:0;line-height:1.6;">Search freely. Connect directly. Reach serious tenants and buyers in your city — no agency headaches, no gatekeeping.</p>
+
+  <div class="landlord-cta-copy">
+    <p class="landlord-cta-eyebrow">For landlords &amp; sellers</p>
+    <h2 class="landlord-cta-title">Have a property to rent or sell?</h2>
+    <p class="landlord-cta-sub">
+      Search freely. Connect directly. Reach serious tenants and buyers in your city —
+      no agency headaches, no commissions, no gatekeeping.
+    </p>
+    <ul class="landlord-cta-points">
+      <li>100% free to list your property</li>
+      <li>Match scoring surfaces you to the right renters</li>
+      <li>Direct chat with prospective tenants and buyers</li>
+    </ul>
   </div>
-  <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:.75rem;flex-shrink:0;width:100%;max-width:220px;">
-    <a href="{% url 'create_listing' %}" class="fmm-cta-btn" style="text-align:center;">List a Property &rarr;</a>
-    <a href="{% url 'create_community' %}" class="hero-ghost-btn" style="text-align:center;">List a Community &rarr;</a>
+
+  <div class="landlord-cta-actions">
+    <a href="{% url 'create_listing' %}" class="landlord-cta-btn">List a Property &rarr;</a>
+    <a href="{% url 'create_community' %}" class="landlord-cta-btn landlord-cta-btn-ghost">List a Community &rarr;</a>
   </div>
 </section>
-
-{# ── CAROUSEL JS ─────────────────────────────────────────────── #}
-<script>
-(function () {
-  var carousel = document.getElementById('home-hero-carousel');
-  if (!carousel) return;
-
-  var slides    = carousel.querySelectorAll('.hc-slide');
-  var dots      = carousel.querySelectorAll('.hc-dot');
-  var progBar   = document.getElementById('hc-progress-bar');
-  var total     = slides.length;
-  var current   = 0;
-  var timer     = null;
-  var INTERVAL  = 5000;
-
-  function goTo(idx) {
-    slides[current].classList.remove('hc-active');
-    dots[current].classList.remove('hc-dot-active');
-    dots[current].setAttribute('aria-selected', 'false');
-
-    current = (idx + total) % total;
-
-    slides[current].classList.add('hc-active');
-    dots[current].classList.add('hc-dot-active');
-    dots[current].setAttribute('aria-selected', 'true');
-
-    // Reset + restart progress bar
-    if (progBar) {
-      progBar.classList.remove('hc-running');
-      void progBar.offsetWidth; // reflow to reset transition
-      progBar.classList.add('hc-running');
-    }
-  }
-
-  function startAuto() {
-    clearInterval(timer);
-    timer = setInterval(function () { goTo(current + 1); }, INTERVAL);
-  }
-
-  function stopAuto() { clearInterval(timer); }
-
-  // Dot clicks
-  dots.forEach(function (dot) {
-    dot.addEventListener('click', function () {
-      var idx = parseInt(dot.getAttribute('data-slide'), 10);
-      goTo(idx);
-      startAuto();
-    });
-  });
-
-  // Pause on hover — only when mouse actively moves inside (not on page-load cursor position)
-  var hcHovering = false;
-  carousel.addEventListener('mousemove', function () {
-    if (!hcHovering) { hcHovering = true; stopAuto(); }
-  });
-  carousel.addEventListener('mouseleave', function () {
-    hcHovering = false; startAuto();
-  });
-
-  // Keyboard support
-  carousel.addEventListener('keydown', function (e) {
-    if (e.key === 'ArrowLeft')  { goTo(current - 1); startAuto(); }
-    if (e.key === 'ArrowRight') { goTo(current + 1); startAuto(); }
-  });
-
-  // Touch swipe support
-  var touchStartX = 0;
-  carousel.addEventListener('touchstart', function (e) {
-    touchStartX = e.changedTouches[0].screenX;
-  }, { passive: true });
-  carousel.addEventListener('touchend', function (e) {
-    var dx = e.changedTouches[0].screenX - touchStartX;
-    if (Math.abs(dx) > 40) {
-      goTo(dx < 0 ? current + 1 : current - 1);
-      startAuto();
-    }
-  }, { passive: true });
-
-  // Hide progress bar for users who prefer reduced motion, but still auto-play
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    if (progBar) progBar.style.display = 'none';
-  }
-
-  // Kick off
-  goTo(0);
-  startAuto();
-})();
-</script>
 
 {% endblock %}

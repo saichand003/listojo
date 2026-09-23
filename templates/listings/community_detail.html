@@ -46,13 +46,13 @@
           <div style="text-align:right;flex-shrink:0;">
             {% with community.price_range as pr %}
             {% if pr.0 %}
-            <p style="font-size:1.5rem;font-weight:800;background:var(--price-gradient,linear-gradient(135deg,#2a7ef2,#8b5cf6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">From ${{ pr.0|floatformat:0|intcomma }}<span style="font-size:.85rem;font-weight:500;-webkit-text-fill-color:var(--text-3);background:none;">/mo</span></p>
+            <p style="font-size:1.5rem;font-weight:800;background:var(--price-gradient,linear-gradient(135deg,var(--primary),#8b5cf6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">From ${{ pr.0|floatformat:0|intcomma }}<span style="font-size:.85rem;font-weight:500;-webkit-text-fill-color:var(--text-3);background:none;">/mo</span></p>
             {% else %}
             <p style="font-size:1rem;font-weight:600;color:var(--text-3);margin:0;">Contact for pricing</p>
             {% endif %}
             {% endwith %}
             {% with community.available_unit_count as uc %}
-            {% if uc %}<p style="font-size:.82rem;color:#1e8a5c;font-weight:600;margin:.15rem 0 0;">{{ uc }} unit{{ uc|pluralize }} available</p>{% endif %}
+            {% if uc %}<p style="font-size:.82rem;color:var(--accent);font-weight:600;margin:.15rem 0 0;">{{ uc }} unit{{ uc|pluralize }} available</p>{% endif %}
             {% endwith %}
           </div>
         </div>
@@ -90,7 +90,7 @@
                 </p>
                 {% with fp.available_units.count as avc %}
                 {% if avc %}
-                <span style="font-size:.72rem;color:#1e8a5c;font-weight:700;background:rgba(30,138,92,.1);border-radius:999px;padding:.1rem .5rem;margin-top:.25rem;display:inline-block;">{{ avc }} available</span>
+                <span style="font-size:.72rem;color:var(--accent);font-weight:700;background:rgba(5,150,105,.1);border-radius:999px;padding:.1rem .5rem;margin-top:.25rem;display:inline-block;">{{ avc }} available</span>
                 {% else %}
                 <span style="font-size:.72rem;color:var(--text-3);background:var(--surface-2);border-radius:999px;padding:.1rem .5rem;margin-top:.25rem;display:inline-block;">No units available</span>
                 {% endif %}
@@ -126,7 +126,7 @@
                 <td style="padding:.4rem .5rem;font-weight:600;">{{ unit.unit_number }}</td>
                 <td style="padding:.4rem .5rem;color:var(--text-3);">{% if unit.floor %}{{ unit.floor }}{% else %}—{% endif %}</td>
                 <td style="padding:.4rem .5rem;">{% if unit.price %}${{ unit.price|floatformat:0|intcomma }}/mo{% else %}TBD{% endif %}</td>
-                <td style="padding:.4rem .5rem;color:{% if unit.available_from %}var(--text-2){% else %}#1e8a5c{% endif %};">
+                <td style="padding:.4rem .5rem;color:{% if unit.available_from %}var(--text-2){% else %}var(--accent){% endif %};">
                   {% if unit.available_from %}{{ unit.available_from|date:"M j, Y" }}{% else %}Now{% endif %}
                 </td>
               </tr>
@@ -316,7 +316,7 @@
       b.style.color        = 'var(--text-2)';
       b.style.borderColor  = 'var(--border)';
     });
-    btn.style.background  = 'rgba(42,126,242,.1)';
+    btn.style.background  = 'rgba(37,99,235,.1)';
     btn.style.color       = 'var(--primary)';
     btn.style.borderColor = 'var(--primary)';
     document.getElementById('tour-type-input').value = val;

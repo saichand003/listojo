@@ -111,7 +111,7 @@
     </div>
   </div>
   <div style="display:flex;gap:.6rem;flex-shrink:0;">
-    <button id="agent-cta-yes" onclick="requestAgent()" style="padding:.45rem 1.1rem;border-radius:999px;background:#2A7EF2;color:#fff;border:none;font-size:.82rem;font-weight:700;cursor:pointer;">Talk to an agent →</button>
+    <button id="agent-cta-yes" onclick="requestAgent()" style="padding:.45rem 1.1rem;border-radius:999px;background:var(--primary);color:#fff;border:none;font-size:.82rem;font-weight:700;cursor:pointer;">Talk to an agent →</button>
     <button onclick="dismissAgentCta()" style="padding:.45rem .85rem;border-radius:999px;background:transparent;border:1.5px solid #bfdbfe;color:#4b7ab3;font-size:.82rem;font-weight:600;cursor:pointer;">Browse on my own</button>
   </div>
 </div>
@@ -154,7 +154,7 @@ function dismissAgentCta() {
   </div>
   <div style="display:flex;gap:.55rem;flex-shrink:0;align-items:center;">
     {% if not user.profile.phone_verified %}
-    <a href="{% url 'profile' %}#notif-card" style="padding:.45rem 1.05rem;border-radius:999px;background:#1e8a5c;color:#fff;font-size:.82rem;font-weight:700;text-decoration:none;white-space:nowrap;">📱 Get SMS alerts</a>
+    <a href="{% url 'profile' %}#notif-card" style="padding:.45rem 1.05rem;border-radius:999px;background:var(--accent);color:#fff;font-size:.82rem;font-weight:700;text-decoration:none;white-space:nowrap;">📱 Get SMS alerts</a>
     {% endif %}
     <button type="button" onclick="document.getElementById('alerts-banner').style.display='none';sessionStorage.setItem('lj_alerts_dismissed','1');" style="padding:.45rem .8rem;border-radius:999px;background:transparent;border:1.5px solid #8dcbb5;color:#155e40;font-size:.82rem;font-weight:600;cursor:pointer;">Dismiss</button>
   </div>
@@ -179,7 +179,7 @@ function dismissAgentCta() {
       </div>
     </div>
     <div style="display:flex;gap:.6rem;flex-shrink:0;align-items:center;">
-      <a href="{% url 'listing_list' %}?{{ ss.as_url_params }}" style="padding:.4rem 1.1rem;border-radius:999px;background:{% if ss.search_type == 'rent' %}#1e8a5c{% else %}#2A7EF2{% endif %};color:#fff;font-size:.82rem;font-weight:700;text-decoration:none;white-space:nowrap;">Resume search →</a>
+      <a href="{% url 'listing_list' %}?{{ ss.as_url_params }}" style="padding:.4rem 1.1rem;border-radius:999px;background:{% if ss.search_type == 'rent' %}var(--accent){% else %}var(--primary){% endif %};color:#fff;font-size:.82rem;font-weight:700;text-decoration:none;white-space:nowrap;">Resume search →</a>
       <a href="{% url 'guided_search' %}" style="padding:.4rem .85rem;border-radius:999px;border:1.5px solid {% if ss.search_type == 'rent' %}#8dcbb5{% else %}#bfdbfe{% endif %};color:{% if ss.search_type == 'rent' %}#155e40{% else %}#2563eb{% endif %};font-size:.82rem;font-weight:600;text-decoration:none;white-space:nowrap;">Update</a>
     </div>
   </div>
@@ -358,7 +358,7 @@ function dismissAgentCta() {
 .lj-iw-title { font-size: .78rem; font-weight: 600; color: #374151; margin-bottom: .18rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lj-iw-meta { font-size: .7rem; color: #9ca3af; margin-bottom: .55rem; }
 .lj-iw-btn { display: block; background: #222; color: #fff; padding: .4rem .75rem; border-radius: 8px; font-size: .75rem; font-weight: 700; text-decoration: none; text-align: center; transition: background .15s; }
-.lj-iw-btn:hover { background: #2A7EF2; color: #fff; }
+.lj-iw-btn:hover { background: var(--primary); color: #fff; }
 </style>
 <style>
 /* ── Airbnb-style map view: one page scrollbar, sticky map, footer flows after ── */
@@ -429,7 +429,7 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 }
 /* Highlighted card from pin click */
 #list-panel.map-mode .listing-card[style*="outline"] {
-  outline: 2.5px solid #2A7EF2 !important;
+  outline: 2.5px solid var(--primary) !important;
   border-radius: 12px !important;
 }
 
@@ -916,7 +916,7 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 
           document.querySelectorAll('#list-panel .listing-card').forEach(function(c){ c.style.outline=''; });
           var c = document.querySelector('#list-panel .listing-card[data-pk="'+pk+'"]');
-          if(c){ c.style.outline='2.5px solid #2A7EF2'; c.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+          if(c){ c.style.outline='2.5px solid var(--primary)'; c.scrollIntoView({behavior:'smooth',block:'nearest'}); }
         },
       });
 
@@ -1177,7 +1177,7 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 {# ── TRUST STRIP ── #}
 <div class="trust-strip">
     <div class="trust-item">
-        <div class="trust-icon" style="background:rgba(42,126,242,.15);">⚡</div>
+        <div class="trust-icon" style="background:rgba(37,99,235,.15);">⚡</div>
         <div>
             <div class="trust-title">Post in 60 seconds</div>
             <div class="trust-desc">Create a listing fast with photo upload and smart fields.</div>

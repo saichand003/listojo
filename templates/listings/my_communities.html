@@ -38,7 +38,7 @@
             <strong style="color:var(--text-1);">{{ community.floor_plans.count }}</strong> floor plan{{ community.floor_plans.count|pluralize }}
           </span>
           {% if uc is not None %}
-          <span style="font-size:.82rem;color:#1e8a5c;font-weight:600;">{{ uc }} unit{{ uc|pluralize }} available</span>
+          <span style="font-size:.82rem;color:var(--accent);font-weight:600;">{{ uc }} unit{{ uc|pluralize }} available</span>
           {% endif %}
           {% if pr.0 %}
           <span style="font-size:.82rem;color:var(--text-3);">From <strong style="color:var(--text-1);">${{ pr.0|floatformat:0|intcomma }}/mo</strong></span>

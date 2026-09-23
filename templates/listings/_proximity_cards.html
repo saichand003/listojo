@@ -16,7 +16,7 @@ use; a caller nesting them inside a `.card` passes a tint and no shadow instead.
     <div style="display:flex;flex-wrap:wrap;gap:1.5rem;">
         {% for label, score, desc in place.walk_score_rows %}
         <div style="display:flex;align-items:center;gap:.65rem;">
-            <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;color:#fff;background:{% if score >= 70 %}#1e8a5c{% elif score >= 50 %}#d97706{% else %}#6b7280{% endif %};">{{ score }}</div>
+            <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;color:#fff;background:{% if score >= 70 %}var(--accent){% elif score >= 50 %}#d97706{% else %}#6b7280{% endif %};">{{ score }}</div>
             <div>
                 <p style="font-size:.85rem;font-weight:600;margin:0;">{{ label }}</p>
                 <p style="font-size:.78rem;color:var(--text-3);margin:0;">{{ desc|default:"—" }}</p>
@@ -43,7 +43,7 @@ use; a caller nesting them inside a `.card` passes a tint and no shadow instead.
     {% if place.has_commute_score %}
     <div style="display:flex;align-items:center;gap:.65rem;{% if stations %}padding-bottom:.85rem;border-bottom:1px solid var(--border);margin-bottom:.85rem;{% endif %}">
         {# Same 46px dial and the same 70/50 thresholds as the Walk Score card, so the two read as one family. #}
-        <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;color:#fff;background:{% if place.commute_score_tone == 'strong' %}#1e8a5c{% elif place.commute_score_tone == 'fair' %}#d97706{% else %}#6b7280{% endif %};">{{ place.commute_score }}</div>
+        <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;color:#fff;background:{% if place.commute_score_tone == 'strong' %}var(--accent){% elif place.commute_score_tone == 'fair' %}#d97706{% else %}#6b7280{% endif %};">{{ place.commute_score }}</div>
         <div>
             <p style="font-size:.85rem;font-weight:600;margin:0;">Commute Score</p>
             <p style="font-size:.78rem;color:var(--text-3);margin:0;">{{ place.commute_score_label }}</p>
@@ -108,7 +108,7 @@ use; a caller nesting them inside a `.card` passes a tint and no shadow instead.
 
     {% if place.nearest_downtown %}
     <div style="display:flex;align-items:center;gap:.65rem;padding-bottom:.85rem;{% if place.grocery_cards %}border-bottom:1px solid var(--border);margin-bottom:.85rem;{% endif %}">
-        <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:rgba(42,126,242,.09);">🏙️</div>
+        <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:rgba(37,99,235,.09);">🏙️</div>
         <div>
             <p style="font-size:.85rem;font-weight:600;margin:0;">{{ place.nearest_downtown.name }}</p>
             <p style="font-size:.78rem;color:var(--text-3);margin:0;">

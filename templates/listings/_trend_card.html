@@ -1,0 +1,64 @@
+{% load humanize %}
+{% comment %}
+  Trending card, shaped after the reference design: photo with a category
+  chip, price leading the body, then the beds/baths/sqft strip and the
+  verification line. Used by both trending rows on the home page.
+
+  Expects: listing, plus `sale` (truthy for the for-sale row).
+{% endcomment %}
+<article class="trend-card">
+  <a class="trend-card-media" href="{% url 'listing_detail' listing.pk %}" tabindex="-1" aria-hidden="true">
+    {% with img=listing.images.all.0 %}
+    {% if img %}
+      <img src="{{ img.image.url }}" alt="" loading="lazy">
+    {% elif listing.image %}
+      <img src="{{ listing.image.url }}" alt="" loading="lazy">
+    {% else %}
+      <span class="trend-card-empty" role="img" aria-label="No photo provided"></span>
+    {% endif %}
+    {% endwith %}
+
+    <span class="trend-chip {% if sale %}trend-chip-sale{% endif %}">{% if sale %}For Sale{% else %}For Rent{% endif %}</span>
+    {% if listing.view_count > 20 %}
+      <span class="trend-chip trend-chip-hot">Popular</span>
+    {% endif %}
+  </a>
+
+  <div class="trend-card-body">
+    <div class="trend-card-pricerow">
+      <span class="trend-card-price">
+        ${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span class="trend-card-per">{{ listing.get_price_unit_display }}</span>{% endif %}
+      </span>
+      {% if listing.original_price and listing.original_price > listing.price %}
+        <span class="trend-card-cut">Price cut</span>
+      {% endif %}
+    </div>
+
+    <h3 class="trend-card-title">
+      <a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a>
+    </h3>
+
+    <p class="trend-card-loc">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
+      {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}
+    </p>
+
+    {% if listing.bedrooms or listing.bathrooms or listing.square_footage %}
+    <ul class="trend-card-specs">
+      {% if listing.bedrooms %}<li>{{ listing.bedrooms }} Bed{{ listing.bedrooms|pluralize }}</li>{% endif %}
+      {% if listing.bathrooms %}<li>{{ listing.bathrooms|floatformat:"-1" }} Bath{{ listing.bathrooms|floatformat:"-1"|pluralize }}</li>{% endif %}
+      {% if listing.square_footage %}<li>{{ listing.square_footage|intcomma }} sqft</li>{% endif %}
+    </ul>
+    {% endif %}
+
+    <div class="trend-card-foot">
+      {% if listing.owner %}
+      <span class="trend-card-verified">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><path d="m9 12.5 2.2 2.2L15.5 10"/><circle cx="12" cy="12" r="9"/></svg>
+        Direct owner
+      </span>
+      {% endif %}
+      <a href="{% url 'listing_detail' listing.pk %}" class="trend-card-cta">View listing &rarr;</a>
+    </div>
+  </div>
+</article>

@@ -23,7 +23,7 @@
                 <div class="listing-thumb listing-thumb-placeholder" role="img" aria-label="No photo provided"></div>
             {% endif %}
             {% if community.featured %}<span class="featured-badge">★ Featured</span>{% endif %}
-            <span class="category-badge" style="background:rgba(30,138,92,.85);">Community</span>
+            <span class="category-badge" style="background:rgba(5,150,105,.85);">Community</span>
             {% if community.special_offer %}
             <span class="new-badge" style="background:#f59e0b;">Special Offer</span>
             {% endif %}
@@ -48,8 +48,8 @@
                 </span>
             </div>
             {% if unit_count %}
-            <p style="font-size:.8rem;color:#1e8a5c;font-weight:700;margin:.2rem 0;">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="margin-right:3px;vertical-align:middle;color:#1e8a5c"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <p style="font-size:.8rem;color:var(--accent);font-weight:700;margin:.2rem 0;">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="margin-right:3px;vertical-align:middle;color:var(--accent)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 {{ unit_count }} unit{{ unit_count|pluralize }} available
             </p>
             {% endif %}

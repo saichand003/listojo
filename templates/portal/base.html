@@ -12,15 +12,15 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --primary:    #2A7EF2;
-      --primary-dk: #1A5DD4;
+      --primary:    #2563EB;
+      --primary-dk: #1D4ED8;
       --green:      #28b87c;
-      --bg:         #F4F7FC;
+      --bg:         #F8F9FF;
       --surface:    #ffffff;
       --border:     #E2E8F0;
       --border-2:   #CBD5E1;
-      --text:       #0F1C35;
-      --text-2:     #3D5280;
+      --text:       #081525;
+      --text-2:     #434655;
       --muted:      #64748B;
       --r:          12px;
       --r-sm:       8px;
@@ -62,7 +62,7 @@
       content: '';
       display: block;
       height: 3px;
-      background: linear-gradient(90deg, #1A5DD4, #2A7EF2, #28b87c);
+      background: linear-gradient(90deg, #1D4ED8, #2563EB, #28b87c);
       flex-shrink: 0;
     }
 
@@ -133,7 +133,7 @@
     }
     .nav-link.active {
       color: #fff;
-      background: rgba(42,126,242,.22);
+      background: rgba(37,99,235,.22);
       font-weight: 600;
     }
     .nav-link.active::before {
@@ -273,7 +273,7 @@
       transition: all .15s;
       white-space: nowrap;
     }
-    .topbar-site-link:hover { color: var(--primary); border-color: var(--primary); background: rgba(42,126,242,.05); }
+    .topbar-site-link:hover { color: var(--primary); border-color: var(--primary); background: rgba(37,99,235,.05); }
     .topbar-icon-btn {
       width: 34px;
       height: 34px;
@@ -287,7 +287,7 @@
       cursor: pointer;
       transition: all .15s;
     }
-    .topbar-icon-btn:hover { color: var(--primary); border-color: var(--primary); background: rgba(42,126,242,.05); }
+    .topbar-icon-btn:hover { color: var(--primary); border-color: var(--primary); background: rgba(37,99,235,.05); }
     .topbar-user-chip {
       display: flex;
       align-items: center;
@@ -323,7 +323,7 @@
       letter-spacing: .06em;
       text-transform: uppercase;
       color: var(--primary);
-      background: rgba(42,126,242,.1);
+      background: rgba(37,99,235,.1);
       padding: .1rem .4rem;
       border-radius: 999px;
     }
@@ -362,7 +362,7 @@
       border-radius: 7px;
       transition: all .15s;
     }
-    .view-all:hover { background: rgba(42,126,242,.06); border-color: var(--primary); }
+    .view-all:hover { background: rgba(37,99,235,.06); border-color: var(--primary); }
 
     /* ── GRID ─────────────────────────────────────────────────── */
     .grid { display: grid; gap: 1rem; }
@@ -467,10 +467,10 @@
       white-space: nowrap;
     }
     .btn:hover { opacity: .85; transform: translateY(-1px); }
-    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(42,126,242,.25); }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.25); }
     .btn-danger  { background: #ef4444; color: #fff; box-shadow: 0 2px 8px rgba(239,68,68,.2); }
     .btn-ghost   { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
-    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); background: rgba(42,126,242,.04); opacity: 1; transform: none; }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); background: rgba(37,99,235,.04); opacity: 1; transform: none; }
     .btn-sm      { padding: .22rem .6rem; font-size: .72rem; }
 
     /* ── SEARCH ROW ───────────────────────────────────────────── */
@@ -488,7 +488,7 @@
     .search-row input:focus, .search-row select:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(42,126,242,.1);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.1);
     }
 
     /* ── BAR CHART ────────────────────────────────────────────── */
@@ -584,7 +584,7 @@
     .form-group { margin-bottom: 1rem; }
     .form-group label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: .35rem; color: var(--text-2); }
     .form-group input { width: 100%; padding: .62rem .9rem; border: 1.5px solid var(--border); border-radius: var(--r-sm); font-size: .95rem; font-family: inherit; transition: border-color .15s, box-shadow .15s; }
-    .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(42,126,242,.12); }
+    .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
     .error-msg { background: #fef2f2; color: #991b1b; padding: .65rem .9rem; border-radius: var(--r-sm); font-size: .82rem; margin-bottom: 1rem; border: 1px solid #fecaca; }
 
     /* ── PLATFORM STATUS STRIP ────────────────────────────────── */

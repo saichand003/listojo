@@ -92,7 +92,7 @@
   {% with lead.name|first|upper as initial %}
   {% cycle '#2A7EF2' '#28b87c' '#d97706' '#7c3aed' '#dc2626' '#0891b2' as avatar_color silent %}
   <div class="lead-avatar" style="background:
-    {% if forloop.counter0|divisibleby:6 %}#2A7EF2
+    {% if forloop.counter0|divisibleby:6 %}var(--primary)
     {% elif forloop.counter0|add:0 == 1 %}#28b87c
     {% elif forloop.counter0|add:0 == 2 %}#d97706
     {% elif forloop.counter0|add:0 == 3 %}#7c3aed
