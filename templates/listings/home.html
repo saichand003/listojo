@@ -419,25 +419,54 @@
     </div>
     <a href="{% url 'guided_search' %}" class="section-link">Start now &rarr;</a>
   </div>
-  <div class="hiw-steps">
+  {% comment %}
+    Three cards rather than three headings on a connecting rule. Each one
+    names the stage it belongs to and then shows what that stage actually
+    produces, which is the part the old version left implicit.
+  {% endcomment %}
+  <div class="hiw-cards">
 
-    <div class="hiw-step">
-      <div class="hiw-step-n" aria-hidden="true">1</div>
-      <h3>Tell us what you need</h3>
-      <p>Budget, city, bedrooms, must-haves. Our guided search saves your preferences automatically.</p>
-    </div>
+    <article class="hiw-card">
+      <span class="hiw-card-n" aria-hidden="true">01</span>
+      <p class="hiw-card-kicker">Input preferences</p>
+      <h3 class="hiw-card-title">Tell us what you need</h3>
+      <p class="hiw-card-body">
+        Budget, city, bedrooms, must-haves. The guided search remembers your
+        answers, so coming back a week later picks up where you left off.
+      </p>
+      <p class="hiw-card-proof">
+        <span class="hiw-card-proof-k">You give</span>
+        Budget &middot; City &middot; Beds &middot; Must-haves
+      </p>
+    </article>
 
-    <div class="hiw-step">
-      <div class="hiw-step-n" aria-hidden="true">2</div>
-      <h3>We score every match</h3>
-      <p>Every listing gets a match % and a plain-English reason, so you know exactly why it fits.</p>
-    </div>
+    <article class="hiw-card">
+      <span class="hiw-card-n" aria-hidden="true">02</span>
+      <p class="hiw-card-kicker">Algorithmic clarity</p>
+      <h3 class="hiw-card-title">We score every match</h3>
+      <p class="hiw-card-body">
+        Every listing gets a match percentage and a plain-English reason, so you
+        can tell at a glance why it fits and which requirement it misses.
+      </p>
+      <p class="hiw-card-proof">
+        <span class="hiw-card-proof-k">You get</span>
+        A score, and the sentence behind it
+      </p>
+    </article>
 
-    <div class="hiw-step">
-      <div class="hiw-step-n" aria-hidden="true">3</div>
-      <h3>Connect with the owner</h3>
-      <p>Message directly, request a tour, or get a free local agent. No middlemen, no agency fees.</p>
-    </div>
+    <article class="hiw-card">
+      <span class="hiw-card-n" aria-hidden="true">03</span>
+      <p class="hiw-card-kicker">Direct connection</p>
+      <h3 class="hiw-card-title">Connect with the owner</h3>
+      <p class="hiw-card-body">
+        Message the owner directly or request a tour. No listing agent in the
+        middle, no placement commission, no fee to send a message.
+      </p>
+      <p class="hiw-card-proof">
+        <span class="hiw-card-proof-k">You pay</span>
+        $0 in agency fees
+      </p>
+    </article>
 
   </div>
 </section>

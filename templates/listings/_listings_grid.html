@@ -111,6 +111,10 @@
                         <img class="listing-thumb" src="{{ img.image.url }}" alt="{{ listing.title }} photo {{ forloop.counter }}">
                     {% endfor %}
                 </div>
+                <span class="thumb-count">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11" aria-hidden="true"><path d="M20 5h-3.2l-1.5-1.8A1 1 0 0 0 14.6 3H9.4a1 1 0 0 0-.7.2L7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-8 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+                    {{ imgs|length }}
+                </span>
                 {% if imgs|length > 1 %}
                 <button type="button" class="thumb-nav thumb-nav-prev" aria-label="Previous photo">&#8249;</button>
                 <button type="button" class="thumb-nav thumb-nav-next" aria-label="Next photo">&#8250;</button>
@@ -214,18 +218,20 @@
             {% if inc %}<p class="card-income-hint">Income req. ~${{ inc|floatformat:0|intcomma }}/mo</p>{% endif %}
             {% endwith %}
 
-            {# AI Match explanation #}
-            {% with listing_explanations|dict_get:listing.pk as explanation %}
-            {% if explanation %}
-            <p class="match-explanation">{{ explanation }}</p>
-            {% endif %}
-            {% endwith %}
-
-            {# Match reason pills #}
-            {% with listing_reasons|dict_get:listing.pk as reasons %}
-            {% if reasons %}
-            <div class="match-reason-pills">
-                {% for r in reasons %}<span class="match-reason-pill">{{ r }}</span>{% endfor %}
+            {# Why this result is here — the card's one piece of reasoning. #}
+            {% with explanation=listing_explanations|dict_get:listing.pk reasons=listing_reasons|dict_get:listing.pk %}
+            {% if explanation or reasons %}
+            <div class="match-factor">
+                <p class="match-factor-head">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9z"/></svg>
+                    Match factor
+                </p>
+                {% if explanation %}<p class="match-factor-body">{{ explanation }}</p>{% endif %}
+                {% if reasons %}
+                <div class="match-reason-pills">
+                    {% for r in reasons %}<span class="match-reason-pill">{{ r }}</span>{% endfor %}
+                </div>
+                {% endif %}
             </div>
             {% endif %}
             {% endwith %}
@@ -241,7 +247,7 @@
 
             {# Action buttons #}
             <div class="card-actions">
-                <a href="{% url 'listing_detail' listing.pk %}" class="card-btn-primary">View Listing</a>
+                <a href="{% url 'listing_detail' listing.pk %}" class="card-btn-primary">View details</a>
                 {% if user.is_authenticated and user != listing.owner %}
                 <button type="button" class="card-btn-secondary open-chat-btn"
                     data-listing-id="{{ listing.pk }}"

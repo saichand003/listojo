@@ -6444,3 +6444,197 @@ footer {
 }
 :root.dark .gsx-shield-title { color: var(--accent); }
 .gsx-shield-body { font-size: .75rem; line-height: 1.5; color: var(--text-2); }
+
+/* ── Match factor callout (result rows) ─────────────────────────
+   Was a bare italic sentence behind a hairline. It is the one thing on the
+   card that answers "why am I being shown this", so it gets a labelled box
+   rather than the styling of an aside. */
+.match-factor {
+  margin: .5rem 0 .1rem;
+  padding: .55rem .65rem;
+  border-radius: var(--r-sm);
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-soft-2);
+}
+.match-factor-head {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  margin-bottom: .2rem;
+  font-family: var(--font-head);
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.match-factor-body {
+  font-size: .8125rem;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.match-factor .match-reason-pills { margin-top: .4rem; margin-bottom: 0; }
+.match-factor .match-reason-pill {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+/* Photo count, so a row says how much there is to see before you open it. */
+.thumb-count {
+  position: absolute;
+  bottom: .55rem; left: .55rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  padding: .18rem .45rem;
+  border-radius: var(--r-xs);
+  background: rgba(10,15,29,.72);
+  color: #fff;
+  font-family: var(--font-head);
+  font-size: .6875rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+/* ── Financial terms ribbon (detail page) ───────────────────── */
+.ld-terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4) var(--sp-6);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.ld-term { display: flex; flex-direction: column; min-width: 0; }
+.ld-term-k {
+  font-family: var(--font-head);
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ld-term-v {
+  font-family: var(--font-head);
+  font-size: .9375rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: .1rem;
+}
+.ld-term-good { color: var(--accent-dk); }
+:root.dark .ld-term-good { color: var(--accent); }
+
+/* ── Highlights (detail page) ───────────────────────────────── */
+.ld-sec-label {
+  font-family: var(--font-head);
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .55rem;
+}
+.ld-highlights { margin-bottom: var(--sp-4); }
+.ld-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: .4rem;
+  list-style: none;
+}
+.ld-highlight-grid li {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .5rem .65rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: .8125rem;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.ld-highlight-grid svg { color: var(--accent); flex-shrink: 0; }
+:root.dark .ld-highlight-grid svg { color: var(--accent); }
+
+/* ── How Listojo works ───────────────────────────────────────── */
+.hiw-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+@media (max-width: 900px) { .hiw-cards { grid-template-columns: 1fr; } }
+
+.hiw-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-5);
+  border-radius: var(--r);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.hiw-card-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  margin-bottom: var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--primary-soft-2);
+  color: var(--primary-dk);
+  font-family: var(--font-head);
+  font-size: .875rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+:root.dark .hiw-card-n { color: var(--primary); }
+/* Each step gets its own accent so the three read as a sequence rather than
+   as three copies of the same card. */
+.hiw-card:nth-child(2) .hiw-card-n { background: var(--accent-soft); color: var(--accent-dk); }
+:root.dark .hiw-card:nth-child(2) .hiw-card-n { color: var(--accent); }
+.hiw-card:nth-child(3) .hiw-card-n { background: var(--ink); color: #fff; }
+
+.hiw-card-kicker {
+  font-family: var(--font-head);
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .3rem;
+}
+.hiw-card-title {
+  font-family: var(--font-head);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: var(--text);
+  margin-bottom: .5rem;
+}
+.hiw-card-body {
+  font-size: .875rem;
+  line-height: 1.6;
+  color: var(--text-2);
+  margin-bottom: var(--sp-4);
+}
+.hiw-card-proof {
+  margin-top: auto;
+  padding: .6rem .75rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-family: var(--font-head);
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.hiw-card-proof-k {
+  display: block;
+  font-size: .625rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .1rem;
+}

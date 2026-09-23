@@ -597,22 +597,29 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
   margin: 0 !important;
 }
 #list-panel.map-mode .card-title-row h3 {
-  font-size: .75rem !important;
-  font-weight: 500 !important;
-  color: #6b7280 !important;
+  font-size: .875rem !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   margin: 0 !important;
 }
 #list-panel.map-mode .card-title-row h3 a { color: inherit !important; }
-#list-panel.map-mode .card-title-row .save-pill,
-#list-panel.map-mode .match-score-badge { display: none !important; }
+#list-panel.map-mode .card-title-row .save-pill { display: none !important; }
+/* The match score was hidden here because the old two-column tiles had no
+   room for it. Rows do, and it is the headline signal of the whole result —
+   the reference design puts it on the card, not behind a hover. */
+#list-panel.map-mode .match-score-badge {
+  display: inline-flex !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+}
 
 /* Specs */
 #list-panel.map-mode .card-specs-row {
-  font-size: .7rem !important;
-  color: #6b7280 !important;
+  font-size: .75rem !important;
+  color: var(--text-2) !important;
   margin: 0 !important;
   gap: .2rem !important;
 }

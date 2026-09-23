@@ -490,6 +490,72 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
             </div>
             {% endif %}
 
+            {% comment %}
+              FINANCIAL TERMS. Deposit, bills and availability were scattered
+              down the page or missing entirely, so the money question needed
+              three separate reads. The reference design puts the whole cost
+              picture on one ribbon under the price.
+            {% endcomment %}
+            {% if listing.security_deposit or listing.bills_included or listing.available_from or listing.category == 'rentals' %}
+            <div class="ld-terms">
+              <div class="ld-term">
+                <span class="ld-term-k">Agency fee</span>
+                <span class="ld-term-v ld-term-good">$0 &mdash; always</span>
+              </div>
+              {% if listing.security_deposit %}
+              <div class="ld-term">
+                <span class="ld-term-k">Security deposit</span>
+                <span class="ld-term-v">${{ listing.security_deposit|floatformat:0|intcomma }}</span>
+              </div>
+              {% endif %}
+              {% if listing.bills_included %}
+              <div class="ld-term">
+                <span class="ld-term-k">Utilities</span>
+                <span class="ld-term-v ld-term-good">Included</span>
+              </div>
+              {% endif %}
+              {% if listing.available_from %}
+              <div class="ld-term">
+                <span class="ld-term-k">Available</span>
+                <span class="ld-term-v">{{ listing.available_from|date:"M j, Y" }}</span>
+              </div>
+              {% elif listing.category == 'rentals' %}
+              <div class="ld-term">
+                <span class="ld-term-k">Available</span>
+                <span class="ld-term-v ld-term-good">Immediately</span>
+              </div>
+              {% endif %}
+              {% if listing.hoa_fee %}
+              <div class="ld-term">
+                <span class="ld-term-k">HOA</span>
+                <span class="ld-term-v">${{ listing.hoa_fee|floatformat:0|intcomma }}/mo</span>
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+
+            {% comment %}
+              HIGHLIGHTS. The listing's own tags, which until now only appeared
+              as a loose chip row inside the amenity cards further down. They
+              are the fastest read of what the place actually has, so they sit
+              with the specs.
+            {% endcomment %}
+            {% with highlights=listing.get_tags_list %}
+            {% if highlights %}
+            <div class="ld-highlights">
+              <p class="ld-sec-label">Highlights</p>
+              <ul class="ld-highlight-grid">
+                {% for h in highlights|slice:":8" %}
+                <li>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+                  {{ h }}
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+            {% endwith %}
+
             {# Floor plan image #}
             {% if listing.floor_plan_image %}
             <div style="margin-bottom:1rem;">

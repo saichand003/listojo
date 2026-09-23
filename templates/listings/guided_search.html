@@ -6,11 +6,11 @@
 /* ── Progress bar ── */
 .gs-progress-wrap{margin-bottom:32px}
 .gs-progress-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.gs-progress-label{font-size:12px;font-weight:700;color:#6B7280;letter-spacing:.04em;text-transform:uppercase}
+.gs-progress-label{font-size:12px;font-weight:700;color:var(--text-3);letter-spacing:.04em;text-transform:uppercase}
 .gs-progress-step{
   font-size:12px;
   font-weight:700;
-  background:linear-gradient(90deg,var(--primary) 0%, var(--primary-2) 55%, #3DB549 82%, var(--accent-2) 100%);
+  background:linear-gradient(90deg,var(--primary) 0%, var(--primary-2) 55%, var(--accent) 82%, var(--accent-2) 100%);
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   background-clip:text;
@@ -24,93 +24,93 @@
 }
 .gs-progress-fill{
   height:100%;
-  background:linear-gradient(90deg,var(--primary) 0%, var(--primary-2) 55%, #3DB549 82%, var(--accent-2) 100%);
+  background:linear-gradient(90deg,var(--primary) 0%, var(--primary-2) 55%, var(--accent) 82%, var(--accent-2) 100%);
   border-radius:999px;
   box-shadow:0 0 14px rgba(37,99,235,.18);
   transition:width .35s cubic-bezier(.4,0,.2,1);
 }
 
 /* ── Cards ── */
-.gs-card{background:#fff;border:1px solid #E5E7EB;border-radius:20px;padding:36px 32px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
-.gs-card-label{display:inline-block;background:#EEF6FF;color:var(--primary);font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;border-radius:6px;padding:3px 10px;margin-bottom:14px}
-.gs-card h2{font-size:1.3rem;font-weight:800;color:#0f1c35;margin-bottom:6px;line-height:1.25}
-.gs-card .gs-sub{font-size:13.5px;color:#6B7280;margin-bottom:28px;line-height:1.5}
+.gs-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+.gs-card-label{display:inline-block;background:var(--primary-soft);color:var(--primary);font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;border-radius:6px;padding:3px 10px;margin-bottom:14px}
+.gs-card h2{font-size:1.3rem;font-weight:800;color:var(--text);margin-bottom:6px;line-height:1.25}
+.gs-card .gs-sub{font-size:13.5px;color:var(--text-3);margin-bottom:28px;line-height:1.5}
 
 /* ── Big choice cards (Rent/Buy) ── */
 .choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px}
-.choice-card{border:2px solid #E5E7EB;border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFAFA}
-.choice-card:hover{border-color:var(--primary);background:#EEF6FF;transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,.12)}
-.choice-card.sel{border-color:var(--primary);background:#EEF6FF;transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,.12)}
-.choice-card .cc-icon{width:42px;height:42px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:#0f1c35}
+.choice-card{border:2px solid var(--border);border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface-2)}
+.choice-card:hover{border-color:var(--primary);background:var(--primary-soft);transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,.12)}
+.choice-card.sel{border-color:var(--primary);background:var(--primary-soft);transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,.12)}
+.choice-card .cc-icon{width:42px;height:42px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:var(--text)}
 .choice-card .cc-icon svg{width:100%;height:100%;display:block}
 .choice-card:hover .cc-icon,.choice-card.sel .cc-icon{color:var(--primary)}
-.choice-card .cc-title{font-size:1rem;font-weight:700;color:#0f1c35;margin-bottom:4px}
-.choice-card .cc-sub{font-size:12.5px;color:#6B7280}
+.choice-card .cc-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.choice-card .cc-sub{font-size:12.5px;color:var(--text-3)}
 
 /* ── Room type cards ── */
 .room-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.room-card{border:2px solid #E5E7EB;border-radius:14px;padding:20px 16px;cursor:pointer;transition:all .2s;background:#FAFAFA;display:flex;align-items:flex-start;gap:12px}
-.room-card:hover{border-color:var(--primary);background:#EEF6FF}
-.room-card.sel{border-color:var(--primary);background:#EEF6FF;box-shadow:0 4px 14px rgba(37,99,235,.1)}
+.room-card{border:2px solid var(--border);border-radius:14px;padding:20px 16px;cursor:pointer;transition:all .2s;background:var(--surface-2);display:flex;align-items:flex-start;gap:12px}
+.room-card:hover{border-color:var(--primary);background:var(--primary-soft)}
+.room-card.sel{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 4px 14px rgba(37,99,235,.1)}
 .room-card .rc-icon{font-size:1.6rem;flex-shrink:0}
-.room-card .rc-title{font-size:.9rem;font-weight:700;color:#0f1c35}
-.room-card .rc-sub{font-size:11.5px;color:#9CA3AF;margin-top:2px}
+.room-card .rc-title{font-size:.9rem;font-weight:700;color:var(--text)}
+.room-card .rc-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
 
 /* ── Type chips ── */
 .type-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
-.type-chip{padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;border:2px solid #E5E7EB;background:#fff;color:#374151;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.type-chip{padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;border:2px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
 .type-chip:hover{border-color:var(--primary);color:var(--primary)}
 .type-chip.sel{border-color:var(--primary);background:rgba(37,99,235,.08);color:var(--primary)}
 
 /* ── Shared form components ── */
-.gs-label{font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:block}
+.gs-label{font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:block}
 .gs-group{margin-bottom:22px}
-.gs-input{width:100%;padding:10px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;font-family:inherit;color:#0f1c35;outline:none;transition:border-color .15s;box-sizing:border-box}
+.gs-input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:border-color .15s;box-sizing:border-box}
 .gs-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .gs-row{display:flex;gap:12px;align-items:center}
 .gs-row .gs-input{flex:1}
-.gs-sep{color:#9CA3AF;font-size:13px;flex-shrink:0}
+.gs-sep{color:var(--muted);font-size:13px;flex-shrink:0}
 .gs-slider{width:100%;accent-color:var(--primary);height:4px;margin:6px 0;cursor:pointer}
 .tag-grid{display:flex;flex-wrap:wrap;gap:8px}
 .tag-custom-row{margin-top:10px}
-.tag-custom-input{padding:6px 14px;border-radius:999px;font-size:13px;font-weight:500;border:1.5px dashed #D1D5DB;background:#fff;color:#6B7280;cursor:text;outline:none;width:auto;min-width:180px;font-family:inherit;transition:border-color .15s,color .15s}
-.tag-custom-input:focus{border-color:var(--primary);color:#374151;border-style:solid}
-.tag-custom-input::placeholder{color:#9CA3AF}
+.tag-custom-input{padding:6px 14px;border-radius:999px;font-size:13px;font-weight:500;border:1.5px dashed var(--border-2);background:var(--surface);color:var(--text-3);cursor:text;outline:none;width:auto;min-width:180px;font-family:inherit;transition:border-color .15s,color .15s}
+.tag-custom-input:focus{border-color:var(--primary);color:var(--text-2);border-style:solid}
+.tag-custom-input::placeholder{color:var(--muted)}
 .custom-tag-remove{margin-left:4px;opacity:.6;font-style:normal;cursor:pointer}.custom-tag-remove:hover{opacity:1}
-.tag-pill{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:500;border:1.5px solid #E5E7EB;background:#fff;color:#374151;cursor:pointer;transition:all .15s;user-select:none}
+.tag-pill{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:500;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;transition:all .15s;user-select:none}
 .tag-pill:hover{border-color:var(--primary);color:var(--primary)}
 .tag-pill.sel{border-color:var(--primary);background:rgba(37,99,235,.08);color:var(--primary);font-weight:600}
 
 /* ── Radio options (timeline, urgency) ── */
 .gs-options{display:flex;flex-direction:column;gap:10px}
-.gs-option{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1.5px solid #E5E7EB;border-radius:12px;cursor:pointer;transition:all .15s}
+.gs-option{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:all .15s}
 .gs-option:hover{border-color:var(--primary);background:rgba(37,99,235,.03)}
 .gs-option.sel{border-color:var(--primary);background:rgba(37,99,235,.05)}
-.gs-option .radio{width:18px;height:18px;border-radius:50%;border:2px solid #D1D5DB;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.gs-option .radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--border-2);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .gs-option.sel .radio{border-color:var(--primary);background:var(--primary)}
-.gs-option.sel .radio::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff}
-.gs-option-title{font-size:14px;font-weight:600;color:#0f1c35}
-.gs-option-sub{font-size:12px;color:#9CA3AF;margin-top:2px}
+.gs-option.sel .radio::after{content:'';width:7px;height:7px;border-radius:50%;background:var(--surface)}
+.gs-option-title{font-size:14px;font-weight:600;color:var(--text)}
+.gs-option-sub{font-size:12px;color:var(--muted);margin-top:2px}
 
 /* ── Priority cards (3-col) ── */
 .priority-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.priority-card{border:2px solid #E5E7EB;border-radius:14px;padding:20px 14px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFAFA}
-.priority-card:hover{border-color:var(--primary);background:#EEF6FF;transform:translateY(-2px)}
-.priority-card.sel{border-color:var(--primary);background:#EEF6FF;box-shadow:0 4px 16px rgba(37,99,235,.14);transform:translateY(-2px)}
+.priority-card{border:2px solid var(--border);border-radius:14px;padding:20px 14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface-2)}
+.priority-card:hover{border-color:var(--primary);background:var(--primary-soft);transform:translateY(-2px)}
+.priority-card.sel{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 4px 16px rgba(37,99,235,.14);transform:translateY(-2px)}
 .priority-card .pc-icon{font-size:1.8rem;margin-bottom:8px}
-.priority-card .pc-title{font-size:.88rem;font-weight:700;color:#0f1c35;margin-bottom:4px}
-.priority-card .pc-sub{font-size:11.5px;color:#9CA3AF;line-height:1.4}
+.priority-card .pc-title{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.priority-card .pc-sub{font-size:11.5px;color:var(--muted);line-height:1.4}
 
 /* ── Income display ── */
-.income-display{font-size:2rem;font-weight:800;color:#0f1c35;text-align:center;margin:8px 0 4px;letter-spacing:-.02em}
-.income-hint{font-size:12.5px;color:#6B7280;text-align:center;margin-bottom:12px}
+.income-display{font-size:2rem;font-weight:800;color:var(--text);text-align:center;margin:8px 0 4px;letter-spacing:-.02em}
+.income-hint{font-size:12.5px;color:var(--text-3);text-align:center;margin-bottom:12px}
 
 /* ── Action buttons ── */
 .gs-actions{display:flex;gap:12px;margin-top:28px}
 .gs-btn{padding:12px 24px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .2s}
-.gs-btn-primary{background:var(--primary);color:#fff;flex:1;box-shadow:0 2px 8px rgba(37,99,235,.25)}
-.gs-btn-primary:hover{background:#1d6fd4;box-shadow:0 4px 16px rgba(37,99,235,.4);transform:translateY(-1px)}
-.gs-btn-ghost{background:transparent;border:1.5px solid #E5E7EB;color:#374151;padding:12px 20px}
+.gs-btn-primary{background:var(--primary-fill);color:var(--on-primary);flex:1;box-shadow:0 2px 8px rgba(37,99,235,.25)}
+.gs-btn-primary:hover{background:var(--primary-fill-dk);box-shadow:0 4px 16px rgba(37,99,235,.4);transform:translateY(-1px)}
+.gs-btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text-2);padding:12px 20px}
 .gs-btn-ghost:hover{border-color:var(--primary);color:var(--primary)}
 .gs-btn-lg{padding:14px 28px;font-size:15px}
 /* Glow pulse on final submit */
@@ -333,7 +333,7 @@
         <div class="income-hint">per month</div>
         <input type="range" class="gs-slider" id="budget_slider" min="500" max="10000" step="50" value="3000"
                oninput="onBudgetSlide(this.value)">
-        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#9CA3AF;margin-top:2px">
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:2px">
           <span>$500</span><span>$10,000</span>
         </div>
         <div style="margin-top:16px;display:flex;gap:12px;align-items:center">
@@ -342,13 +342,13 @@
           <input id="max_price" class="gs-input" placeholder="Max $" type="number" min="0" style="flex:1" value="3000">
         </div>
       </div>
-      <div class="gs-group" style="border-top:1px solid #F3F4F6;padding-top:20px;margin-top:4px;">
-        <label class="gs-label">Monthly household income <span style="font-weight:400;color:#9CA3AF">(before taxes, optional)</span></label>
+      <div class="gs-group" style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px;">
+        <label class="gs-label">Monthly household income <span style="font-weight:400;color:var(--muted)">(before taxes, optional)</span></label>
         <div class="income-display" id="income_disp">$5,000</div>
         <div class="income-hint">Most landlords require 2.5–3× the monthly rent</div>
         <input type="range" class="gs-slider" id="income_slider" min="1000" max="30000" step="250" value="5000"
                oninput="onIncomeSlide(this.value)">
-        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#9CA3AF;margin-top:2px">
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:2px">
           <span>$1,000</span><span>$30,000</span>
         </div>
         <input type="hidden" id="monthly_income_val" value="5000">
@@ -433,7 +433,7 @@
           </div>
         </div>
       </div>
-      <div class="gs-group" id="lease-group" style="border-top:1px solid #F3F4F6;padding-top:20px;margin-top:4px;">
+      <div class="gs-group" id="lease-group" style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px;">
         <label class="gs-label">Lease preference</label>
         <div class="tag-grid">
           <div class="tag-pill" data-group="lease" data-val="12 month lease" onclick="toggleTag(this)">12 months</div>
