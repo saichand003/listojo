@@ -28,6 +28,13 @@
   --primary-2:  #60A5FA;
   --primary-dk: #1D4ED8;
   --primary-deep: #004AC6;
+  /* Filled surfaces are a separate pair from --primary, which is the colour
+     of text and icons. In dark mode --primary has to lighten to stay legible
+     ON the background, but a filled button is the background, so lightening
+     it there would put white text on a pale blue. These stay saturated. */
+  --primary-fill:    #2563EB;
+  --primary-fill-dk: #1D4ED8;
+  --on-primary:      #FFFFFF;
   /* Tinted primary washes, so the ~40 hand-written rgba(37,99,235,.08) calls
      have one source of truth and a dark-mode counterpart. */
   --primary-soft:   #EFF6FF;
@@ -36,6 +43,9 @@
   --accent-2:   #10B981;
   --accent-dk:  #006C49;
   --accent-soft:#ECFDF5;
+  --accent-fill:    #059669;
+  --accent-fill-dk: #047857;
+  --on-accent:      #FFFFFF;
   --border:     #E2E8F0;
   --border-2:   #CBD5E1;
   /* The near-black used by the landlord CTA band and other inverted panels. */
@@ -110,12 +120,18 @@
   --primary-2:  #93C5FD;
   --primary-dk: #3B82F6;
   --primary-deep: #93C5FD;
+  --primary-fill:    #2E6FE0;
+  --primary-fill-dk: #4285F4;
+  --on-primary:      #FFFFFF;
   --primary-soft:   #15233C;
   --primary-soft-2: #1B2F4F;
   --accent:     #34D399;
   --accent-2:   #6EE7B7;
   --accent-dk:  #10B981;
   --accent-soft:#0F2A22;
+  --accent-fill:    #0B7A57;
+  --accent-fill-dk: #109468;
+  --on-accent:      #FFFFFF;
   --border:     #1E293B;
   --border-2:   #2C3B52;
   --ink:        #05080F;
@@ -289,6 +305,11 @@ p { line-height: 1.65; }
   flex-shrink: 0;
   margin-left: -.2rem;
 }
+/* The mark carries its own <style> setting .dark-text to the light-mode ink.
+   On a dark surface that is invisible, so it is flipped here rather than in
+   the SVG — the mark itself stays exactly as authored. */
+:root.dark .brand-logo .dark-text { fill: #ffffff; }
+
 .brand-logo {
   height: 58px;
   width: auto;
@@ -397,7 +418,7 @@ p { line-height: 1.65; }
   .nav-icon-btn:hover { background: var(--surface-2); color: var(--text); }
 }
 
-.nav-signin {
+.nav-links a.nav-signin {
   font-family: var(--font-head);
   font-size: .9375rem;
   font-weight: 600;
@@ -408,17 +429,17 @@ p { line-height: 1.65; }
   white-space: nowrap;
   transition: color var(--dur-fast) var(--ease-out);
 }
-@media (hover:hover) and (pointer:fine) { .nav-signin:hover { color: var(--primary); } }
+@media (hover:hover) and (pointer:fine) { .nav-links a.nav-signin:hover { color: var(--primary); } }
 @media (max-width: 640px) { .nav-signin { display: none; } }
 
-.nav-cta {
+.nav-links a.nav-cta {
   display: inline-flex;
   align-items: center;
   gap: .4rem;
   padding: .55rem 1rem;
   border-radius: var(--r-sm);
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-fill);
+  color: var(--on-primary);
   font-family: var(--font-head);
   font-size: .9375rem;
   font-weight: 700;
@@ -428,9 +449,9 @@ p { line-height: 1.65; }
   transition: background var(--dur-fast) var(--ease-out), transform var(--dur-press) var(--ease-out);
 }
 @media (hover:hover) and (pointer:fine) {
-  .nav-cta:hover { background: var(--primary-dk); color: #fff; }
+  .nav-links a.nav-cta:hover { background: var(--primary-fill-dk); color: var(--on-primary); }
 }
-.nav-cta:active { transform: translateY(1px); }
+.nav-links a.nav-cta:active { transform: translateY(1px); }
 .nav-cta svg { flex-shrink: 0; }
 @media (max-width: 520px) { .nav-cta span, .nav-cta { font-size: .875rem; padding: .5rem .75rem; } }
 
@@ -441,8 +462,8 @@ p { line-height: 1.65; }
   height: 36px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-fill);
+  color: var(--on-primary);
   font-family: var(--font-head);
   font-size: .875rem;
   font-weight: 700;
@@ -548,8 +569,8 @@ p { line-height: 1.65; }
   padding: 0 .35rem;
   height: 20px;
   border-radius: 999px;
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-fill);
+  color: var(--on-primary);
   font-size: .6875rem;
   font-weight: 700;
   display: inline-flex;
@@ -564,7 +585,7 @@ p { line-height: 1.65; }
 
 .primary-links, .nav-links { display: flex; align-items: center; gap: .2rem; flex-wrap: wrap; }
 
-.primary-links a:not(.button), .nav-links a:not(.button) {
+.primary-links a:not(.button), .nav-links a:not(.button):not(.nav-cta):not(.nav-signin) {
   text-decoration: none;
   color: var(--text-2);
   font-weight: 600;
@@ -575,8 +596,8 @@ p { line-height: 1.65; }
   letter-spacing: .01em;
   position: relative;
 }
-.primary-links a:not(.button):hover, .nav-links a:not(.button):hover { background: rgba(37,99,235,.08); color: var(--primary); }
-.primary-links a:not(.button).nav-active, .nav-links a:not(.button).nav-active {
+.primary-links a:not(.button):hover, .nav-links a:not(.button):not(.nav-cta):not(.nav-signin):hover { background: rgba(37,99,235,.08); color: var(--primary); }
+.primary-links a:not(.button).nav-active, .nav-links a:not(.button):not(.nav-cta):not(.nav-signin).nav-active {
   background: rgba(37,99,235,.1);
   color: var(--primary);
   font-weight: 700;
@@ -602,8 +623,8 @@ p { line-height: 1.65; }
   align-items: center;
   justify-content: center;
   gap: .4rem;
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-fill);
+  color: var(--on-primary);
   border: none;
   border-radius: var(--r-sm);
   padding: .55rem 1.1rem;
@@ -625,7 +646,7 @@ p { line-height: 1.65; }
 }
 
 .button:hover, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):not(.sb-city-btn):not(.sb-city-locate):not(.nav-market-btn):not(.nav-icon-btn):not(.nav-avatar):not(.nav-menu-signout):not(.results-view-btn):not(.results-search-btn):hover {
-  background: var(--primary-dk);
+  background: var(--primary-fill-dk);
   box-shadow: 0 2px 6px rgba(11,28,48,.12);
 }
 .button:active, button:not(.nav-text-btn):not(.fav-btn):not(.search-tag-remove):not(.save-pill):not(.tag-input-chip-remove):not(.img-preview-remove):not(.lightbox-close):not(.lightbox-prev):not(.lightbox-next):not(.thumb-nav):not(.lj-tile):not(.lj-collage-nav):not(.lj-collage-count):not(.lb-thumb):not(.quality-chip):not(.fmm-trigger):not(.fmm-opt):not(.fmm-cat-card):not(.fmm-choice-card):not(.fmm-prop-card):not(.fmm-skip-link):not(.fmm-next):not(.fmm-submit):not(.fmm-tag):not(.cl-unit-tab):not(.cl-amenity-btn):not(.sb-city-btn):not(.sb-city-locate):not(.nav-market-btn):not(.nav-icon-btn):not(.nav-avatar):not(.nav-menu-signout):not(.results-view-btn):not(.results-search-btn):active { transform: none; box-shadow: 0 2px 8px rgba(37,99,235,.2); }
@@ -4490,8 +4511,8 @@ footer {
   transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 .hero-tab input:checked + span {
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-fill);
+  color: var(--on-primary);
   font-weight: 700;
   box-shadow: var(--shadow-xs);
 }
@@ -4569,7 +4590,7 @@ footer {
   transition: background var(--dur-fast) var(--ease-out);
 }
 @media (hover:hover) and (pointer:fine) {
-  .hero-console-submit:hover { background: var(--primary-dk); }
+  .hero-console-submit:hover { background: var(--primary-fill-dk); }
 }
 
 .hero-console-ai {
@@ -4713,7 +4734,7 @@ footer {
   padding: .15rem .55rem;
   border-radius: 999px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-primary);
   font-family: var(--font-head);
   font-size: .75rem;
   font-weight: 700;
@@ -4938,8 +4959,8 @@ footer {
   width: 42px; height: 42px;
   flex-shrink: 0;
   border-radius: var(--r-sm);
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-fill);
+  color: var(--on-primary);
   display: flex; align-items: center; justify-content: center;
 }
 .alerts-band-copy { flex: 1; min-width: 16rem; }
@@ -4961,8 +4982,8 @@ footer {
   flex-shrink: 0;
   padding: .65rem 1.25rem;
   border-radius: var(--r-sm);
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-fill);
+  color: var(--on-primary);
   font-family: var(--font-head);
   font-size: .875rem;
   font-weight: 700;
@@ -4971,7 +4992,7 @@ footer {
   transition: background var(--dur-fast) var(--ease-out);
 }
 @media (hover:hover) and (pointer:fine) {
-  .alerts-band-btn:hover { background: var(--primary-dk); color: #fff; }
+  .alerts-band-btn:hover { background: var(--primary-fill-dk); color: var(--on-primary); }
 }
 
 /* ── Landlord CTA ───────────────────────────────────────────── */
@@ -5073,8 +5094,8 @@ footer {
 .landlord-cta-btn {
   padding: .8rem 1.25rem;
   border-radius: var(--r-sm);
-  background: var(--accent);
-  color: #fff;
+  background: var(--accent-fill);
+  color: var(--on-accent);
   font-family: var(--font-head);
   font-size: .9375rem;
   font-weight: 700;
@@ -5083,7 +5104,7 @@ footer {
   transition: background var(--dur-fast) var(--ease-out);
 }
 @media (hover:hover) and (pointer:fine) {
-  .landlord-cta-btn:hover { background: var(--accent-dk); color: #fff; }
+  .landlord-cta-btn:hover { background: var(--accent-fill-dk); color: var(--on-accent); }
 }
 .landlord-cta-btn-ghost {
   background: transparent;
@@ -5163,14 +5184,14 @@ footer {
   top: .6rem; left: .6rem;
   padding: .22rem .6rem;
   border-radius: 999px;
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-fill);
+  color: var(--on-primary);
   font-family: var(--font-head);
   font-size: .6875rem;
   font-weight: 700;
   letter-spacing: .03em;
 }
-.trend-chip-sale { background: var(--accent-dk); }
+.trend-chip-sale { background: var(--accent-fill); }
 .trend-chip-hot {
   left: auto;
   right: .6rem;
@@ -5349,8 +5370,8 @@ footer {
   transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 .results-scope-tab.is-on {
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-fill);
+  color: var(--on-primary);
   font-weight: 700;
 }
 @media (hover:hover) and (pointer:fine) {
@@ -5432,8 +5453,8 @@ footer {
   padding: .55rem 1.1rem;
   border: none;
   border-radius: var(--r-sm);
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-fill);
+  color: var(--on-primary);
   font-family: var(--font-head);
   font-size: .875rem;
   font-weight: 700;
@@ -5441,7 +5462,7 @@ footer {
   transition: background var(--dur-fast) var(--ease-out);
 }
 @media (hover:hover) and (pointer:fine) {
-  .results-search-btn:hover { background: var(--primary-dk); }
+  .results-search-btn:hover { background: var(--primary-fill-dk); }
 }
 
 /* ── Count / sort / view ────────────────────────────────────── */
