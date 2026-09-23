@@ -16,7 +16,7 @@ from listojo.services.notifications import send_listing_inquiry_email
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry, SavedSearch
 from listings.services.amenities import PICKER_GROUPS
-from listings.services.search import build_listing_search_context
+from listings.services.search import build_listing_search_context, live_match_preview
 from listings.services.valuation import predict_price
 from listings.services.event_tracker import log_event, log_impression_batch
 from portal.services.routing import least_loaded_agent
@@ -197,6 +197,41 @@ def guided_search(request):
     return render(request, 'listings/guided_search.html', {
         'category_choices': Listing.CATEGORY_CHOICES,
         'gs_mode': mode,
+    })
+
+
+def guided_match_preview(request):
+    """
+    JSON feed for the guided-search intelligence rail.
+
+    Returns what the criteria chosen so far actually match — a count and the
+    top few listings — rather than a projected score. The rail shows these
+    numbers next to the questions, so they have to come from the same filters
+    the results page uses.
+    """
+    if not _listings_table_ready():
+        return JsonResponse({'ok': False}, status=503)
+
+    preview = live_match_preview(request)
+    return JsonResponse({
+        'ok': True,
+        'total': preview['total'],
+        'inventory': preview['inventory'],
+        'listings': [
+            {
+                'pk': l.pk,
+                'title': l.title,
+                'city': l.city,
+                'state': l.state,
+                'price': float(l.price) if l.price else None,
+                'unit': l.get_price_unit_display() if l.price_unit else '',
+                'bedrooms': l.bedrooms,
+                'bathrooms': float(l.bathrooms) if l.bathrooms else None,
+                'url': l.get_absolute_url() if hasattr(l, 'get_absolute_url') else f'/listing/{l.pk}/',
+                'image': (l.images.all()[0].image.url if l.images.all() else None),
+            }
+            for l in preview['listings']
+        ],
     })
 
 

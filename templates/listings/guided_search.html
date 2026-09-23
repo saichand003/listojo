@@ -127,19 +127,39 @@
 }
 </style>
 
-<div class="gs-wrap">
-
-  {# ── Header ── #}
-  <div style="text-align:center;margin-bottom:32px">
-    {% if gs_mode == 'buy' %}
-    <h1 style="font-size:1.7rem;font-weight:800;color:#0f1c35;margin-bottom:8px">Find the right property to buy.</h1>
-    {% elif gs_mode == 'rent' %}
-    <h1 style="font-size:1.7rem;font-weight:800;color:#0f1c35;margin-bottom:8px">Find the right rental for you.</h1>
-    {% else %}
-    <h1 style="font-size:1.7rem;font-weight:800;color:#0f1c35;margin-bottom:8px">Find the right home, not just a listing.</h1>
-    {% endif %}
-    <p style="color:#6B7280;font-size:15px">Answer a few questions — we'll score every match for you.</p>
+{% comment %}
+  GUIDED SEARCH HEADER. Was a centred title over a bare progress bar. The
+  reference design states what the engine is and what it is reading right now,
+  so the header carries the live inventory figure beside the title.
+{% endcomment %}
+<header class="gsx-header">
+  <p class="gsx-eyebrow">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9z"/></svg>
+    Guided match engine
+  </p>
+  <div class="gsx-header-row">
+    <h1 class="gsx-title">
+      {% if gs_mode == 'buy' %}Smart match builder <span class="gsx-title-rest">— find the right property to buy</span>
+      {% elif gs_mode == 'rent' %}Smart match builder <span class="gsx-title-rest">— find the right rental for you</span>
+      {% else %}Smart match builder <span class="gsx-title-rest">— find the right home, not just a listing</span>{% endif %}
+    </h1>
+    <div class="gsx-live" id="gsx-live">
+      <span class="gsx-live-chip">
+        <span class="gsx-live-dot" aria-hidden="true"></span>
+        DFW inventory live
+      </span>
+      <span class="gsx-live-sep" aria-hidden="true"></span>
+      <span class="gsx-live-chip gsx-live-count"><strong id="gsx-inventory">—</strong> listings</span>
+    </div>
   </div>
+  <p class="gsx-sub">
+    Zero brokerage friction. Every answer narrows the live DFW inventory, and the
+    panel beside the questions shows exactly what is left.
+  </p>
+</header>
+
+<div class="gsx-layout">
+<div class="gs-wrap">
 
   {# ── Progress bar ── #}
   <div class="gs-progress-wrap">
@@ -458,7 +478,73 @@
     </div>
   </div>
 
-</div>
+</div>{# /gs-wrap #}
+
+{% comment %}
+  INTELLIGENCE RAIL. The wizard asked eight questions with no sense of whether
+  the answers were narrowing to something or to nothing. This panel runs the
+  same filters the results page runs, against the answers given so far, and
+  reports the real count and the real top matches. Nothing here is projected.
+{% endcomment %}
+<aside class="gsx-rail" id="gsx-rail" data-url="{% url 'guided_match_preview' %}"
+       aria-label="Live match preview" aria-live="polite">
+
+  <section class="gsx-card gsx-card-lead">
+    <header class="gsx-card-head">
+      <span class="gsx-card-title">Matching right now</span>
+      <span class="gsx-card-note" id="gsx-state">Answer a question to start</span>
+    </header>
+
+    <div class="gsx-gauge">
+      <svg viewBox="0 0 84 84" width="84" height="84" aria-hidden="true">
+        <circle cx="42" cy="42" r="36" fill="none" stroke="var(--border)" stroke-width="7"/>
+        <circle id="gsx-ring" cx="42" cy="42" r="36" fill="none" stroke="var(--primary)"
+                stroke-width="7" stroke-linecap="round"
+                stroke-dasharray="226" stroke-dashoffset="226"
+                transform="rotate(-90 42 42)"/>
+      </svg>
+      <div class="gsx-gauge-body">
+        <span class="gsx-gauge-num" id="gsx-total">—</span>
+        <span class="gsx-gauge-lbl">of <span id="gsx-inv2">—</span> live listings</span>
+      </div>
+    </div>
+
+    <p class="gsx-gauge-foot" id="gsx-foot">
+      The share of DFW inventory still matching your answers.
+    </p>
+  </section>
+
+  <section class="gsx-card">
+    <header class="gsx-card-head">
+      <span class="gsx-card-title">What you've told us</span>
+    </header>
+    <ul class="gsx-criteria" id="gsx-criteria">
+      <li class="gsx-criteria-empty">Nothing yet — your answers appear here as you go.</li>
+    </ul>
+  </section>
+
+  <section class="gsx-card" id="gsx-matches-card" hidden>
+    <header class="gsx-card-head">
+      <span class="gsx-card-title">Top matches so far</span>
+      <span class="gsx-card-note">Live listings</span>
+    </header>
+    <div class="gsx-matches" id="gsx-matches"></div>
+  </section>
+
+  <section class="gsx-card gsx-shield">
+    <span class="gsx-shield-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z"/><path d="m8.8 12.2 2.2 2.2 4.2-4.4"/></svg>
+    </span>
+    <div>
+      <p class="gsx-shield-title">Direct owners only</p>
+      <p class="gsx-shield-body">
+        Every listing here is posted by the owner or manager. No agency fees,
+        and no duplicate re-posts of the same unit.
+      </p>
+    </div>
+  </section>
+</aside>
+</div>{# /gsx-layout #}
 
 {# Hidden POST form — populated and submitted by submitSearch() #}
 <form id="gs-submit-form" method="post" action="{% url 'guided_search' %}{% if gs_mode %}?mode={{ gs_mode }}{% endif %}" style="display:none">{% csrf_token %}</form>
@@ -683,5 +769,195 @@ function submitSearch() {
 if (GS_MODE === 'rent' || GS_MODE === 'buy') {
   selectRentBuy(GS_MODE);
 }
+
+/* ── Live intelligence rail ─────────────────────────────────────
+   Reads the same wizard state submitSearch() reads, sends it to the same
+   filters the results page runs, and reports what actually matches. It is
+   deliberately a read of the real query rather than a projected score: the
+   panel's whole claim is that the number beside the questions is the number
+   you will get. */
+(function () {
+  var rail = document.getElementById('gsx-rail');
+  if (!rail) return;
+
+  var ring     = document.getElementById('gsx-ring');
+  var totalEl  = document.getElementById('gsx-total');
+  var invEl    = document.getElementById('gsx-inventory');
+  var inv2El   = document.getElementById('gsx-inv2');
+  var stateEl  = document.getElementById('gsx-state');
+  var footEl   = document.getElementById('gsx-foot');
+  var critEl   = document.getElementById('gsx-criteria');
+  var matchWrap= document.getElementById('gsx-matches-card');
+  var matchEl  = document.getElementById('gsx-matches');
+
+  var RING_LEN = 226;
+  var timer = null;
+  var lastKey = null;
+
+  function money(n) {
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  /* The criteria the wizard has actually collected so far. Mirrors
+     submitSearch(), so the preview and the submission cannot disagree. */
+  function collect() {
+    var f = {};
+
+    if (rentBuy === 'buy') f.category = 'properties';
+    else if (roomType === 'room') f.category = 'roommates';
+    else if (rentBuy === 'rent') f.category = 'rentals';
+
+    var bedPill = document.querySelector('#beds-group .tag-pill.sel');
+    if (bedPill && bedPill.dataset.val) f.bedrooms = bedPill.dataset.val;
+
+    var cityEl = document.getElementById('city');
+    var city = cityEl ? cityEl.value.trim().split(',')[0].trim() : '';
+    if (city) f.city = city;
+
+    var minP = (document.getElementById('min_price') || {}).value;
+    var maxP = (document.getElementById('max_price') || {}).value;
+    if (minP) f.min_price = minP;
+    if (maxP) f.max_price = maxP;
+
+    var tags = [];
+    document.querySelectorAll('.tag-pill.sel[data-group="features"], .tag-pill.sel[data-group="vibe"], .tag-pill.sel[data-group="lease"]')
+      .forEach(function (p) { tags.push(p.dataset.val); });
+    if (tags.length) f.tags = tags.join(',');
+
+    return f;
+  }
+
+  /* Human-readable rows for "what you've told us". */
+  var CAT_LABEL = { rentals: 'Rentals', properties: 'Homes for sale', roommates: 'Rooms & co-living' };
+
+  function describe(f) {
+    var rows = [];
+    if (f.category) rows.push(['Looking for', CAT_LABEL[f.category] || f.category]);
+    if (f.city)     rows.push(['City', f.city]);
+    if (f.bedrooms) rows.push(['Bedrooms', f.bedrooms + '+']);
+    if (f.max_price) {
+      rows.push(['Budget', (f.min_price ? money(f.min_price) + ' – ' : 'Up to ') + money(f.max_price)]);
+    }
+    if (f.tags) {
+      f.tags.split(',').forEach(function (t) { rows.push(['Must have', t]); });
+    }
+    return rows;
+  }
+
+  function renderCriteria(rows) {
+    if (!rows.length) {
+      critEl.innerHTML = '<li class="gsx-criteria-empty">Nothing yet — your answers appear here as you go.</li>';
+      return;
+    }
+    critEl.innerHTML = rows.map(function (r) {
+      var li = document.createElement('li');
+      var k = document.createElement('span'); k.className = 'gsx-criteria-k'; k.textContent = r[0];
+      var v = document.createElement('span'); v.className = 'gsx-criteria-v'; v.textContent = r[1];
+      li.appendChild(k); li.appendChild(v);
+      return li.outerHTML;
+    }).join('');
+  }
+
+  function renderMatches(list) {
+    matchWrap.hidden = !list.length;
+    matchEl.innerHTML = '';
+    list.forEach(function (m) {
+      var a = document.createElement('a');
+      a.className = 'gsx-match';
+      a.href = m.url;
+
+      var thumb = document.createElement('span');
+      thumb.className = 'gsx-match-thumb';
+      if (m.image) {
+        var img = document.createElement('img');
+        img.src = m.image; img.alt = '';
+        thumb.appendChild(img);
+      } else {
+        thumb.classList.add('is-empty');
+      }
+
+      var body = document.createElement('span');
+      body.className = 'gsx-match-body';
+
+      var price = document.createElement('span');
+      price.className = 'gsx-match-price';
+      price.textContent = m.price ? money(m.price) + (m.unit || '') : 'Contact for price';
+
+      var title = document.createElement('span');
+      title.className = 'gsx-match-title';
+      title.textContent = m.title;
+
+      var meta = document.createElement('span');
+      meta.className = 'gsx-match-meta';
+      var bits = [];
+      if (m.city) bits.push(m.city + (m.state ? ', ' + m.state : ''));
+      if (m.bedrooms !== null && m.bedrooms !== undefined) {
+        bits.push(m.bedrooms === 0 ? 'Studio' : m.bedrooms + ' bed');
+      }
+      meta.textContent = bits.join(' · ');
+
+      body.appendChild(price); body.appendChild(title); body.appendChild(meta);
+      a.appendChild(thumb); a.appendChild(body);
+      matchEl.appendChild(a);
+    });
+  }
+
+  function apply(d) {
+    var total = d.total, inv = d.inventory || 0;
+    totalEl.textContent = total.toLocaleString('en-US');
+    invEl.textContent   = inv.toLocaleString('en-US');
+    inv2El.textContent  = inv.toLocaleString('en-US');
+
+    var frac = inv ? Math.min(1, total / inv) : 0;
+    ring.style.strokeDashoffset = String(RING_LEN * (1 - frac));
+
+    if (total === 0) {
+      stateEl.textContent = 'No matches';
+      footEl.textContent  = 'Nothing matches every answer. Loosening the budget or the must-haves is usually what opens it up.';
+      ring.setAttribute('stroke', 'var(--featured)');
+    } else {
+      stateEl.textContent = total === 1 ? '1 match' : total + ' matches';
+      footEl.textContent  = 'The share of DFW inventory still matching your answers.';
+      ring.setAttribute('stroke', 'var(--primary)');
+    }
+    renderMatches(d.listings || []);
+  }
+
+  function refresh() {
+    var f = collect();
+    var key = JSON.stringify(f);
+    if (key === lastKey) return;
+    lastKey = key;
+
+    renderCriteria(describe(f));
+
+    var qs = Object.keys(f).map(function (k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(f[k]);
+    }).join('&');
+
+    fetch(rail.dataset.url + (qs ? '?' + qs : ''), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d && d.ok) apply(d); })
+      .catch(function () { /* the rail keeps its last good numbers */ });
+  }
+
+  function schedule() {
+    clearTimeout(timer);
+    timer = setTimeout(refresh, 320);
+  }
+
+  // Any click or input inside the wizard can change the criteria; one
+  // delegated pair of listeners is cheaper than binding each control.
+  var wrap = document.querySelector('.gs-wrap');
+  if (wrap) {
+    wrap.addEventListener('click', schedule);
+    wrap.addEventListener('input', schedule);
+    wrap.addEventListener('change', schedule);
+  }
+
+  refresh();
+})();
 </script>
 {% endblock %}

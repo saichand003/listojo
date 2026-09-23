@@ -6,6 +6,7 @@ from . import community_views
 urlpatterns = [
     path('', views.home, name='home'),
     path('listings/', views.listing_list, name='listing_list'),
+    path('search/guided/matches/', views.guided_match_preview, name='guided_match_preview'),
     path('post/', views.create_listing, name='create_listing'),
     path('post/market/', views.posting_market_stats, name='posting_market_stats'),
     path('saved/', views.saved_listings, name='saved_listings'),

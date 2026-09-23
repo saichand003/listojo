@@ -338,6 +338,33 @@ def _build_fmm_context(listings_qs, communities: list, params: SearchParams) -> 
     }
 
 
+def live_match_preview(request, limit: int = 3) -> dict:
+    """
+    Real counts and real listings for the guided-search intelligence rail,
+    from whatever criteria have been chosen so far.
+
+    The rail is meant to say "here is what your answers match right now", so it
+    has to run the same filters the results page runs. It reuses the same
+    parser, so the preview and the results it promises cannot drift apart.
+    """
+    params = _parse_search_params(request)
+    qs = Listing.objects.select_related('owner').prefetch_related('images')
+    qs = _apply_listing_filters(qs, params, request.user)
+    qs = _apply_listing_ordering(qs, params)
+
+    total = qs.count()
+    top = list(qs[:limit])
+
+    return {
+        'total': total,
+        # Total live inventory, so the rail can say "N of M" rather than
+        # reporting a count with nothing to scale it against.
+        'inventory': Listing.objects.filter(status='active', parent__isnull=True).count(),
+        'listings': top,
+        'params': params,
+    }
+
+
 def build_listing_search_context(request) -> dict:
     """Shared search/listing context for the consumer discovery experience."""
     params = _parse_search_params(request)
