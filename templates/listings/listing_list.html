@@ -13,91 +13,123 @@
   body.lj-map-active .app-content{ background-image:none; }
 </style>
 
-<section class="hero">
-    <div style="position:relative;z-index:1;max-width:720px;">
-        {% if filters.category == 'properties' %}
-        <h1 class="hero-headline">Find a property<br>worth buying.</h1>
-        <p class="hero-sub">Trusted listings from real sellers, curated for serious buyers.<br>Smart match scoring highlights homes that fit your budget,<br>location, and must-have criteria so you know why they fit.</p>
-        {% else %}
-        <h1 class="hero-headline">Find the right home,<br>not just a listing.</h1>
-        <p class="hero-sub">Listojo understands what matters — budget, commute, neighborhood, lifestyle — and shows you exactly why each result fits.</p>
-        {% endif %}
+{% comment %}
+  RESULTS TOOLBAR. Was a dark marketing hero, then a separate search card, then
+  a lone sort dropdown, then a lone view toggle — four stacked bands before the
+  first result. The reference design collapses all of it into one sticky
+  toolbar: what you are browsing, how many there are, how it is sorted, and
+  which view. Every id and name below is the one the page's JS already binds to.
+{% endcomment %}
+<div class="results-bar">
 
-        <div class="hero-ctas">
-            <a href="{% url 'guided_search' %}?mode={% if filters.category == 'properties' %}buy{% else %}rent{% endif %}" class="fmm-cta-btn">Start guided search →</a>
-            <a href="#listings-grid" class="hero-ghost-btn">Browse all listings</a>
-        </div>
-    </div>
-</section>
+  {# Row 1: scope tabs + free-text search #}
+  <div class="results-bar-row">
+    <nav class="results-scope" aria-label="Listing type">
+      <a href="?{% if filters.city %}city={{ filters.city|urlencode }}{% endif %}"
+         class="results-scope-tab {% if not filters.category %}is-on{% endif %}">All</a>
+      <a href="?category=rentals{% if filters.city %}&amp;city={{ filters.city|urlencode }}{% endif %}"
+         class="results-scope-tab {% if filters.category == 'rentals' %}is-on{% endif %}">Rentals</a>
+      <a href="?category=properties{% if filters.city %}&amp;city={{ filters.city|urlencode }}{% endif %}"
+         class="results-scope-tab {% if filters.category == 'properties' %}is-on{% endif %}">For Sale</a>
+      <a href="?category=roommates{% if filters.city %}&amp;city={{ filters.city|urlencode }}{% endif %}"
+         class="results-scope-tab {% if filters.category == 'roommates' %}is-on{% endif %}">Roommates</a>
+    </nav>
 
-{# ── Search card — separate from hero ── #}
-<div class="search-card">
-    <form method="get" class="filters" id="search-form">
-        <input type="text" id="tag-search-input" placeholder="🔍  Search… e.g. pet-friendly, 2BHK, parking" autocomplete="off">
-        <input type="hidden" name="q" id="tag-search-hidden" value="{{ filters.q }}">
-        <input type="hidden" name="min_price" id="filter-min-price" value="{{ filters.min_price }}">
-        <input type="hidden" name="max_price" id="filter-max-price" value="{{ filters.max_price }}">
-        <select name="category">
-            <option value="">All Types</option>
-            {% for key, label in wizard_categories %}
-                <option value="{{ key }}" {% if filters.category == key %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-        <div class="city-ac-wrap" id="filter-city-wrap">
-            <input type="text" name="city" id="filter-city" placeholder="📍  City" value="{{ filters.city }}" autocomplete="new-password">
-            <ul class="city-ac-dropdown" id="filter-city-dropdown" hidden></ul>
-        </div>
-        <button type="submit">Search</button>
-    </form>
-    {% if filters.q %}
-    <div id="search-tags-display" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem;">
-        {% for term in filters.q|split_csv %}
-        <span class="search-tag-chip">{{ term }}<button type="button" class="search-tag-remove" data-val="{{ term }}">×</button></span>
+    <form method="get" class="results-search" id="search-form" role="search">
+      <span class="results-search-field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4-4"/></svg>
+        <input type="text" id="tag-search-input" aria-label="Search listings"
+               placeholder="Search — pet-friendly, 2BHK, parking…" autocomplete="off">
+      </span>
+      <input type="hidden" name="q" id="tag-search-hidden" value="{{ filters.q }}">
+      <input type="hidden" name="min_price" id="filter-min-price" value="{{ filters.min_price }}">
+      <input type="hidden" name="max_price" id="filter-max-price" value="{{ filters.max_price }}">
+      <select name="category" class="results-select" aria-label="Listing category">
+        <option value="">All Types</option>
+        {% for key, label in wizard_categories %}
+          <option value="{{ key }}" {% if filters.category == key %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
-    </div>
-    {% else %}
-    <div id="search-tags-display" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem;"></div>
-    {% endif %}
+      </select>
+      <span class="city-ac-wrap results-search-city" id="filter-city-wrap">
+        <input type="text" name="city" id="filter-city" aria-label="City"
+               placeholder="City" value="{{ filters.city }}" autocomplete="new-password">
+        <ul class="city-ac-dropdown" id="filter-city-dropdown" hidden></ul>
+      </span>
+      <button type="submit" class="results-search-btn">Search</button>
+    </form>
+  </div>
 
-    {# ── Amenity filter chips — context-aware by tab ── #}
-    <div class="quality-chips-row" id="quality-chips-row">
-        <span class="trending-label">POPULAR</span>
-        {% if filters.category == 'properties' %}
-            {% for qt in "garage,backyard,pool,new build,HOA,corner lot,no HOA,fireplace,renovated,open floor plan,golf community,schools"|split_csv %}
-            <button type="button"
-                class="quality-chip {% if qt in active_quality_tags %}quality-chip-active{% endif %}"
-                data-tag="{{ qt }}">{{ qt }}</button>
-            {% endfor %}
-        {% else %}
-            {% for qt in "pet-friendly,parking,furnished,washer/dryer,gym,pool,balcony,utilities included,no deposit,near transit"|split_csv %}
-            <button type="button"
-                class="quality-chip {% if qt in active_quality_tags %}quality-chip-active{% endif %}"
-                data-tag="{{ qt }}">{{ qt }}</button>
-            {% endfor %}
-        {% endif %}
-    </div>
-    <input type="hidden" name="tags" id="quality-tags-hidden" value="{{ filters.tags }}">
-</div>
+  {# Row 2: count + amenity chips + sort + view #}
+  <div class="results-bar-row results-bar-row-2">
+    <p class="results-count">
+      <strong>{{ total_matches }}</strong>
+      {% if fmm_mode %}match{{ total_matches|pluralize:"es" }} for you{% else %}verified {{ filters.category|default:"listings" }} in DFW{% endif %}
+    </p>
 
-{# ── Actions row ── #}
-<div class="sub-tab-bar" style="justify-content:flex-end;">
+    <div class="results-bar-spacer"></div>
+
     {% if fmm_mode %}
-    <a href="?" class="button secondary" style="font-size:.82rem;padding:.38rem .9rem;white-space:nowrap;flex-shrink:0;">✕ Clear matches</a>
+      <a href="?" class="results-clear">&times; Clear matches</a>
     {% else %}
-    <form method="get" id="sort-form" style="display:flex;align-items:center;">
-        <input type="hidden" name="q" value="{{ filters.q }}">
-        <input type="hidden" name="category" value="{{ filters.category }}">
-        <input type="hidden" name="city" value="{{ filters.city }}">
-        <input type="hidden" name="tag" value="{{ filters.tag }}">
-        <input type="hidden" name="tags" value="{{ filters.tags }}">
-        <select name="sort" class="sort-select" id="sort-select">
-            {% if filters.q %}<option value="best_match" {% if filters.sort == 'best_match' %}selected{% endif %}>✦ Best match</option>{% endif %}
-            <option value="latest"     {% if filters.sort == 'latest'     %}selected{% endif %}>Latest first</option>
-            <option value="price_low"  {% if filters.sort == 'price_low'  %}selected{% endif %}>Price: Low → High</option>
-            <option value="price_high" {% if filters.sort == 'price_high' %}selected{% endif %}>Price: High → Low</option>
-        </select>
+    <form method="get" id="sort-form" class="results-sort">
+      <input type="hidden" name="q" value="{{ filters.q }}">
+      <input type="hidden" name="category" value="{{ filters.category }}">
+      <input type="hidden" name="city" value="{{ filters.city }}">
+      <input type="hidden" name="tag" value="{{ filters.tag }}">
+      <input type="hidden" name="tags" value="{{ filters.tags }}">
+      <select name="sort" class="sort-select results-select" id="sort-select" aria-label="Sort results">
+        {% if filters.q %}<option value="best_match" {% if filters.sort == 'best_match' %}selected{% endif %}>Best match</option>{% endif %}
+        <option value="latest"     {% if filters.sort == 'latest'     %}selected{% endif %}>Latest first</option>
+        <option value="price_low"  {% if filters.sort == 'price_low'  %}selected{% endif %}>Price: Low &rarr; High</option>
+        <option value="price_high" {% if filters.sort == 'price_high' %}selected{% endif %}>Price: High &rarr; Low</option>
+      </select>
     </form>
     {% endif %}
+
+    {% comment %}
+      Map is first because it is the default view: in a segmented control the
+      leftmost option reads as the one that is on when the page opens.
+      setView() owns the selected state from boot onward.
+    {% endcomment %}
+    <div id="view-toggle" class="results-view">
+      <button type="button" id="btn-map-view" onclick="setView('map')" class="results-view-btn is-on">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
+        Map
+      </button>
+      <button type="button" id="btn-list-view" onclick="setView('list')" class="results-view-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg>
+        List
+      </button>
+    </div>
+  </div>
+
+  {# Row 3: active search terms + amenity chips #}
+  <div class="results-bar-row results-bar-chips">
+    <div id="search-tags-display" class="results-terms">
+      {% if filters.q %}
+        {% for term in filters.q|split_csv %}
+        <span class="search-tag-chip">{{ term }}<button type="button" class="search-tag-remove" data-val="{{ term }}">&times;</button></span>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <div class="quality-chips-row" id="quality-chips-row">
+      {% if filters.category == 'properties' %}
+        {% for qt in "garage,backyard,pool,new build,HOA,corner lot,no HOA,fireplace,renovated,open floor plan,golf community,schools"|split_csv %}
+        <button type="button"
+          class="quality-chip {% if qt in active_quality_tags %}quality-chip-active{% endif %}"
+          data-tag="{{ qt }}">{{ qt }}</button>
+        {% endfor %}
+      {% else %}
+        {% for qt in "pet-friendly,parking,furnished,washer/dryer,gym,pool,balcony,utilities included,no deposit,near transit"|split_csv %}
+        <button type="button"
+          class="quality-chip {% if qt in active_quality_tags %}quality-chip-active{% endif %}"
+          data-tag="{{ qt }}">{{ qt }}</button>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <input type="hidden" name="tags" id="quality-tags-hidden" value="{{ filters.tags }}" form="search-form">
+  </div>
 </div>
 
 {# ── Agent CTA banner (shown after guided search completion) ── #}
@@ -186,26 +218,6 @@ function dismissAgentCta() {
   {% endfor %}
 </div>
 {% endif %}
-
-{# ── Map / List view toggle ── #}
-{% comment %}
-  Map sits first because it is the default view: the selected option reads
-  left-to-right first in a segmented control, so the order matches which one
-  is on when the page opens. The initial background/color on each button is
-  overwritten by setView() on boot, which owns the selected state.
-{% endcomment %}
-<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem;">
-  <div id="view-toggle" style="display:flex;gap:.3rem;background:var(--border);border-radius:8px;padding:.2rem;">
-    <button id="btn-map-view" onclick="setView('map')" style="display:flex;align-items:center;gap:.4rem;padding:.35rem .75rem;border-radius:6px;border:none;cursor:pointer;font-size:.78rem;font-weight:700;background:#fff;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1);">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
-      Map
-    </button>
-    <button id="btn-list-view" onclick="setView('list')" style="display:flex;align-items:center;gap:.4rem;padding:.35rem .75rem;border-radius:6px;border:none;cursor:pointer;font-size:.78rem;font-weight:700;background:transparent;color:var(--muted);">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg>
-      List
-    </button>
-  </div>
-</div>
 
 {# ── Map/List wrapper ── #}
 <div id="view-wrapper" style="display:flex;gap:1rem;align-items:flex-start;">
@@ -303,7 +315,13 @@ function dismissAgentCta() {
 {% endif %}
 
   </div>{# /list-panel #}
-  <div id="map-panel" style="display:none;flex:0 0 50%;position:sticky;top:16px;height:calc(100vh - 32px);align-self:flex-start;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+  {% comment %}
+    The map pins below the sticky header and the results toolbar rather than
+    at the top of the viewport, so it never slides under either of them.
+    --results-bar-h is measured and set by the boot script below, because
+    the toolbar's height depends on how many filter chips wrap.
+  {% endcomment %}
+  <div id="map-panel" style="display:none;flex:0 0 50%;position:sticky;top:calc(var(--topbar-h) + var(--results-bar-h, 108px) + 12px);height:calc(100dvh - var(--topbar-h) - var(--results-bar-h, 108px) - 24px);align-self:flex-start;border-radius:var(--r);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-sm);">
     <div id="listing-map" style="width:100%;height:100%;"></div>
   </div>
 </div>{# /view-wrapper #}
@@ -397,7 +415,11 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
   }
 }
 
-/* ── Airbnb-style 2-col map tiles ── */
+/* ── Split view: horizontal result rows ──
+   Was a two-column tile grid. With the map holding half the width, two
+   columns gave each result ~330px, so the title wrapped to three lines and
+   the specs fell off. The reference design puts the results in rows here:
+   photo left, everything else right, one result per line. */
 #list-panel.map-mode {
   padding-right: .25rem;
   background: transparent;
@@ -405,41 +427,47 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 
 #list-panel.map-mode .grid-listings {
   display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
+  grid-template-columns: 1fr !important;
   gap: .75rem !important;
   padding: 0 !important;
 }
 
-/* Card shell — borderless, Airbnb style */
 #list-panel.map-mode .listing-card {
   display: flex !important;
-  flex-direction: column !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
   height: auto !important;
   min-height: 0 !important;
-  border-radius: 12px !important;
+  border-radius: var(--r) !important;
   overflow: hidden !important;
-  border: none !important;
+  border: 1px solid var(--border) !important;
   box-shadow: none !important;
-  background: #fff !important;
+  background: var(--surface) !important;
   cursor: pointer;
-  transition: transform .18s ease;
+  transition: border-color .18s ease, box-shadow .18s ease;
 }
 #list-panel.map-mode .listing-card:hover {
-  transform: translateY(-2px);
+  /* No lift here: a row that jumps on hover fights the map pin it is
+     paired with. Border and shadow carry the state instead. */
+  transform: none !important;
+  border-color: var(--border-2) !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 /* Highlighted card from pin click */
 #list-panel.map-mode .listing-card[style*="outline"] {
-  outline: 2.5px solid var(--primary) !important;
-  border-radius: 12px !important;
+  outline: 2px solid var(--primary) !important;
+  outline-offset: -1px;
+  border-radius: var(--r) !important;
 }
 
-/* Photo — large & square-ish, top of card (Airbnb) */
 #list-panel.map-mode .listing-thumb-wrap {
-  width: 100% !important;
-  aspect-ratio: 20 / 19 !important;
+  flex: 0 0 196px !important;
+  width: 196px !important;
+  aspect-ratio: auto !important;
   height: auto !important;
-  flex-shrink: 0 !important;
-  border-radius: 12px !important;
+  min-height: 148px !important;
+  align-self: stretch !important;
+  border-radius: 0 !important;
   overflow: hidden !important;
   position: relative !important;
 }
@@ -450,6 +478,7 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 #list-panel.map-mode .listing-thumb {
   width: 100% !important;
   height: 100% !important;
+  min-height: 148px !important;
   object-fit: cover !important;
   border-radius: 0 !important;
   display: block !important;
@@ -457,18 +486,23 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 #list-panel.map-mode .listing-thumb-placeholder {
   width: 100% !important;
   height: 100% !important;
+  min-height: 148px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   background: var(--surface-2) !important;
-  /* Was 2rem, sized for the emoji glyph this used to render. The placeholder
-     is now a masked icon plus a small label, and 2rem blew the label up to
-     32px across the whole results column. */
   font-size: .75rem !important;
   border-radius: 0 !important;
 }
+#list-panel.map-mode .listing-body {
+  flex: 1 !important;
+  min-width: 0 !important;
+  padding: var(--sp-4) !important;
+}
+@media (max-width: 1180px) {
+  #list-panel.map-mode .listing-thumb-wrap { flex-basis: 150px !important; width: 150px !important; }
+}
 
-/* Keep save heart + badges; show the photo carousel (Airbnb style) */
 #list-panel.map-mode .featured-badge { display: none !important; }
 
 /* Carousel arrows — circular, appear on hover */
@@ -971,12 +1005,8 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
       listPanel.style.position   = '';
       listPanel.style.top        = '';
       mapPanel.style.display     = 'block';
-      btnMap.style.background    = '#fff';
-      btnMap.style.color         = 'var(--text)';
-      btnMap.style.boxShadow     = '0 1px 4px rgba(0,0,0,.1)';
-      btnList.style.background   = 'transparent';
-      btnList.style.color        = 'var(--muted)';
-      btnList.style.boxShadow    = '';
+      btnMap.classList.add('is-on');
+      btnList.classList.remove('is-on');
       if(!gMapsReady){
         _loadGMapsScript();
       } else if(!gMap){
@@ -994,14 +1024,25 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
       listPanel.style.position  = '';
       listPanel.style.top       = '';
       mapPanel.style.display    = 'none';
-      btnList.style.background  = '#fff';
-      btnList.style.color       = 'var(--text)';
-      btnList.style.boxShadow   = '0 1px 4px rgba(0,0,0,.1)';
-      btnMap.style.background   = 'transparent';
-      btnMap.style.color        = 'var(--muted)';
-      btnMap.style.boxShadow    = '';
+      btnList.classList.add('is-on');
+      btnMap.classList.remove('is-on');
     }
   };
+
+  // ── Toolbar height ───────────────────────────────────────────
+  // The results toolbar wraps its filter chips, so its height is not knowable
+  // from CSS. Measure it and publish it as --results-bar-h; the sticky map
+  // sizes and offsets itself against that.
+  (function () {
+    var bar = document.querySelector('.results-bar');
+    if (!bar) return;
+    function publish() {
+      document.documentElement.style.setProperty('--results-bar-h', bar.offsetHeight + 'px');
+    }
+    publish();
+    if (window.ResizeObserver) new ResizeObserver(publish).observe(bar);
+    else window.addEventListener('resize', publish);
+  })();
 
   // ── Boot view ────────────────────────────────────────────────
   // Map is the default on desktop: it is the view people come to a listings
