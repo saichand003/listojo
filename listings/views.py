@@ -8,16 +8,18 @@ from django.db import models as django_models
 from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
 from datetime import timedelta, date
 
 from listojo.services.notifications import send_listing_inquiry_email
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
-from .models import CityWaitlist, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry, SavedSearch
+from .models import CityWaitlist, Community, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry, SavedSearch
 from listings.services.amenities import PICKER_GROUPS
-from listings.services.search import build_listing_search_context, live_match_preview
+from listings.services.search import build_listing_search_context, live_inventory_count, live_match_preview
 from listings.services.valuation import predict_price
+from listings.services.visibility import active_listings
 from listings.services.event_tracker import log_event, log_impression_batch
 from portal.services.routing import least_loaded_agent
 from portal.services.lead_service import create_or_update_lead, parse_budget, parse_move_in
@@ -80,24 +82,47 @@ HOME_CITY_HUBS = [
 def home(request):
     if not _listings_table_ready():
         return _render_db_setup_page(request)
-    trending_rentals = (
-        Listing.objects.filter(category='rentals', status='active', parent__isnull=True)
+    # One definition of "live" for every number and card on this page — the
+    # same visibility rule the results page uses (expired listings drop out),
+    # and communities counted as inventory. The home page used to show listings
+    # only, so a market with one rental and two communities read as "1".
+    live = active_listings(Listing.objects.filter(parent__isnull=True))
+    communities = Community.objects.filter(status='active')
+
+    trending_rentals = list(
+        live.filter(category='rentals')
         .select_related('owner', 'nearest_downtown').prefetch_related('images')
         .order_by('-view_count', '-created_at')[:5]
     )
-    trending_properties = (
-        Listing.objects.filter(category='properties', status='active', parent__isnull=True)
+    trending_properties = list(
+        live.filter(category='properties')
         .select_related('owner', 'nearest_downtown').prefetch_related('images')
         .order_by('-view_count', '-created_at')[:5]
     )
-    cities = list(
-        Listing.objects.filter(status='active', parent__isnull=True)
-        .exclude(city='').values_list('city', flat=True)
-        .distinct().order_by('city')[:12]
+    trending_communities = list(
+        communities.prefetch_related('images', 'floor_plans__units')
+        .order_by('-featured', '-created_at')[:3]
     )
+    # The rentals half of the trending grid mixes both kinds, alternating so
+    # neither crowds the other out of the three slots.
+    trend_rent_items = []
+    for i in range(max(len(trending_rentals), len(trending_communities))):
+        if i < len(trending_communities):
+            trend_rent_items.append({'kind': 'community', 'obj': trending_communities[i]})
+        if i < len(trending_rentals):
+            trend_rent_items.append({'kind': 'listing', 'obj': trending_rentals[i]})
+    trend_rent_items = trend_rent_items[:3]
+
+    city_names = {
+        c.strip().title()
+        for c in list(live.exclude(city='').values_list('city', flat=True))
+        + list(communities.exclude(city='').values_list('city', flat=True))
+        if c.strip()
+    }
+    cities = sorted(city_names)[:12]
     # The city grid always shows the metroplex's main hubs. "Active" is only
-    # set where there is at least one live listing; the rest read "DFW".
-    active_cities = {c.strip().lower() for c in cities}
+    # set where there is at least one live listing or community; the rest read "DFW".
+    active_cities = {c.lower() for c in city_names}
     city_hubs = [
         {'name': name, 'district': district, 'icon': icon,
          'active': name.lower() in active_cities}
@@ -105,25 +130,25 @@ def home(request):
     ]
     hub_names = {h['name'].lower() for h in city_hubs}
     city_hubs += [
-        {'name': c.title(), 'district': 'Dallas–Fort Worth, TX', 'icon': 'pin', 'active': True}
-        for c in cities if c.strip().lower() not in hub_names
+        {'name': c, 'district': 'Dallas–Fort Worth, TX', 'icon': 'pin', 'active': True}
+        for c in cities if c.lower() not in hub_names
     ]
     fav_ids = set()
     if request.user.is_authenticated:
         fav_ids = set(Favourite.objects.filter(user=request.user).values_list('listing_id', flat=True))
-    listing_count = Listing.objects.filter(status='active', parent__isnull=True).count()
-    city_count = Listing.objects.filter(status='active', parent__isnull=True).exclude(city='').values('city').distinct().count()
-    landlord_count = Listing.objects.filter(status='active', parent__isnull=True).values('owner').distinct().count()
+    owners = set(live.exclude(owner=None).values_list('owner', flat=True)) | set(
+        communities.exclude(owner=None).values_list('owner', flat=True))
     return render(request, 'listings/home.html', {
         'trending_rentals': trending_rentals,
         'trending_properties': trending_properties,
+        'trend_rent_items': trend_rent_items,
         'cities': cities,
         'city_hubs': city_hubs,
         'fav_ids': fav_ids,
         'stats': {
-            'listing_count': listing_count,
-            'city_count': city_count,
-            'landlord_count': landlord_count,
+            'listing_count': live_inventory_count(),
+            'city_count': len(city_names),
+            'landlord_count': len(owners),
         },
     })
 
@@ -168,6 +193,7 @@ def guided_search(request):
         urgency       = request.POST.get('urgency', '').strip()
         income_raw    = request.POST.get('monthly_income', '').strip()
         property_type = request.POST.get('property_type', '').strip()
+        accommodation = request.POST.get('accommodation_type', '').strip()
 
         beds_int = None
         if bedrooms:
@@ -181,7 +207,9 @@ def guided_search(request):
             email=request.user.email if request.user.is_authenticated else '',
             source='guided_search',
             city=city,
-            property_type=property_type or category,
+            # A room seeker has no category now (rooms span Rentals and
+            # Roommates), so the lead keeps saying what they asked for.
+            property_type=property_type or category or ('roommates' if accommodation == 'room' else ''),
             bedrooms=beds_int,
             max_budget=parse_budget(max_budget),
             amenities=amenities,
@@ -217,7 +245,7 @@ def guided_search(request):
         # Build redirect to listing list preserving all search params
         from urllib.parse import urlencode
         qs_params = {}
-        for key in ('category', 'city', 'bedrooms', 'min_price', 'max_price',
+        for key in ('category', 'accommodation_type', 'city', 'bedrooms', 'min_price', 'max_price',
                     'tags', 'available_by', 'property_type', 'fmm', 'priority', 'urgency'):
             val = request.POST.get(key, '').strip()
             if val:
@@ -251,22 +279,44 @@ def guided_match_preview(request):
         'ok': True,
         'total': preview['total'],
         'inventory': preview['inventory'],
-        'listings': [
-            {
-                'pk': l.pk,
-                'title': l.title,
-                'city': l.city,
-                'state': l.state,
-                'price': float(l.price) if l.price else None,
-                'unit': l.get_price_unit_display() if l.price_unit else '',
-                'bedrooms': l.bedrooms,
-                'bathrooms': float(l.bathrooms) if l.bathrooms else None,
-                'url': l.get_absolute_url() if hasattr(l, 'get_absolute_url') else f'/listing/{l.pk}/',
-                'image': (l.images.all()[0].image.url if l.images.all() else None),
-            }
-            for l in preview['listings']
-        ],
+        'listings': [_preview_item(item) for item in preview['listings']],
     })
+
+
+def _preview_item(item):
+    """One row of the guided-search rail: a stand-alone listing or a community."""
+    images = item.images.all()
+    image = images[0].image.url if images else None
+    if isinstance(item, Community):
+        low, _high = item.price_range
+        return {
+            'pk': item.pk,
+            'kind': 'community',
+            'title': item.name,
+            'city': item.city,
+            'state': item.state,
+            'price': float(low) if low else None,
+            'unit': '/mo',
+            'from_price': True,
+            'bedrooms': None,
+            'bathrooms': None,
+            'url': reverse('community_detail', args=[item.pk]),
+            'image': image,
+        }
+    return {
+        'pk': item.pk,
+        'kind': 'listing',
+        'title': item.title,
+        'city': item.city,
+        'state': item.state,
+        'price': float(item.price) if item.price else None,
+        'unit': item.get_price_unit_display() if item.price_unit else '',
+        'from_price': False,
+        'bedrooms': item.bedrooms,
+        'bathrooms': float(item.bathrooms) if item.bathrooms else None,
+        'url': reverse('listing_detail', args=[item.pk]),
+        'image': image,
+    }
 
 
 def _detail_match(request, listing):

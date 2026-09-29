@@ -17,6 +17,20 @@ COMMUNITY_TYPE_BY_PROPERTY_TYPE = {
 }
 
 
+def live_inventory_count() -> int:
+    """
+    Everything a renter or buyer can open right now: visible stand-alone
+    listings plus active communities. The home page, the guided-search rail and
+    the results page all report inventory, so they share this one definition.
+    Leaving communities out is what made the rail say "1 of 1 live listings"
+    while the Rent tab showed three.
+    """
+    return (
+        active_listings(Listing.objects.filter(parent__isnull=True)).count()
+        + Community.objects.filter(status='active').count()
+    )
+
+
 def _parse_int(value: str) -> int | None:
     try:
         return int(value)
@@ -104,7 +118,15 @@ def _apply_listing_filters(listings_qs, params: SearchParams, user):
         listings = listings.filter(city__icontains=params.city)
     if params.tag:
         listings = listings.filter(tags__icontains=params.tag)
-    if params.accommodation_type:
+    # "whole" = an entire place: anything not listed as a single room (a blank
+    # type is an older whole-home listing). "room" = a room to rent, whether it
+    # was posted under Roommates or as a room under Rentals, so the room tab
+    # and the rentals tab can never both miss (or both show) the same bedroom.
+    if params.accommodation_type == 'whole':
+        listings = listings.exclude(accommodation_type='room').exclude(category='roommates')
+    elif params.accommodation_type == 'room':
+        listings = listings.filter(Q(accommodation_type='room') | Q(category='roommates'))
+    elif params.accommodation_type:
         listings = listings.filter(accommodation_type=params.accommodation_type)
     if params.property_type:
         listings = listings.filter(property_type=params.property_type)
@@ -174,6 +196,9 @@ def _matching_communities(user, params: SearchParams) -> list[Community]:
     # mismatch hid every community from the default /listings/ view, which is
     # exactly where a renter lands after signing in.
     if params.category and params.category != 'rentals':
+        return []
+    # A community rents whole units, never a single room.
+    if params.accommodation_type == 'room':
         return []
 
     mapped_type = COMMUNITY_TYPE_BY_PROPERTY_TYPE.get(params.property_type)
@@ -351,15 +376,19 @@ def live_match_preview(request, limit: int = 3) -> dict:
     qs = Listing.objects.select_related('owner').prefetch_related('images')
     qs = _apply_listing_filters(qs, params, request.user)
     qs = _apply_listing_ordering(qs, params)
+    # The same communities the results page shows for these answers — the
+    # rail used to count listings only, so it disagreed with the Rent tab.
+    communities = _matching_communities(request.user, params)
 
-    total = qs.count()
-    top = list(qs[:limit])
+    total = qs.count() + len(communities)
+    # Communities first, as on the results page, then listings, up to `limit`.
+    top = communities[:limit] + list(qs[:max(0, limit - len(communities))])
 
     return {
         'total': total,
         # Total live inventory, so the rail can say "N of M" rather than
         # reporting a count with nothing to scale it against.
-        'inventory': Listing.objects.filter(status='active', parent__isnull=True).count(),
+        'inventory': live_inventory_count(),
         'listings': top,
         'params': params,
     }

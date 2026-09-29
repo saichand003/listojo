@@ -2017,3 +2017,71 @@ class CommunityProximityTests(TestCase):
 
         self.assertIsNotNone(score)
         self.assertTrue(self.community.commute_score_label)
+
+
+class GuidedInventoryConsistencyTests(TestCase):
+    """
+    The guided-search rail, the home page and the results page must agree on
+    what is live and on what "entire place" and "a room" mean.
+
+    Regression: picking "entire place" still matched a private bedroom posted
+    under Rentals; the rail said "1 of 1 live listings" and the home page showed
+    one trending rental while the Rent tab showed that rental plus two
+    communities.
+    """
+
+    def setUp(self):
+        self.owner = User.objects.create_user(username='landlord', password='pw')
+        self.whole = Listing.objects.create(
+            owner=self.owner, title='Whole 2BR Apartment', description='x',
+            category='rentals', accommodation_type='whole', price=Decimal('1800'),
+            city='Irving', status='active')
+        self.room = Listing.objects.create(
+            owner=self.owner, title='Private Bedroom in a 5BR Townhouse', description='x',
+            category='rentals', accommodation_type='room', price=Decimal('800'),
+            city='Irving', status='active')
+        self.roommate = Listing.objects.create(
+            owner=self.owner, title='Room share near DART', description='x',
+            category='roommates', price=Decimal('700'), city='Irving', status='active')
+        self.communities = [
+            Community.objects.create(name=f'Community {n}', description='x', city='Irving', status='active')
+            for n in (1, 2)
+        ]
+
+    def _preview(self, **params):
+        return self.client.get(reverse('guided_match_preview'), params).json()
+
+    def test_entire_place_excludes_rooms(self):
+        data = self._preview(category='rentals', accommodation_type='whole')
+        titles = {item['title'] for item in data['listings']}
+        self.assertNotIn(self.room.title, titles)
+        self.assertNotIn(self.roommate.title, titles)
+        self.assertIn(self.whole.title, titles)
+
+    def test_a_room_matches_rooms_under_rentals_and_roommates(self):
+        data = self._preview(accommodation_type='room')
+        titles = {item['title'] for item in data['listings']}
+        self.assertEqual(titles, {self.room.title, self.roommate.title})
+        self.assertEqual(data['total'], 2)
+
+    def test_rail_counts_communities_like_the_rent_tab(self):
+        data = self._preview(category='rentals', accommodation_type='whole')
+        # One whole rental + two communities, matching the results page.
+        self.assertEqual(data['total'], 3)
+        self.assertEqual(
+            sum(1 for item in data['listings'] if item['kind'] == 'community'), 2)
+        # Live inventory = 3 listings + 2 communities.
+        self.assertEqual(data['inventory'], 5)
+
+    def test_results_page_agrees_with_the_rail(self):
+        response = self.client.get(reverse('listing_list'),
+                                   {'category': 'rentals', 'accommodation_type': 'whole'})
+        shown = len(response.context['listings']) + len(response.context['communities'])
+        self.assertEqual(shown, self._preview(category='rentals', accommodation_type='whole')['total'])
+
+    def test_home_trending_includes_communities(self):
+        response = self.client.get(reverse('home'))
+        kinds = [item['kind'] for item in response.context['trend_rent_items']]
+        self.assertEqual(kinds.count('community'), 2)
+        self.assertEqual(len(kinds), 3)
+        self.assertEqual(response.context['stats']['listing_count'], 5)

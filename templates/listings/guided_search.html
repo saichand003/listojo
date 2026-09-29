@@ -721,12 +721,15 @@ function submitSearch() {
   var form = document.getElementById('gs-submit-form');
   var fields = {};
 
+  // Same mapping as collect() in the live rail below, so the results page
+  // shows exactly what the rail counted.
   if (rentBuy === 'buy') {
     fields.category = 'properties';
   } else if (roomType === 'room') {
-    fields.category = 'roommates';
+    fields.accommodation_type = 'room';
   } else {
     fields.category = 'rentals';
+    fields.accommodation_type = 'whole';
   }
 
   var typeGroup = rentBuy === 'buy' ? '#type-buy-group' : '#type-group';
@@ -858,9 +861,12 @@ if (GS_MODE === 'rent' || GS_MODE === 'buy') {
   function collect() {
     var f = {};
 
+    // A room can be posted under Roommates or as a room under Rentals, so the
+    // room choice filters on the space type, not on a category; an entire
+    // place is Rentals minus single rooms. Same mapping as submitSearch().
     if (rentBuy === 'buy') f.category = 'properties';
-    else if (roomType === 'room') f.category = 'roommates';
-    else if (rentBuy === 'rent') f.category = 'rentals';
+    else if (roomType === 'room') f.accommodation_type = 'room';
+    else if (rentBuy === 'rent') { f.category = 'rentals'; f.accommodation_type = 'whole'; }
 
     var bedPill = document.querySelector('#beds-group .tag-pill.sel');
     if (bedPill && bedPill.dataset.val) f.bedrooms = bedPill.dataset.val;
@@ -888,6 +894,7 @@ if (GS_MODE === 'rent' || GS_MODE === 'buy') {
   function describe(f) {
     var rows = [];
     if (f.category) rows.push(['Looking for', CAT_LABEL[f.category] || f.category]);
+    if (f.accommodation_type) rows.push(['Space', f.accommodation_type === 'room' ? 'A private room' : 'An entire place']);
     if (f.city)     rows.push(['City', f.city]);
     if (f.bedrooms) rows.push(['Bedrooms', f.bedrooms + '+']);
     if (f.max_price) {
@@ -936,7 +943,7 @@ if (GS_MODE === 'rent' || GS_MODE === 'buy') {
 
       var price = document.createElement('span');
       price.className = 'gsx-match-price';
-      price.textContent = m.price ? money(m.price) + (m.unit || '') : 'Contact for price';
+      price.textContent = m.price ? (m.from_price ? 'From ' : '') + money(m.price) + (m.unit || '') : 'Contact for price';
 
       var title = document.createElement('span');
       title.className = 'gsx-match-title';

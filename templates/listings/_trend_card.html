@@ -24,6 +24,7 @@
 
     <span class="trend-chips">
       <span class="trend-chip {% if sale %}trend-chip-sale{% endif %}">{% if sale %}For Sale{% else %}For Rent{% endif %}</span>
+      {% if listing.accommodation_type == 'room' or listing.category == 'roommates' %}<span class="trend-chip trend-chip-soft">Private room</span>{% endif %}
       {% if listing.featured %}
         <span class="trend-chip trend-chip-soft">
           <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8z"/></svg>
@@ -83,10 +84,13 @@
     </p>
 
     <ul class="trend-card-specs">
+      {% comment %}A room has no bedroom count of its own, so it reads "Private room"; a blank count is left out rather than shown as a studio.{% endcomment %}
+      {% if listing.accommodation_type == 'room' or listing.category == 'roommates' or listing.bedrooms is not None %}
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7"/><path d="M3 15h18"/><path d="M6 9V6.5A1.5 1.5 0 0 1 7.5 5h3A1.5 1.5 0 0 1 12 6.5V9"/><path d="M3 18v2m18-2v2"/></svg>
-        {% if listing.bedrooms %}{{ listing.bedrooms }} Bed{{ listing.bedrooms|pluralize }}{% else %}Studio{% endif %}
+        {% if listing.accommodation_type == 'room' or listing.category == 'roommates' %}Private room{% elif listing.bedrooms == 0 %}Studio{% else %}{{ listing.bedrooms }} Bed{{ listing.bedrooms|pluralize }}{% endif %}
       </li>
+      {% endif %}
       {% if listing.bathrooms %}
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M6 12V5.5A1.5 1.5 0 0 1 7.5 4c.8 0 1.5.7 1.5 1.5"/><path d="M7 19l-1 2m11-2 1 2"/></svg>
@@ -113,7 +117,8 @@
         {% else %}
           {% with tags=listing.get_tags_list %}
             {% if tags %}{{ tags.0 }}{% if tags.1 %} &bull; {{ tags.1 }}{% endif %}
-            {% else %}{{ listing.view_count|intcomma }} view{{ listing.view_count|pluralize }} from DFW home seekers{% endif %}
+            {% elif listing.view_count %}{{ listing.view_count|intcomma }} view{{ listing.view_count|pluralize }} from DFW home seekers
+            {% else %}Message the owner directly, no agency fee{% endif %}
           {% endwith %}
         {% endif %}
       </span>

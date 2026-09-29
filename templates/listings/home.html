@@ -516,7 +516,7 @@
   TRENDING. The reference puts rentals and homes for sale in one three-column
   grid under a single heading. Top three of each, rentals first.
 {% endcomment %}
-{% if trending_rentals or trending_properties %}
+{% if trend_rent_items or trending_properties %}
 <section class="home-band home-band-tint">
   <div class="section-header home-sec-hdr">
     <div class="section-header-left">
@@ -527,8 +527,12 @@
     <a href="{% url 'listing_list' %}" class="section-link">Explore all DFW listings &rarr;</a>
   </div>
   <div class="trend-grid">
-    {% for listing in trending_rentals|slice:":3" %}
-      {% include 'listings/_trend_card.html' %}
+    {% for item in trend_rent_items %}
+      {% if item.kind == 'community' %}
+        {% include 'listings/_trend_card_community.html' with community=item.obj %}
+      {% else %}
+        {% include 'listings/_trend_card.html' with listing=item.obj %}
+      {% endif %}
     {% endfor %}
     {% for listing in trending_properties|slice:":3" %}
       {% include 'listings/_trend_card.html' with sale=True %}
