@@ -48,7 +48,7 @@
     fill="white"/>
 
   <text x="400" y="243" class="mainText" font-size="162">
-    <tspan class="dark-text">Listo</tspan><tspan fill="url(#greenGradient)">jo</tspan>
+    <tspan class="dark-text">List</tspan><tspan fill="url(#greenGradient)">ojo</tspan>
   </text>
  
   <text x="660" y="323" class="tagText" font-size="52" text-anchor="middle">

@@ -47,7 +47,8 @@
       font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.15rem;
       color: #fff; padding: 0 1.25rem 1rem; letter-spacing: -.02em;
     }
-    .brand span { color: var(--primary); }
+    /* "ojo" in the logo's leaf-green gradient, as in the header mark (base.html). */
+    .brand span { color: #3DB549; background: linear-gradient(180deg, #3DB549, #5DC228); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .brand small {
       display: block; font-family: 'Sora', sans-serif; font-size: .68rem;
       font-weight: 500; color: #64748b; letter-spacing: .08em; text-transform: uppercase;
@@ -156,7 +157,7 @@
 </head>
 <body>
   <nav class="sidebar">
-    <div class="brand">Listo<span>jo</span><small>Partners</small></div>
+    <div class="brand">List<span>ojo</span><small>Partners</small></div>
 
     <div class="nav-section">Inventory</div>
     <a href="{% url 'partner_dashboard' %}" class="{% block nav_dash %}{% endblock %}">Portfolio</a>

@@ -3804,14 +3804,25 @@ footer {
   gap: .5rem;
   margin-bottom: .75rem;
 }
+/* Same colours as the header mark in base.html: "List" in the logo's navy ink
+   (white in dark mode, as .brand-logo .dark-text does) and "ojo" in the logo's
+   leaf-green gradient, not the UI blue and emerald. */
 .site-footer-logo {
   font-family: var(--font-head);
   font-size: 1.375rem;
   font-weight: 800;
-  color: var(--primary);
+  color: #182B52;
   letter-spacing: -.03em;
 }
-.site-footer-logo em { color: var(--accent); font-style: normal; }
+:root.dark .site-footer-logo { color: #ffffff; }
+.site-footer-logo em {
+  font-style: normal;
+  color: #3DB549;
+  background: linear-gradient(180deg, #3DB549, #5DC228);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 .site-footer-tagline {
   font-size: .875rem;
   line-height: 1.6;
