@@ -3094,7 +3094,10 @@ footer {
   background-repeat: no-repeat;
   opacity: 0;
   transition: opacity 1.2s cubic-bezier(.4,0,.2,1);
-  will-change: opacity;
+  /* No permanent will-change: on twelve full-bleed slides it kept twelve
+     photo-sized compositor layers alive, which is what Safari evicted and
+     slowly rebuilt when the hero scrolled back into view. The browser still
+     promotes a slide for the length of its fade. */
 }
 .hc-slide.hc-active { opacity: 1; z-index: 1; }
 .hc-slide.hc-prev-slide { opacity: 0; z-index: 0; }
@@ -8273,3 +8276,11 @@ button.ld-cta-ghost { cursor: pointer; }
   vertical-align: middle;
 }
 .gs-btn-count[hidden] { display: none; }
+
+/* Hero photos load on demand (see home.html): a slide paints its 2400px copy,
+   or the 1280px one on a phone, only while it is marked hc-loaded. */
+.hero-split--photo .hc-slide { background-image: none; }
+.hero-split--photo .hc-slide.hc-loaded { background-image: var(--hc-lg); }
+@media (max-width: 760px) {
+  .hero-split--photo .hc-slide.hc-loaded { background-image: var(--hc-sm); }
+}

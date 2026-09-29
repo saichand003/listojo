@@ -1,5 +1,10 @@
 {% extends 'base.html' %}
 {% load static humanize %}
+{% block head_extra %}
+{# The first hero photo, fetched before the stylesheet names it, at the size the screen will use. #}
+<link rel="preload" as="image" href="{% static 'images/hero/opt/sean-pollock-PhYq704ffdA-unsplash-2400.jpg' %}" media="(min-width: 761px)" fetchpriority="high">
+<link rel="preload" as="image" href="{% static 'images/hero/opt/sean-pollock-PhYq704ffdA-unsplash-1280.jpg' %}" media="(max-width: 760px)" fetchpriority="high">
+{% endblock %}
 {% block content %}
 <style>
 /* ── Home page card button variants ──────────────────────────── */
@@ -208,19 +213,27 @@
 {% endcomment %}
 <section class="hero-split hero-split--photo" id="home-hero" aria-label="Search Dallas–Fort Worth homes">
 
-  {# Slides — all 12 photos, 5s each = 60s full cycle #}
-  <div class="hc-slide hc-active" style="background-image:url('{% static 'images/hero/sean-pollock-PhYq704ffdA-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/avi-waxman-f9qZuKoZYoY-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/francesca-tosolini-tHkJAMcO3QE-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/zac-gudakov-UPbYh3A5cdg-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/breno-assis-r3WAWU5Fi5Q-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/minh-pham-OtXADkUh3-I-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/dillon-kydd-2keCPb73aQY-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/lotus-design-n-print-wRzBarqn3hs-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/spacejoy-9M66C_w_ToM-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/lotus-design-n-print-0sDzRgrN_pI-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/francesca-tosolini-qnSTxcs0EEs-unsplash.jpg' %}');"></div>
-  <div class="hc-slide" style="background-image:url('{% static 'images/hero/maria-ziegler-jJnZg7vBfMs-unsplash.jpg' %}');"></div>
+  {% comment %}
+    Slides: all 12 photos, 5s each. Each carries a 2400px and a 1280px copy
+    (static/images/hero/opt/, made from the camera originals beside them) in
+    CSS variables, and only slides marked hc-loaded paint one. The script keeps
+    that to the previous, current and next slide, so the page holds three
+    decoded photos, not twelve 24-megapixel ones. Holding all twelve is what
+    made Safari drop them off-screen and repaint a blank hero for ~2 seconds
+    on the way back up.
+  {% endcomment %}
+  <div class="hc-slide hc-active hc-loaded" style="--hc-lg:url('{% static 'images/hero/opt/sean-pollock-PhYq704ffdA-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/sean-pollock-PhYq704ffdA-unsplash-1280.jpg' %}');"></div>
+  <div class="hc-slide" style="--hc-lg:url('{% static 'images/hero/opt/avi-waxman-f9qZuKoZYoY-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/avi-waxman-f9qZuKoZYoY-unsplash-1280.jpg' %}');"></div>
+  <div class="hc-slide" style="--hc-lg:url('{% static 'images/hero/opt/francesca-tosolini-tHkJAMcO3QE-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/francesca-tosolini-tHkJAMcO3QE-unsplash-1280.jpg' %}');"></div>
+  <div class="hc-slide" style="--hc-lg:url('{% static 'images/hero/opt/zac-gudakov-UPbYh3A5cdg-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/zac-gudakov-UPbYh3A5cdg-unsplash-1280.jpg' %}');"></div>
+  <div class="hc-slide" style="--hc-lg:url('{% static 'images/hero/opt/breno-assis-r3WAWU5Fi5Q-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/breno-assis-r3WAWU5Fi5Q-unsplash-1280.jpg' %}');"></div>
+  <div class="hc-slide" style="--hc-lg:url('{% static 'images/hero/opt/minh-pham-OtXADkUh3-I-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/minh-pham-OtXADkUh3-I-unsplash-1280.jpg' %}');"></div>
+  <div class="hc-slide" style="--hc-lg:url('{% static 'images/hero/opt/dillon-kydd-2keCPb73aQY-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/dillon-kydd-2keCPb73aQY-unsplash-1280.jpg' %}');"></div>
+  <div class="hc-slide" style="--hc-lg:url('{% static 'images/hero/opt/lotus-design-n-print-wRzBarqn3hs-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/lotus-design-n-print-wRzBarqn3hs-unsplash-1280.jpg' %}');"></div>
+  <div class="hc-slide" style="--hc-lg:url('{% static 'images/hero/opt/spacejoy-9M66C_w_ToM-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/spacejoy-9M66C_w_ToM-unsplash-1280.jpg' %}');"></div>
+  <div class="hc-slide" style="--hc-lg:url('{% static 'images/hero/opt/lotus-design-n-print-0sDzRgrN_pI-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/lotus-design-n-print-0sDzRgrN_pI-unsplash-1280.jpg' %}');"></div>
+  <div class="hc-slide" style="--hc-lg:url('{% static 'images/hero/opt/francesca-tosolini-qnSTxcs0EEs-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/francesca-tosolini-qnSTxcs0EEs-unsplash-1280.jpg' %}');"></div>
+  <div class="hc-slide" style="--hc-lg:url('{% static 'images/hero/opt/maria-ziegler-jJnZg7vBfMs-unsplash-2400.jpg' %}'); --hc-sm:url('{% static 'images/hero/opt/maria-ziegler-jJnZg7vBfMs-unsplash-1280.jpg' %}');"></div>
 
   {# Dark gradient so the copy and chips stay legible on any photo #}
   <div class="hc-overlay" aria-hidden="true"></div>
@@ -693,6 +706,14 @@
   var INTERVAL = 5000;
   if (!total) return;
 
+  // Only the slides around the current one hold a photo (see the note on the
+  // slides above): the one fading out, the one showing, and the next, which
+  // loads during the 5s before it is needed so the crossfade never waits.
+  function keepLoaded() {
+    var keep = [(current - 1 + total) % total, current, (current + 1) % total];
+    slides.forEach(function (s, i) { s.classList.toggle('hc-loaded', keep.indexOf(i) !== -1); });
+  }
+
   function goTo(idx) {
     slides[current].classList.remove('hc-active');
     dots[current].classList.remove('hc-dot-active');
@@ -701,6 +722,7 @@
     current = (idx + total) % total;
 
     slides[current].classList.add('hc-active');
+    keepLoaded();
     dots[current].classList.add('hc-dot-active');
     dots[current].setAttribute('aria-selected', 'true');
 

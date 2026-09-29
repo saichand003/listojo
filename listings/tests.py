@@ -2085,3 +2085,37 @@ class GuidedInventoryConsistencyTests(TestCase):
         self.assertEqual(kinds.count('community'), 2)
         self.assertEqual(len(kinds), 3)
         self.assertEqual(response.context['stats']['listing_count'], 5)
+
+
+class HeroCarouselWeightTests(TestCase):
+    """
+    Regression: the home carousel painted 12 camera originals (4000-7000px,
+    up to 8 MB each, ~1 GB decoded). Safari dropped them off-screen and showed
+    a blank hero for ~2 seconds when scrolling back to the top. Slides must
+    point at the right-sized copies, and only the first may start loaded.
+    """
+
+    def test_slides_use_right_sized_photos(self):
+        import os, re
+        from django.conf import settings
+        from PIL import Image
+
+        html = self.client.get(reverse('home')).content.decode()
+        urls = re.findall(r"--hc-(lg|sm):url\('([^']+)'\)", html)
+        self.assertEqual(len(urls), 24)  # 12 slides x (desktop + phone)
+        for size, url in urls:
+            rel = url.split('/static/', 1)[1]
+            path = os.path.join(settings.BASE_DIR, 'static', rel)
+            self.assertTrue(os.path.exists(path), rel)
+            limit = 2400 if size == 'lg' else 1280
+            with Image.open(path) as im:
+                self.assertLessEqual(im.width, limit, rel)
+            self.assertLess(os.path.getsize(path), 1_200_000, rel)
+
+    def test_only_the_first_slide_starts_loaded(self):
+        import re
+        html = self.client.get(reverse('home')).content.decode()
+        slides = re.findall(r'class="(hc-slide[^"]*)"', html)
+        self.assertEqual(len(slides), 12)
+        self.assertEqual(slides[0], 'hc-slide hc-active hc-loaded')
+        self.assertFalse(any('hc-loaded' in c for c in slides[1:]))
