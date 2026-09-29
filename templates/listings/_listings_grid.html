@@ -13,15 +13,34 @@
              data-price="{{ pr.0|default_if_none:'' }}"
              data-address="{{ community.address_line|escapejs }}"
              {% if community.latitude and community.longitude %}data-lat="{{ community.latitude }}" data-lng="{{ community.longitude }}"{% endif %}
-             onclick="window.location='{% url 'community_detail' community.pk %}'" style="cursor:pointer;">
+             onclick="if (!event.target.closest('.thumb-nav')) window.location='{% url 'community_detail' community.pk %}'" style="cursor:pointer;">
+        {# Same photo strip as a listing card: every photo, arrows, dots and a count. #}
+        {# The card is one big link, so the arrows are excluded from it above. #}
         <div class="listing-thumb-wrap">
-            {% if hero %}
+            {% with community.images.all as imgs %}
+            {% if imgs %}
                 <div class="listing-thumb-track">
-                    <img class="listing-thumb" src="{{ hero.image.url }}" alt="{{ community.name }}">
+                    {% for img in imgs %}
+                        <img class="listing-thumb" src="{{ img.image.url }}" alt="{{ community.name }} photo {{ forloop.counter }}"{% if not forloop.first %} loading="lazy"{% endif %}>
+                    {% endfor %}
                 </div>
+                <span class="thumb-count">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11" aria-hidden="true"><path d="M20 5h-3.2l-1.5-1.8A1 1 0 0 0 14.6 3H9.4a1 1 0 0 0-.7.2L7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-8 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+                    {{ imgs|length }}
+                </span>
+                {% if imgs|length > 1 %}
+                <button type="button" class="thumb-nav thumb-nav-prev" aria-label="Previous photo">&#8249;</button>
+                <button type="button" class="thumb-nav thumb-nav-next" aria-label="Next photo">&#8250;</button>
+                <div class="thumb-dots">
+                    {% for img in imgs %}
+                    <span class="thumb-dot {% if forloop.first %}active{% endif %}"></span>
+                    {% endfor %}
+                </div>
+                {% endif %}
             {% else %}
                 <div class="listing-thumb listing-thumb-placeholder" role="img" aria-label="No photo provided"></div>
             {% endif %}
+            {% endwith %}
             {% if community.featured %}<span class="featured-badge">★ Featured</span>{% endif %}
             <span class="category-badge" style="background:rgba(5,150,105,.85);">Community</span>
             {% if community.special_offer %}
