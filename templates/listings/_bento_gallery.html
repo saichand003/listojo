@@ -1,0 +1,71 @@
+{% comment %}
+  Bento gallery: one tall hero photo and up to four tiles beside it, the shape
+  the reference design uses. Degrades by photo count — with one photo it is a
+  single wide frame rather than a hero next to four empty boxes.
+
+  Expects: place (Listing or Community), label.
+{% endcomment %}
+{% with imgs=place.images.all %}
+{% with total=imgs|length %}
+
+<section class="bento {% if total <= 1 %}bento-solo{% endif %}" aria-label="Photos of {{ label }}">
+
+  <div class="bento-hero">
+    {% if total %}
+      <img src="{{ imgs.0.image.url }}" alt="{{ label }}" loading="eager">
+    {% elif place.image %}
+      <img src="{{ place.image.url }}" alt="{{ label }}" loading="eager">
+    {% else %}
+      <span class="bento-empty" role="img" aria-label="No photo provided"></span>
+    {% endif %}
+
+    {# Floating badges, top-left #}
+    <div class="bento-badges">
+      {% if place.owner %}
+      <span class="bento-badge bento-badge-verified">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><path d="m9 12.5 2.2 2.2L15.5 10"/><circle cx="12" cy="12" r="9"/></svg>
+        Direct owner
+      </span>
+      {% endif %}
+      {% if place.featured %}
+      <span class="bento-badge">&#9733; Featured</span>
+      {% endif %}
+    </div>
+
+    {# Caption, bottom-left #}
+    <div class="bento-caption">
+      {% if place.address_line %}<p class="bento-caption-k">{{ place.address_line }}</p>{% endif %}
+      <p class="bento-caption-v">{{ label }}</p>
+    </div>
+  </div>
+
+  {% if total > 1 %}
+  <div class="bento-tiles">
+    {% for img in imgs|slice:"1:5" %}
+    <button type="button" class="bento-tile" data-lightbox-index="{{ forloop.counter }}"
+            aria-label="Open photo {{ forloop.counter|add:1 }} of {{ total }}">
+      <img src="{{ img.image.url }}" alt="" loading="lazy">
+    </button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Actions, bottom-right of the whole gallery #}
+  <div class="bento-actions">
+    {% if total > 1 %}
+    <button type="button" class="bento-action" id="bento-view-all">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true"><path d="M20 5h-3.2l-1.5-1.8A1 1 0 0 0 14.6 3H9.4a1 1 0 0 0-.7.2L7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-8 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+      View all {{ total }} photos
+    </button>
+    {% endif %}
+    {% if place.virtual_tour_url %}
+    <a href="{{ place.virtual_tour_url }}" target="_blank" rel="noopener" class="bento-action bento-action-tour">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 2.5 21 7v10l-9 4.5L3 17V7z"/><path d="M3 7l9 4.5L21 7M12 11.5V21"/></svg>
+      3D virtual tour
+    </a>
+    {% endif %}
+  </div>
+</section>
+
+{% endwith %}
+{% endwith %}

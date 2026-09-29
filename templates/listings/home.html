@@ -202,16 +202,28 @@
 </style>
 
 {% comment %}
-  HERO. Was a full-bleed dark photo carousel with the copy laid over it. The
-  reference design puts the search console itself in the hero on a light
-  surface, with one honest listing card beside it as proof, so the first thing
-  on the page is the thing people came to do rather than a slideshow.
+  HERO. The search console, quick chips and featured listing sit on top of the
+  full-bleed photo carousel from the earlier home page: twelve slides, 5s each,
+  with dots, a progress bar, hover pause, arrow keys and swipe.
 {% endcomment %}
-<section class="hero-split" aria-label="Search Dallas–Fort Worth homes">
+<section class="hero-split hero-split--photo" id="home-hero" aria-label="Search Dallas–Fort Worth homes">
 
-  {# Soft colour wash. Purely decorative, sits behind everything. #}
-  <div class="hero-wash hero-wash-a" aria-hidden="true"></div>
-  <div class="hero-wash hero-wash-b" aria-hidden="true"></div>
+  {# Slides — all 12 photos, 5s each = 60s full cycle #}
+  <div class="hc-slide hc-active" style="background-image:url('{% static 'images/hero/sean-pollock-PhYq704ffdA-unsplash.jpg' %}');"></div>
+  <div class="hc-slide" style="background-image:url('{% static 'images/hero/avi-waxman-f9qZuKoZYoY-unsplash.jpg' %}');"></div>
+  <div class="hc-slide" style="background-image:url('{% static 'images/hero/francesca-tosolini-tHkJAMcO3QE-unsplash.jpg' %}');"></div>
+  <div class="hc-slide" style="background-image:url('{% static 'images/hero/zac-gudakov-UPbYh3A5cdg-unsplash.jpg' %}');"></div>
+  <div class="hc-slide" style="background-image:url('{% static 'images/hero/breno-assis-r3WAWU5Fi5Q-unsplash.jpg' %}');"></div>
+  <div class="hc-slide" style="background-image:url('{% static 'images/hero/minh-pham-OtXADkUh3-I-unsplash.jpg' %}');"></div>
+  <div class="hc-slide" style="background-image:url('{% static 'images/hero/dillon-kydd-2keCPb73aQY-unsplash.jpg' %}');"></div>
+  <div class="hc-slide" style="background-image:url('{% static 'images/hero/lotus-design-n-print-wRzBarqn3hs-unsplash.jpg' %}');"></div>
+  <div class="hc-slide" style="background-image:url('{% static 'images/hero/spacejoy-9M66C_w_ToM-unsplash.jpg' %}');"></div>
+  <div class="hc-slide" style="background-image:url('{% static 'images/hero/lotus-design-n-print-0sDzRgrN_pI-unsplash.jpg' %}');"></div>
+  <div class="hc-slide" style="background-image:url('{% static 'images/hero/francesca-tosolini-qnSTxcs0EEs-unsplash.jpg' %}');"></div>
+  <div class="hc-slide" style="background-image:url('{% static 'images/hero/maria-ziegler-jJnZg7vBfMs-unsplash.jpg' %}');"></div>
+
+  {# Dark gradient so the copy and chips stay legible on any photo #}
+  <div class="hc-overlay" aria-hidden="true"></div>
 
   <div class="hero-split-inner">
 
@@ -367,6 +379,25 @@
     {% endwith %}
 
   </div>
+
+  {# Navigation dots — one per slide #}
+  <div class="hc-dots" role="tablist" aria-label="Slide navigation">
+    <button type="button" class="hc-dot hc-dot-active" data-slide="0" role="tab" aria-label="Slide 1" aria-selected="true"></button>
+    <button type="button" class="hc-dot" data-slide="1" role="tab" aria-label="Slide 2" aria-selected="false"></button>
+    <button type="button" class="hc-dot" data-slide="2" role="tab" aria-label="Slide 3" aria-selected="false"></button>
+    <button type="button" class="hc-dot" data-slide="3" role="tab" aria-label="Slide 4" aria-selected="false"></button>
+    <button type="button" class="hc-dot" data-slide="4" role="tab" aria-label="Slide 5" aria-selected="false"></button>
+    <button type="button" class="hc-dot" data-slide="5" role="tab" aria-label="Slide 6" aria-selected="false"></button>
+    <button type="button" class="hc-dot" data-slide="6" role="tab" aria-label="Slide 7" aria-selected="false"></button>
+    <button type="button" class="hc-dot" data-slide="7" role="tab" aria-label="Slide 8" aria-selected="false"></button>
+    <button type="button" class="hc-dot" data-slide="8" role="tab" aria-label="Slide 9" aria-selected="false"></button>
+    <button type="button" class="hc-dot" data-slide="9" role="tab" aria-label="Slide 10" aria-selected="false"></button>
+    <button type="button" class="hc-dot" data-slide="10" role="tab" aria-label="Slide 11" aria-selected="false"></button>
+    <button type="button" class="hc-dot" data-slide="11" role="tab" aria-label="Slide 12" aria-selected="false"></button>
+  </div>
+
+  {# Progress bar #}
+  <div class="hc-progress" aria-hidden="true"><div class="hc-progress-bar" id="hc-progress-bar"></div></div>
 </section>
 
 {% comment %}
@@ -642,5 +673,101 @@
     <a href="{% url 'create_community' %}" class="landlord-cta-btn landlord-cta-btn-ghost">List a Community &rarr;</a>
   </div>
 </section>
+
+{# ── CAROUSEL JS ─────────────────────────────────────────────── #}
+<script>
+(function () {
+  var carousel = document.getElementById('home-hero');
+  if (!carousel) return;
+
+  var slides   = carousel.querySelectorAll('.hc-slide');
+  var dots     = carousel.querySelectorAll('.hc-dot');
+  var progBar  = document.getElementById('hc-progress-bar');
+  var total    = slides.length;
+  var current  = 0;
+  var timer    = null;
+  var INTERVAL = 5000;
+  if (!total) return;
+
+  function goTo(idx) {
+    slides[current].classList.remove('hc-active');
+    dots[current].classList.remove('hc-dot-active');
+    dots[current].setAttribute('aria-selected', 'false');
+
+    current = (idx + total) % total;
+
+    slides[current].classList.add('hc-active');
+    dots[current].classList.add('hc-dot-active');
+    dots[current].setAttribute('aria-selected', 'true');
+
+    // Reset + restart progress bar
+    if (progBar) {
+      progBar.classList.remove('hc-running');
+      void progBar.offsetWidth; // reflow to reset transition
+      progBar.classList.add('hc-running');
+    }
+  }
+
+  function startAuto() {
+    clearInterval(timer);
+    timer = setInterval(function () { goTo(current + 1); }, INTERVAL);
+  }
+
+  function stopAuto() {
+    clearInterval(timer);
+    if (progBar) progBar.classList.remove('hc-running');
+  }
+
+  dots.forEach(function (dot) {
+    dot.addEventListener('click', function () {
+      goTo(parseInt(dot.getAttribute('data-slide'), 10));
+      startAuto();
+    });
+  });
+
+  // Pause while the pointer is over the hero or focus is inside the search
+  // console, so the background doesn't shift under someone who is typing.
+  var hovering = false;
+  carousel.addEventListener('mousemove', function () {
+    if (!hovering) { hovering = true; stopAuto(); }
+  });
+  carousel.addEventListener('mouseleave', function () {
+    hovering = false;
+    if (!carousel.contains(document.activeElement)) { goTo(current); startAuto(); }
+  });
+  carousel.addEventListener('focusin', stopAuto);
+  carousel.addEventListener('focusout', function (e) {
+    if (!carousel.contains(e.relatedTarget) && !hovering) { goTo(current); startAuto(); }
+  });
+
+  // Arrow keys, but never while typing in a field
+  carousel.addEventListener('keydown', function (e) {
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowLeft')  { goTo(current - 1); startAuto(); }
+    if (e.key === 'ArrowRight') { goTo(current + 1); startAuto(); }
+  });
+
+  // Swipe, ignoring touches that start on the console or the listing card
+  var touchStartX = null;
+  carousel.addEventListener('touchstart', function (e) {
+    touchStartX = e.target.closest('.hero-console, .hero-feature-card, .hero-chips') ? null : e.changedTouches[0].screenX;
+  }, { passive: true });
+  carousel.addEventListener('touchend', function (e) {
+    if (touchStartX === null) return;
+    var dx = e.changedTouches[0].screenX - touchStartX;
+    if (Math.abs(dx) > 40) {
+      goTo(dx < 0 ? current + 1 : current - 1);
+      startAuto();
+    }
+  }, { passive: true });
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (progBar) progBar.style.display = 'none';
+  }
+
+  goTo(0);
+  startAuto();
+})();
+</script>
 
 {% endblock %}

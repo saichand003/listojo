@@ -235,6 +235,92 @@ def guided_match_preview(request):
     })
 
 
+def _detail_match(request, listing):
+    """
+    A real match score for this listing against this visitor's stated
+    preferences, or None.
+
+    The reference design shows a match score on every detail page. A score is
+    only meaningful against preferences someone actually gave us, so this
+    returns None when there are none — the module is hidden rather than filled
+    with a number that means nothing. Preferences come from the visitor's most
+    recent saved search, falling back to the guided-search criteria still in
+    their session.
+    """
+    from listings.services.matching import score_listing, explain_match
+
+    pref = None
+    if request.user.is_authenticated:
+        pref = (SavedSearch.objects
+                .filter(user=request.user)
+                .order_by('-last_updated')
+                .first())
+
+    if pref:
+        max_price = float(pref.max_budget) if pref.max_budget else None
+        tags = [t.strip() for t in (pref.amenities or '').split(',') if t.strip()]
+        bedrooms = pref.bedrooms
+        property_type = pref.property_type or ''
+        accommodation_type = pref.accommodation_type or ''
+        source = 'your saved search'
+    else:
+        gs = request.session.get('gs_criteria') or {}
+        if not gs:
+            return None
+        max_price = _parse_money(gs.get('max_price'))
+        tags = [t.strip() for t in (gs.get('tags') or '').split(',') if t.strip()]
+        bedrooms = _parse_int(gs.get('bedrooms'))
+        property_type = gs.get('property_type') or ''
+        accommodation_type = gs.get('accommodation_type') or ''
+        source = 'your guided search'
+
+    # With nothing to score against, the result would be a constant.
+    if not any([max_price, tags, bedrooms, property_type, accommodation_type]):
+        return None
+
+    result = score_listing(
+        listing,
+        max_price=max_price,
+        requested_tags=tags,
+        bedrooms=bedrooms,
+        property_type=property_type,
+        accommodation_type=accommodation_type,
+    )
+    explanation = explain_match(
+        listing,
+        result.reasons,
+        max_price=max_price,
+        quality_tags=tags,
+        accommodation_type=accommodation_type,
+        property_type=property_type,
+    )
+
+    return {
+        'pct': result.pct,
+        'band': 'strong' if result.pct >= 85 else 'fair' if result.pct >= 65 else 'weak',
+        'label': 'Excellent fit' if result.pct >= 85 else 'Good fit' if result.pct >= 65 else 'Partial fit',
+        'reasons': result.reasons,
+        'caveats': result.caveats,
+        'explanation': explanation,
+        'source': source,
+        'max_price': max_price,
+    }
+
+
+def _parse_money(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def _parse_int(v):
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return None
+
+
 def listing_detail(request, pk):
     if not _listings_table_ready():
         return _render_db_setup_page(request)
@@ -284,7 +370,18 @@ def listing_detail(request, pk):
     return render(
         request,
         'listings/listing_detail.html',
-        {'listing': listing, 'inquiry_form': inquiry_form, 'render_as_community': False},
+        {
+            'listing': listing,
+            'inquiry_form': inquiry_form,
+            'render_as_community': False,
+            'match': _detail_match(request, listing),
+            # Drives the save button's initial state; the toggle endpoint owns
+            # it from there.
+            'is_favourite': (
+                request.user.is_authenticated
+                and Favourite.objects.filter(user=request.user, listing=listing).exists()
+            ),
+        },
     )
 
 

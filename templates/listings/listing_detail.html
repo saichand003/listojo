@@ -404,54 +404,67 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
   <span aria-current="page">{{ listing.title|truncatechars:48 }}</span>
 </nav>
 
+{% include 'listings/_bento_gallery.html' with place=listing label=listing.title %}
+
 <div class="grid ld-layout" style="grid-template-columns:2fr 1fr;align-items:start;gap:1.25rem;">
 
   {# Left column is a stack of cards on the page background, not one long card — #}
   {# same shape as community detail, so the catalogues read as separate sections. #}
   <div style="display:flex;flex-direction:column;gap:1.25rem;min-width:0;">
 
-    <article class="card" style="padding:0;overflow:hidden;">
-        {% include 'listings/_photo_collage.html' with place=listing label=listing.title %}
-
-        <div style="padding:1.5rem;">
+    <article class="card">
+        <div>
             {% if listing.status == 'sold' %}
             <div style="background:#dc2626;color:#fff;font-weight:700;font-size:.95rem;padding:.6rem 1rem;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">🏷️ This property has been SOLD</div>
             {% elif listing.status == 'under_contract' %}
             <div style="background:#d97706;color:#fff;font-weight:700;font-size:.95rem;padding:.6rem 1rem;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">📋 Under Contract — still accepting backup offers</div>
             {% endif %}
 
-            <div class="chips" style="margin-bottom:.75rem;">
-                <span class="chip">{{ listing.get_category_display }}</span>
-                {% if listing.featured %}<span class="inline-featured-badge">★ Featured</span>{% endif %}
-                {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
-                <span style="background:var(--accent);color:#fff;font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;">Price Reduced</span>
+            {% comment %}
+              Header, in the reference screen's order: status chips and the
+              page-level actions, then the title and address, then the money.
+              The price used to sit opposite the title; it belongs in the terms
+              ribbon below, where the deposit and availability are, so the cost
+              of the place reads as one block rather than three.
+            {% endcomment %}
+            <div class="ld-top">
+              <div class="ld-top-chips">
+                <span class="ld-tag">{{ listing.get_category_display }}</span>
+                {% if listing.owner %}
+                <span class="ld-tag ld-tag-verified">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" aria-hidden="true"><path d="m9 12.5 2.2 2.2L15.5 10"/><circle cx="12" cy="12" r="9"/></svg>
+                  Direct owner
+                </span>
                 {% endif %}
+                {% if listing.featured %}<span class="ld-tag ld-tag-featured">&#9733; Featured</span>{% endif %}
+                {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
+                <span class="ld-tag ld-tag-cut">Price reduced</span>
+                {% endif %}
+                <span class="ld-tag-time">Listed {{ listing.created_at|timesince }} ago</span>
+              </div>
+
+              <div class="ld-top-actions">
+                {% if user.is_authenticated and user != listing.owner %}
+                <button type="button" class="ld-icon-btn save-pill {% if is_favourite %}save-pill-active{% endif %}"
+                        data-fav-url="{% url 'toggle_favourite' listing.pk %}"
+                        data-csrf="{{ csrf_token }}" aria-label="Save this listing">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M19 13.6c1.4-1.4 2.8-3 2.8-5.2A5.2 5.2 0 0 0 16.6 3c-1.7 0-2.9.5-4.6 2.1C10.3 3.5 9.1 3 7.4 3A5.2 5.2 0 0 0 2.2 8.4c0 2.2 1.4 3.8 2.8 5.2L12 20.8z"/></svg>
+                </button>
+                {% endif %}
+                <button type="button" class="ld-icon-btn" id="ld-share" aria-label="Copy link to this listing">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4M8.2 13.2l7.6 4"/></svg>
+                </button>
+                {% if user == listing.owner %}
+                <a href="{% url 'edit_listing' listing.pk %}" class="ld-icon-btn ld-icon-btn-text">Edit</a>
+                {% endif %}
+              </div>
             </div>
 
-            {# Title + address on the left, price on the right — same shape as community detail. #}
-            <div class="ld-solo-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:1.25rem;flex-wrap:wrap;margin-bottom:1rem;">
-                <div style="min-width:0;">
-                    <h1 style="font-size:1.6rem;margin:0 0 .3rem;">{{ listing.title }}</h1>
-                    <p style="color:var(--text-3);font-size:.9rem;margin:0;">
-                        📍 {% if listing.address_line %}{{ listing.address_line }}, {% endif %}{{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}{% if listing.zip_code %} {{ listing.zip_code }}{% endif %}
-                    </p>
-                </div>
-                <div style="text-align:right;flex-shrink:0;">
-                    {% if listing.price %}
-                    <p class="ld-price">${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span class="ld-price-per">{{ listing.get_price_unit_display }}</span>{% endif %}</p>
-                    {% else %}
-                    <p class="ld-price ld-price-ask">Contact for price</p>
-                    {% endif %}
-                    {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
-                    <p style="font-size:.85rem;color:var(--text-3);text-decoration:line-through;margin:.2rem 0 0;">${{ listing.original_price|floatformat:0|intcomma }}</p>
-                    {% endif %}
-                    {% if user == listing.owner %}
-                    <div style="display:flex;gap:.5rem;margin-top:.55rem;justify-content:flex-end;">
-                        <a href="{% url 'edit_listing' listing.pk %}" class="nav-text-btn" style="white-space:nowrap;">✏️ Edit</a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+            <h1 class="ld-h1">{{ listing.title }}</h1>
+            <p class="ld-address">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
+              {% if listing.address_line %}{{ listing.address_line }}, {% endif %}{{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}{% if listing.zip_code %} {{ listing.zip_code }}{% endif %}
+            </p>
 
             {# Parent community breadcrumb #}
             {% if listing.parent %}
@@ -465,24 +478,28 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
             <div class="ld-specs">
                 {% if listing.bedrooms is not None %}
                 <div class="ld-spec">
+                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 18v-7h18v7"/><path d="M3 18v2M21 18v2M3 11V6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5V11"/><path d="M7 11V9h4v2M13 11V9h4v2"/></svg></span>
                     <div class="ld-spec-num">{% if listing.bedrooms == 0 %}Studio{% else %}{{ listing.bedrooms }}{% endif %}</div>
                     <div class="ld-spec-lbl">Bed{% if listing.bedrooms != 1 and listing.bedrooms != 0 %}s{% endif %}</div>
                 </div>
                 {% endif %}
                 {% if listing.bathrooms %}
                 <div class="ld-spec">
+                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 12h18v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 12V5.5A1.5 1.5 0 0 1 7.5 4h1A1.5 1.5 0 0 1 10 5.5"/><path d="M6.5 19.5 5.5 21M17.5 19.5l1 1.5"/></svg></span>
                     <div class="ld-spec-num">{{ listing.bathrooms }}</div>
                     <div class="ld-spec-lbl">Bath{% if listing.bathrooms > 1 %}s{% endif %}</div>
                 </div>
                 {% endif %}
                 {% if listing.square_footage %}
                 <div class="ld-spec">
+                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M8 3.5v4M3.5 8h4M16 20.5v-4M20.5 16h-4"/></svg></span>
                     <div class="ld-spec-num">{{ listing.square_footage|intcomma }}</div>
                     <div class="ld-spec-lbl">Sq Ft</div>
                 </div>
                 {% endif %}
                 {% if listing.year_built %}
                 <div class="ld-spec">
+                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17"/></svg></span>
                     <div class="ld-spec-num">{{ listing.year_built }}</div>
                     <div class="ld-spec-lbl">Built</div>
                 </div>
@@ -496,8 +513,28 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
               three separate reads. The reference design puts the whole cost
               picture on one ribbon under the price.
             {% endcomment %}
-            {% if listing.security_deposit or listing.bills_included or listing.available_from or listing.category == 'rentals' %}
             <div class="ld-terms">
+              <div class="ld-terms-top">
+                <div class="ld-terms-price">
+                  {% if listing.price %}
+                  <span class="ld-price">${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span class="ld-price-per">{{ listing.get_price_unit_display }}</span>{% endif %}</span>
+                  {% else %}
+                  <span class="ld-price ld-price-ask">Contact for price</span>
+                  {% endif %}
+                  {% if listing.original_price and listing.price and listing.original_price > listing.price %}
+                  <span class="ld-price-was">${{ listing.original_price|floatformat:0|intcomma }}</span>
+                  <span class="ld-price-flag">Price cut</span>
+                  {% endif %}
+                </div>
+                {% if listing.recommended_income %}
+                <div class="ld-terms-aside">
+                  <span class="ld-term-k">Income guide</span>
+                  <span class="ld-term-v">${{ listing.recommended_income|intcomma }}/mo</span>
+                </div>
+                {% endif %}
+              </div>
+
+              <div class="ld-terms-row">
               <div class="ld-term">
                 <span class="ld-term-k">Agency fee</span>
                 <span class="ld-term-v ld-term-good">$0 &mdash; always</span>
@@ -531,8 +568,8 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 <span class="ld-term-v">${{ listing.hoa_fee|floatformat:0|intcomma }}/mo</span>
               </div>
               {% endif %}
+              </div>
             </div>
-            {% endif %}
 
             {% comment %}
               HIGHLIGHTS. The listing's own tags, which until now only appeared
@@ -555,6 +592,69 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
             </div>
             {% endif %}
             {% endwith %}
+
+            {% comment %}
+              MATCH ANALYSIS. The reference screen puts a score here on every
+              listing. A score only means something against preferences the
+              visitor actually gave us, so the view returns None when there are
+              none and this whole module is absent rather than showing a
+              number calibrated against nothing.
+            {% endcomment %}
+            {% if match %}
+            <section class="ld-match ld-match-{{ match.band }}">
+              <div class="ld-match-head">
+                <span class="ld-match-mark" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9zM18.5 14l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg>
+                </span>
+                <div class="ld-match-lead">
+                  <p class="ld-match-title">
+                    {{ match.pct }}% match score
+                    <span class="ld-match-flag">{{ match.label }}</span>
+                  </p>
+                  <p class="ld-match-sub">Scored against {{ match.source }} — budget, must-haves and property type.</p>
+                </div>
+
+                {# Dial. The arc length is the score, so it cannot disagree with the number beside it. #}
+                <div class="ld-match-dial" role="img" aria-label="{{ match.pct }} percent match">
+                  <svg viewBox="0 0 72 72" width="72" height="72">
+                    <circle cx="36" cy="36" r="30" fill="none" stroke="var(--border)" stroke-width="6"/>
+                    <circle cx="36" cy="36" r="30" fill="none" stroke="currentColor" stroke-width="6"
+                            stroke-linecap="round" transform="rotate(-90 36 36)"
+                            stroke-dasharray="188.5"
+                            style="stroke-dashoffset:calc(188.5px - 188.5px * {{ match.pct }} / 100)"/>
+                  </svg>
+                  <span class="ld-match-dial-num">{{ match.pct }}<i>%</i></span>
+                </div>
+              </div>
+
+              {% if match.explanation %}
+              <p class="ld-match-why">{{ match.explanation }}</p>
+              {% endif %}
+
+              {% if match.reasons or match.caveats %}
+              <div class="ld-match-factors">
+                {% for r in match.reasons|slice:":3" %}
+                <div class="ld-match-factor">
+                  <p class="ld-match-factor-k">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+                    Why it fits
+                  </p>
+                  <p class="ld-match-factor-v">{{ r }}</p>
+                </div>
+                {% endfor %}
+                {% for c in match.caveats|slice:":2" %}
+                <div class="ld-match-factor ld-match-factor-warn">
+                  <p class="ld-match-factor-k">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" aria-hidden="true"><path d="M12 8.5v5"/><path d="M12 16.8h.01"/><circle cx="12" cy="12" r="9"/></svg>
+                    Worth knowing
+                  </p>
+                  <p class="ld-match-factor-v">{{ c }}</p>
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </section>
+            {% endif %}
 
             {# Floor plan image #}
             {% if listing.floor_plan_image %}
@@ -699,30 +799,217 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
 
   </div>{# /left column stack #}
 
+    {% comment %}
+      BOOKING RAIL. The reference screen's owner panel. The tour picker is not
+      a separate booking system — there is none — it writes the chosen day and
+      time into the inquiry message, so "Schedule tour" sends the owner a real
+      request naming when you want to come. Same for the quick questions.
+    {% endcomment %}
     {% if user != listing.owner %}
-    <aside class="card" id="inquiry-form" style="position:sticky;top:calc(var(--topbar-h) + 1.25rem);scroll-margin-top:calc(var(--topbar-h) + 1.25rem);">
-        {% if listing.category == 'properties' %}
-        <div style="background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(98,194,255,.06));border:1px solid rgba(37,99,235,.2);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
-            <p style="font-weight:700;font-size:.95rem;margin-bottom:.3rem;">Want expert help with this property?</p>
-            <p class="muted" style="font-size:.8rem;margin-bottom:.75rem;">Connect with a Listojo agent who can guide you through the buying process.</p>
-            <a href="mailto:agents@listojo.com?subject=Agent help: {{ listing.title|urlencode }}&body=I am interested in: {{ listing.title }} — {{ request.build_absolute_uri }}" class="button" style="width:100%;text-align:center;display:block;">Connect with an Agent</a>
-        </div>
-        {% endif %}
-        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.25rem;">Send an Inquiry</h2>
-        <p class="muted" style="margin-bottom:1rem;font-size:.82rem;">The lister will be notified by email.</p>
+    <aside class="ld-rail" id="inquiry-form">
+
+      <section class="ld-rail-card">
+        {% with org=listing.organization %}
+        <header class="ld-owner">
+          <span class="ld-owner-mark">{% if org %}{{ org.name|first|upper }}{% else %}{{ listing.owner.username|first|upper }}{% endif %}</span>
+          <div class="ld-owner-body">
+            <p class="ld-owner-name">{% if org %}{{ org.name }}{% else %}{{ listing.owner.username }}{% endif %}</p>
+            <p class="ld-owner-kind">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" aria-hidden="true"><path d="m9 12.5 2.2 2.2L15.5 10"/><circle cx="12" cy="12" r="9"/></svg>
+              {% if org %}Verified property manager{% else %}Direct owner &mdash; no agent{% endif %}
+            </p>
+          </div>
+        </header>
+        {% endwith %}
+
         {% if listing.status == 'sold' %}
-        <p style="color:#dc2626;font-size:.85rem;font-weight:600;">This listing is marked as sold. Inquiries are disabled.</p>
+        <p class="ld-rail-closed">This listing is marked as sold. Inquiries are closed.</p>
         {% else %}
-        <form method="post">
-            {% csrf_token %}
+
+        <form method="post" id="ld-inquiry">
+          {% csrf_token %}
+
+          {% comment %}
+            Tour picker. The next four days are generated in the browser from
+            the visitor's own clock, so the labels are right in their timezone
+            rather than the server's.
+          {% endcomment %}
+          <p class="ld-rail-label">Request a tour</p>
+          <div class="ld-days" id="ld-days" role="group" aria-label="Tour day"></div>
+          <div class="ld-slots" id="ld-slots" role="group" aria-label="Tour time">
+            <button type="button" class="ld-slot" data-slot="Morning (9am–12pm)">Morning</button>
+            <button type="button" class="ld-slot" data-slot="Afternoon (12pm–5pm)">Afternoon</button>
+            <button type="button" class="ld-slot" data-slot="Evening (after 5pm)">Evening</button>
+          </div>
+
+          <div class="ld-rail-ctas">
+            <button type="submit" class="ld-cta" id="ld-tour-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17"/></svg>
+              Request in-person tour
+            </button>
+            {% if listing.virtual_tour_url %}
+            <a href="{{ listing.virtual_tour_url }}" target="_blank" rel="noopener" class="ld-cta ld-cta-ghost">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M15.5 10.5 21 7.5v9l-5.5-3z"/><rect x="3" y="6.5" width="12.5" height="11" rx="2"/></svg>
+              Take the 3D tour
+            </a>
+            {% endif %}
+          </div>
+
+          <p class="ld-rail-label ld-rail-label-2">Quick questions</p>
+          <div class="ld-quick">
+            <button type="button" class="ld-quick-chip" data-ask="Is parking included with this unit?">Parking included?</button>
+            <button type="button" class="ld-quick-chip" data-ask="What is the pet policy for this property?">Pet policy?</button>
+            <button type="button" class="ld-quick-chip" data-ask="Are flexible lease terms available?">Flexible term?</button>
+            <button type="button" class="ld-quick-chip" data-ask="Are utilities included in the rent?">Utilities?</button>
+          </div>
+
+          <div class="ld-fields">
             {{ inquiry_form.as_p }}
-            <button type="submit" style="width:100%;margin-top:.25rem;">Send inquiry</button>
+          </div>
+
+          <button type="submit" class="ld-cta ld-cta-send">Send to {% if listing.organization %}the team{% else %}the owner{% endif %}</button>
+          <p class="ld-rail-note">Goes straight to the lister by email. No agent in between.</p>
         </form>
         {% endif %}
+      </section>
+
+      <section class="ld-rail-card ld-policy">
+        <span class="ld-policy-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z"/><path d="m8.8 12.2 2.2 2.2 4.2-4.4"/></svg>
+        </span>
+        <div>
+          <p class="ld-policy-title">Listojo zero-markup policy</p>
+          <p class="ld-policy-body">$0 agency fee and no charge to message the lister. The price you see is the price they set.</p>
+        </div>
+      </section>
+
+      {% if listing.category == 'properties' %}
+      <section class="ld-rail-card ld-agent">
+        <p class="ld-agent-title">Want expert help buying?</p>
+        <p class="ld-agent-body">A Listojo agent can walk you through offers, inspection and closing. Free, no obligation.</p>
+        <a class="ld-cta ld-cta-ghost" href="mailto:agents@listojo.com?subject=Agent help: {{ listing.title|urlencode }}&amp;body=I am interested in: {{ listing.title }} — {{ request.build_absolute_uri }}">Connect with an agent</a>
+      </section>
+      {% endif %}
     </aside>
     {% endif %}
 </div>
 {% endif %}{# end community / regular split #}
+
+{% comment %}
+  Tour picker and quick questions. Neither is a separate system: both compose
+  the inquiry message, so what the owner receives says plainly when you want to
+  visit and what you asked.
+{% endcomment %}
+<script>
+(function () {
+  var form = document.getElementById('ld-inquiry');
+  if (!form) return;
+
+  var daysWrap = document.getElementById('ld-days');
+  var slotsWrap = document.getElementById('ld-slots');
+  var message = form.querySelector('[name="message"]');
+  if (!message) return;
+
+  var chosenDay = null;
+  var chosenSlot = null;
+
+  /* The next four days, labelled from the visitor's own clock rather than the
+     server's, so "Today" is today where they are. */
+  (function buildDays() {
+    if (!daysWrap) return;
+    var today = new Date();
+    for (var i = 0; i < 4; i++) {
+      var d = new Date(today);
+      d.setDate(today.getDate() + i);
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ld-day';
+      btn.dataset.iso = d.toISOString().slice(0, 10);
+      btn.dataset.label = i === 0
+        ? 'today, ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        : d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+
+      var name = document.createElement('span');
+      name.className = 'ld-day-name';
+      name.textContent = i === 0 ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' });
+
+      var date = document.createElement('span');
+      date.className = 'ld-day-date';
+      date.textContent = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+      btn.appendChild(name);
+      btn.appendChild(date);
+      daysWrap.appendChild(btn);
+    }
+  })();
+
+  /* The message is rebuilt from the current selection each time rather than
+     appended to, so changing your mind does not leave the old choice in it. */
+  var TOUR_MARK = '[tour request]';
+
+  function syncMessage() {
+    var lines = message.value.split('\n').filter(function (l) {
+      return l.indexOf(TOUR_MARK) !== 0;
+    });
+    if (chosenDay || chosenSlot) {
+      var when = [chosenDay, chosenSlot].filter(Boolean).join(', ');
+      lines.unshift(TOUR_MARK + ' I would like to tour this property on ' + when + '.');
+    }
+    message.value = lines.join('\n').replace(/^\n+/, '');
+  }
+
+  function pick(wrap, cls, btn) {
+    wrap.querySelectorAll('.' + cls).forEach(function (b) { b.classList.remove('is-on'); });
+    btn.classList.add('is-on');
+  }
+
+  if (daysWrap) {
+    daysWrap.addEventListener('click', function (e) {
+      var btn = e.target.closest('.ld-day');
+      if (!btn) return;
+      pick(daysWrap, 'ld-day', btn);
+      chosenDay = btn.dataset.label;
+      syncMessage();
+    });
+  }
+
+  if (slotsWrap) {
+    slotsWrap.addEventListener('click', function (e) {
+      var btn = e.target.closest('.ld-slot');
+      if (!btn) return;
+      pick(slotsWrap, 'ld-slot', btn);
+      chosenSlot = btn.dataset.slot;
+      syncMessage();
+    });
+  }
+
+  /* Quick questions append rather than replace: asking two is normal. */
+  form.querySelectorAll('.ld-quick-chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var q = chip.dataset.ask;
+      if (message.value.indexOf(q) !== -1) return;
+      message.value = (message.value ? message.value.replace(/\s*$/, '\n') : '') + q;
+      chip.classList.add('is-on');
+      message.focus();
+      message.setSelectionRange(message.value.length, message.value.length);
+    });
+  });
+
+  /* The tour button is the same submit as the send button; it just insists on
+     a day first, so the owner never gets "I want a tour" with no date. */
+  var tourBtn = document.getElementById('ld-tour-btn');
+  if (tourBtn) {
+    tourBtn.addEventListener('click', function (e) {
+      if (chosenDay) return;
+      e.preventDefault();
+      daysWrap.classList.add('is-asking');
+      daysWrap.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      setTimeout(function () { daysWrap.classList.remove('is-asking'); }, 1600);
+    });
+  }
+})();
+</script>
 
 {# ── LIVE CHAT PANEL ── #}
 {% if user.is_authenticated and user != listing.owner %}
