@@ -8284,3 +8284,49 @@ button.ld-cta-ghost { cursor: pointer; }
 @media (max-width: 760px) {
   .hero-split--photo .hc-slide.hc-loaded { background-image: var(--hc-sm); }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE PASS — home hero (≤760px)
+   The desktop hero stretched one landscape photo over a 366×1122 box on a
+   phone (headline, search, chips and the featured card all inside it), so
+   `cover` cropped each photo to a thin vertical slice — the "zoomed in"
+   look. On phones the hero goes back to the earlier full-bleed shape, the
+   featured card (already in Trending) is dropped, and the photo is a fixed
+   band at the top that fades into ink behind the search console.
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+  .hero-split--photo {
+    width: 100vw;
+    margin: calc(-1 * var(--sp-3)) calc(50% - 50vw) var(--sp-6);
+    border-radius: 0;
+    padding: var(--sp-6) var(--sp-4) calc(var(--sp-8) + var(--sp-2));
+    background: #0b1220;
+  }
+  .hero-split--photo .hc-slide {
+    bottom: auto;
+    height: 520px;
+    background-position: center 40%;
+  }
+  .hero-split--photo .hc-overlay {
+    background: linear-gradient(to bottom,
+      rgba(8,18,38,.45) 0px,
+      rgba(8,18,38,.62) 300px,
+      #0b1220 520px);
+  }
+  .hero-split--photo .hero-feature { display: none; }
+  .hero-split--photo .hero-eyebrow { font-size: .625rem; padding: .35rem .7rem; margin-bottom: var(--sp-3); }
+  .hero-split--photo .hero-display { font-size: 2.125rem; line-height: 1.1; }
+  .hero-split--photo .hero-split-sub { font-size: .9375rem; margin-bottom: var(--sp-5); }
+  /* Quick-search chips: one swipeable line instead of four wrapped rows. */
+  .hero-split--photo .hero-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-right: calc(-1 * var(--sp-4));
+    padding-right: var(--sp-4);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .hero-split--photo .hero-chips::-webkit-scrollbar { display: none; }
+  .hero-split--photo .hero-chip { flex-shrink: 0; }
+  .hero-split--photo .hero-chips-label { flex-shrink: 0; white-space: nowrap; }
+}
