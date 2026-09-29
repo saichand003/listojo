@@ -440,25 +440,25 @@ body.lj-map-active .hero { display: none !important; }
 /* The view row aligns to top so the sticky map can pin while the list scrolls */
 body.lj-map-active #view-wrapper { align-items: flex-start; }
 
-/* ── Phones and small tablets: one panel at a time ──────────────
-   A 50/50 split at 390px is 195px each, which is useless for both. Below
-   900px the panels take turns, which is what every major ILS does on a
-   phone, and the toggle switches between them. */
+/* ── Phones and small tablets: map band above the list ──────────
+   A 50/50 split at 390px is 195px each, useless for both. This used to
+   hide the list and give the map the whole screen, so "Split" on a phone
+   meant "map only" and the results vanished. Now the map is a band at the
+   top and the results carry on underneath it, one row each.
+   !important throughout: #view-wrapper, #list-panel and #map-panel carry
+   inline styles (display:flex, flex:0 0 50%, position:sticky) set in the
+   markup and by setView() that a plain stylesheet rule cannot beat. */
 @media (max-width: 899px) {
-  /* !important throughout: #view-wrapper and #map-panel both carry inline
-     style attributes (display:flex, flex:0 0 50%) that a stylesheet rule
-     cannot otherwise beat. Without it the panel stayed at 50% and rendered
-     183px wide on a 390px phone. */
-  body.lj-map-active #view-wrapper { display: block !important; }
-  body.lj-map-active #list-panel   { display: none !important; }
+  body.lj-map-active #view-wrapper { display: flex !important; flex-direction: column !important; gap: var(--sp-4) !important; }
+  body.lj-map-active #list-panel   { display: block !important; flex: none !important; width: 100% !important; }
   body.lj-map-active #map-panel {
+    order: -1;
     display: block !important;
     flex: none !important;
     width: 100% !important;
-    /* dvh so a collapsing mobile URL bar does not leave the map short. */
-    height: calc(100dvh - var(--topbar-h, 124px) - var(--sp-5, 20px));
-    position: sticky;
-    top: var(--sp-3, 12px);
+    height: min(52vh, 420px) !important;
+    position: relative !important;
+    top: auto !important;
   }
 }
 
@@ -1188,7 +1188,10 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
   // right there. A stored choice beats both.
   (function bootView(){
     var stored = readView();
-    var initial = stored || (window.innerWidth >= 900 ? 'map' : 'list');
+    // Phones always open on the list: a choice of Split made on a desktop
+    // used to follow the visitor to their phone and open a map with no
+    // results in sight. Split is one tap away on the toggle.
+    var initial = window.innerWidth < 900 ? 'list' : (stored || 'map');
     // silent: this is a default, not a decision, so it is not written back.
     window.setView(initial, {silent: !stored});
   })();

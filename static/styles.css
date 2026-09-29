@@ -8330,3 +8330,35 @@ button.ld-cta-ghost { cursor: pointer; }
   .hero-split--photo .hero-chip { flex-shrink: 0; }
   .hero-split--photo .hero-chips-label { flex-shrink: 0; white-space: nowrap; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE PASS — results toolbar (≤760px)
+   The toolbar is sticky on desktop. On a phone it stacked to ~370px and
+   stayed pinned, covering almost half the screen while scrolling results.
+   Here it scrolls away with the page, the search takes a full row, the
+   category select (the tabs above already do its job) is dropped, and the
+   price/bed filters and amenity chips share one swipeable line.
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+  .results-bar { position: static; margin: calc(-1 * var(--sp-3)) calc(-1 * var(--sp-3)) var(--sp-4); padding: var(--sp-3); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .results-scope { width: 100%; }
+  .results-scope-tab { flex: 1; text-align: center; padding: .45rem .3rem; }
+  .results-search { flex-wrap: wrap; min-width: 0; width: 100%; }
+  .results-search-field { flex: 1 1 100%; }
+  .results-search .results-select { display: none; }
+  .results-search-city { flex: 1 1 0; min-width: 0; }
+  .results-bar-row-2 { gap: var(--sp-2); }
+  .results-count { flex: 1 1 100%; }
+  .results-sort { flex: 1 1 auto; }
+  .results-sort .results-select { max-width: none; width: 100%; }
+  .results-bar-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-right: calc(-1 * var(--sp-3));
+    padding-right: var(--sp-3);
+    scrollbar-width: none;
+  }
+  .results-bar-chips::-webkit-scrollbar { display: none; }
+  .results-bar-chips .quality-chips-row { flex-wrap: nowrap; }
+  .results-bar-chips .quality-chip, .results-filter { flex-shrink: 0; }
+}
