@@ -61,17 +61,33 @@ def terms(request):
     return render(request, 'listings/terms.html', _legal_context())
 
 
+HOME_CITY_HUBS = [
+    ('Irving', 'Las Colinas Core', 'tower'),
+    ('Dallas', 'Downtown & Uptown', 'tower'),
+    ('Frisco', 'The Star & Legacy', 'house'),
+    ('Plano', 'Legacy West', 'house'),
+    ('Fort Worth', 'Cultural District', 'tower'),
+    ('Arlington', 'Entertainment Core', 'pin'),
+    ('McKinney', 'Historic Square', 'house'),
+    ('Allen', 'Watters Creek', 'house'),
+    ('Carrollton', 'K-Town Center', 'pin'),
+    ('Denton', 'University Core', 'pin'),
+    ('Garland', 'Lake Ray Hubbard', 'pin'),
+    ('Grand Prairie', 'Epic Central', 'pin'),
+]
+
+
 def home(request):
     if not _listings_table_ready():
         return _render_db_setup_page(request)
     trending_rentals = (
         Listing.objects.filter(category='rentals', status='active', parent__isnull=True)
-        .select_related('owner').prefetch_related('images')
+        .select_related('owner', 'nearest_downtown').prefetch_related('images')
         .order_by('-view_count', '-created_at')[:5]
     )
     trending_properties = (
         Listing.objects.filter(category='properties', status='active', parent__isnull=True)
-        .select_related('owner').prefetch_related('images')
+        .select_related('owner', 'nearest_downtown').prefetch_related('images')
         .order_by('-view_count', '-created_at')[:5]
     )
     cities = list(
@@ -79,6 +95,22 @@ def home(request):
         .exclude(city='').values_list('city', flat=True)
         .distinct().order_by('city')[:12]
     )
+    # The city grid always shows the metroplex's main hubs. "Active" is only
+    # set where there is at least one live listing; the rest read "DFW".
+    active_cities = {c.strip().lower() for c in cities}
+    city_hubs = [
+        {'name': name, 'district': district, 'icon': icon,
+         'active': name.lower() in active_cities}
+        for name, district, icon in HOME_CITY_HUBS
+    ]
+    hub_names = {h['name'].lower() for h in city_hubs}
+    city_hubs += [
+        {'name': c.title(), 'district': 'Dallas–Fort Worth, TX', 'icon': 'pin', 'active': True}
+        for c in cities if c.strip().lower() not in hub_names
+    ]
+    fav_ids = set()
+    if request.user.is_authenticated:
+        fav_ids = set(Favourite.objects.filter(user=request.user).values_list('listing_id', flat=True))
     listing_count = Listing.objects.filter(status='active', parent__isnull=True).count()
     city_count = Listing.objects.filter(status='active', parent__isnull=True).exclude(city='').values('city').distinct().count()
     landlord_count = Listing.objects.filter(status='active', parent__isnull=True).values('owner').distinct().count()
@@ -86,6 +118,8 @@ def home(request):
         'trending_rentals': trending_rentals,
         'trending_properties': trending_properties,
         'cities': cities,
+        'city_hubs': city_hubs,
+        'fav_ids': fav_ids,
         'stats': {
             'listing_count': listing_count,
             'city_count': city_count,

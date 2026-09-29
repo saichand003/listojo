@@ -187,7 +187,8 @@ def register(request):
             )
             return redirect('register_confirm')
     else:
-        form = RegistrationForm()
+        # The home page's alerts band hands its email field over as ?email=.
+        form = RegistrationForm(initial={'email': request.GET.get('email', '')[:254]})
     return render(request, 'accounts/register.html',
                   {'form': form, 'error': error, 'intent': _signup_intent(request)})
 

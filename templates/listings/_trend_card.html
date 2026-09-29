@@ -1,10 +1,14 @@
 {% load humanize %}
 {% comment %}
-  Trending card, shaped after the reference design: photo with a category
-  chip, price leading the body, then the beds/baths/sqft strip and the
-  verification line. Used by both trending rows on the home page.
+  Trending card, shaped after the reference design: photo with the category
+  and popularity chips top-left, the commute score top-right, a verified strip
+  along the bottom of the photo; then price with a save heart, title, location,
+  the beds/baths/sqft strip, a one-line "why it stands out" callout and a
+  full-width View listing button.
 
-  Expects: listing, plus `sale` (truthy for the for-sale row).
+  Every signal is real listing data — nothing here is a made-up match score.
+
+  Expects: listing, plus `sale` (truthy for a for-sale listing) and `fav_ids`.
 {% endcomment %}
 <article class="trend-card">
   <a class="trend-card-media" href="{% url 'listing_detail' listing.pk %}" tabindex="-1" aria-hidden="true">
@@ -18,9 +22,30 @@
     {% endif %}
     {% endwith %}
 
-    <span class="trend-chip {% if sale %}trend-chip-sale{% endif %}">{% if sale %}For Sale{% else %}For Rent{% endif %}</span>
-    {% if listing.view_count > 20 %}
-      <span class="trend-chip trend-chip-hot">Popular</span>
+    <span class="trend-chips">
+      <span class="trend-chip {% if sale %}trend-chip-sale{% endif %}">{% if sale %}For Sale{% else %}For Rent{% endif %}</span>
+      {% if listing.featured %}
+        <span class="trend-chip trend-chip-soft">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8z"/></svg>
+          Featured
+        </span>
+      {% elif listing.view_count > 20 %}
+        <span class="trend-chip trend-chip-soft">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" aria-hidden="true"><path d="M12 2c1 3.5 5 5.8 5 11a5 5 0 0 1-10 0c0-2.4 1.2-3.9 2.3-5 .2 1.6 1 2.7 2 3.1C11 8.5 11.3 5 12 2Z"/></svg>
+          Popular
+        </span>
+      {% endif %}
+    </span>
+
+    {% if listing.commute_score %}
+      <span class="trend-score" title="Commute score{% if listing.commute_score_label %}: {{ listing.commute_score_label }}{% endif %}">{{ listing.commute_score }} Commute</span>
+    {% endif %}
+
+    {% if listing.owner %}
+    <span class="trend-verified">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z" opacity=".3"/><path d="m8.6 12.2 2.3 2.3 4.5-4.6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      {% if listing.organization_id %}Community Direct{% elif sale %}Direct Owner Sale{% else %}Verified Landlord Direct{% endif %}
+    </span>
     {% endif %}
   </a>
 
@@ -32,6 +57,20 @@
       {% if listing.original_price and listing.original_price > listing.price %}
         <span class="trend-card-cut">Price cut</span>
       {% endif %}
+      {% if user.is_authenticated %}
+        <button type="button"
+          class="trend-fav save-pill {% if listing.pk in fav_ids %}save-pill-active{% endif %}"
+          data-fav-url="{% url 'toggle_favourite' listing.pk %}"
+          data-csrf="{{ csrf_token }}"
+          aria-label="{% if listing.pk in fav_ids %}Remove from saved{% else %}Save listing{% endif %}"
+          aria-pressed="{% if listing.pk in fav_ids %}true{% else %}false{% endif %}">
+          <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 4 4.5 7.3 4.5c2 0 3.6 1.1 4.7 2.7 1.1-1.6 2.7-2.7 4.7-2.7 3.3 0 5.7 3.1 4.5 6.6-1.7 4.8-9.2 9.4-9.2 9.4Z"/></svg>
+        </button>
+      {% else %}
+        <a class="trend-fav" href="{% url 'login' %}?next={{ request.path|urlencode }}" aria-label="Sign in to save this listing">
+          <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 4 4.5 7.3 4.5c2 0 3.6 1.1 4.7 2.7 1.1-1.6 2.7-2.7 4.7-2.7 3.3 0 5.7 3.1 4.5 6.6-1.7 4.8-9.2 9.4-9.2 9.4Z"/></svg>
+        </a>
+      {% endif %}
     </div>
 
     <h3 class="trend-card-title">
@@ -39,26 +78,47 @@
     </h3>
 
     <p class="trend-card-loc">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
-      {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
+      {{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}{% if listing.nearest_downtown %} &bull; {{ listing.nearest_downtown.name }}{% endif %}
     </p>
 
-    {% if listing.bedrooms or listing.bathrooms or listing.square_footage %}
     <ul class="trend-card-specs">
-      {% if listing.bedrooms %}<li>{{ listing.bedrooms }} Bed{{ listing.bedrooms|pluralize }}</li>{% endif %}
-      {% if listing.bathrooms %}<li>{{ listing.bathrooms|floatformat:"-1" }} Bath{{ listing.bathrooms|floatformat:"-1"|pluralize }}</li>{% endif %}
-      {% if listing.square_footage %}<li>{{ listing.square_footage|intcomma }} sqft</li>{% endif %}
-    </ul>
-    {% endif %}
-
-    <div class="trend-card-foot">
-      {% if listing.owner %}
-      <span class="trend-card-verified">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><path d="m9 12.5 2.2 2.2L15.5 10"/><circle cx="12" cy="12" r="9"/></svg>
-        Direct owner
-      </span>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7"/><path d="M3 15h18"/><path d="M6 9V6.5A1.5 1.5 0 0 1 7.5 5h3A1.5 1.5 0 0 1 12 6.5V9"/><path d="M3 18v2m18-2v2"/></svg>
+        {% if listing.bedrooms %}{{ listing.bedrooms }} Bed{{ listing.bedrooms|pluralize }}{% else %}Studio{% endif %}
+      </li>
+      {% if listing.bathrooms %}
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M6 12V5.5A1.5 1.5 0 0 1 7.5 4c.8 0 1.5.7 1.5 1.5"/><path d="M7 19l-1 2m11-2 1 2"/></svg>
+        {{ listing.bathrooms|floatformat:"-1" }} Bath{{ listing.bathrooms|floatformat:"-1"|pluralize }}
+      </li>
       {% endif %}
-      <a href="{% url 'listing_detail' listing.pk %}" class="trend-card-cta">View listing &rarr;</a>
-    </div>
+      {% if listing.square_footage %}
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M4 20V4h4v2m-4 4h3m-3 4h4m-4 4h3"/><path d="M4 20h16v-4m-8 4v-3m4 3v-4"/></svg>
+        {{ listing.square_footage|intcomma }} sq ft
+      </li>
+      {% endif %}
+    </ul>
+
+    {% comment %}
+      "Why it stands out": the drive to the nearest downtown when we have it,
+      otherwise the listing's first two tags, otherwise its view count.
+    {% endcomment %}
+    <p class="trend-reason">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9zM18.5 14l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg>
+      <span>
+        {% if listing.downtown_drive_minutes and listing.nearest_downtown %}
+          {{ listing.downtown_drive_minutes }} min drive to {{ listing.nearest_downtown.name }}{% with tags=listing.get_tags_list %}{% if tags %} &bull; {{ tags.0 }}{% endif %}{% endwith %}
+        {% else %}
+          {% with tags=listing.get_tags_list %}
+            {% if tags %}{{ tags.0 }}{% if tags.1 %} &bull; {{ tags.1 }}{% endif %}
+            {% else %}{{ listing.view_count|intcomma }} view{{ listing.view_count|pluralize }} from DFW home seekers{% endif %}
+          {% endwith %}
+        {% endif %}
+      </span>
+    </p>
+
+    <a href="{% url 'listing_detail' listing.pk %}" class="trend-card-cta">View listing &rarr;</a>
   </div>
 </article>

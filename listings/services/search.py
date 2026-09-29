@@ -406,6 +406,7 @@ def build_listing_search_context(request) -> dict:
             'tag': params.tag,
             'min_price': params.min_price,
             'max_price': params.max_price,
+            'bedrooms': params.bedrooms,
             'tags': params.tags_raw,
             'available_by': params.available_by,
         },

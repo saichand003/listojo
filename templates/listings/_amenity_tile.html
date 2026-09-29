@@ -1,0 +1,32 @@
+{% comment %}
+  One amenity tile. The icon is picked by keyword from the amenity's own name;
+  anything unrecognised gets the generic sparkle. Expects `a`, the amenity name.
+{% endcomment %}
+{% with k=a|lower %}
+<li class="ld-amen-tile">
+  <span class="ld-amen-ico" aria-hidden="true">
+    {% if 'pool' in k or 'spa' in k or 'hot tub' in k %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M2 18c1.7 0 1.7-1 3.3-1s1.7 1 3.4 1 1.6-1 3.3-1 1.7 1 3.3 1 1.7-1 3.4-1 1.6 1 3.3 1"/><path d="M8 15V5.5a2 2 0 0 1 4 0M16 15V5.5a2 2 0 0 0-4 0M8 9h8M8 12.5h8"/></svg>
+    {% elif 'gym' in k or 'fitness' in k or 'wellness' in k %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>
+    {% elif 'pet' in k or 'dog' in k %}
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><circle cx="5.5" cy="10" r="2"/><circle cx="9" cy="5.5" r="2"/><circle cx="15" cy="5.5" r="2"/><circle cx="18.5" cy="10" r="2"/><path d="M12 11c-3 0-6 4.5-6 7 0 1.6 1.3 2.5 3 2.5 1.2 0 2-.6 3-.6s1.8.6 3 .6c1.7 0 3-.9 3-2.5 0-2.5-3-7-6-7Z"/></svg>
+    {% elif 'ev' in k or 'charging' in k %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M4 20V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v15M3 20h12M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3"/><path d="m9.5 7-2 3.5h3L8.5 14"/></svg>
+    {% elif 'park' in k or 'garage' in k or 'carport' in k %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M9.5 17V7h3.5a3 3 0 0 1 0 6H9.5"/></svg>
+    {% elif 'laundry' in k or 'washer' in k or 'dryer' in k or 'w/d' in k %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><rect x="4" y="2.5" width="16" height="19" rx="2"/><circle cx="12" cy="13.5" r="4.5"/><path d="M7.5 6h.01M10.5 6h.01"/></svg>
+    {% elif 'concierge' in k or 'package' in k or 'door' in k or 'security' in k or 'gated' in k %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M12 2.5 4 6v6c0 5 3.4 8.3 8 9.5 4.6-1.2 8-4.5 8-9.5V6z"/><path d="m8.8 12.2 2.2 2.2 4.2-4.4"/></svg>
+    {% elif 'wifi' in k or 'internet' in k or 'smart' in k %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5h.01"/></svg>
+    {% elif 'balcony' in k or 'patio' in k or 'yard' in k or 'garden' in k or 'lake' in k or 'kayak' in k %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M12 22v-7M7 15h10l-5-12z"/><path d="M4 22h16"/></svg>
+    {% else %}
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9zM18.5 14l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg>
+    {% endif %}
+  </span>
+  <span class="ld-amen-name">{{ a }}</span>
+</li>
+{% endwith %}

@@ -248,6 +248,13 @@
             {# Action buttons #}
             <div class="card-actions">
                 <a href="{% url 'listing_detail' listing.pk %}" class="card-btn-primary">View details</a>
+                {% if user != listing.owner and listing.status != 'sold' %}
+                {# Split view only: opens the detail page on its tour picker. #}
+                <a href="{% url 'listing_detail' listing.pk %}#inquiry-form" class="card-btn-tour">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17"/></svg>
+                    Book tour
+                </a>
+                {% endif %}
                 {% if user.is_authenticated and user != listing.owner %}
                 <button type="button" class="card-btn-secondary open-chat-btn"
                     data-listing-id="{{ listing.pk }}"

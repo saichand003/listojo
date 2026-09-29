@@ -10,7 +10,37 @@ blocks on the page background, which is what both detail pages want; a caller
 that nests them inside another card passes a tinted panel style instead.
 `chip_bg` inverts with it: a chip has to contrast with whatever is behind it,
 and a tinted panel is the same colour the chips use by default.
+
+`layout="tiles"` swaps the chip rows for the reference design's grid of icon
+tiles under an open heading with a count. Only the listing detail page asks
+for it; everything else keeps the chip cards.
 {% endcomment %}
+{% if layout == "tiles" %}
+{% with shared=place.community_amenities_list private=place.in_unit_amenities_list %}
+{% if shared %}
+<section class="ld-amen">
+  <div class="ld-amen-head">
+    <h2 class="ld-sec-title">{{ place.shared_amenities_label }}</h2>
+    <span class="ld-amen-count">{{ shared|length }} amenit{{ shared|length|pluralize:"y,ies" }} available</span>
+  </div>
+  <ul class="ld-amen-grid">
+    {% for a in shared %}{% include 'listings/_amenity_tile.html' %}{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% if private %}
+<section class="ld-amen">
+  <div class="ld-amen-head">
+    <h2 class="ld-sec-title">{{ place.unit_amenities_label }}</h2>
+    <span class="ld-amen-count">{{ private|length }} in unit</span>
+  </div>
+  <ul class="ld-amen-grid">
+    {% for a in private %}{% include 'listings/_amenity_tile.html' %}{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endwith %}
+{% else %}
 {% with shared=place.community_amenities_list private=place.in_unit_amenities_list %}
 
 {# ── Shared: what you queue for, book, or walk outside your door to reach ── #}
@@ -34,3 +64,4 @@ and a tinted panel is the same colour the chips use by default.
 {% endif %}
 
 {% endwith %}
+{% endif %}

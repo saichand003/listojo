@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load listing_extras static %}
+{% load listing_extras static humanize %}
 {% block content %}
 <style>
   /* Faint scattered property-icon pattern fills empty space behind listings.
@@ -44,6 +44,7 @@
       <input type="hidden" name="q" id="tag-search-hidden" value="{{ filters.q }}">
       <input type="hidden" name="min_price" id="filter-min-price" value="{{ filters.min_price }}">
       <input type="hidden" name="max_price" id="filter-max-price" value="{{ filters.max_price }}">
+      <input type="hidden" name="bedrooms" id="filter-bedrooms" value="{{ filters.bedrooms }}">
       <select name="category" class="results-select" aria-label="Listing category">
         <option value="">All Types</option>
         {% for key, label in wizard_categories %}
@@ -77,6 +78,8 @@
       <input type="hidden" name="city" value="{{ filters.city }}">
       <input type="hidden" name="tag" value="{{ filters.tag }}">
       <input type="hidden" name="tags" value="{{ filters.tags }}">
+      <input type="hidden" name="max_price" value="{{ filters.max_price }}">
+      <input type="hidden" name="bedrooms" value="{{ filters.bedrooms }}">
       <select name="sort" class="sort-select results-select" id="sort-select" aria-label="Sort results">
         {% if filters.q %}<option value="best_match" {% if filters.sort == 'best_match' %}selected{% endif %}>Best match</option>{% endif %}
         <option value="latest"     {% if filters.sort == 'latest'     %}selected{% endif %}>Latest first</option>
@@ -103,8 +106,37 @@
     </div>
   </div>
 
-  {# Row 3: active search terms + amenity chips #}
+  {# Row 3: price + bedroom filters, active search terms, amenity chips #}
   <div class="results-bar-row results-bar-chips">
+    {% comment %}
+      The reference's filter pills. They write into the search form's hidden
+      max_price / bedrooms inputs and resubmit it, so the URL stays the one
+      source of truth for every filter on the page.
+    {% endcomment %}
+    <div class="results-filters">
+      <label class="results-filter {% if filters.max_price %}is-on{% endif %}">
+        <span class="results-filter-k">Price</span>
+        <select data-filter-target="filter-max-price" aria-label="Maximum price">
+          <option value="">Any</option>
+          {% if filters.category == 'properties' %}{% firstof "250000,350000,500000,750000,1000000" as steps %}{% else %}{% firstof "1000,1500,2000,2500,3000,4000" as steps %}{% endif %}
+          {% for p in steps|split_csv %}
+          <option value="{{ p }}" {% if filters.max_price == p %}selected{% endif %}>Up to ${{ p|add:0|intcomma }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="results-filter {% if filters.bedrooms %}is-on{% endif %}">
+        <span class="results-filter-k">Bedrooms</span>
+        <select data-filter-target="filter-bedrooms" aria-label="Bedrooms">
+          <option value="">Any</option>
+          <option value="0" {% if filters.bedrooms == '0' %}selected{% endif %}>Studio</option>
+          {% for b in "1,2,3,4"|split_csv %}
+          <option value="{{ b }}" {% if filters.bedrooms == b %}selected{% endif %}>{{ b }} bed</option>
+          {% endfor %}
+        </select>
+      </label>
+      <span class="results-filters-rule" aria-hidden="true"></span>
+    </div>
+
     <div id="search-tags-display" class="results-terms">
       {% if filters.q %}
         {% for term in filters.q|split_csv %}
@@ -131,6 +163,18 @@
     <input type="hidden" name="tags" id="quality-tags-hidden" value="{{ filters.tags }}" form="search-form">
   </div>
 </div>
+<script>
+// Filter pills → the search form's hidden inputs, then resubmit.
+document.querySelectorAll('.results-filter select[data-filter-target]').forEach(function (sel) {
+  sel.addEventListener('change', function () {
+    var target = document.getElementById(sel.dataset.filterTarget);
+    var form = document.getElementById('search-form');
+    if (!target || !form) return;
+    target.value = sel.value;
+    form.submit();
+  });
+});
+</script>
 
 {# ── Agent CTA banner (shown after guided search completion) ── #}
 {% if show_agent_cta %}
@@ -564,87 +608,146 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
   z-index: 2 !important;
 }
 
-/* Body — below photo, tight padding */
-#list-panel.map-mode .listing-body {
-  padding: .5rem .3rem .4rem !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: .12rem !important;
-  min-width: 0 !important;
+/* ── Split-view row body, shaped after the reference results rows ──
+   Title with the price opposite, the address under it, the verified /
+   availability line, the spec strip, the Match Factor callout, then the
+   actions. Grid areas pin the price to the top-right however the DOM
+   orders it; everything else flows full width underneath. */
+#list-panel.map-mode .listing-card { padding: var(--sp-4) !important; gap: var(--sp-5) !important; border: none !important; box-shadow: var(--shadow-sm) !important; }
+#list-panel.map-mode .listing-card:hover { box-shadow: var(--shadow-md) !important; }
+#list-panel.map-mode .listing-thumb-wrap {
+  flex: 0 0 236px !important;
+  width: 236px !important;
+  min-height: 176px !important;
+  align-self: flex-start !important;
+  aspect-ratio: 4 / 3 !important;
+  border-radius: var(--r-sm) !important;
 }
+#list-panel.map-mode .listing-thumb,
+#list-panel.map-mode .listing-thumb-placeholder { min-height: 176px !important; }
+@media (max-width: 1180px) {
+  #list-panel.map-mode .listing-thumb-wrap { flex-basis: 180px !important; width: 180px !important; min-height: 140px !important; }
+  #list-panel.map-mode .listing-thumb, #list-panel.map-mode .listing-thumb-placeholder { min-height: 140px !important; }
+}
+#list-panel.map-mode .thumb-count {
+  left: .5rem !important; right: auto !important; bottom: .5rem !important;
+  background: rgba(10,15,29,.78) !important; color: #fff !important;
+  border-radius: 999px !important; padding: .2rem .55rem !important;
+  font-size: .6875rem !important; font-weight: 600 !important;
+}
+#list-panel.map-mode .listing-thumb-wrap .save-pill {
+  width: 32px !important; height: 32px !important; padding: 0 !important;
+  align-items: center !important; justify-content: center !important;
+  font-size: .95rem !important; background: rgba(255,255,255,.92) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+#list-panel.map-mode .listing-thumb-wrap .category-badge,
+#list-panel.map-mode .listing-thumb-wrap .new-badge { border-radius: 999px !important; font-weight: 700 !important; }
 
-/* Price — bold, first */
+#list-panel.map-mode .listing-body {
+  padding: 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  column-gap: var(--sp-4) !important;
+  row-gap: .3rem !important;
+  align-content: start !important;
+}
+#list-panel.map-mode .listing-body > * { grid-column: 1 / -1; margin: 0 !important; }
+
+#list-panel.map-mode .card-title-row { grid-column: 1 !important; grid-row: 1 !important; align-items: flex-start !important; gap: .5rem !important; }
+#list-panel.map-mode .card-title-row h3 {
+  font-family: var(--font-head) !important;
+  font-size: 1.3125rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -.02em !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+#list-panel.map-mode .card-title-row h3 a:hover { color: var(--primary) !important; }
+#list-panel.map-mode .card-title-row .save-pill { display: none !important; }
+#list-panel.map-mode .match-score-badge { display: none !important; }
+
 #list-panel.map-mode .price {
-  order: -2 !important;
-  font-size: .88rem !important;
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  text-align: right !important;
+  font-family: var(--font-head) !important;
+  font-size: 1.625rem !important;
   font-weight: 800 !important;
-  margin: 0 !important;
-  line-height: 1.2 !important;
-  color: #111827 !important;
-  -webkit-text-fill-color: #111827 !important;
+  letter-spacing: -.03em !important;
+  line-height: 1.1 !important;
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text) !important;
   background: none !important;
+  white-space: nowrap !important;
 }
 #list-panel.map-mode .price .price-unit {
-  font-size: .68rem !important;
-  font-weight: 500 !important;
-  color: #6b7280 !important;
-  -webkit-text-fill-color: #6b7280 !important;
+  font-family: var(--font-body) !important;
+  font-size: .8125rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  color: var(--text-3) !important;
+  -webkit-text-fill-color: var(--text-3) !important;
 }
-
-/* Title */
-#list-panel.map-mode .card-title-row {
-  order: -1 !important;
-  margin: 0 !important;
-}
-#list-panel.map-mode .card-title-row h3 {
-  font-size: .875rem !important;
+#list-panel.map-mode .card-income-hint {
+  display: block !important;
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  text-align: right !important;
+  font-size: .6875rem !important;
   font-weight: 600 !important;
-  color: var(--text) !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  margin: 0 !important;
-}
-#list-panel.map-mode .card-title-row h3 a { color: inherit !important; }
-#list-panel.map-mode .card-title-row .save-pill { display: none !important; }
-/* The match score was hidden here because the old two-column tiles had no
-   room for it. Rows do, and it is the headline signal of the whole result —
-   the reference design puts it on the card, not behind a hover. */
-#list-panel.map-mode .match-score-badge {
-  display: inline-flex !important;
-  flex-shrink: 0 !important;
-  margin-left: auto !important;
+  color: var(--accent-dk) !important;
 }
 
-/* Specs */
-#list-panel.map-mode .card-specs-row {
-  font-size: .75rem !important;
-  color: var(--text-2) !important;
-  margin: 0 !important;
-  gap: .2rem !important;
-}
-#list-panel.map-mode .card-spec-item { font-size: .7rem !important; }
-#list-panel.map-mode .card-spec-dot { font-size: .35rem !important; color: #d1d5db !important; }
-
-/* Location */
-#list-panel.map-mode .card-meta-row {
-  font-size: .68rem !important;
-  color: #9ca3af !important;
-  margin: 0 !important;
-}
+#list-panel.map-mode .card-meta-row { grid-column: 1 !important; grid-row: 2 !important; font-size: .875rem !important; color: var(--text-2) !important; }
+#list-panel.map-mode .card-meta-row svg { opacity: 1 !important; color: var(--primary) !important; fill: var(--primary) !important; }
 #list-panel.map-mode .dom-chip { display: none !important; }
 
-/* Hide everything else */
 #list-panel.map-mode .verified-owner-badge,
-#list-panel.map-mode .card-avail,
-#list-panel.map-mode .card-income-hint,
-#list-panel.map-mode .match-explanation,
-#list-panel.map-mode .match-reason-pills,
-#list-panel.map-mode .listing-tag-pills,
-#list-panel.map-mode .card-actions { display: none !important; }
+#list-panel.map-mode .card-avail { display: inline-flex !important; }
 
-/* Hide page sections not relevant in map mode */
-#list-panel.map-mode .fmm-active-banner,
+#list-panel.map-mode .card-specs-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: .6rem !important;
+  padding: .55rem 0 !important;
+  margin-top: .2rem !important;
+  border-top: 1px solid var(--border) !important;
+  border-bottom: 1px solid var(--border) !important;
+  font-size: .8125rem !important;
+  color: var(--text-2) !important;
+}
+#list-panel.map-mode .card-spec-item { font-size: .8125rem !important; }
+#list-panel.map-mode .card-spec-dot { font-size: .3rem !important; color: var(--border-2) !important; }
+
+#list-panel.map-mode .match-factor { display: block !important; margin-top: .35rem !important; }
+#list-panel.map-mode .match-reason-pills { display: flex !important; }
+#list-panel.map-mode .listing-tag-pills { display: none !important; }
+
+#list-panel.map-mode .card-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: .5rem !important;
+  margin-top: .5rem !important;
+}
+#list-panel.map-mode .card-actions > * { flex: 0 0 auto !important; width: auto !important; padding: .55rem 1rem !important; }
+#list-panel.map-mode .card-btn-primary {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+#list-panel.map-mode .card-btn-tour { display: inline-flex !important; }
+
+@media (max-width: 700px) {
+  #list-panel.map-mode .listing-card { flex-direction: column !important; }
+  #list-panel.map-mode .listing-thumb-wrap { width: 100% !important; flex-basis: auto !important; }
+}
+
+/* The preference banner stays in split view, as in the reference. */
 #list-panel.map-mode .fmm-market-strip,
 #list-panel.map-mode .fmm-near-matches .fmm-near-header { display: none !important; }
 

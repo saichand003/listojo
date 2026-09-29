@@ -441,204 +441,204 @@
 </section>
 
 {# ── HOW IT WORKS ───────────────────────────────────────────────── #}
-<section style="margin-bottom:2.5rem;">
-  <div class="section-header">
+<section class="home-band">
+  <div class="section-header home-sec-hdr">
     <div class="section-header-left">
       <div class="section-eyebrow eyebrow-blue">Simple Process</div>
       <h2 class="section-title-xl">How Listojo Works</h2>
-      <p class="section-sub">From search to signed — in 3 steps. Takes 2 minutes.</p>
+      <p class="section-sub">From initial search to signed lease — in 3 transparent steps. Takes under 2 minutes.</p>
     </div>
-    <a href="{% url 'guided_search' %}" class="section-link">Start now &rarr;</a>
+    <a href="{% url 'guided_search' %}" class="section-pill-link">Start guided search &rarr;</a>
   </div>
   {% comment %}
-    Three cards rather than three headings on a connecting rule. Each one
-    names the stage it belongs to and then shows what that stage actually
-    produces, which is the part the old version left implicit.
+    Three cards, each with its own step colour (cobalt, emerald, ink), a
+    kicker naming the stage, and a proof box showing what that stage produces.
   {% endcomment %}
   <div class="hiw-cards">
 
     <article class="hiw-card">
-      <span class="hiw-card-n" aria-hidden="true">01</span>
-      <p class="hiw-card-kicker">Input preferences</p>
+      <span class="hiw-card-n hiw-card-n-1" aria-hidden="true">01</span>
+      <p class="hiw-card-kicker hiw-kicker-1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M4 6h10m4 0h2M4 12h4m4 0h8M4 18h12m4 0h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+        Input preferences
+      </p>
       <h3 class="hiw-card-title">Tell us what you need</h3>
       <p class="hiw-card-body">
-        Budget, city, bedrooms, must-haves. The guided search remembers your
-        answers, so coming back a week later picks up where you left off.
+        Set your budget, target city, bedroom count, and everyday non-negotiables.
+        Guided search remembers your answers, so coming back a week later picks up
+        where you left off.
       </p>
       <p class="hiw-card-proof">
-        <span class="hiw-card-proof-k">You give</span>
+        <span class="hiw-card-proof-k">Auto-synced</span>
         Budget &middot; City &middot; Beds &middot; Must-haves
       </p>
     </article>
 
     <article class="hiw-card">
-      <span class="hiw-card-n" aria-hidden="true">02</span>
-      <p class="hiw-card-kicker">Algorithmic clarity</p>
+      <span class="hiw-card-n hiw-card-n-2" aria-hidden="true">02</span>
+      <p class="hiw-card-kicker hiw-kicker-2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M9.5 3a4.5 4.5 0 0 0-4.4 5.5A4 4 0 0 0 6 16h1v3.5a1.5 1.5 0 0 0 1.5 1.5H12V3.3A4.5 4.5 0 0 0 9.5 3Z"/><path d="M14.5 3a4.5 4.5 0 0 1 4.4 5.5A4 4 0 0 1 18 16h-1v3.5a1.5 1.5 0 0 1-1.5 1.5H12"/></svg>
+        Algorithmic clarity
+      </p>
       <h3 class="hiw-card-title">We score every match</h3>
       <p class="hiw-card-body">
-        Every listing gets a match percentage and a plain-English reason, so you
-        can tell at a glance why it fits and which requirement it misses.
+        Every listing gets a transparent match percentage and a plain-English
+        explanation, so you can tell at a glance why it fits and which
+        requirement it misses.
       </p>
-      <p class="hiw-card-proof">
-        <span class="hiw-card-proof-k">You get</span>
-        A score, and the sentence behind it
+      <p class="hiw-card-proof hiw-card-proof-ok">
+        <span class="hiw-card-proof-k">Reasoning</span>
+        &ldquo;12 mins to DFW Airport, fully inside budget ceiling&rdquo;
       </p>
     </article>
 
     <article class="hiw-card">
-      <span class="hiw-card-n" aria-hidden="true">03</span>
-      <p class="hiw-card-kicker">Direct connection</p>
+      <span class="hiw-card-n hiw-card-n-3" aria-hidden="true">03</span>
+      <p class="hiw-card-kicker hiw-kicker-3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.4A8.5 8.5 0 1 1 21 12Z"/></svg>
+        Direct connection
+      </p>
       <h3 class="hiw-card-title">Connect with the owner</h3>
       <p class="hiw-card-body">
         Message the owner directly or request a tour. No listing agent in the
         middle, no placement commission, no fee to send a message.
       </p>
-      <p class="hiw-card-proof">
-        <span class="hiw-card-proof-k">You pay</span>
-        $0 in agency fees
+      <p class="hiw-card-proof hiw-card-proof-row">
+        <span class="hiw-card-proof-k">Direct chat</span>
+        <span class="hiw-card-proof-ok-text">$0 in agency fees</span>
       </p>
     </article>
 
   </div>
 </section>
 
-{# ── TRENDING RENTALS ─────────────────────────────────────────── #}
-{% if trending_rentals %}
-<section class="home-section">
+{% comment %}
+  TRENDING. The reference puts rentals and homes for sale in one three-column
+  grid under a single heading. Top three of each, rentals first.
+{% endcomment %}
+{% if trending_rentals or trending_properties %}
+<section class="home-band home-band-tint">
   <div class="section-header home-sec-hdr">
     <div class="section-header-left">
-      <div class="section-eyebrow eyebrow-blue">Hot in DFW</div>
-      <h2 class="section-title-xl">Trending Rentals</h2>
-      <p class="section-sub">Most-viewed rentals in the metroplex right now</p>
+      <div class="section-eyebrow eyebrow-green">Hot in DFW</div>
+      <h2 class="section-title-xl">Trending Rentals &amp; Properties</h2>
+      <p class="section-sub">Most-viewed homes, verified rooms, and homes for sale right now.</p>
     </div>
-    <a href="{% url 'listing_list' %}?category=rentals" class="section-link">See all rentals &rarr;</a>
+    <a href="{% url 'listing_list' %}" class="section-link">Explore all DFW listings &rarr;</a>
   </div>
-  <div class="home-scroll-row-wrap">
-    <div class="home-scroll-row trend-row">
-      {% for listing in trending_rentals %}
-        {% include 'listings/_trend_card.html' %}
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
-
-{# ── TRENDING PROPERTIES ─────────────────────────────────────── #}
-{% if trending_properties %}
-<section class="home-section">
-  <div class="section-header home-sec-hdr">
-    <div class="section-header-left">
-      <div class="section-eyebrow eyebrow-green">DFW Market</div>
-      <h2 class="section-title-xl">Homes for Sale</h2>
-      <p class="section-sub">Top-viewed homes on the DFW market</p>
-    </div>
-    <a href="{% url 'listing_list' %}?category=properties" class="section-link">See all homes &rarr;</a>
-  </div>
-  <div class="home-scroll-row-wrap">
-    <div class="home-scroll-row trend-row">
-      {% for listing in trending_properties %}
-        {% include 'listings/_trend_card.html' with sale=True %}
-      {% endfor %}
-    </div>
+  <div class="trend-grid">
+    {% for listing in trending_rentals|slice:":3" %}
+      {% include 'listings/_trend_card.html' %}
+    {% endfor %}
+    {% for listing in trending_properties|slice:":3" %}
+      {% include 'listings/_trend_card.html' with sale=True %}
+    {% endfor %}
   </div>
 </section>
 {% endif %}
 
 {# ── TESTIMONIALS ─────────────────────────────────────────────── #}
-<section style="margin-bottom:2.5rem;">
-  <div class="section-header" style="margin-bottom:1.25rem;">
-    <div class="section-header-left">
-      <div class="section-eyebrow eyebrow-amber">Real Stories</div>
-      <h2 class="section-title-xl">What DFW residents say</h2>
-      <p class="section-sub">Tenants and landlords across the metroplex</p>
-    </div>
+<section class="home-band">
+  <div class="section-header-center">
+    <div class="section-eyebrow eyebrow-green">Real Stories</div>
+    <h2 class="section-title-xl">What DFW residents say</h2>
+    <p class="section-sub">Authentic experiences from tenants and landlords across the metroplex.</p>
   </div>
-  <div class="home-testimonials-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
+  <div class="home-testimonials-grid">
 
-    {% with star='<svg viewBox="0 0 20 20" fill="#F59E0B" width="14" height="14"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>' %}
+    {% with star='<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true"><path d="m12 2.8 2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/></svg>' %}
 
-    <div class="testimonial-v2">
-      <div class="testimonial-stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
-      <p class="testimonial-quote">"Found my apartment in Irving in 3 days. The AI match score explained exactly why each place fit my budget — I didn't have to guess or scroll endlessly."</p>
-      <div class="testimonial-author">
-        <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--primary-dk),var(--primary));">P</div>
+    <figure class="testimonial-v2">
+      <div class="testimonial-stars" role="img" aria-label="5 out of 5 stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
+      <blockquote class="testimonial-quote">"Found my apartment in Irving in 3 days. The AI match score explained exactly why each place fit my budget — I didn't have to guess or scroll endlessly."</blockquote>
+      <figcaption class="testimonial-author">
+        <div class="testimonial-avatar testimonial-avatar-1">P</div>
         <div>
           <div class="testimonial-name">Priya M.</div>
           <div class="testimonial-role">Renter &middot; Irving, TX</div>
         </div>
-      </div>
-    </div>
+      </figcaption>
+    </figure>
 
-    <div class="testimonial-v2">
-      <div class="testimonial-stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
-      <p class="testimonial-quote">"The guided search is brilliant. It saved my preferences and when I came back a week later, it remembered exactly what I needed. No other platform does this."</p>
-      <div class="testimonial-author">
-        <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--primary),var(--primary-2));">M</div>
+    <figure class="testimonial-v2">
+      <div class="testimonial-stars" role="img" aria-label="5 out of 5 stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
+      <blockquote class="testimonial-quote">"The guided search is brilliant. It saved my preferences and when I came back a week later, it remembered exactly what I needed. No other platform does this."</blockquote>
+      <figcaption class="testimonial-author">
+        <div class="testimonial-avatar testimonial-avatar-2">M</div>
         <div>
           <div class="testimonial-name">Marcus T.</div>
           <div class="testimonial-role">Renter &middot; Las Colinas, TX</div>
         </div>
-      </div>
-    </div>
+      </figcaption>
+    </figure>
 
-    <div class="testimonial-v2" style="border-left:3px solid var(--accent);">
-      <div class="testimonial-stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
-      <p class="testimonial-quote">"Listed my condo and had serious inquiries within 48 hours. Zero agency fees, zero headaches. I'm in direct contact with every renter. This is how it should work."</p>
-      <div class="testimonial-author">
-        <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--accent),var(--accent-2));">R</div>
+    <figure class="testimonial-v2">
+      <div class="testimonial-stars" role="img" aria-label="5 out of 5 stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
+      <blockquote class="testimonial-quote">"Listed my condo and had serious inquiries within 48 hours. Zero agency fees, zero headaches. I'm in direct contact with every renter. This is how it should work."</blockquote>
+      <figcaption class="testimonial-author">
+        <div class="testimonial-avatar testimonial-avatar-3">R</div>
         <div>
           <div class="testimonial-name">Rohan K.</div>
           <div class="testimonial-role">Landlord &middot; Frisco, TX</div>
         </div>
-      </div>
-    </div>
+      </figcaption>
+    </figure>
 
     {% endwith %}
   </div>
 </section>
 
 {% comment %}
-  EXPLORE BY CITY. Was a row of loose pills. Rebuilt as the reference design's
-  card grid so each city is a target with room to breathe. The "Active" chip is
-  literal: the view only lists cities that have active listings in them.
+  EXPLORE BY CITY. The metroplex's twelve hubs, always shown, each with its
+  best-known district. "Active" is literal — at least one live listing there;
+  the rest read "DFW". Any other city with live listings is appended.
 {% endcomment %}
-{% if cities %}
-<section class="home-section">
-  <div class="section-header">
+<section class="home-band home-band-tint">
+  <div class="section-header home-sec-hdr">
     <div class="section-header-left">
-      <div class="section-eyebrow eyebrow-blue">DFW Metroplex</div>
+      <div class="section-eyebrow eyebrow-blue">DFW Metroplex Hubs</div>
       <h2 class="section-title-xl">Explore by City</h2>
-      <p class="section-sub">Browse verified listings across the Dallas–Fort Worth metroplex</p>
+      <p class="section-sub">Fast-track your neighborhood discovery across Dallas–Fort Worth's premier districts.</p>
     </div>
-    <span class="city-grid-count">{{ cities|length }} connected {{ cities|length|pluralize:"city,cities" }}</span>
+    <span class="city-grid-count">{{ city_hubs|length }} connected municipalities</span>
   </div>
 
   <div class="city-grid">
-    {% for city in cities %}
-    <a href="{% url 'listing_list' %}?city={{ city|urlencode }}" class="city-tile">
+    {% for hub in city_hubs %}
+    <a href="{% url 'listing_list' %}?city={{ hub.name|urlencode }}" class="city-tile">
       <span class="city-tile-top">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
-        <span class="city-tile-flag">Active</span>
+        {% if hub.icon == 'tower' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V10l5-3v14"/><path d="M10 21V4l9 4v13"/><path d="M13 9h2m-2 3h2m-2 3h2M7 12h1m-1 3h1"/></svg>
+        {% elif hub.icon == 'house' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M3 11 9 6l6 5"/><path d="M5 9.5V20h8V9.5"/><path d="M13 13l4-3 4 3v7h-8"/><path d="M8 20v-4h2v4"/></svg>
+        {% else %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
+        {% endif %}
+        <span class="city-tile-flag {% if not hub.active %}city-tile-flag-muted{% endif %}">{% if hub.active %}Active{% else %}DFW{% endif %}</span>
       </span>
-      <span class="city-tile-name">{{ city|title }}</span>
-      <span class="city-tile-sub">Dallas–Fort Worth, TX</span>
+      <span class="city-tile-name">{{ hub.name }}</span>
+      <span class="city-tile-sub">{{ hub.district }}</span>
     </a>
     {% endfor %}
   </div>
 </section>
-{% endif %}
 
 {# ── SAVED-SEARCH ALERTS ──────────────────────────────────────── #}
 {% if not user.is_authenticated %}
 <section class="alerts-band">
   <span class="alerts-band-mark" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M18 8.6a6 6 0 1 0-12 0c0 6.4-2.5 8.2-2.5 8.2h17S18 15 18 8.6"/><path d="M13.7 20.5a2 2 0 0 1-3.4 0"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M18 8.6a6 6 0 1 0-12 0c0 6.4-2.5 8.2-2.5 8.2h17S18 15 18 8.6"/><path d="M13.7 20.5a2 2 0 0 1-3.4 0"/><path d="M20.5 4.5a8 8 0 0 1 1.5 4M3.5 4.5A8 8 0 0 0 2 8.5"/></svg>
   </span>
   <div class="alerts-band-copy">
     <p class="alerts-band-title">Get notified when new DFW listings match your criteria</p>
     <p class="alerts-band-sub">Create a free search profile and we'll alert you the minute a verified listing meets your parameters.</p>
   </div>
-  <a href="{% url 'register' %}" class="alerts-band-btn">Set up alerts &rarr;</a>
+  {# Carries the address into sign-up so it doesn't have to be typed twice. #}
+  <form class="alerts-band-form" action="{% url 'register' %}" method="get">
+    <label class="sr-only" for="alerts-email">Email address</label>
+    <input class="alerts-band-input" id="alerts-email" type="email" name="email" placeholder="Enter your email address…" autocomplete="email">
+    <button type="submit" class="alerts-band-btn">Set up alerts &rarr;</button>
+  </form>
 </section>
 {% endif %}
 

@@ -44,26 +44,6 @@
   .ld-solo-header > div:last-child > div { justify-content: flex-start !important; }
 }
 
-/* ── Contact card — reach / know / who, side by side ── */
-.ld-contact-title { font-size:1.35rem;font-weight:700;margin:0 0 1rem; }
-.ld-contact-grid  { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:1.25rem 2rem;align-items:start; }
-.ld-contact-actions, .ld-contact-facts { display:flex;flex-direction:column;gap:.55rem;min-width:0; }
-.ld-contact-line  { display:flex;align-items:flex-start;gap:.5rem;margin:0;color:var(--text-3);font-size:.9rem;line-height:1.5; }
-.ld-contact-line > span:first-child { flex-shrink:0;line-height:1.4; }
-.ld-contact-link  { color:var(--primary);font-weight:600;text-decoration:none; }
-.ld-contact-link:hover { text-decoration:underline; }
-.ld-contact-btns  { display:flex;flex-direction:column;gap:.5rem;margin-top:.35rem;max-width:260px; }
-.ld-contact-btn   { width:100%;text-align:center;justify-content:center; }
-.ld-contact-brand { grid-column:3;text-align:center;min-width:130px; }
-.ld-contact-monogram { width:56px;height:56px;margin:0 auto .5rem;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:var(--primary);background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2); }
-.ld-contact-brand-label { margin:0;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3); }
-.ld-contact-brand-name  { margin:.1rem 0 0;font-size:.92rem;font-weight:700;color:var(--text-2);word-break:break-word; }
-@media (max-width: 720px) {
-  .ld-contact-grid  { grid-template-columns:1fr; }
-  .ld-contact-brand { grid-column:auto;text-align:left; }
-  .ld-contact-monogram { margin-left:0; }
-  .ld-contact-btns  { max-width:none; }
-}
 
 /* Unit cards: image strip goes full-width on mobile */
 @media (max-width: 600px) {
@@ -410,9 +390,9 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
 
   {# Left column is a stack of cards on the page background, not one long card — #}
   {# same shape as community detail, so the catalogues read as separate sections. #}
-  <div style="display:flex;flex-direction:column;gap:1.25rem;min-width:0;">
+  <div class="ld-main" style="display:flex;flex-direction:column;gap:1.25rem;min-width:0;">
 
-    <article class="card">
+    <article class="ld-flat">
         <div>
             {% if listing.status == 'sold' %}
             <div style="background:#dc2626;color:#fff;font-weight:700;font-size:.95rem;padding:.6rem 1rem;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">🏷️ This property has been SOLD</div>
@@ -440,7 +420,10 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 {% if listing.category == 'properties' and listing.original_price and listing.price and listing.original_price > listing.price %}
                 <span class="ld-tag ld-tag-cut">Price reduced</span>
                 {% endif %}
-                <span class="ld-tag-time">Listed {{ listing.created_at|timesince }} ago</span>
+                <span class="ld-tag-time">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4v4h4"/><path d="M12 8v4l2.5 2"/></svg>
+                  Listed {{ listing.created_at|timesince }} ago
+                </span>
               </div>
 
               <div class="ld-top-actions">
@@ -495,6 +478,13 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                     <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M8 3.5v4M3.5 8h4M16 20.5v-4M20.5 16h-4"/></svg></span>
                     <div class="ld-spec-num">{{ listing.square_footage|intcomma }}</div>
                     <div class="ld-spec-lbl">Sq Ft</div>
+                </div>
+                {% endif %}
+                {% if listing.accommodation_type %}
+                <div class="ld-spec">
+                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg></span>
+                    <div class="ld-spec-num ld-spec-num-sm">{{ listing.get_accommodation_type_display }}</div>
+                    <div class="ld-spec-lbl">Type</div>
                 </div>
                 {% endif %}
                 {% if listing.year_built %}
@@ -678,14 +668,14 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
     {# About this property — description only. Tags are no longer a loose chip #}
     {# row: they are folded into the two amenity cards below by the mixin. #}
     {% if listing.description %}
-    <div class="card">
-        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">About This Property</h2>
-        <p style="color:var(--text-2);line-height:1.7;margin:0;">{{ listing.description }}</p>
-    </div>
+    <section class="ld-flat ld-about">
+        <h2 class="ld-sec-title">About This {% if listing.category == 'properties' %}Home{% else %}Residence{% endif %}</h2>
+        <p class="ld-about-body">{{ listing.description|linebreaksbr }}</p>
+    </section>
     {% endif %}
 
     {# Standalone cards on the page background — the defaults, same as community detail. #}
-    {% include 'listings/_amenity_cards.html' with place=listing %}
+    {% include 'listings/_amenity_cards.html' with place=listing layout="tiles" %}
 
     {% include 'listings/_proximity_cards.html' with place=listing %}
 
@@ -742,61 +732,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
     {% endif %}
     {% endwith %}
 
-    {# ── Contact — three columns: how to reach, what to know, who is letting ── #}
-    <div class="card">
-        <h2 class="ld-contact-title">Contact</h2>
-        <div class="ld-contact-grid">
-
-            {# Reach: the links and the actions, in the order a renter uses them #}
-            <div class="ld-contact-actions">
-                {% if listing.contact_phone %}
-                    {% if user.is_authenticated %}
-                    <p class="ld-contact-line"><span>📞</span> <a href="tel:{{ listing.contact_phone }}" class="ld-contact-link">{{ listing.contact_phone }}</a></p>
-                    {% else %}
-                    <p class="ld-contact-line"><span>📞</span> <a href="{% url 'login' %}?next={{ request.path }}" class="ld-contact-link">Login to view phone number</a></p>
-                    {% endif %}
-                {% endif %}
-                {% if listing.virtual_tour_url %}
-                <p class="ld-contact-line"><span>🌐</span> <a href="{{ listing.virtual_tour_url }}" target="_blank" rel="noopener" class="ld-contact-link">View Property Tour</a></p>
-                {% endif %}
-
-                {% if user != listing.owner %}
-                <div class="ld-contact-btns">
-                    {% if listing.status != 'sold' %}
-                    <a href="#inquiry-form" class="button secondary ld-contact-btn">Send Inquiry</a>
-                    {% endif %}
-                    {% if user.is_authenticated %}
-                    <button type="button" class="button ld-contact-btn" id="open-chat-btn">💬 Open Live Chat</button>
-                    {% else %}
-                    <a href="{% url 'login' %}?next={{ request.path }}" class="button ld-contact-btn">💬 Login to Chat</a>
-                    {% endif %}
-                </div>
-                {% endif %}
-            </div>
-
-            {# Know: timing. The address lives under the title in the top tile. #}
-            {% if listing.category != 'properties' %}
-            <div class="ld-contact-facts">
-                {% if listing.available_from %}
-                <p class="ld-contact-line"><span>📅</span> Available from <strong style="color:var(--text-2);">{{ listing.available_from|date:"F j, Y" }}</strong></p>
-                {% else %}
-                <p class="ld-contact-line"><span>📅</span> <strong style="color:var(--accent);">Available now</strong></p>
-                {% endif %}
-            </div>
-            {% endif %}
-
-            {# Who: a monogram stands in for the management logo we do not have #}
-            {% with org=listing.organization %}
-            <div class="ld-contact-brand">
-                <div class="ld-contact-monogram">{% if org %}{{ org.name|first|upper }}{% else %}{{ listing.owner.username|first|upper }}{% endif %}</div>
-                <p class="ld-contact-brand-label">Listed by</p>
-                <p class="ld-contact-brand-name">{% if org %}{{ org.name }}{% else %}{{ listing.owner.username }}{% endif %}</p>
-            </div>
-            {% endwith %}
-
-        </div>
-    </div>{# /contact card #}
-
   </div>{# /left column stack #}
 
     {% comment %}
@@ -852,6 +787,28 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M15.5 10.5 21 7.5v9l-5.5-3z"/><rect x="3" y="6.5" width="12.5" height="11" rx="2"/></svg>
               Take the 3D tour
             </a>
+            {% endif %}
+            {% comment %}
+              Live chat and the phone number used to sit in a separate Contact
+              card at the foot of the page, repeating this rail. They live here now.
+            {% endcomment %}
+            {% if user.is_authenticated %}
+            <button type="button" class="ld-cta ld-cta-ghost" id="open-chat-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.4A8.5 8.5 0 1 1 21 12Z"/></svg>
+              Open live chat
+            </button>
+            {% else %}
+            <a href="{% url 'login' %}?next={{ request.path|urlencode }}" class="ld-cta ld-cta-ghost">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.4A8.5 8.5 0 1 1 21 12Z"/></svg>
+              Sign in for live chat
+            </a>
+            {% endif %}
+            {% if listing.contact_phone %}
+              {% if user.is_authenticated %}
+              <a href="tel:{{ listing.contact_phone }}" class="ld-rail-phone">Call {{ listing.contact_phone }}</a>
+              {% else %}
+              <a href="{% url 'login' %}?next={{ request.path|urlencode }}" class="ld-rail-phone">Sign in to view phone number</a>
+              {% endif %}
             {% endif %}
           </div>
 
