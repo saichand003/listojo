@@ -7923,7 +7923,7 @@ button.ld-cta-ghost { cursor: pointer; }
 .cl-cat-sub { font-size: .75rem; color: var(--text-3); }
 #cl-sec-1 .cl-cat-card.selected { border-color: var(--primary); background: var(--primary-soft); box-shadow: 0 0 0 1px var(--primary); }
 #cl-sec-1 .cl-cat-card.selected .cl-cat-sub { color: var(--primary); }
-@media (max-width: 480px) { #cl-sec-1 .cl-cat-grid { grid-template-columns: 1fr; } }
+
 
 /* Commission-free guarantee callout (pricing) */
 .cl-guarantee {
@@ -8416,4 +8416,28 @@ button.ld-cta-ghost { cursor: pointer; }
   .gs-wrap .choice-card .cc-sub { font-size: 11.5px; }
   .gs-wrap .room-card { padding: 14px 12px; }
   .gs-wrap .gs-card { padding: 20px 16px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE PASS — post a listing (≤760px)
+   The single / multi-family / portfolio switcher ran off the right edge;
+   the five-step bar took three rows (~180px); the two listing-type tiles
+   stacked into two tall cards.
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+  .post-hero-kinds { width: 100%; }
+  .post-kind { flex: 1 1 0; justify-content: center; padding: .45rem .35rem; font-size: .75rem; line-height: 1.25; text-align: center; min-width: 0; white-space: normal; }
+  .post-kind svg { display: none; }
+
+  /* Steps: five numbered dots in one row; only the active step keeps its label. */
+  .post-steps { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--sp-2); padding: var(--sp-3) 0; }
+  .post-step { flex-direction: column; gap: .3rem; text-align: center; }
+  .post-step-body { display: none; }
+  .post-step.is-active { grid-column: auto; }
+  .post-step-n { width: 30px; height: 30px; }
+
+  #cl-sec-1 .cl-cat-grid { grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+  #cl-sec-1 .cl-cat-card { padding: var(--sp-4) var(--sp-2); }
+  #cl-sec-1 .cl-cat-label { font-size: .8125rem; }
+  .cl-cat-sub { font-size: .6875rem; }
 }
