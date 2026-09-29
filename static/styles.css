@@ -8395,3 +8395,25 @@ button.ld-cta-ghost { cursor: pointer; }
   .ld-sec-title, .nb-title { font-size: 1.25rem; }
   .nb-card { padding: var(--sp-4); }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE PASS — guided search
+   A long listing title could not shrink inside a rail match card, so the
+   cards ran past their panel's edge. Titles now truncate on one line.
+   ═══════════════════════════════════════════════════════════════ */
+.gsx-match { min-width: 0; }
+.gsx-match-body { min-width: 0; }
+.gsx-match-title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 760px) {
+  /* The rent/buy and space-type cards were 165px tall each; a phone needs
+     both choices on one screen with the Continue button. */
+  /* Two short choices fit side by side at 390px; stacked, the second fell
+     below the fold with the Continue button. */
+  .gs-wrap .choice-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .gs-wrap .choice-card { padding: 18px 10px; }
+  .gs-wrap .choice-card .cc-icon { width: 32px; height: 32px; margin-bottom: 8px; }
+  .gs-wrap .choice-card .cc-title { font-size: .9375rem; }
+  .gs-wrap .choice-card .cc-sub { font-size: 11.5px; }
+  .gs-wrap .room-card { padding: 14px 12px; }
+  .gs-wrap .gs-card { padding: 20px 16px; }
+}
