@@ -2,266 +2,383 @@
 {% load humanize %}
 {% block content %}
 
-<style>
-/* Hero header: stack the price under the name once the grid collapses — the
-   same breakpoint styles.css uses for the 2fr/1fr detail layout, and the same
-   rule listing_detail.html applies to its own header. */
-@media (max-width: 860px) {
-  .cd-header { flex-direction: column !important; align-items: flex-start !important; }
-  .cd-header > div:last-child { text-align: left !important; }
-}
-</style>
+{% comment %}
+  COMMUNITY DETAIL, laid out after the reference detail screen — which is
+  itself a community listing: breadcrumb, bento gallery, status chips, title
+  and address, the price ribbon with the lease term opposite, a spec strip
+  (here as ranges across the floor plans), policies as highlights, floor plans,
+  amenity tiles, the Commute & Neighborhood card, and the leasing-team rail.
+  It shares its partials and rail script with listing_detail.html so the two
+  pages cannot drift apart.
+{% endcomment %}
 
-{# ── Move-in special banner ── #}
+<nav class="ld-crumbs" aria-label="Breadcrumb">
+  <a href="{% url 'home' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M3 10.5 12 3.5l9 7V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
+    Home
+  </a>
+  <span class="ld-crumb-sep" aria-hidden="true"></span>
+  <a href="{% url 'listing_list' %}?category=rentals">Rentals</a>
+  {% if community.city %}
+  <span class="ld-crumb-sep" aria-hidden="true"></span>
+  <a href="{% url 'listing_list' %}?city={{ community.city|urlencode }}">{{ community.city }}{% if community.state %}, {{ community.state }}{% endif %}</a>
+  {% endif %}
+  <span class="ld-crumb-sep" aria-hidden="true"></span>
+  <span aria-current="page">{{ community.name|truncatechars:48 }}</span>
+</nav>
+
+{# ── Move-in special ── #}
 {% if community.special_offer %}
-<div id="special-banner" style="background:linear-gradient(135deg,#f59e0b 0%,#ef4444 100%);color:#fff;border-radius:10px;padding:.65rem 1.1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;box-shadow:0 2px 10px rgba(239,68,68,.25);">
-  <span style="font-size:.9rem;font-weight:700;display:flex;align-items:center;gap:.5rem;">
-    🔥 <span>{{ community.special_offer }}</span>
+<div class="cd-special" id="special-banner" role="status">
+  <span class="cd-special-mark" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 2c1 3.5 5 5.8 5 11a5 5 0 0 1-10 0c0-2.4 1.2-3.9 2.3-5 .2 1.6 1 2.7 2 3.1C11 8.5 11.3 5 12 2Z"/></svg>
   </span>
-  <button onclick="document.getElementById('special-banner').style.display='none'" style="background:rgba(255,255,255,.2);border:none;color:#fff;cursor:pointer;font-size:.9rem;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1;flex-shrink:0;">&times;</button>
+  <span class="cd-special-text"><strong>Move-in special:</strong> {{ community.special_offer }}</span>
+  <button type="button" class="cd-special-close" aria-label="Dismiss" onclick="document.getElementById('special-banner').hidden=true">&times;</button>
 </div>
 {% endif %}
 
-<div style="padding-bottom:5rem;">
+{% include 'listings/_bento_gallery.html' with place=community label=community.name kind="community" %}
 
-  {# Same shape as a listing detail page: the hero tile heads the left column #}
-  {# of a 2fr/1fr grid, so the sidebar starts level with it. See #}
-  {# listing_detail.html — the two pages are meant to size identically. #}
-  <div class="grid" style="grid-template-columns:2fr 1fr;align-items:start;gap:1.25rem;">
+<div class="grid ld-layout" style="grid-template-columns:2fr 1fr;align-items:start;gap:1.25rem;">
 
-    {# ── Left column ── #}
-    <div style="display:flex;flex-direction:column;gap:1.25rem;min-width:0;">
+  {# ── Left column ── #}
+  <div class="ld-main" style="display:flex;flex-direction:column;min-width:0;">
 
-      {# ── Hero ── #}
-      <article class="card" style="padding:0;overflow:hidden;">
-      {% include 'listings/_photo_collage.html' with place=community label=community.name placeholder="🏢" %}
+    <article class="ld-flat" id="hero-sentinel">
+      <div class="ld-top">
+        <div class="ld-top-chips">
+          <span class="ld-tag">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3"/></svg>
+            {{ community.get_community_type_display|default:"Community" }}
+          </span>
+          {% if community.owner or community.managed_by %}
+          <span class="ld-tag ld-tag-verified">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" aria-hidden="true"><path d="m9 12.5 2.2 2.2L15.5 10"/><circle cx="12" cy="12" r="9"/></svg>
+            Verified Community Direct
+          </span>
+          {% endif %}
+          {% if community.featured %}<span class="ld-tag ld-tag-featured">&#9733; Featured</span>{% endif %}
+          <span class="ld-tag-time">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4v4h4"/><path d="M12 8v4l2.5 2"/></svg>
+            Listed {{ community.created_at|timesince }} ago
+          </span>
+        </div>
+        <div class="ld-top-actions">
+          <button type="button" class="ld-icon-btn" id="ld-share" aria-label="Copy link to this community">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4M8.2 13.2l7.6 4"/></svg>
+          </button>
+          {% if request.user == community.owner %}
+          <a href="{% url 'edit_community' community.pk %}" class="ld-icon-btn ld-icon-btn-text">Manage</a>
+          {% endif %}
+        </div>
+      </div>
 
-      <div style="padding:1.5rem;" id="hero-sentinel">
-        <div class="cd-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:1.25rem;flex-wrap:wrap;">
-          <div style="min-width:0;">
-            {% if community.featured %}<span style="font-size:.75rem;font-weight:700;color:#b45309;background:#fef3c7;padding:.15rem .5rem;border-radius:999px;letter-spacing:.04em;">★ Featured</span>{% endif %}
-            <h1 style="font-size:1.6rem;margin:.35rem 0 .3rem;">{{ community.name }}</h1>
-            <p style="color:var(--text-3);font-size:.9rem;margin:0;">📍 {% if community.address_line %}{{ community.address_line }}, {% endif %}{{ community.city }}{% if community.state %}, {{ community.state }}{% endif %}{% if community.zip_code %} {{ community.zip_code }}{% endif %}</p>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
+      <h1 class="ld-h1">{{ community.name }}</h1>
+      <p class="ld-address">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
+        {% if community.address_line %}{{ community.address_line }}, {% endif %}{{ community.city }}{% if community.state %}, {{ community.state }}{% endif %}{% if community.zip_code %} {{ community.zip_code }}{% endif %}
+      </p>
+
+      {# Price ribbon: from-price, then the terms; lease term opposite. #}
+      <div class="ld-terms">
+        <div class="ld-terms-top">
+          <div class="ld-terms-price">
             {% with community.price_range as pr %}
             {% if pr.0 %}
-            <p style="font-size:1.5rem;font-weight:800;background:var(--price-gradient,linear-gradient(135deg,var(--primary),#8b5cf6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">From ${{ pr.0|floatformat:0|intcomma }}<span style="font-size:.85rem;font-weight:500;-webkit-text-fill-color:var(--text-3);background:none;">/mo</span></p>
+            <span class="ld-price"><span class="ld-price-from">From</span> ${{ pr.0|floatformat:0|intcomma }}<span class="ld-price-per">/month</span></span>
             {% else %}
-            <p style="font-size:1rem;font-weight:600;color:var(--text-3);margin:0;">Contact for pricing</p>
+            <span class="ld-price ld-price-ask">Contact for pricing</span>
             {% endif %}
             {% endwith %}
-            {% with community.available_unit_count as uc %}
-            {% if uc %}<p style="font-size:.82rem;color:var(--accent);font-weight:600;margin:.15rem 0 0;">{{ uc }} unit{{ uc|pluralize }} available</p>{% endif %}
-            {% endwith %}
+            {% if community.special_offer %}<span class="ld-price-flag">Special</span>{% endif %}
           </div>
-        </div>
-      </div>
-      </article>
-
-      {# Description #}
-      <div class="card">
-        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">About This Community</h2>
-        <p style="color:var(--text-2);line-height:1.7;margin:0;">{{ community.description }}</p>
-      </div>
-
-      {# Floor Plans & Units #}
-      {% if floor_plans %}
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;">
-          <h2 style="font-size:1rem;font-weight:700;margin:0;">Floor Plans &amp; Available Units</h2>
-          {# Bedroom filter tabs — populated by JS #}
-          <div id="fp-filter-tabs" style="display:flex;gap:.35rem;flex-wrap:wrap;"></div>
-        </div>
-
-        {% for fp in floor_plans %}
-        <div class="fp-card" data-bedrooms="{{ fp.bedrooms }}"
-             style="border:1px solid var(--border);border-radius:10px;padding:1rem;{% if not forloop.last %}margin-bottom:.85rem;{% endif %}">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;flex-wrap:wrap;margin-bottom:.65rem;">
-            <div style="display:flex;gap:.85rem;align-items:flex-start;">
-              {% if fp.floor_plan_image %}
-              <img src="{{ fp.floor_plan_image.url }}" alt="{{ fp.name }} blueprint"
-                   style="width:64px;height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0;">
-              {% endif %}
-              <div>
-                <h3 style="font-size:.95rem;font-weight:700;margin:0 0 .15rem;">{{ fp.name }}</h3>
-                <p style="font-size:.8rem;color:var(--text-3);margin:0;">
-                  {% if fp.bedrooms == 0 %}Studio{% else %}{{ fp.bedrooms }}BR{% endif %} &middot; {{ fp.bathrooms }}BA{% if fp.square_footage %} &middot; {{ fp.square_footage|intcomma }} sqft{% endif %}
-                </p>
-                {% with fp.available_units.count as avc %}
-                {% if avc %}
-                <span style="font-size:.72rem;color:var(--accent);font-weight:700;background:rgba(5,150,105,.1);border-radius:999px;padding:.1rem .5rem;margin-top:.25rem;display:inline-block;">{{ avc }} available</span>
-                {% else %}
-                <span style="font-size:.72rem;color:var(--text-3);background:var(--surface-2);border-radius:999px;padding:.1rem .5rem;margin-top:.25rem;display:inline-block;">No units available</span>
-                {% endif %}
-                {% endwith %}
-              </div>
-            </div>
-            {% with fp.price_range as fpr %}
-            {% if fpr.0 %}
-            <div style="text-align:right;flex-shrink:0;">
-              <p style="font-size:1rem;font-weight:700;margin:0;color:var(--primary);">${{ fpr.0|floatformat:0|intcomma }}{% if fpr.1 and fpr.1 != fpr.0 %}&ndash;${{ fpr.1|floatformat:0|intcomma }}{% endif %}<span style="font-size:.78rem;color:var(--text-3);font-weight:500;">/mo</span></p>
-            </div>
-            {% endif %}
-            {% endwith %}
+          {% if community.lease_terms %}
+          <div class="ld-terms-aside">
+            <span class="ld-term-k">Lease term</span>
+            <span class="ld-term-v">{{ community.lease_terms }}</span>
           </div>
-          {% if fp.description %}
-          <p style="font-size:.82rem;color:var(--text-3);margin:.3rem 0 .65rem;">{{ fp.description }}</p>
           {% endif %}
-          {# Available units table #}
-          {% with fp.available_units as avail %}
-          {% if avail %}
-          <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
-            <thead>
-              <tr style="text-align:left;color:var(--text-3);font-weight:600;border-bottom:1px solid var(--border);">
-                <th style="padding:.35rem .5rem;">Unit</th>
-                <th style="padding:.35rem .5rem;">Floor</th>
-                <th style="padding:.35rem .5rem;">Rent</th>
-                <th style="padding:.35rem .5rem;">Available</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for unit in avail %}
-              <tr style="border-bottom:1px solid var(--border);">
-                <td style="padding:.4rem .5rem;font-weight:600;">{{ unit.unit_number }}</td>
-                <td style="padding:.4rem .5rem;color:var(--text-3);">{% if unit.floor %}{{ unit.floor }}{% else %}—{% endif %}</td>
-                <td style="padding:.4rem .5rem;">{% if unit.price %}${{ unit.price|floatformat:0|intcomma }}/mo{% else %}TBD{% endif %}</td>
-                <td style="padding:.4rem .5rem;color:{% if unit.available_from %}var(--text-2){% else %}var(--accent){% endif %};">
-                  {% if unit.available_from %}{{ unit.available_from|date:"M j, Y" }}{% else %}Now{% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        </div>
+        <div class="ld-terms-row">
+          <div class="ld-term">
+            <span class="ld-term-k">Agency fee</span>
+            <span class="ld-term-v ld-term-good">$0 &mdash; always</span>
+          </div>
+          {% with community.available_unit_count as uc %}
+          <div class="ld-term">
+            <span class="ld-term-k">Availability</span>
+            {% if uc %}
+            <span class="ld-term-v ld-term-good">{{ uc }} unit{{ uc|pluralize }} available</span>
+            {% else %}
+            <span class="ld-term-v">Join the waitlist</span>
+            {% endif %}
+          </div>
+          {% endwith %}
+          {% if community.utilities_included %}
+          <div class="ld-term">
+            <span class="ld-term-k">Utilities</span>
+            <span class="ld-term-v">{{ community.utilities_included|truncatechars:40 }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Spec strip — ranges across the floor plans. #}
+      {% if plan_specs %}
+      <div class="ld-specs">
+        {% if plan_specs.bedrooms %}
+        <div class="ld-spec">
+          <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 18v-7h18v7"/><path d="M3 18v2M21 18v2M3 11V6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5V11"/><path d="M7 11V9h4v2M13 11V9h4v2"/></svg></span>
+          <div class="ld-spec-num">{{ plan_specs.bedrooms }}</div>
+          <div class="ld-spec-lbl">Bedrooms</div>
+        </div>
+        {% endif %}
+        {% if plan_specs.bathrooms %}
+        <div class="ld-spec">
+          <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 12h18v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 12V5.5A1.5 1.5 0 0 1 7.5 4h1A1.5 1.5 0 0 1 10 5.5"/><path d="M6.5 19.5 5.5 21M17.5 19.5l1 1.5"/></svg></span>
+          <div class="ld-spec-num">{{ plan_specs.bathrooms }}</div>
+          <div class="ld-spec-lbl">Bathrooms</div>
+        </div>
+        {% endif %}
+        {% if plan_specs.sqft %}
+        <div class="ld-spec">
+          <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M8 3.5v4M3.5 8h4M16 20.5v-4M20.5 16h-4"/></svg></span>
+          <div class="ld-spec-num ld-spec-num-sm">{{ plan_specs.sqft }}</div>
+          <div class="ld-spec-lbl">Sq Ft</div>
+        </div>
+        {% endif %}
+        <div class="ld-spec">
+          <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></span>
+          <div class="ld-spec-num">{{ plan_specs.plan_count }}</div>
+          <div class="ld-spec-lbl">Floor plan{{ plan_specs.plan_count|pluralize }}</div>
+        </div>
+        {% with community.available_unit_count as uc %}
+        <div class="ld-spec">
+          <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17M3 21h18"/><path d="M14.5 12h.01"/></svg></span>
+          <div class="ld-spec-num">{{ uc|default:0 }}</div>
+          <div class="ld-spec-lbl">Available now</div>
+        </div>
+        {% endwith %}
+      </div>
+      {% endif %}
+
+      {# Policies read as the reference's highlights grid. #}
+      {% if community.pet_policy or community.parking_info or community.utilities_included or community.lease_terms %}
+      <div class="ld-highlights">
+        <p class="ld-sec-label">Community policies</p>
+        <ul class="cd-policies">
+          {% if community.pet_policy %}
+          <li>
+            <span class="cd-policy-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><circle cx="5.5" cy="10" r="2"/><circle cx="9" cy="5.5" r="2"/><circle cx="15" cy="5.5" r="2"/><circle cx="18.5" cy="10" r="2"/><path d="M12 11c-3 0-6 4.5-6 7 0 1.6 1.3 2.5 3 2.5 1.2 0 2-.6 3-.6s1.8.6 3 .6c1.7 0 3-.9 3-2.5 0-2.5-3-7-6-7Z"/></svg></span>
+            <span><strong>Pets</strong>{{ community.pet_policy }}</span>
+          </li>
+          {% endif %}
+          {% if community.parking_info %}
+          <li>
+            <span class="cd-policy-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M9.5 17V7h3.5a3 3 0 0 1 0 6H9.5"/></svg></span>
+            <span><strong>Parking</strong>{{ community.parking_info }}</span>
+          </li>
+          {% endif %}
+          {% if community.utilities_included %}
+          <li>
+            <span class="cd-policy-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span>
+            <span><strong>Utilities</strong>{{ community.utilities_included }}</span>
+          </li>
+          {% endif %}
+          {% if community.lease_terms %}
+          <li>
+            <span class="cd-policy-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17"/></svg></span>
+            <span><strong>Lease terms</strong>{{ community.lease_terms }}</span>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+      {% endif %}
+    </article>
+
+    {% if community.description %}
+    <section class="ld-flat ld-about">
+      <h2 class="ld-sec-title">About This Community</h2>
+      <p class="ld-about-body">{{ community.description|linebreaksbr }}</p>
+    </section>
+    {% endif %}
+
+    {# ── Floor plans & units ── #}
+    {% if floor_plans %}
+    <section class="ld-flat" id="floor-plans">
+      <div class="ld-amen-head">
+        <h2 class="ld-sec-title">Floor Plans &amp; Available Units</h2>
+        {# Bedroom filter tabs — populated by JS #}
+        <div id="fp-filter-tabs" class="cd-fp-tabs" role="group" aria-label="Filter by bedrooms"></div>
+      </div>
+
+      <div class="cd-fp-list">
+      {% for fp in floor_plans %}
+      <article class="cd-fp fp-card" data-bedrooms="{{ fp.bedrooms }}">
+        <div class="cd-fp-head">
+          {% if fp.floor_plan_image %}
+          <img class="cd-fp-img" src="{{ fp.floor_plan_image.url }}" alt="{{ fp.name }} floor plan">
           {% else %}
-          <p style="font-size:.82rem;color:var(--text-3);margin:.5rem 0 0;">No units currently listed as available.</p>
+          <span class="cd-fp-img cd-fp-img-empty" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 12h7v9M10 3v5M14 12h7M14 12v4"/></svg>
+          </span>
+          {% endif %}
+          <div class="cd-fp-id">
+            <h3 class="cd-fp-name">{{ fp.name }}</h3>
+            <p class="cd-fp-specs">
+              {% if fp.bedrooms == 0 %}Studio{% else %}{{ fp.bedrooms }} Bed{{ fp.bedrooms|pluralize }}{% endif %} &middot; {{ fp.bathrooms|floatformat:"-1" }} Bath &middot; {% if fp.square_footage %}{{ fp.square_footage|intcomma }} sq ft{% endif %}
+            </p>
+            {% with fp.available_units.count as avc %}
+            {% if avc %}
+            <span class="cd-fp-chip cd-fp-chip-ok">{{ avc }} available</span>
+            {% else %}
+            <span class="cd-fp-chip">No units available</span>
+            {% endif %}
+            {% endwith %}
+          </div>
+          {% with fp.price_range as fpr %}
+          {% if fpr.0 %}
+          <p class="cd-fp-price">${{ fpr.0|floatformat:0|intcomma }}{% if fpr.1 and fpr.1 != fpr.0 %}&ndash;${{ fpr.1|floatformat:0|intcomma }}{% endif %}<span>/mo</span></p>
           {% endif %}
           {% endwith %}
         </div>
-        {% endfor %}
+        {% if fp.description %}<p class="cd-fp-desc">{{ fp.description }}</p>{% endif %}
+
+        {% with fp.available_units as avail %}
+        {% if avail %}
+        <table class="cd-units">
+          <thead>
+            <tr><th scope="col">Unit</th><th scope="col">Floor</th><th scope="col">Rent</th><th scope="col">Available</th></tr>
+          </thead>
+          <tbody>
+            {% for unit in avail %}
+            <tr>
+              <td class="cd-unit-no">{{ unit.unit_number }}</td>
+              <td>{% if unit.floor %}{{ unit.floor }}{% else %}&mdash;{% endif %}</td>
+              <td>{% if unit.price %}${{ unit.price|floatformat:0|intcomma }}/mo{% else %}TBD{% endif %}</td>
+              <td>{% if unit.available_from %}{{ unit.available_from|date:"M j, Y" }}{% else %}<span class="cd-unit-now">Now</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        {% endwith %}
+      </article>
+      {% endfor %}
       </div>
-      {% endif %}
+    </section>
+    {% endif %}
 
-      {# Amenities — same two cards as a listing detail page, one definition. #}
-      {% include 'listings/_amenity_cards.html' with place=community %}
+    {% include 'listings/_amenity_cards.html' with place=community layout="tiles" %}
 
-      {# Same cards as a listing detail page — one definition, two pages. #}
-      {% include 'listings/_proximity_cards.html' with place=community %}
+    {% include 'listings/_neighborhood_score.html' with place=community %}
 
-    </div>{# /left #}
+  </div>{# /left #}
 
-    {# ── Right sidebar ── #}
-    <div style="display:flex;flex-direction:column;gap:1.25rem;position:sticky;top:1.5rem;">
+  {# ── Leasing-team rail — same shape and script as the listing rail ── #}
+  <aside class="ld-rail" id="inquiry-form">
+    <section class="ld-rail-card">
+      {% with org=community.managed_by %}
+      <header class="ld-owner">
+        <span class="ld-owner-mark">{% if org %}{{ org.name|first|upper }}{% else %}{{ community.name|first|upper }}{% endif %}</span>
+        <div class="ld-owner-body">
+          <p class="ld-owner-name">{% if org %}{{ org.name }}{% else %}{{ community.name }} Leasing Team{% endif %}</p>
+          <p class="ld-owner-kind">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" aria-hidden="true"><path d="m9 12.5 2.2 2.2L15.5 10"/><circle cx="12" cy="12" r="9"/></svg>
+            Direct verified community
+          </p>
+        </div>
+      </header>
+      {% endwith %}
 
-      {# Schedule a Tour card #}
-      <div class="card" style="border:2px solid var(--primary);">
-        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.5rem;">Schedule a Tour</h2>
-        <p style="font-size:.78rem;color:var(--text-3);margin:0 0 .85rem;">Choose how you'd like to visit</p>
-        <div style="display:flex;gap:.4rem;margin-bottom:1rem;">
-          <button onclick="selectTourType(this,'in_person')" class="tour-type-btn" style="flex:1;padding:.45rem .3rem;border:1.5px solid var(--border);border-radius:8px;font-size:.72rem;font-weight:600;cursor:pointer;background:var(--card-bg);color:var(--text-2);transition:all .15s;">
-            🏠 In-Person
+      <form method="post" id="ld-inquiry">
+        {% csrf_token %}
+        <input type="hidden" name="tour_type" value="in_person">
+
+        <p class="ld-rail-label">Select tour type &amp; day</p>
+        <div class="ld-types" id="ld-tour-types" role="group" aria-label="Tour type">
+          <button type="button" class="ld-type is-on" data-type="in_person" aria-pressed="true">In-person</button>
+          <button type="button" class="ld-type" data-type="virtual" aria-pressed="false">Virtual</button>
+          <button type="button" class="ld-type" data-type="self_guided" aria-pressed="false">Self-guided</button>
+        </div>
+        <div class="ld-days" id="ld-days" role="group" aria-label="Tour day"></div>
+        <div class="ld-slots" id="ld-slots" role="group" aria-label="Tour time">
+          <button type="button" class="ld-slot" data-slot="Morning (9am–12pm)">Morning</button>
+          <button type="button" class="ld-slot" data-slot="Afternoon (12pm–5pm)">Afternoon</button>
+          <button type="button" class="ld-slot" data-slot="Evening (after 5pm)">Evening</button>
+        </div>
+
+        <div class="ld-rail-ctas">
+          <button type="submit" class="ld-cta" id="ld-tour-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17"/></svg>
+            Schedule a tour
           </button>
-          <button onclick="selectTourType(this,'virtual')" class="tour-type-btn" style="flex:1;padding:.45rem .3rem;border:1.5px solid var(--border);border-radius:8px;font-size:.72rem;font-weight:600;cursor:pointer;background:var(--card-bg);color:var(--text-2);transition:all .15s;">
-            💻 Virtual
-          </button>
-          <button onclick="selectTourType(this,'self_guided')" class="tour-type-btn" style="flex:1;padding:.45rem .3rem;border:1.5px solid var(--border);border-radius:8px;font-size:.72rem;font-weight:600;cursor:pointer;background:var(--card-bg);color:var(--text-2);transition:all .15s;">
-            🗝 Self-Guided
+          <button type="submit" class="ld-cta ld-cta-ghost" id="ld-video-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M15.5 10.5 21 7.5v9l-5.5-3z"/><rect x="3" y="6.5" width="12.5" height="11" rx="2"/></svg>
+            Request live video walkthrough
           </button>
         </div>
-        <form method="post" style="display:flex;flex-direction:column;gap:.55rem;">
-          {% csrf_token %}
-          <input type="hidden" name="tour_type" id="tour-type-input" value="">
-          <input type="text" name="name" placeholder="Your name" required style="width:100%;font-size:.85rem;padding:.4rem .6rem;">
-          <input type="email" name="email" placeholder="Email address" required style="width:100%;font-size:.85rem;padding:.4rem .6rem;">
-          <input type="tel" name="phone" placeholder="Phone (optional)" style="width:100%;font-size:.85rem;padding:.4rem .6rem;">
-          <textarea name="message" rows="2" placeholder="Any questions or preferred move-in date?" style="width:100%;font-size:.85rem;padding:.4rem .6rem;resize:vertical;"></textarea>
-          <button type="submit" class="button accent" style="width:100%;padding:.55rem;font-size:.9rem;font-weight:700;">Request a Tour</button>
-        </form>
-      </div>
 
-      {# Contact card #}
-      <div class="card">
-        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.85rem;">Contact &amp; Info</h2>
-        {% if community.contact_phone %}
-        <a href="tel:{{ community.contact_phone }}" style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;background:var(--surface-2);border-radius:8px;text-decoration:none;color:var(--text-1);font-size:.85rem;font-weight:600;margin-bottom:.5rem;">
-          <span>📞</span> {{ community.contact_phone }}
-        </a>
-        {% endif %}
-        {% if community.contact_email %}
-        <a href="mailto:{{ community.contact_email }}" style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;background:var(--surface-2);border-radius:8px;text-decoration:none;color:var(--text-1);font-size:.85rem;font-weight:600;margin-bottom:.5rem;">
-          <span>✉️</span> {{ community.contact_email }}
-        </a>
-        {% endif %}
-        {% if community.website %}
-        <a href="{{ community.website }}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;background:var(--surface-2);border-radius:8px;text-decoration:none;color:var(--primary);font-size:.85rem;font-weight:600;">
-          <span>🌐</span> Visit website ↗
-        </a>
-        {% endif %}
-        {% if not community.contact_phone and not community.contact_email and not community.website %}
-        <p style="font-size:.85rem;color:var(--text-3);">No contact info listed.</p>
-        {% endif %}
-      </div>
+        <p class="ld-rail-label ld-rail-label-2">Quick questions for the leasing team</p>
+        <div class="ld-quick">
+          <button type="button" class="ld-quick-chip" data-ask="Is parking included?">Parking included?</button>
+          <button type="button" class="ld-quick-chip" data-ask="What is the pet policy?">Pet policy?</button>
+          <button type="button" class="ld-quick-chip" data-ask="Are flexible lease terms available?">Flexible term?</button>
+          <button type="button" class="ld-quick-chip" data-ask="Are there any move-in specials right now?">Specials?</button>
+        </div>
 
-      {# Policies #}
-      {% if community.pet_policy or community.parking_info or community.utilities_included or community.lease_terms %}
-      <div class="card">
-        <h2 style="font-size:1rem;font-weight:700;margin-bottom:.85rem;">Policies &amp; Details</h2>
-        {% if community.lease_terms %}
-        <div style="margin-bottom:.6rem;">
-          <p style="font-size:.75rem;font-weight:700;color:var(--text-3);margin:0 0 .15rem;text-transform:uppercase;letter-spacing:.06em;">Lease Terms</p>
-          <p style="font-size:.85rem;margin:0;">{{ community.lease_terms }}</p>
+        <div class="ld-fields">
+          {{ inquiry_form.as_p }}
         </div>
-        {% endif %}
-        {% if community.pet_policy %}
-        <div style="margin-bottom:.6rem;">
-          <p style="font-size:.75rem;font-weight:700;color:var(--text-3);margin:0 0 .15rem;text-transform:uppercase;letter-spacing:.06em;">Pet Policy</p>
-          <p style="font-size:.85rem;margin:0;">{{ community.pet_policy }}</p>
+
+        <button type="submit" class="ld-cta ld-cta-send">Send to the leasing team</button>
+        <div class="ld-rail-policy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z"/><path d="m8.8 12.2 2.2 2.2 4.2-4.4"/></svg>
+          <span><strong>Listojo zero-markup policy</strong>$0 application markup &middot; direct community pricing</span>
         </div>
-        {% endif %}
-        {% if community.parking_info %}
-        <div style="margin-bottom:.6rem;">
-          <p style="font-size:.75rem;font-weight:700;color:var(--text-3);margin:0 0 .15rem;text-transform:uppercase;letter-spacing:.06em;">Parking</p>
-          <p style="font-size:.85rem;margin:0;">{{ community.parking_info }}</p>
-        </div>
-        {% endif %}
-        {% if community.utilities_included %}
-        <div>
-          <p style="font-size:.75rem;font-weight:700;color:var(--text-3);margin:0 0 .15rem;text-transform:uppercase;letter-spacing:.06em;">Utilities</p>
-          <p style="font-size:.85rem;margin:0;">{{ community.utilities_included }}</p>
-        </div>
-        {% endif %}
-      </div>
+      </form>
+    </section>
+
+    {% if community.contact_phone or community.contact_email or community.website %}
+    <section class="ld-rail-card cd-contact">
+      <p class="ld-rail-label">Contact &amp; info</p>
+      {% if community.contact_phone %}
+      <a class="cd-contact-row" href="tel:{{ community.contact_phone }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M21 16.5v3a2 2 0 0 1-2.2 2A19 19 0 0 1 2.5 5.2 2 2 0 0 1 4.5 3h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.4 10.9a16 16 0 0 0 4.7 4.7l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg>
+        {{ community.contact_phone }}
+      </a>
       {% endif %}
-
-      {# Owner manage link #}
-      {% if request.user == community.owner %}
-      <a href="{% url 'edit_community' community.pk %}" class="button accent" style="text-align:center;display:block;">Manage Community</a>
+      {% if community.contact_email %}
+      <a class="cd-contact-row" href="mailto:{{ community.contact_email }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>
+        {{ community.contact_email }}
+      </a>
       {% endif %}
-
-    </div>{# /sidebar #}
-  </div>
+      {% if community.website %}
+      <a class="cd-contact-row" href="{{ community.website }}" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+        Visit website
+      </a>
+      {% endif %}
+    </section>
+    {% endif %}
+  </aside>
 </div>
 
-{# ── Sticky bottom bar ── #}
-<div id="sticky-bar" style="position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--card-bg);border-top:1px solid var(--border);box-shadow:0 -4px 20px rgba(0,0,0,.1);padding:.75rem 1.25rem;display:none;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;">
-  <div style="min-width:0;">
-    <p style="font-weight:700;font-size:.95rem;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ community.name }}</p>
+{# ── Sticky bottom bar, once the header scrolls away ── #}
+<div id="sticky-bar" class="cd-sticky" hidden>
+  <div class="cd-sticky-id">
+    <p class="cd-sticky-name">{{ community.name }}</p>
     {% with community.price_range as pr %}
-    {% if pr.0 %}
-    <p style="font-size:.82rem;color:var(--primary);font-weight:600;margin:0;">From ${{ pr.0|floatformat:0|intcomma }}/mo</p>
-    {% endif %}
+    {% if pr.0 %}<p class="cd-sticky-price">From ${{ pr.0|floatformat:0|intcomma }}/mo</p>{% endif %}
     {% endwith %}
   </div>
-  <div style="display:flex;gap:.5rem;flex-shrink:0;align-items:center;">
+  <div class="cd-sticky-actions">
     {% if community.contact_phone %}
-    <a href="tel:{{ community.contact_phone }}" style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;font-weight:600;text-decoration:none;color:var(--text-1);">
-      📞 Call
-    </a>
+    <a href="tel:{{ community.contact_phone }}" class="ld-cta ld-cta-ghost">Call</a>
     {% endif %}
-    <a href="#" onclick="document.querySelector('.card').scrollIntoView({behavior:'smooth'});return false;"
-       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;background:var(--primary);color:#fff;border-radius:8px;font-size:.82rem;font-weight:700;text-decoration:none;">
-      Schedule a Tour
-    </a>
+    <a href="#inquiry-form" class="ld-cta">Schedule a tour</a>
   </div>
 </div>
 
@@ -278,61 +395,57 @@
     });
     seen.sort(function(a,b){ return +a - +b; });
     if (seen.length > 1) {
-      var active = 'all';
-      function label(b) {
-        return b === '0' ? 'Studio' : b + ' BR';
-      }
       function makeTab(val, text) {
         var btn = document.createElement('button');
         btn.type = 'button';
+        btn.className = 'cd-fp-tab';
         btn.textContent = text;
         btn.dataset.val = val;
-        btn.style.cssText = 'padding:.3rem .75rem;border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid var(--border);background:var(--card-bg);color:var(--text-2);';
         btn.addEventListener('click', function() {
-          active = val;
-          tabContainer.querySelectorAll('button').forEach(function(b) {
-            var on = b.dataset.val === active;
-            b.style.background = on ? 'var(--primary)' : 'var(--card-bg)';
-            b.style.color      = on ? '#fff'           : 'var(--text-2)';
-            b.style.borderColor= on ? 'var(--primary)' : 'var(--border)';
+          tabContainer.querySelectorAll('.cd-fp-tab').forEach(function(b) {
+            var on = b.dataset.val === val;
+            b.classList.toggle('is-on', on);
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
           });
           cards.forEach(function(c) {
-            c.style.display = (active === 'all' || c.dataset.bedrooms === active) ? '' : 'none';
+            c.hidden = !(val === 'all' || c.dataset.bedrooms === val);
           });
         });
         return btn;
       }
       tabContainer.appendChild(makeTab('all', 'All'));
-      seen.forEach(function(b){ tabContainer.appendChild(makeTab(b, label(b))); });
-      /* Activate "All" by default */
-      tabContainer.querySelector('button').click();
+      seen.forEach(function(b){ tabContainer.appendChild(makeTab(b, b === '0' ? 'Studio' : b + ' BR')); });
+      tabContainer.querySelector('.cd-fp-tab').click();
     }
   }
 
-  /* ── Tour type picker ── */
-  window.selectTourType = function(btn, val) {
-    document.querySelectorAll('.tour-type-btn').forEach(function(b) {
-      b.style.background   = 'var(--card-bg)';
-      b.style.color        = 'var(--text-2)';
-      b.style.borderColor  = 'var(--border)';
+  /* ── Share: copy the link ── */
+  var share = document.getElementById('ld-share');
+  if (share) {
+    share.addEventListener('click', function () {
+      var url = window.location.href;
+      if (navigator.share) { navigator.share({ title: document.title, url: url }).catch(function(){}); return; }
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function () {
+          share.classList.add('is-copied');
+          share.setAttribute('aria-label', 'Link copied');
+          setTimeout(function () { share.classList.remove('is-copied'); share.setAttribute('aria-label', 'Copy link to this community'); }, 1600);
+        });
+      }
     });
-    btn.style.background  = 'rgba(37,99,235,.1)';
-    btn.style.color       = 'var(--primary)';
-    btn.style.borderColor = 'var(--primary)';
-    document.getElementById('tour-type-input').value = val;
-  };
+  }
 
-  /* ── Sticky bar — show after scrolling past hero ── */
+  /* ── Sticky bar — show after scrolling past the header ── */
   var stickyBar = document.getElementById('sticky-bar');
   var sentinel  = document.getElementById('hero-sentinel');
-  if (stickyBar && sentinel) {
-    var observer = new IntersectionObserver(function(entries) {
-      stickyBar.style.display = entries[0].isIntersecting ? 'none' : 'flex';
-    }, { threshold: 0 });
-    observer.observe(sentinel);
+  if (stickyBar && sentinel && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function(entries) {
+      stickyBar.hidden = entries[0].isIntersecting || entries[0].boundingClientRect.top > 0;
+    }, { threshold: 0 }).observe(sentinel);
   }
 })();
 </script>
-{# ── Photo viewer for the collage above ── #}
+{% include 'listings/_tour_rail_script.html' %}
+{# ── Photo viewer for the gallery above ── #}
 {% include 'listings/_photo_lightbox.html' %}
 {% endblock %}

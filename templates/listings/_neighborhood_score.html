@@ -1,0 +1,183 @@
+{% load humanize %}
+{% comment %}
+  Commute & Neighborhood Score — one card, as in the reference detail screen.
+
+  Replaces four stacked cards (Getting Around, Commute, Neighborhood and
+  Nearby schools) on both detail pages. `place` is a Listing or a Community;
+  both carry the proximity columns through ProximityDisplayMixin. Schools only
+  exist on listings, so on a community `place.school_cards` is empty and that
+  block is skipped.
+
+  Every block renders only from stored data. With nothing stored, the whole
+  card is absent — a fresh import must not show an empty shell.
+{% endcomment %}
+{% with stations=place.transit_cards schools=place.school_cards walk_rows=place.walk_score_rows %}
+{% if place.has_walk_scores or place.has_commute_score or stations or place.has_neighborhood_card or schools %}
+<section class="nb-card">
+
+  <header class="nb-head">
+    <div>
+      <h2 class="nb-title">Commute &amp; Neighborhood Score</h2>
+      <p class="nb-sub">Proximity calculated from {% if place.address_line %}{{ place.address_line }}{% else %}{{ place.city }}{% endif %}</p>
+    </div>
+    {% if place.walk_score is not None %}
+    <span class="nb-walk-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="m9 20 2.5-6.5L14 16v5M8.5 10.5 11 8l3 2 2.5 3M11 8l-1.5 6.5"/></svg>
+      Walk Score: <strong>{{ place.walk_score }}/100</strong>
+    </span>
+    {% endif %}
+  </header>
+
+  {# ── Score tiles: walk/bike, commute, nearest downtown ── #}
+  {% if place.has_walk_scores or place.has_commute_score or place.nearest_downtown %}
+  {% if place.has_walk_scores %}<p class="nb-label">Getting Around</p>{% endif %}
+  <div class="nb-tiles">
+    {% for label, score, desc in walk_rows %}
+    <div class="nb-tile">
+      <p class="nb-tile-k">{{ label }}</p>
+      <p class="nb-tile-v">{{ score }}<span>/100</span></p>
+      <p class="nb-tile-sub">{{ desc|default:"—" }}</p>
+      <span class="nb-bar"><span class="nb-bar-fill nb-tone-{% if score >= 70 %}strong{% elif score >= 50 %}fair{% else %}weak{% endif %}" style="width:{{ score }}%"></span></span>
+    </div>
+    {% endfor %}
+
+    {% if place.has_commute_score %}
+    <div class="nb-tile">
+      <p class="nb-tile-k">Commute Score</p>
+      <p class="nb-tile-v">{{ place.commute_score }}<span>/100</span></p>
+      <p class="nb-tile-sub">{{ place.commute_score_label }}</p>
+      <span class="nb-bar"><span class="nb-bar-fill nb-tone-{{ place.commute_score_tone }}" style="width:{{ place.commute_score }}%"></span></span>
+    </div>
+    {% endif %}
+
+    {% if place.nearest_downtown %}
+    <div class="nb-tile">
+      <p class="nb-tile-k">{{ place.nearest_downtown.name }}</p>
+      {% if place.downtown_drive_minutes %}
+      <p class="nb-tile-v">{{ place.downtown_drive_minutes }} min drive</p>
+      {% else %}
+      <p class="nb-tile-v">{{ place.downtown_display_miles|floatformat:1 }}<span> mi</span></p>
+      {% endif %}
+      <p class="nb-tile-sub">{{ place.downtown_display_miles|floatformat:1 }} miles &middot; nearest downtown</p>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# ── Commute: nearest rail up front, then every stop ── #}
+  {% if stations %}
+  {% with rail=place.rail_cards buses=place.bus_cards %}
+  <p class="nb-label">Commute</p>
+  {% with first=rail.0 %}
+  {% if first %}
+  <div class="nb-station">
+    <span class="nb-station-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M9 17l-2 4M15 17l2 4M9 13.5h.01M15 13.5h.01"/></svg>
+    </span>
+    <div>
+      <p class="nb-station-name">{{ first.station.name }}</p>
+      <p class="nb-station-sub">{{ first.display_miles|floatformat:1 }} mi{% if first.walk_minutes %} &bull; {{ first.walk_minutes }} min walk{% elif first.drive_minutes %} &bull; {{ first.drive_minutes }} min drive{% endif %} &bull; nearest rail station</p>
+    </div>
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  {% if rail %}
+  <p class="nb-sublabel">Rail stations</p>
+  <ul class="nb-rows">
+    {% for link in rail %}
+    <li>
+      <span class="nb-row-main">
+        {% for route in link.station.route_badges %}
+        {# Colours come from the feed; the text colour is derived for contrast — see TransitRoute.badge_text_color. #}
+        <span class="nb-route" style="background:{{ route.badge_color }};color:{{ route.badge_text_color }};">{{ route.label }}</span>
+        {% endfor %}
+        <strong>{{ link.station.name }}</strong>
+        <span class="nb-row-meta">{{ link.station.agency.name }} &middot; {{ link.station.get_mode_display }}</span>
+      </span>
+      <span class="nb-row-val">{{ link.display_miles|floatformat:1 }} mi{% if link.walk_minutes %}<span> &middot; {{ link.walk_minutes }} min walk</span>{% elif link.drive_minutes %}<span> &middot; {{ link.drive_minutes }} min drive</span>{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if buses %}
+  <p class="nb-sublabel">Bus stops</p>
+  <ul class="nb-rows">
+    {% for link in buses %}
+    <li>
+      <span class="nb-row-main">
+        {% for route in link.station.route_badges %}
+        <span class="nb-route" style="background:{{ route.badge_color }};color:{{ route.badge_text_color }};">{{ route.label }}</span>
+        {% endfor %}
+        <strong>{{ link.station.name }}</strong>
+        <span class="nb-row-meta">{{ link.station.agency.name }} &middot; {{ link.station.get_mode_display }}</span>
+      </span>
+      <span class="nb-row-val">{{ link.display_miles|floatformat:1 }} mi{% if link.walk_minutes %}<span> &middot; {{ link.walk_minutes }} min walk</span>{% elif link.drive_minutes %}<span> &middot; {{ link.drive_minutes }} min drive</span>{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <p class="nb-foot">Schedule data from {% for name in place.transit_agencies %}{{ name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+  {% endwith %}
+  {% endif %}
+
+  {# ── Neighborhood: groceries ── #}
+  {% with groceries=place.grocery_cards %}
+  {% if groceries %}
+  <p class="nb-label">Neighborhood</p>
+  <p class="nb-sublabel">Grocery stores nearby</p>
+  <ul class="nb-rows">
+    {% for link in groceries %}
+    <li>
+      <span class="nb-row-main">
+        <strong>{{ link.store.chain }}</strong>
+        {# Only worth showing when it says something the chain name does not. #}
+        {% if link.store.name != link.store.chain %}<span class="nb-row-meta">{{ link.store.name }}</span>{% endif %}
+      </span>
+      <span class="nb-row-val">{{ link.display_miles|floatformat:1 }} mi{% if link.drive_minutes %}<span> &middot; {{ link.drive_minutes }} min</span>{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="nb-foot">
+    {% if place.has_drive_times %}Driving distance and time in typical traffic{% else %}Straight-line distance{% endif %}
+    &middot; data from Google
+  </p>
+  {% endif %}
+  {% endwith %}
+
+  {# ── Schools (listings only) ── #}
+  {% if schools %}
+  <p class="nb-label">Nearby schools{% if place.city %} in {{ place.city }}{% endif %}</p>
+  <div class="nb-schools">
+    {% for link in schools %}
+    {% with school=link.school %}
+    <div class="nb-school">
+      <div class="nb-school-top">
+        <div class="nb-school-id">
+          <p class="nb-school-name">
+            {% if school.profile_url %}<a href="{{ school.profile_url }}" target="_blank" rel="noopener">{{ school.name }}</a>{% else %}{{ school.name }}{% endif %}
+          </p>
+          <p class="nb-school-sub">
+            {% if school.grade_range %}Grades {{ school.grade_range }}{% endif %}{% if school.grade_range and link.distance_miles %} &bull; {% endif %}{% if link.distance_miles %}{{ link.distance_miles|floatformat:1 }} miles{% endif %}
+          </p>
+        </div>
+        {% if school.rating %}
+        <span class="nb-school-rating" style="background:{{ school.rating_color }};" title="GreatSchools® Rating">{{ school.rating }}/10</span>
+        {% endif %}
+      </div>
+      {# Rows vary by school — college readiness is high-school only. #}
+      {% for label, score in school.rating_rows %}
+      <div class="nb-school-row"><span>{{ label }}</span><strong>{{ score }}/10</strong></div>
+      {% endfor %}
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {# Attribution is a licence condition, not decoration — do not drop it. #}
+  <p class="nb-foot">Ratings source: GreatSchools&reg;</p>
+  {% endif %}
+
+</section>
+{% endif %}
+{% endwith %}

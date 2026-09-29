@@ -212,7 +212,7 @@
   {# ── Step 1: Rent or Buy ── #}
   <div id="step1">
     <div class="gs-card">
-      <div class="gs-card-label">Step 1</div>
+      <div class="gs-card-label">Step 1 <span aria-hidden="true">&middot;</span> Search target</div>
       <h2>Are you looking to rent or buy?</h2>
       <p class="gs-sub">This helps us show the right types of listings for you.</p>
       <div class="choice-grid">
@@ -246,7 +246,7 @@
   {# ── Step 2: Room type ── #}
   <div id="step2" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 2</div>
+      <div class="gs-card-label">Step 2 <span aria-hidden="true">&middot;</span> Occupancy model</div>
       <div id="room-q-rent">
         <h2>What type of space do you need?</h2>
         <p class="gs-sub">We'll match you with listings that fit your living situation.</p>
@@ -281,7 +281,7 @@
       </div>
       <div class="gs-actions">
         <button class="gs-btn gs-btn-ghost" onclick="goStep(1)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(3)">Continue →</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(3)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -289,7 +289,7 @@
   {# ── Step 3: Property type + bedrooms ── #}
   <div id="step3" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 3</div>
+      <div class="gs-card-label">Step 3 <span aria-hidden="true">&middot;</span> Dwelling architecture</div>
       <h2>What type of property?</h2>
       <p class="gs-sub">Pick everything that works — we'll show all matching types.</p>
       <div class="gs-group">
@@ -329,7 +329,7 @@
       </div>
       <div class="gs-actions">
         <button class="gs-btn gs-btn-ghost" onclick="goStep(2)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(4)">Continue →</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(4)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -337,7 +337,7 @@
   {# ── Step 4: City ── #}
   <div id="step4" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 4</div>
+      <div class="gs-card-label">Step 4 <span aria-hidden="true">&middot;</span> Location geometry</div>
       <h2>Where are you looking?</h2>
       <p class="gs-sub">Enter a city or neighborhood — we'll focus results there.</p>
       <div class="gs-group">
@@ -353,7 +353,7 @@
       </div>
       <div class="gs-actions">
         <button class="gs-btn gs-btn-ghost" onclick="goStep(3)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(5)">Continue →</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(5)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -361,7 +361,7 @@
   {# ── Step 5: Budget + Income ── #}
   <div id="step5" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 5</div>
+      <div class="gs-card-label">Step 5 <span aria-hidden="true">&middot;</span> Financial envelope</div>
       <h2>What's your budget?</h2>
       <p class="gs-sub" id="budget-sub">Set your monthly max — we'll show listings that fit and flag how much you'd save.</p>
       <div class="gs-group">
@@ -392,7 +392,7 @@
       </div>
       <div class="gs-actions">
         <button class="gs-btn gs-btn-ghost" onclick="goStep(4)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(6)">Continue →</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(6)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -400,7 +400,7 @@
   {# ── Step 6: Must-haves ── #}
   <div id="step6" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 6</div>
+      <div class="gs-card-label">Step 6 <span aria-hidden="true">&middot;</span> Lifestyle integration</div>
       <h2>What are your must-haves?</h2>
       <p class="gs-sub">Select everything that applies — we'll weight results to show what actually fits.</p>
       <div class="gs-group">
@@ -438,7 +438,7 @@
       </div>
       <div class="gs-actions">
         <button class="gs-btn gs-btn-ghost" onclick="goStep(5)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(7)">Continue →</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(7)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -446,7 +446,7 @@
   {# ── Step 7: Timeline + Urgency (merged) ── #}
   <div id="step7" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 7</div>
+      <div class="gs-card-label">Step 7 <span aria-hidden="true">&middot;</span> Temporal readiness</div>
       <h2>When do you want to move?</h2>
       <p class="gs-sub">Helps us filter by availability and understand your urgency.</p>
       <div class="gs-group">
@@ -480,7 +480,7 @@
       </div>
       <div class="gs-actions">
         <button class="gs-btn gs-btn-ghost" onclick="goStep(6)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(8)">Continue →</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(8)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -488,7 +488,7 @@
   {# ── Step 8: Priority + Submit ── #}
   <div id="step8" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 8</div>
+      <div class="gs-card-label">Step 8 <span aria-hidden="true">&middot;</span> Priority calibration</div>
       <h2>What matters most to you?</h2>
       <p class="gs-sub">This helps us rank your results — the top matches will be optimized for what you care about most.</p>
       <div class="priority-grid" id="priority-group">
@@ -510,7 +510,7 @@
       </div>
       <div class="gs-actions" style="margin-top:24px">
         <button class="gs-btn gs-btn-ghost" onclick="goStep(7)">← Back</button>
-        <button class="gs-btn gs-btn-primary gs-btn-lg gs-btn-submit" onclick="submitSearch()">Show my matches →</button>
+        <button class="gs-btn gs-btn-primary gs-btn-lg gs-btn-submit" onclick="submitSearch()">Show my matches → <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -553,7 +553,8 @@
 
   <section class="gsx-card">
     <header class="gsx-card-head">
-      <span class="gsx-card-title">What you've told us</span>
+      <span class="gsx-card-title">Match calibration</span>
+      <span class="gsx-card-note">What you've told us</span>
     </header>
     <ul class="gsx-criteria" id="gsx-criteria">
       <li class="gsx-criteria-empty">Nothing yet — your answers appear here as you go.</li>
@@ -563,7 +564,7 @@
   <section class="gsx-card" id="gsx-matches-card" hidden>
     <header class="gsx-card-head">
       <span class="gsx-card-title">Top matches so far</span>
-      <span class="gsx-card-note">Live listings</span>
+      <a class="gsx-card-link" id="gsx-compare" href="{% url 'listing_list' %}">Compare all</a>
     </header>
     <div class="gsx-matches" id="gsx-matches"></div>
   </section>
@@ -580,6 +581,15 @@
       </p>
     </div>
   </section>
+  {# A real quote from the home page's testimonials, about this feature. #}
+  <figure class="gsx-card gsx-quote">
+    <p class="gsx-quote-k">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="m12 2.8 2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/></svg>
+      Renter story
+    </p>
+    <blockquote>&ldquo;The guided search is brilliant. It saved my preferences and when I came back a week later, it remembered exactly what I needed.&rdquo;</blockquote>
+    <figcaption>Marcus T. &middot; Renter, Las Colinas</figcaption>
+  </figure>
 </aside>
 </div>{# /gsx-layout #}
 
@@ -966,8 +976,19 @@ if (GS_MODE === 'rent' || GS_MODE === 'buy') {
       ring.setAttribute('stroke', 'var(--primary)');
     }
     renderMatches(d.listings || []);
+
+    document.querySelectorAll('[data-live-count]').forEach(function (b) {
+      b.hidden = false;
+      b.textContent = total.toLocaleString('en-US') + ' available';
+    });
+    var compare = document.getElementById('gsx-compare');
+    if (compare) {
+      compare.textContent = 'Compare all ' + total.toLocaleString('en-US');
+      compare.href = compare.href.split('?')[0] + (lastQs ? '?' + lastQs : '');
+    }
   }
 
+  var lastQs = '';
   function refresh() {
     var f = collect();
     var key = JSON.stringify(f);
@@ -976,7 +997,7 @@ if (GS_MODE === 'rent' || GS_MODE === 'buy') {
 
     renderCriteria(describe(f));
 
-    var qs = Object.keys(f).map(function (k) {
+    var qs = lastQs = Object.keys(f).map(function (k) {
       return encodeURIComponent(k) + '=' + encodeURIComponent(f[k]);
     }).join('&');
 

@@ -1,0 +1,150 @@
+{% comment %}
+  Tour picker and quick questions. Neither is a separate system: both compose
+  the inquiry message, so what the owner receives says plainly when you want to
+  visit and what you asked.
+
+  Shared by the listing and community detail pages. Both render the rail with
+  the same ids: #ld-inquiry, #ld-days, #ld-slots, #ld-tour-btn, and optionally
+  #ld-video-btn (live video walkthrough) and #ld-tour-types (community only,
+  writes the hidden tour_type field the community view reads).
+{% endcomment %}
+<script>
+(function () {
+  var form = document.getElementById('ld-inquiry');
+  if (!form) return;
+
+  var daysWrap = document.getElementById('ld-days');
+  var slotsWrap = document.getElementById('ld-slots');
+  var message = form.querySelector('[name="message"]');
+  if (!message) return;
+
+  var chosenDay = null;
+  var chosenSlot = null;
+
+  /* The next four days, labelled from the visitor's own clock rather than the
+     server's, so "Today" is today where they are. */
+  (function buildDays() {
+    if (!daysWrap) return;
+    var today = new Date();
+    for (var i = 0; i < 4; i++) {
+      var d = new Date(today);
+      d.setDate(today.getDate() + i);
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ld-day';
+      btn.dataset.iso = d.toISOString().slice(0, 10);
+      btn.dataset.label = i === 0
+        ? 'today, ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        : d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+
+      var name = document.createElement('span');
+      name.className = 'ld-day-name';
+      name.textContent = i === 0 ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' });
+
+      var date = document.createElement('span');
+      date.className = 'ld-day-date';
+      date.textContent = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+      btn.appendChild(name);
+      btn.appendChild(date);
+      daysWrap.appendChild(btn);
+    }
+  })();
+
+  /* The message is rebuilt from the current selection each time rather than
+     appended to, so changing your mind does not leave the old choice in it. */
+  var TOUR_MARK = '[tour request]';
+
+  function syncMessage() {
+    var lines = message.value.split('\n').filter(function (l) {
+      return l.indexOf(TOUR_MARK) !== 0;
+    });
+    if (chosenDay || chosenSlot) {
+      var when = [chosenDay, chosenSlot].filter(Boolean).join(', ');
+      lines.unshift(TOUR_MARK + ' I would like to tour this property on ' + when + '.');
+    }
+    message.value = lines.join('\n').replace(/^\n+/, '');
+  }
+
+  function pick(wrap, cls, btn) {
+    wrap.querySelectorAll('.' + cls).forEach(function (b) { b.classList.remove('is-on'); });
+    btn.classList.add('is-on');
+  }
+
+  if (daysWrap) {
+    daysWrap.addEventListener('click', function (e) {
+      var btn = e.target.closest('.ld-day');
+      if (!btn) return;
+      pick(daysWrap, 'ld-day', btn);
+      chosenDay = btn.dataset.label;
+      syncMessage();
+    });
+  }
+
+  if (slotsWrap) {
+    slotsWrap.addEventListener('click', function (e) {
+      var btn = e.target.closest('.ld-slot');
+      if (!btn) return;
+      pick(slotsWrap, 'ld-slot', btn);
+      chosenSlot = btn.dataset.slot;
+      syncMessage();
+    });
+  }
+
+  /* Quick questions append rather than replace: asking two is normal. */
+  form.querySelectorAll('.ld-quick-chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var q = chip.dataset.ask;
+      if (message.value.indexOf(q) !== -1) return;
+      message.value = (message.value ? message.value.replace(/\s*$/, '\n') : '') + q;
+      chip.classList.add('is-on');
+      message.focus();
+      message.setSelectionRange(message.value.length, message.value.length);
+    });
+  });
+
+  /* Tour type (community pages): a segmented control over the hidden
+     tour_type field the community view stores with the request. */
+  var typesWrap = document.getElementById('ld-tour-types');
+  var typeInput = form.querySelector('[name="tour_type"]');
+  if (typesWrap && typeInput) {
+    typesWrap.addEventListener('click', function (e) {
+      var btn = e.target.closest('.ld-type');
+      if (!btn) return;
+      typesWrap.querySelectorAll('.ld-type').forEach(function (b) {
+        b.classList.toggle('is-on', b === btn);
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+      typeInput.value = btn.dataset.type;
+    });
+  }
+
+  /* Live video walkthrough: the same inquiry, asking for a video call
+     instead of a visit. No day is required — the owner proposes a time. */
+  var VIDEO_MARK = '[video walkthrough]';
+  var videoBtn = document.getElementById('ld-video-btn');
+  if (videoBtn) {
+    videoBtn.addEventListener('click', function () {
+      if (message.value.indexOf(VIDEO_MARK) === -1) {
+        message.value = VIDEO_MARK + ' Could you give me a live video walkthrough of this home?'
+          + (message.value ? '\n' + message.value : '');
+      }
+      if (typeInput) typeInput.value = 'virtual';
+    });
+  }
+
+  /* The tour button is the same submit as the send button; it just insists on
+     a day first, so the owner never gets "I want a tour" with no date. */
+  var tourBtn = document.getElementById('ld-tour-btn');
+  if (tourBtn) {
+    tourBtn.addEventListener('click', function (e) {
+      if (chosenDay) return;
+      e.preventDefault();
+      daysWrap.classList.add('is-asking');
+      daysWrap.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      setTimeout(function () { daysWrap.classList.remove('is-asking'); }, 1600);
+    });
+  }
+})();
+</script>

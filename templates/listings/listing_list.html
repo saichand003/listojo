@@ -96,8 +96,8 @@
     {% endcomment %}
     <div id="view-toggle" class="results-view">
       <button type="button" id="btn-map-view" onclick="setView('map')" class="results-view-btn is-on">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
-        Map
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg>
+        Split
       </button>
       <button type="button" id="btn-list-view" onclick="setView('list')" class="results-view-btn">
         <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg>
@@ -344,6 +344,9 @@ function dismissAgentCta() {
 {% endif %}
 
 {% include 'listings/_listings_grid.html' %}
+{% if total_matches %}
+<p class="results-foot">Showing all {{ total_matches }} propert{{ total_matches|pluralize:"y,ies" }}{% if filters.city %} in {{ filters.city }}{% endif %}</p>
+{% endif %}
 
 {# ── Near matches ── #}
 {% if fmm_mode and near_match_listings %}
@@ -654,7 +657,8 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 }
 #list-panel.map-mode .listing-body > * { grid-column: 1 / -1; margin: 0 !important; }
 
-#list-panel.map-mode .card-title-row { grid-column: 1 !important; grid-row: 1 !important; align-items: flex-start !important; gap: .5rem !important; }
+#list-panel.map-mode .card-kicker { grid-column: 1 !important; grid-row: 1 !important; }
+#list-panel.map-mode .card-title-row { grid-column: 1 !important; grid-row: 2 !important; align-items: flex-start !important; gap: .5rem !important; }
 #list-panel.map-mode .card-title-row h3 {
   font-family: var(--font-head) !important;
   font-size: 1.3125rem !important;
@@ -673,7 +677,8 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 
 #list-panel.map-mode .price {
   grid-column: 2 !important;
-  grid-row: 1 !important;
+  grid-row: 1 / span 2 !important;
+  align-self: start !important;
   text-align: right !important;
   font-family: var(--font-head) !important;
   font-size: 1.625rem !important;
@@ -696,14 +701,14 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 #list-panel.map-mode .card-income-hint {
   display: block !important;
   grid-column: 2 !important;
-  grid-row: 2 !important;
+  grid-row: 3 !important;
   text-align: right !important;
   font-size: .6875rem !important;
   font-weight: 600 !important;
   color: var(--accent-dk) !important;
 }
 
-#list-panel.map-mode .card-meta-row { grid-column: 1 !important; grid-row: 2 !important; font-size: .875rem !important; color: var(--text-2) !important; }
+#list-panel.map-mode .card-meta-row { grid-column: 1 !important; grid-row: 3 !important; font-size: .875rem !important; color: var(--text-2) !important; }
 #list-panel.map-mode .card-meta-row svg { opacity: 1 !important; color: var(--primary) !important; fill: var(--primary) !important; }
 #list-panel.map-mode .dom-chip { display: none !important; }
 
@@ -741,6 +746,27 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
   border: 1px solid var(--border) !important;
 }
 #list-panel.map-mode .card-btn-tour { display: inline-flex !important; }
+#list-panel.map-mode .card-actions { align-items: center !important; }
+#list-panel.map-mode .card-actions .card-actions-note {
+  display: inline-flex !important;
+  flex: 1 1 auto !important;
+  padding: 0 !important;
+  align-items: center !important;
+  gap: .35rem !important;
+  font-size: .75rem !important;
+  color: var(--text-2) !important;
+}
+#list-panel.map-mode .card-actions .card-actions-note { white-space: nowrap !important; }
+#list-panel.map-mode .card-kicker { white-space: nowrap !important; overflow: hidden !important; }
+/* Chat stays in split view, as an icon, so the row keeps the reference's
+   two labelled actions. */
+#list-panel.map-mode .card-actions .open-chat-btn,
+#list-panel.map-mode .card-actions a.card-btn-secondary:not([href*="#"]) {
+  font-size: 0 !important; gap: 0 !important; padding: .55rem .7rem !important;
+}
+#list-panel.map-mode .card-actions .open-chat-btn svg,
+#list-panel.map-mode .card-actions a.card-btn-secondary:not([href*="#"]) svg { width: 16px !important; height: 16px !important; opacity: .8 !important; }
+#list-panel.map-mode .card-actions-note::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 
 @media (max-width: 700px) {
   #list-panel.map-mode .listing-card { flex-direction: column !important; }

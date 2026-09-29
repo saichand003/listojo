@@ -39,8 +39,40 @@ def community_detail(request, pk):
     return render(request, 'listings/community_detail.html', {
         'community': community,
         'floor_plans': floor_plans,
+        'plan_specs': _plan_specs(floor_plans),
         'inquiry_form': inquiry_form,
     })
+
+
+def _plan_specs(floor_plans):
+    """
+    The spec strip for a community: bedroom, bathroom and size ranges across
+    its floor plans. A community has no single bed/bath count, so each tile
+    shows the span ("1–3") instead, or the one value when every plan agrees.
+    """
+    plans = list(floor_plans)
+    if not plans:
+        return None
+
+    def span(values, fmt=str):
+        values = sorted(v for v in values if v is not None)
+        if not values:
+            return None
+        lo, hi = fmt(values[0]), fmt(values[-1])
+        return lo if lo == hi else f'{lo}–{hi}'
+
+    def beds(n):
+        return 'Studio' if n == 0 else str(n)
+
+    def baths(n):
+        return f'{float(n):g}'
+
+    return {
+        'bedrooms': span([p.bedrooms for p in plans], beds),
+        'bathrooms': span([p.bathrooms for p in plans], baths),
+        'sqft': span([p.square_footage for p in plans], lambda n: f'{n:,}'),
+        'plan_count': len(plans),
+    }
 
 
 @login_required

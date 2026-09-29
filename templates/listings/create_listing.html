@@ -508,9 +508,10 @@
       <div class="cl-section-head">
         <div class="cl-section-num">8</div>
         <div>
-          <div class="cl-section-title">Photos</div>
+          <div class="cl-section-title">Photos &amp; tour links</div>
           <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Up to {{ max_images }} photos · max 5 MB each · listings with photos get 3× more views</div>
         </div>
+        <span class="cl-section-count" id="img-head-count">0 / {{ max_images }} photos uploaded</span>
       </div>
       {% if image_errors %}
       <div class="img-upload-errors" style="margin-bottom:.75rem;">
@@ -520,10 +521,21 @@
       <div id="img-preview-grid" class="img-preview-grid"></div>
       <div class="img-upload-zone" id="img-upload-zone">
         <input type="file" name="images" id="img-file-input" multiple accept="image/*">
-        <div class="img-upload-icon">📷</div>
-        <div class="img-upload-label">Click to add photos or drag & drop</div>
-        <div class="img-upload-hint">JPEG, PNG, WEBP · Max 5 MB each</div>
+        <div class="img-upload-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4 4 0 0 1 .5 7.97"/><path d="M12 12v8M9 15l3-3 3 3"/></svg>
+        </div>
+        <div class="img-upload-label">Drag &amp; drop high-res property photos</div>
+        <div class="img-upload-hint">JPEG, PNG, WEBP · Max 5 MB each · the first photo is your cover</div>
+        <span class="img-upload-browse" aria-hidden="true">Browse local files</span>
         <div class="img-upload-count" id="img-count-label">0 / {{ max_images }} photos added</div>
+      </div>
+
+      {# The form has always accepted a tour link; it just was never on the page. #}
+      <div class="cl-tour-field">
+        <label class="cl-label" for="f-virtual-tour">3D Matterport or YouTube virtual tour URL <span class="muted">(optional)</span></label>
+        <input type="url" id="f-virtual-tour" name="virtual_tour_url" value="{{ form.virtual_tour_url.value|default:'' }}"
+               placeholder="https://my.matterport.com/show/?m=…" inputmode="url">
+        {% if form.virtual_tour_url.errors %}<p class="cl-field-error">{{ form.virtual_tour_url.errors.0 }}</p>{% endif %}
       </div>
     </div>
 
@@ -664,6 +676,8 @@
     var valid = files.filter(function(f){ return !f.error; });
     var ok = valid.length;
     countLbl.textContent = ok + ' / ' + MAX + ' photos added';
+    var headCount = document.getElementById('img-head-count');
+    if (headCount) headCount.textContent = ok + ' / ' + MAX + ' photos uploaded';
     countLbl.classList.toggle('at-limit', ok >= MAX);
     updateCompletion();
     // Publish the count and the cover shot so the live preview rail can show
@@ -681,6 +695,12 @@
       var img = document.createElement('img');
       img.src = item.url;
       wrap.appendChild(img);
+      if (idx === 0 && !item.error) {
+        var cover = document.createElement('span');
+        cover.className = 'img-preview-cover';
+        cover.textContent = 'Main cover';
+        wrap.appendChild(cover);
+      }
       if (item.error) {
         var lbl = document.createElement('div');
         lbl.className = 'img-preview-error-label';

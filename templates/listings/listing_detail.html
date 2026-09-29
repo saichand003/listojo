@@ -373,14 +373,17 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
   search, or up to the city.
 {% endcomment %}
 <nav class="ld-crumbs" aria-label="Breadcrumb">
-  <a href="{% url 'home' %}">Home</a>
-  <span aria-hidden="true">/</span>
+  <a href="{% url 'home' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M3 10.5 12 3.5l9 7V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
+    Home
+  </a>
+  <span class="ld-crumb-sep" aria-hidden="true"></span>
   <a href="{% url 'listing_list' %}?category={{ listing.category }}">{{ listing.get_category_display }}</a>
   {% if listing.city %}
-  <span aria-hidden="true">/</span>
+  <span class="ld-crumb-sep" aria-hidden="true"></span>
   <a href="{% url 'listing_list' %}?city={{ listing.city|urlencode }}">{{ listing.city }}{% if listing.state %}, {{ listing.state }}{% endif %}</a>
   {% endif %}
-  <span aria-hidden="true">/</span>
+  <span class="ld-crumb-sep" aria-hidden="true"></span>
   <span aria-current="page">{{ listing.title|truncatechars:48 }}</span>
 </nav>
 
@@ -456,47 +459,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
             </div>
             {% endif %}
 
-            {# Floor plan + tour details for unit listings #}
-            {% if listing.bedrooms is not None or listing.bathrooms or listing.square_footage %}
-            <div class="ld-specs">
-                {% if listing.bedrooms is not None %}
-                <div class="ld-spec">
-                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 18v-7h18v7"/><path d="M3 18v2M21 18v2M3 11V6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5V11"/><path d="M7 11V9h4v2M13 11V9h4v2"/></svg></span>
-                    <div class="ld-spec-num">{% if listing.bedrooms == 0 %}Studio{% else %}{{ listing.bedrooms }}{% endif %}</div>
-                    <div class="ld-spec-lbl">Bed{% if listing.bedrooms != 1 and listing.bedrooms != 0 %}s{% endif %}</div>
-                </div>
-                {% endif %}
-                {% if listing.bathrooms %}
-                <div class="ld-spec">
-                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 12h18v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 12V5.5A1.5 1.5 0 0 1 7.5 4h1A1.5 1.5 0 0 1 10 5.5"/><path d="M6.5 19.5 5.5 21M17.5 19.5l1 1.5"/></svg></span>
-                    <div class="ld-spec-num">{{ listing.bathrooms }}</div>
-                    <div class="ld-spec-lbl">Bath{% if listing.bathrooms > 1 %}s{% endif %}</div>
-                </div>
-                {% endif %}
-                {% if listing.square_footage %}
-                <div class="ld-spec">
-                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M8 3.5v4M3.5 8h4M16 20.5v-4M20.5 16h-4"/></svg></span>
-                    <div class="ld-spec-num">{{ listing.square_footage|intcomma }}</div>
-                    <div class="ld-spec-lbl">Sq Ft</div>
-                </div>
-                {% endif %}
-                {% if listing.accommodation_type %}
-                <div class="ld-spec">
-                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg></span>
-                    <div class="ld-spec-num ld-spec-num-sm">{{ listing.get_accommodation_type_display }}</div>
-                    <div class="ld-spec-lbl">Type</div>
-                </div>
-                {% endif %}
-                {% if listing.year_built %}
-                <div class="ld-spec">
-                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17"/></svg></span>
-                    <div class="ld-spec-num">{{ listing.year_built }}</div>
-                    <div class="ld-spec-lbl">Built</div>
-                </div>
-                {% endif %}
-            </div>
-            {% endif %}
-
             {% comment %}
               FINANCIAL TERMS. Deposit, bills and availability were scattered
               down the page or missing entirely, so the money question needed
@@ -560,6 +522,47 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
               {% endif %}
               </div>
             </div>
+
+            {# Floor plan + tour details for unit listings #}
+            {% if listing.bedrooms is not None or listing.bathrooms or listing.square_footage %}
+            <div class="ld-specs">
+                {% if listing.bedrooms is not None %}
+                <div class="ld-spec">
+                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 18v-7h18v7"/><path d="M3 18v2M21 18v2M3 11V6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5V11"/><path d="M7 11V9h4v2M13 11V9h4v2"/></svg></span>
+                    <div class="ld-spec-num">{% if listing.bedrooms == 0 %}Studio{% else %}{{ listing.bedrooms }}{% endif %}</div>
+                    <div class="ld-spec-lbl">Bed{% if listing.bedrooms != 1 and listing.bedrooms != 0 %}s{% endif %}</div>
+                </div>
+                {% endif %}
+                {% if listing.bathrooms %}
+                <div class="ld-spec">
+                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 12h18v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 12V5.5A1.5 1.5 0 0 1 7.5 4h1A1.5 1.5 0 0 1 10 5.5"/><path d="M6.5 19.5 5.5 21M17.5 19.5l1 1.5"/></svg></span>
+                    <div class="ld-spec-num">{{ listing.bathrooms }}</div>
+                    <div class="ld-spec-lbl">Bath{% if listing.bathrooms > 1 %}s{% endif %}</div>
+                </div>
+                {% endif %}
+                {% if listing.square_footage %}
+                <div class="ld-spec">
+                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M8 3.5v4M3.5 8h4M16 20.5v-4M20.5 16h-4"/></svg></span>
+                    <div class="ld-spec-num">{{ listing.square_footage|intcomma }}</div>
+                    <div class="ld-spec-lbl">Sq Ft</div>
+                </div>
+                {% endif %}
+                {% if listing.accommodation_type %}
+                <div class="ld-spec">
+                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg></span>
+                    <div class="ld-spec-num ld-spec-num-sm">{{ listing.get_accommodation_type_display }}</div>
+                    <div class="ld-spec-lbl">Type</div>
+                </div>
+                {% endif %}
+                {% if listing.year_built %}
+                <div class="ld-spec">
+                    <span class="ld-spec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17"/></svg></span>
+                    <div class="ld-spec-num">{{ listing.year_built }}</div>
+                    <div class="ld-spec-lbl">Built</div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
 
             {% comment %}
               HIGHLIGHTS. The listing's own tags, which until now only appeared
@@ -677,60 +680,8 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
     {# Standalone cards on the page background — the defaults, same as community detail. #}
     {% include 'listings/_amenity_cards.html' with place=listing layout="tiles" %}
 
-    {% include 'listings/_proximity_cards.html' with place=listing %}
-
-    {# ── Nearby schools — GreatSchools ── #}
-    {# `school_cards` is the prefetched join; see Listing.school_cards. #}
-    {% with schools=listing.school_cards %}
-    {% if schools %}
-    <div class="card" style="margin-top:1.5rem;">
-        <p style="font-size:1.05rem;font-weight:700;margin:0 0 .2rem;">
-            Nearby schools{% if listing.city %} in {{ listing.city }}{% endif %}
-        </p>
-        {# Attribution is a licence condition, not decoration — do not drop it. #}
-        <p style="font-size:.78rem;color:var(--text-3);margin:0 0 .9rem;">
-            Source: GreatSchools&reg;
-        </p>
-
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:.75rem;">
-            {% for link in schools %}
-            {% with school=link.school %}
-            <div style="border:1px solid var(--border);border-radius:10px;padding:.9rem;">
-                <p style="font-size:.95rem;font-weight:700;margin:0 0 .2rem;line-height:1.3;">
-                    {% if school.profile_url %}
-                    <a href="{{ school.profile_url }}" target="_blank" rel="noopener"
-                       style="color:inherit;text-decoration:none;">{{ school.name }}</a>
-                    {% else %}{{ school.name }}{% endif %}
-                </p>
-                <p style="font-size:.8rem;color:var(--text-3);margin:0 0 .8rem;">
-                    {% if school.grade_range %}Grades {{ school.grade_range }}{% endif %}
-                    {% if school.grade_range and link.distance_miles %} &bull; {% endif %}
-                    {% if link.distance_miles %}{{ link.distance_miles|floatformat:1 }} miles{% endif %}
-                </p>
-
-                {% if school.rating %}
-                <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem;">
-                    <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:baseline;justify-content:center;color:#fff;background:{{ school.rating_color }};">
-                        <span style="font-weight:700;font-size:1.05rem;line-height:46px;">{{ school.rating }}</span><span style="font-size:.72rem;">/10</span>
-                    </div>
-                    <p style="font-size:.82rem;font-weight:700;margin:0;line-height:1.3;">GreatSchools&reg;<br>Rating</p>
-                </div>
-                {% endif %}
-
-                {# Rows vary by school — college readiness is high-school only. #}
-                {% for label, score in school.rating_rows %}
-                <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.8rem;padding:.18rem 0;">
-                    <span style="color:var(--text-2);">{{ label }}</span>
-                    <span style="font-weight:700;white-space:nowrap;">{{ score }}/10</span>
-                </div>
-                {% endfor %}
-            </div>
-            {% endwith %}
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-    {% endwith %}
+    {# Walk Score, commute, downtown, groceries and schools — one card. #}
+    {% include 'listings/_neighborhood_score.html' with place=listing %}
 
   </div>{# /left column stack #}
 
@@ -782,6 +733,10 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17"/></svg>
               Request in-person tour
             </button>
+            <button type="submit" class="ld-cta ld-cta-ghost" id="ld-video-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M15.5 10.5 21 7.5v9l-5.5-3z"/><rect x="3" y="6.5" width="12.5" height="11" rx="2"/></svg>
+              Request live video walkthrough
+            </button>
             {% if listing.virtual_tour_url %}
             <a href="{{ listing.virtual_tour_url }}" target="_blank" rel="noopener" class="ld-cta ld-cta-ghost">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M15.5 10.5 21 7.5v9l-5.5-3z"/><rect x="3" y="6.5" width="12.5" height="11" rx="2"/></svg>
@@ -826,18 +781,12 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
 
           <button type="submit" class="ld-cta ld-cta-send">Send to {% if listing.organization %}the team{% else %}the owner{% endif %}</button>
           <p class="ld-rail-note">Goes straight to the lister by email. No agent in between.</p>
+          <div class="ld-rail-policy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z"/><path d="m8.8 12.2 2.2 2.2 4.2-4.4"/></svg>
+            <span><strong>Listojo zero-markup policy</strong>$0 agency fee and no charge to message the lister. The price you see is the price they set.</span>
+          </div>
         </form>
         {% endif %}
-      </section>
-
-      <section class="ld-rail-card ld-policy">
-        <span class="ld-policy-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z"/><path d="m8.8 12.2 2.2 2.2 4.2-4.4"/></svg>
-        </span>
-        <div>
-          <p class="ld-policy-title">Listojo zero-markup policy</p>
-          <p class="ld-policy-body">$0 agency fee and no charge to message the lister. The price you see is the price they set.</p>
-        </div>
       </section>
 
       {% if listing.category == 'properties' %}
@@ -852,121 +801,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
 </div>
 {% endif %}{# end community / regular split #}
 
-{% comment %}
-  Tour picker and quick questions. Neither is a separate system: both compose
-  the inquiry message, so what the owner receives says plainly when you want to
-  visit and what you asked.
-{% endcomment %}
-<script>
-(function () {
-  var form = document.getElementById('ld-inquiry');
-  if (!form) return;
-
-  var daysWrap = document.getElementById('ld-days');
-  var slotsWrap = document.getElementById('ld-slots');
-  var message = form.querySelector('[name="message"]');
-  if (!message) return;
-
-  var chosenDay = null;
-  var chosenSlot = null;
-
-  /* The next four days, labelled from the visitor's own clock rather than the
-     server's, so "Today" is today where they are. */
-  (function buildDays() {
-    if (!daysWrap) return;
-    var today = new Date();
-    for (var i = 0; i < 4; i++) {
-      var d = new Date(today);
-      d.setDate(today.getDate() + i);
-
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'ld-day';
-      btn.dataset.iso = d.toISOString().slice(0, 10);
-      btn.dataset.label = i === 0
-        ? 'today, ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-        : d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
-
-      var name = document.createElement('span');
-      name.className = 'ld-day-name';
-      name.textContent = i === 0 ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' });
-
-      var date = document.createElement('span');
-      date.className = 'ld-day-date';
-      date.textContent = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-
-      btn.appendChild(name);
-      btn.appendChild(date);
-      daysWrap.appendChild(btn);
-    }
-  })();
-
-  /* The message is rebuilt from the current selection each time rather than
-     appended to, so changing your mind does not leave the old choice in it. */
-  var TOUR_MARK = '[tour request]';
-
-  function syncMessage() {
-    var lines = message.value.split('\n').filter(function (l) {
-      return l.indexOf(TOUR_MARK) !== 0;
-    });
-    if (chosenDay || chosenSlot) {
-      var when = [chosenDay, chosenSlot].filter(Boolean).join(', ');
-      lines.unshift(TOUR_MARK + ' I would like to tour this property on ' + when + '.');
-    }
-    message.value = lines.join('\n').replace(/^\n+/, '');
-  }
-
-  function pick(wrap, cls, btn) {
-    wrap.querySelectorAll('.' + cls).forEach(function (b) { b.classList.remove('is-on'); });
-    btn.classList.add('is-on');
-  }
-
-  if (daysWrap) {
-    daysWrap.addEventListener('click', function (e) {
-      var btn = e.target.closest('.ld-day');
-      if (!btn) return;
-      pick(daysWrap, 'ld-day', btn);
-      chosenDay = btn.dataset.label;
-      syncMessage();
-    });
-  }
-
-  if (slotsWrap) {
-    slotsWrap.addEventListener('click', function (e) {
-      var btn = e.target.closest('.ld-slot');
-      if (!btn) return;
-      pick(slotsWrap, 'ld-slot', btn);
-      chosenSlot = btn.dataset.slot;
-      syncMessage();
-    });
-  }
-
-  /* Quick questions append rather than replace: asking two is normal. */
-  form.querySelectorAll('.ld-quick-chip').forEach(function (chip) {
-    chip.addEventListener('click', function () {
-      var q = chip.dataset.ask;
-      if (message.value.indexOf(q) !== -1) return;
-      message.value = (message.value ? message.value.replace(/\s*$/, '\n') : '') + q;
-      chip.classList.add('is-on');
-      message.focus();
-      message.setSelectionRange(message.value.length, message.value.length);
-    });
-  });
-
-  /* The tour button is the same submit as the send button; it just insists on
-     a day first, so the owner never gets "I want a tour" with no date. */
-  var tourBtn = document.getElementById('ld-tour-btn');
-  if (tourBtn) {
-    tourBtn.addEventListener('click', function (e) {
-      if (chosenDay) return;
-      e.preventDefault();
-      daysWrap.classList.add('is-asking');
-      daysWrap.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      setTimeout(function () { daysWrap.classList.remove('is-asking'); }, 1600);
-    });
-  }
-})();
-</script>
+{% include 'listings/_tour_rail_script.html' %}
 
 {# ── LIVE CHAT PANEL ── #}
 {% if user.is_authenticated and user != listing.owner %}
