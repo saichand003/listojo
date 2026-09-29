@@ -8362,3 +8362,36 @@ button.ld-cta-ghost { cursor: pointer; }
   .results-bar-chips .quality-chips-row { flex-wrap: nowrap; }
   .results-bar-chips .quality-chip, .results-filter { flex-shrink: 0; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE PASS — listing and community detail (≤760px)
+   Two rows of big gallery tiles doubled the scroll before the listing
+   began; highlights, amenities and policies stacked one per full row; the
+   terms line wrapped its "•" separators onto lines of their own; the share
+   button dropped under the chips. Photos themselves are unchanged.
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+  .bento-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: 64px; }
+  /* Sits on the main photo's corner, clear of the thumbnail row (64px + gap). */
+  .bento:not(.bento-solo) .bento-actions { right: .75rem; bottom: calc(64px + .5rem + .75rem); }
+  .bento-action { padding: .35rem .6rem; font-size: .75rem; }
+  /* The page title sits right under the gallery; on a phone the caption only collides with the photo button. */
+  .bento-caption { display: none; }
+
+  .ld-top { flex-wrap: nowrap; align-items: flex-start; }
+  .ld-top-chips { flex: 1 1 auto; }
+
+  .ld-flat .ld-terms-row { flex-direction: column; align-items: flex-start; gap: .3rem; }
+  .ld-flat .ld-term + .ld-term::before { content: none; }
+  .ld-flat .ld-terms-aside { text-align: left; }
+  .ld-flat .ld-terms-top { align-items: flex-start; }
+
+  .ld-highlight-grid, .ld-amen-grid, .cd-policies { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+  .ld-amen-tile { padding: var(--sp-3); gap: .5rem; }
+  .ld-amen-ico { width: 32px; height: 32px; }
+  .ld-amen-name { font-size: .8125rem; }
+  .cd-policies li { padding: .6rem; font-size: .75rem; }
+  .cd-policy-ico { display: none; }
+  .ld-sec-title, .nb-title { font-size: 1.25rem; }
+  .nb-card { padding: var(--sp-4); }
+}
