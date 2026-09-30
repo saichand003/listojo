@@ -240,14 +240,14 @@ function dismissAgentCta() {
 
 {# ── Resume saved search banner ── #}
 {% if saved_searches %}
-<div style="margin-bottom:1.25rem;display:flex;flex-direction:column;gap:.65rem;">
+<div id="saved-search-banner" style="margin-bottom:1.25rem;display:flex;flex-direction:column;gap:.65rem;">
   {% for ss in saved_searches %}
   <div style="background:{% if ss.search_type == 'rent' %}#e4f5ee{% else %}#eff6ff{% endif %};border:1.5px solid {% if ss.search_type == 'rent' %}#8dcbb5{% else %}#bfdbfe{% endif %};border-radius:14px;padding:.9rem 1.2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
     <div style="display:flex;align-items:center;gap:.75rem;">
       <span style="font-size:1.4rem;">{% if ss.search_type == 'rent' %}🔑{% else %}🏠{% endif %}</span>
       <div>
         <div style="font-weight:700;font-size:.92rem;color:{% if ss.search_type == 'rent' %}#0f4d32{% else %}#1e3a5f{% endif %};">
-          Welcome back! Your {{ ss.get_search_type_display }} search is saved.
+          {% if just_logged_in %}Welcome back! {% endif %}Your {{ ss.get_search_type_display|lower }} search is saved.
         </div>
         <div style="font-size:.8rem;color:{% if ss.search_type == 'rent' %}#7ecbaa{% else %}#4b7ab3{% endif %};margin-top:.1rem;color:{% if ss.search_type == 'rent' %}#155e40{% else %}#1A5DD4{% endif %};">
           {{ ss.summary_label }}
@@ -257,9 +257,22 @@ function dismissAgentCta() {
     <div style="display:flex;gap:.6rem;flex-shrink:0;align-items:center;">
       <a href="{% url 'listing_list' %}?{{ ss.as_url_params }}" style="padding:.4rem 1.1rem;border-radius:999px;background:{% if ss.search_type == 'rent' %}var(--accent){% else %}var(--primary){% endif %};color:#fff;font-size:.82rem;font-weight:700;text-decoration:none;white-space:nowrap;">Resume search →</a>
       <a href="{% url 'guided_search' %}" style="padding:.4rem .85rem;border-radius:999px;border:1.5px solid {% if ss.search_type == 'rent' %}#8dcbb5{% else %}#bfdbfe{% endif %};color:{% if ss.search_type == 'rent' %}#155e40{% else %}#1A5DD4{% endif %};font-size:.82rem;font-weight:600;text-decoration:none;white-space:nowrap;">Update</a>
+      <button type="button" onclick="document.getElementById('saved-search-banner').style.display='none';try{sessionStorage.setItem('lj_saved_dismissed','1')}catch(e){}" style="padding:.4rem .7rem;border-radius:999px;background:transparent;border:0;color:var(--muted);font-size:.82rem;font-weight:600;cursor:pointer;">Dismiss</button>
     </div>
   </div>
   {% endfor %}
+</div>
+{% if not just_logged_in %}<script>try{if(sessionStorage.getItem('lj_saved_dismissed')){document.getElementById('saved-search-banner').style.display='none';}}catch(e){}</script>{% endif %}
+{% endif %}
+
+{# ── Signed-out visitor finished a guided search: say how to keep it ── #}
+{% if search_awaiting_signin and fmm_mode %}
+<div class="save-search-prompt">
+  <div>
+    <p class="save-search-prompt-title">Want to keep this search?</p>
+    <p class="save-search-prompt-sub">Sign in and we'll save it, and alert you when new listings match.</p>
+  </div>
+  <a class="card-btn-primary" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Sign in to save</a>
 </div>
 {% endif %}
 

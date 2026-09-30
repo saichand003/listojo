@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 @receiver(user_logged_in)
 def stamp_fresh_login(sender, request, user, **kwargs):
     request.session['show_saved_search_banner'] = True
+    # A guided search finished while signed out is saved now.
+    from listings.services.saved_searches import save_pending
+    save_pending(request, user)
 
 
 @receiver(pre_save, sender=Listing)

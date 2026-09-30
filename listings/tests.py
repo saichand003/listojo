@@ -2190,3 +2190,48 @@ class MatchScoreTests(TestCase):
             'max_price': '1500', 'next': 'https://evil.example.com/',
         })
         self.assertEqual(response['Location'], reverse('listing_list'))
+
+
+class SavedSearchVisibilityTests(TestCase):
+    """A finished guided search is kept, and the visitor can find it again."""
+
+    GUIDED = {'category': 'rentals', 'city': 'Irving', 'max_price': '2000', 'bedrooms': '2'}
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='saver', password='pw', email='saver@example.com')
+
+    def test_signed_out_search_is_saved_when_they_sign_in(self):
+        from django.contrib.auth.signals import user_logged_in
+        from listings.models import SavedSearch
+        self.client.post(reverse('guided_search'), self.GUIDED)
+        self.assertFalse(SavedSearch.objects.exists())
+
+        # The answers wait in the session; signing in fires user_logged_in,
+        # which saves them.
+        session = self.client.session
+        self.assertEqual(session['gs_pending_search']['city'], 'Irving')
+        user_logged_in.send(sender=User, request=mock.Mock(session=session), user=self.user)
+        self.assertNotIn('gs_pending_search', session)
+
+        search = SavedSearch.objects.get(user=self.user)
+        self.assertEqual(search.city, 'Irving')
+        self.assertEqual(search.bedrooms, 2)
+        self.assertEqual(int(search.max_budget), 2000)
+
+    def test_signed_out_results_offer_sign_in_to_save(self):
+        self.client.post(reverse('guided_search'), self.GUIDED)
+        response = self.client.get(reverse('listing_list'), {'fmm': '1', **self.GUIDED})
+        self.assertContains(response, 'Sign in to save')
+
+    def test_saved_search_shows_on_every_browse_not_only_after_login(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse('guided_search'), self.GUIDED)
+        for _ in range(2):
+            response = self.client.get(reverse('listing_list'))
+            self.assertContains(response, 'search is saved')
+
+    def test_guided_search_starts_with_nothing_chosen(self):
+        html = self.client.get(reverse('guided_search')).content.decode()
+        self.assertNotIn('room-card sel" id="rc-whole"', html)
+        self.assertRegex(html, r'<input id="max_price"(?![^>]*value=)[^>]*>')
+        self.assertIn("var roomType = '';", html)

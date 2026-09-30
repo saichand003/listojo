@@ -979,10 +979,11 @@ class SavedSearch(models.Model):
 
     def as_url_params(self) -> str:
         from urllib.parse import urlencode
-        params = {
-            'fmm': '1',
-            'category': 'rentals' if self.search_type == 'rent' else 'properties',
-        }
+        params = {'fmm': '1'}
+        # A room can be listed under Rentals or Roommates, so a room search
+        # filters on the space type alone, as the guided search does.
+        if self.accommodation_type != 'room':
+            params['category'] = 'rentals' if self.search_type == 'rent' else 'properties'
         if self.city:              params['city'] = self.city
         if self.max_budget:        params['max_price'] = str(int(self.max_budget))
         if self.bedrooms:          params['bedrooms'] = str(self.bedrooms)

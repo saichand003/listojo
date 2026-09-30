@@ -6622,6 +6622,17 @@ footer {
 .match-sheet-actions { display: flex; justify-content: flex-end; }
 .match-sheet-actions .card-btn-primary { width: 100%; justify-content: center; min-height: 42px; }
 
+.save-search-prompt {
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem; padding: .85rem 1.2rem;
+  border: 1.5px solid var(--primary-soft-2); border-radius: 14px;
+  background: var(--primary-soft);
+}
+.save-search-prompt-title { margin: 0; font-weight: 700; font-size: .92rem; color: var(--text); }
+.save-search-prompt-sub { margin: .12rem 0 0; font-size: .8rem; color: var(--text-2); }
+.save-search-prompt .card-btn-primary { white-space: nowrap; text-decoration: none; }
+
 .match-prefs-note { margin: 0 0 .75rem; font-size: .8rem; color: var(--muted); }
 
 /* Detail page: offer the sheet where the match module would be. */

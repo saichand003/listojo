@@ -249,9 +249,9 @@
       <div class="gs-card-label">Step 2 <span aria-hidden="true">&middot;</span> Occupancy model</div>
       <div id="room-q-rent">
         <h2>What type of space do you need?</h2>
-        <p class="gs-sub">We'll match you with listings that fit your living situation.</p>
+        <p class="gs-sub">Pick one, or skip to see both.</p>
         <div class="room-grid">
-          <div class="room-card sel" id="rc-whole" onclick="selectRoom('whole')">
+          <div class="room-card" id="rc-whole" onclick="selectRoom('whole')">
             <span class="rc-icon">🏠</span>
             <div><div class="rc-title">Entire place</div><div class="rc-sub">A whole apartment or house to yourself</div></div>
           </div>
@@ -376,7 +376,7 @@
         <div style="margin-top:16px;display:flex;gap:12px;align-items:center">
           <input id="min_price" class="gs-input" placeholder="Min $ (optional)" type="number" min="0" style="flex:1">
           <span class="gs-sep">to</span>
-          <input id="max_price" class="gs-input" placeholder="Max $" type="number" min="0" style="flex:1" value="3000">
+          <input id="max_price" class="gs-input" placeholder="Max $" type="number" min="0" style="flex:1">
         </div>
       </div>
       <div class="gs-group" style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px;">
@@ -598,8 +598,11 @@
 
 <script>
 var TOTAL_STEPS = 8;
-var rentBuy = 'rent';
-var roomType = 'whole';
+// Nothing is chosen until the visitor chooses it: the live rail reports these
+// as "what you've told us" and filters on them, so a default here is an
+// answer the visitor never gave.
+var rentBuy = '';
+var roomType = '';
 var buyPurpose = 'primary';
 var selectedPriority = '';
 var selectedUrgency = 'no_hurry';
@@ -629,6 +632,12 @@ function goStep(n) {
     li.classList.toggle('is-active', p === phase);
     if (p === phase) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
   });
+  // Moving past the budget step accepts the budget the slider is showing.
+  var maxEl = document.getElementById('max_price');
+  if (n > 5 && rentBuy && !maxEl.value) {
+    maxEl.value = document.getElementById('budget_slider').value;
+    maxEl.dispatchEvent(new Event('input', {bubbles: true}));
+  }
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
@@ -650,21 +659,21 @@ function selectRentBuy(val) {
     document.getElementById('budget_slider').step = '10000';
     document.getElementById('budget_slider').value = '400000';
     document.getElementById('budget_disp').textContent = '$400,000';
-    document.getElementById('max_price').value = '400000';
     document.getElementById('lease-group').style.display = 'none';
   } else {
     document.getElementById('budget_slider').max = '10000';
     document.getElementById('budget_slider').step = '50';
     document.getElementById('budget_slider').value = '3000';
     document.getElementById('budget_disp').textContent = '$3,000';
-    document.getElementById('max_price').value = '3000';
     document.getElementById('lease-group').style.display = '';
   }
   goStep(2);
 }
 
 function selectRoom(val) {
-  roomType = val;
+  // Tapping the chosen card again clears it: no preference, show both.
+  roomType = roomType === val ? '' : val;
+  val = roomType;
   document.getElementById('rc-whole').classList.toggle('sel', val === 'whole');
   document.getElementById('rc-room').classList.toggle('sel', val === 'room');
 }
@@ -729,7 +738,7 @@ function submitSearch() {
     fields.accommodation_type = 'room';
   } else {
     fields.category = 'rentals';
-    fields.accommodation_type = 'whole';
+    if (roomType === 'whole') fields.accommodation_type = 'whole';
   }
 
   var typeGroup = rentBuy === 'buy' ? '#type-buy-group' : '#type-group';
@@ -866,7 +875,10 @@ if (GS_MODE === 'rent' || GS_MODE === 'buy') {
     // place is Rentals minus single rooms. Same mapping as submitSearch().
     if (rentBuy === 'buy') f.category = 'properties';
     else if (roomType === 'room') f.accommodation_type = 'room';
-    else if (rentBuy === 'rent') { f.category = 'rentals'; f.accommodation_type = 'whole'; }
+    else if (rentBuy === 'rent') {
+      f.category = 'rentals';
+      if (roomType === 'whole') f.accommodation_type = 'whole';
+    }
 
     var bedPill = document.querySelector('#beds-group .tag-pill.sel');
     if (bedPill && bedPill.dataset.val) f.bedrooms = bedPill.dataset.val;

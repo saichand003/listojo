@@ -18,7 +18,7 @@ from datetime import timedelta, date
 from listojo.services.notifications import send_listing_inquiry_email
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Community, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry, SavedSearch
-from listings.services import match_prefs
+from listings.services import match_prefs, saved_searches
 from listings.services.amenities import PICKER_GROUPS
 from listings.services.match_prefs import resolve_match_prefs
 from listings.services.matching import match_band
@@ -171,14 +171,20 @@ def listing_list(request):
 
     context['show_agent_cta'] = bool(request.session.get('gs_lead_id'))
 
-    # Resume banner: only on the first page load after a fresh login
-    just_logged_in = request.session.pop('show_saved_search_banner', False)
-    if request.user.is_authenticated and just_logged_in and not request.GET.get('fmm'):
+    # Saved searches stay one click away on every plain browse page (the
+    # results of a search already show that search). "Welcome back" is only
+    # for the first page after signing in.
+    context['just_logged_in'] = request.session.pop('show_saved_search_banner', False)
+    if request.user.is_authenticated and not request.GET.get('fmm'):
         context['saved_searches'] = list(
             SavedSearch.objects.filter(user=request.user).order_by('search_type')
         )
     else:
         context['saved_searches'] = []
+    context['search_awaiting_signin'] = (
+        not request.user.is_authenticated
+        and bool(request.session.get(saved_searches.PENDING_KEY))
+    )
 
     return render(request, 'listings/listing_list.html', context)
 
@@ -233,25 +239,13 @@ def guided_search(request):
         if answers.has_criteria:
             match_prefs.remember(request, answers)
 
-        # Persist guided search so returning users can resume it
+        # Persist guided search so returning users can resume it. A signed-out
+        # visitor's answers wait in the session and are saved when they sign in.
+        answers = saved_searches.answers_from_post(request.POST)
         if request.user.is_authenticated:
-            search_type = 'buy' if category == 'properties' else 'rent'
-            SavedSearch.objects.update_or_create(
-                user=request.user,
-                search_type=search_type,
-                defaults={
-                    'city': city,
-                    'max_budget': parse_budget(max_budget),
-                    'bedrooms': beds_int,
-                    'property_type': property_type,
-                    'accommodation_type': request.POST.get('accommodation_type', '').strip(),
-                    'amenities': amenities,
-                    'available_by': available_by,
-                    'priority': priority,
-                    'urgency': urgency,
-                    'monthly_income': parse_budget(income_raw),
-                },
-            )
+            saved_searches.save_answers(request.user, answers)
+        else:
+            saved_searches.hold_for_signin(request, answers)
 
         # Build redirect to listing list preserving all search params
         from urllib.parse import urlencode
