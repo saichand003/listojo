@@ -8591,3 +8591,35 @@ button.ld-cta-ghost { cursor: pointer; }
   #cl-sec-1 .cl-cat-label { font-size: .8125rem; }
   .cl-cat-sub { font-size: .6875rem; }
 }
+
+/* ── Landlord performance: how renters see your listings ── */
+.ins-title { font-family: var(--font-head); font-size: 1.05rem; font-weight: 700; color: var(--text); margin: 0 0 .75rem; }
+.ins-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.ins-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.1rem; min-width: 0; }
+.ins-head { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+.ins-name { font-weight: 700; font-size: .9rem; color: var(--text); text-decoration: none; min-width: 0; }
+.ins-name:hover { color: var(--primary); }
+.ins-strength { display: flex; flex-direction: column; align-items: flex-end; font-weight: 800; font-size: 1.05rem; color: var(--text); line-height: 1.1; flex-shrink: 0; }
+.ins-strength small { font-size: .65rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.ins-meter { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; margin: .6rem 0 .2rem; }
+.ins-meter i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.ins-k { margin: .85rem 0 .35rem; font-family: var(--font-head); font-size: .6875rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-2); }
+.ins-todo, .ins-demand { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
+.ins-todo li { display: grid; gap: .1rem; font-size: .8125rem; }
+.ins-todo b { color: var(--text); }
+.ins-todo span { color: var(--muted); line-height: 1.4; }
+.ins-edit { display: inline-block; margin-top: .6rem; font-size: .8125rem; font-weight: 700; color: var(--primary); text-decoration: none; }
+.ins-done { margin: .6rem 0 0; font-size: .8125rem; color: var(--accent-dk); }
+:root.dark .ins-done { color: var(--accent); }
+.ins-demand li { font-size: .8125rem; line-height: 1.4; padding-left: 1rem; position: relative; color: var(--text-2); }
+.ins-demand li::before { content: ''; position: absolute; left: 0; top: .45em; width: .45rem; height: .45rem; border-radius: 50%; background: var(--border-2); }
+.ins-demand li.ins-unmet::before { background: var(--featured); }
+.ins-demand li.ins-met::before { background: var(--accent); }
+.ins-foot, .ins-wait { margin: .5rem 0 0; font-size: .75rem; color: var(--muted); line-height: 1.45; }
+
+/* ── Inquiry: how the home fits the renter who wrote in ── */
+.lead-fit { margin: .5rem 0; padding: .55rem .75rem; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); font-size: .8125rem; color: var(--text-2); }
+.lead-fit-head { margin: 0; color: var(--text); }
+.lead-fit-line { margin: .2rem 0 0; line-height: 1.45; }
+.lead-fit-line span { font-weight: 700; color: var(--muted); margin-right: .25rem; }
+

@@ -71,14 +71,42 @@
     {% endwith %}
   </div>
 
-  <div style="background:#EBF3FF;border:1px solid rgba(26,93,212,.2);border-radius:12px;padding:1rem 1.25rem">
-    <div style="font-weight:700;color:var(--primary);margin-bottom:.5rem;font-size:.9rem">💡 Tips to improve performance</div>
-    <div style="font-size:.8rem;color:#1e3a6e;display:flex;gap:20px;flex-wrap:wrap;line-height:1.6">
-      <span>📸 Add 10+ photos to each listing</span>
-      <span>🏷️ Use tags like pet-friendly, parking</span>
-      <span>✅ Fill in all details for better search ranking</span>
-      <span>💬 Respond to inquiries within 24 hours</span>
-    </div>
+  {# How renters see each listing: what to fix, and what renters who looked were after. #}
+  <h2 class="ins-title">How renters see your listings</h2>
+  <div class="ins-grid">
+    {% for item in items %}
+    <section class="ins-card">
+      <header class="ins-head">
+        <a href="{% url item.url_name item.pk %}" class="ins-name">{{ item.title|truncatechars:48 }}</a>
+        <span class="ins-strength" title="Listing strength">{{ item.strength.pct }}%<small>strength</small></span>
+      </header>
+      <div class="ins-meter"><i style="width:{{ item.strength.pct }}%"></i></div>
+
+      {% if item.strength.todo %}
+      <p class="ins-k">Next steps</p>
+      <ul class="ins-todo">
+        {% for c in item.strength.todo|slice:":3" %}
+        <li><b>{{ c.action }}</b><span>{{ c.why }}</span></li>
+        {% endfor %}
+      </ul>
+      {% if item.kind == 'listing' %}<a class="ins-edit" href="{% url 'edit_listing' item.pk %}">Edit listing</a>{% else %}<a class="ins-edit" href="{% url 'edit_community' item.pk %}">Edit community</a>{% endif %}
+      {% else %}
+      <p class="ins-done">Everything renters look for is filled in.</p>
+      {% endif %}
+
+      <p class="ins-k">What renters who viewed wanted</p>
+      {% if item.demand.ready %}
+      <ul class="ins-demand">
+        {% for line in item.demand.unmet %}<li class="ins-unmet">{{ line }}</li>{% endfor %}
+        {% if item.demand.budget_note %}<li class="ins-unmet">{{ item.demand.budget_note }}</li>{% endif %}
+        {% for line in item.demand.met %}<li class="ins-met">{{ line }}</li>{% endfor %}
+      </ul>
+      <p class="ins-foot">From {{ item.demand.renters }} renters who viewed with their preferences set.</p>
+      {% else %}
+      <p class="ins-wait">Shown once {{ item.demand.still_needed }} more renter{{ item.demand.still_needed|pluralize }} with preferences set {{ item.demand.still_needed|pluralize:"has,have" }} viewed this listing, so the numbers mean something.</p>
+      {% endif %}
+    </section>
+    {% endfor %}
   </div>
 
   {% else %}

@@ -6,6 +6,7 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from listings.models import Community, Listing, ListingInquiry
+from listings.services.landlord_insights import community_strength, listing_strength, renter_demand
 from listings.services.visibility import active_listings
 
 
@@ -31,6 +32,7 @@ def owner_listing_overview(user) -> dict:
 def owner_performance(user) -> dict:
     listings = (
         active_listings(Listing.objects.filter(owner=user))
+        .prefetch_related('images')
         .annotate(
             inquiry_count=Count('inquiries', distinct=True),
             save_count=Count('favourited_by', distinct=True),
@@ -39,6 +41,7 @@ def owner_performance(user) -> dict:
     )
     communities = (
         Community.objects.filter(owner=user)
+        .prefetch_related('images', 'floor_plans__units')
         .annotate(
             view_count=Count('events', filter=Q(events__event_type='click'), distinct=True),
             inquiry_count=Count('events', filter=Q(events__event_type='tour_request'), distinct=True),
@@ -75,6 +78,8 @@ def owner_performance(user) -> dict:
             'inquiry_count': listing.inquiry_count,
             'save_count': listing.save_count,
             'url_name': 'listing_detail',
+            'strength': listing_strength(listing),
+            'demand': renter_demand(listing),
         }
         for listing in listings
     ]
@@ -90,6 +95,8 @@ def owner_performance(user) -> dict:
             'inquiry_count': community.inquiry_count,
             'save_count': community.save_count,
             'url_name': 'community_detail',
+            'strength': community_strength(community),
+            'demand': renter_demand(community),
         }
         for community in communities
     ])

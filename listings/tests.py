@@ -2340,3 +2340,89 @@ class FitReportTests(TestCase):
         self.assertContains(response, 'Good to know')
         self.assertNotContains(response, 'The catch')
         self.assertContains(response, 'Based on 3 of 7 factors')
+
+
+class LandlordInsightTests(TestCase):
+    """The landlord half of the Fit Report: listing strength, renter demand, fit on each lead."""
+
+    def setUp(self):
+        self.owner = User.objects.create_user(username='ll', password='pw', email='ll@example.com')
+        self.listing = Listing.objects.create(
+            owner=self.owner, title='Two bed', description='Short.', category='rentals', city='Irving',
+            price=Decimal('1700'), price_unit='mo', bedrooms=2, status='active', tags='pet-friendly, parking')
+
+    def _views(self, wants_list):
+        from listings.models import UserListingEvent
+        for i, wants in enumerate(wants_list):
+            UserListingEvent.objects.create(session_key=f's{i}', listing=self.listing,
+                                            event_type='click', user_features_snapshot=wants)
+
+    def test_strength_lists_landlord_fixable_gaps(self):
+        from listings.services.landlord_insights import listing_strength
+        strength = listing_strength(self.listing)
+        todo = {c.key for c in strength.todo}
+        self.assertEqual(todo, {'photos', 'amenities', 'address', 'sqft', 'description'})
+        self.assertEqual(strength.next_step.action, 'Add photos (aim for 5)')
+        self.assertEqual(strength.pct, 0)
+
+    def test_demand_waits_for_enough_renters(self):
+        from listings.services.landlord_insights import renter_demand
+        self._views([{'max_price': '1500', 'tags': 'washer/dryer'}] * 4)
+        demand = renter_demand(self.listing)
+        # Four events from four sessions; still under the minimum.
+        self.assertFalse(demand.ready)
+        self.assertEqual(demand.still_needed, 6)
+
+    def test_demand_reports_shared_wants_only(self):
+        from listings.services.landlord_insights import renter_demand
+        wants = ([{'max_price': '1500', 'tags': 'washer/dryer,pet-friendly'}] * 7
+                 + [{'max_price': '2000', 'tags': 'pool'}] * 2
+                 + [{'max_price': '2000', 'tags': 'parking'}] * 3)
+        self._views(wants)
+        demand = renter_demand(self.listing)
+        self.assertTrue(demand.ready)
+        self.assertEqual(demand.unmet, ["7 of 12 wanted washer/dryer, which you don't list"])
+        # Only two renters wanted a pool: too few to report.
+        self.assertNotIn('pool', ' '.join(demand.unmet + demand.met))
+        self.assertIn('7 of 12 wanted pet-friendly, and you list it', demand.met)
+        self.assertEqual(demand.budget_note, '7 of 12 had a budget below your price of $1,700')
+
+    def test_listing_view_records_the_renters_preferences(self):
+        from listings.models import UserListingEvent
+        self.client.post(reverse('match_prefs_update'), {'max_price': '1800', 'bedrooms': '2',
+                                                        'tags': ['washer/dryer']})
+        self.client.get(reverse('listing_detail', args=[self.listing.pk]))
+        snap = UserListingEvent.objects.filter(listing=self.listing).latest('created_at').user_features_snapshot
+        self.assertEqual(snap['max_price'], '1800')
+        self.assertEqual(snap['tags'], 'washer/dryer')
+
+    def test_inquiry_carries_the_renters_fit_to_the_landlord(self):
+        self.client.post(reverse('match_prefs_update'), {'max_price': '2000', 'bedrooms': '2',
+                                                        'tags': ['pet-friendly', 'washer/dryer']})
+        self.client.post(reverse('listing_detail', args=[self.listing.pk]), {
+            'name': 'Ana', 'email': 'ana@example.com', 'phone': '', 'message': 'Is it available?'})
+        inquiry = self.listing.inquiries.get()
+        fit = inquiry.fit_snapshot
+        self.assertEqual(fit['wants'], ['Budget $2,000/mo', '2 bed', 'Needs pet-friendly, washer/dryer'])
+        self.assertEqual(fit['differs'], ["Doesn't list: washer/dryer"])
+        self.assertEqual(fit['fits'], 'Fits 2 of 3 of their criteria')
+        body = mail.outbox[-1].body
+        self.assertIn('How your home fits this renter', body)
+        self.assertIn("Differs: Doesn't list: washer/dryer", body)
+        self.client.force_login(self.owner)
+        page = self.client.get(reverse('inquiries_overview'))
+        self.assertContains(page, 'Fits 2 of 3 of their criteria')
+        self.assertContains(page, 'Needs pet-friendly, washer/dryer')
+
+    def test_inquiry_without_preferences_has_no_fit(self):
+        self.client.post(reverse('listing_detail', args=[self.listing.pk]), {
+            'name': 'Bo', 'email': 'bo@example.com', 'phone': '', 'message': 'Hi'})
+        self.assertEqual(self.listing.inquiries.get().fit_snapshot, {})
+        self.assertNotIn('How your home fits', mail.outbox[-1].body)
+
+    def test_performance_page_shows_how_renters_see_the_listing(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse('performance'))
+        self.assertContains(response, 'How renters see your listings')
+        self.assertContains(response, 'Add photos (aim for 5)')
+        self.assertContains(response, 'more renters with preferences set have viewed')

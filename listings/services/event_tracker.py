@@ -52,9 +52,29 @@ def _user_snapshot(request):
 
     for key in ('category', 'city', 'min_price', 'max_price',
                 'bedrooms', 'property_type', 'tags', 'available_by'):
-        val = request.GET.get(key, '') or request.session.get(f'gs_{key}', '')
+        val = request.GET.get(key, '')
         if val:
             snapshot[key] = str(val)
+
+    # The renter's stated preferences — the same ones their match scores use
+    # (guided search, the match-score sheet, or a saved search). Landlords'
+    # renter-demand insights are built from these.
+    try:
+        from listings.services.match_prefs import resolve_match_prefs
+        prefs = resolve_match_prefs(request)
+    except Exception:
+        prefs = None
+    if prefs:
+        if prefs.max_price:
+            snapshot.setdefault('max_price', str(int(prefs.max_price)))
+        if prefs.bedrooms is not None:
+            snapshot.setdefault('bedrooms', str(prefs.bedrooms))
+        if prefs.tags:
+            snapshot.setdefault('tags', ','.join(prefs.tags))
+        if prefs.avail_date:
+            snapshot.setdefault('available_by', prefs.avail_date.isoformat())
+        if prefs.priority:
+            snapshot.setdefault('priority', prefs.priority)
 
     lead_id = request.session.get('gs_lead_id')
     if lead_id:
