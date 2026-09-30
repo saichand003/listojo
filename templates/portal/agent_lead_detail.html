@@ -27,7 +27,7 @@
   .pref-label { font-size:.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.2rem; }
   .pref-value { font-size:.97rem; font-weight:700; color:#0f1c35; }
   .must-haves { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1rem; padding-top:1rem; border-top:1px solid #f1f5f9; }
-  .must-chip { padding:.32rem .85rem; border-radius:999px; font-size:.77rem; font-weight:600; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+  .must-chip { padding:.32rem .85rem; border-radius:999px; font-size:.77rem; font-weight:600; background:#eff6ff; color:#154BB0; border:1px solid #bfdbfe; }
   .pref-section-label { font-size:.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.65rem; margin-top:.1rem; }
 
   /* ── Curated shortlist ── */
@@ -212,7 +212,7 @@
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.1rem;">
               <a href="{% url 'listing_detail' item.listing.pk %}" target="_blank" class="listing-match-name" style="text-decoration:none;color:#0f1c35;">{{ item.listing.title|truncatechars:44 }}</a>
-              <span class="match-pct-badge {% if item.match_pct >= 88 %}match-high{% elif item.match_pct >= 78 %}match-med{% else %}match-low{% endif %}">{{ item.match_pct }}% match</span>
+              {% if item.match_pct is not None %}<span class="match-pct-badge {% if item.match_pct >= 85 %}match-high{% elif item.match_pct >= 65 %}match-med{% else %}match-low{% endif %}">{{ item.match_pct }}% match</span>{% endif %}
             </div>
             <div class="listing-match-meta">
               {% if item.listing.price %}${{ item.listing.price|floatformat:0 }}/mo{% endif %}

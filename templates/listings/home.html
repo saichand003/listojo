@@ -166,7 +166,7 @@
 .home-city-pill:hover {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(37,99,235,.06);
+  background: rgba(26,93,212,.06);
 }
 
 /* ── Landlord CTA hero ────────────────────────────────────── */
@@ -289,10 +289,17 @@
           <div class="hero-field">
             <span class="hero-field-body">
               <label class="hero-field-label" for="hero-budget">Max Budget</label>
+              {% comment %}
+                Starts at "Any budget": a preset cap filtered searches nobody
+                asked to filter, and on Homes for Sale it capped $300k homes
+                at $2,500, so the search came back empty. The options switch
+                between monthly rent and purchase price with the tab (script
+                at the end of this page).
+              {% endcomment %}
               <select class="hero-field-select" id="hero-budget" name="max_price">
                 <option value="">Any budget</option>
                 <option value="1500">$1,500/mo</option>
-                <option value="2500" selected>$2,500/mo</option>
+                <option value="2500">$2,500/mo</option>
                 <option value="4000">$4,000/mo</option>
               </select>
             </span>
@@ -303,9 +310,9 @@
               <label class="hero-field-label" for="hero-beds">Bedrooms</label>
               <select class="hero-field-select" id="hero-beds" name="bedrooms">
                 <option value="">Any beds</option>
-                <option value="1">1+ Bed</option>
-                <option value="2">2+ Beds</option>
-                <option value="3">3+ Beds</option>
+                <option value="1">1 Bed</option>
+                <option value="2">2 Beds</option>
+                <option value="3">3 Beds</option>
               </select>
             </span>
           </div>
@@ -331,7 +338,7 @@
         <a href="{% url 'listing_list' %}?category=roommates" class="hero-chip">Rooms</a>
         <a href="{% url 'listing_list' %}?bedrooms=1" class="hero-chip">1 Bed</a>
         <a href="{% url 'listing_list' %}?bedrooms=2" class="hero-chip">2 Bed</a>
-        <a href="{% url 'listing_list' %}?bedrooms=3" class="hero-chip">3+ Bed</a>
+        <a href="{% url 'listing_list' %}?bedrooms=3" class="hero-chip">3 Bed</a>
         <a href="{% url 'listing_list' %}?max_price=1500" class="hero-chip">Under $1,500</a>
         <a href="{% url 'listing_list' %}?max_price=2500" class="hero-chip">Under $2,500</a>
       </div>
@@ -793,6 +800,32 @@
 
   goTo(0);
   startAuto();
+})();
+</script>
+
+<script>
+// Hero budget: monthly rent for Rentals and Rooms, purchase price for Homes
+// for Sale. Rebuilt on every tab change so a rent cap can never be sent with
+// a sale search (that combination returned no results).
+(function () {
+  var select = document.getElementById('hero-budget');
+  var tabs = document.querySelectorAll('.hero-console-tabs input[name="category"]');
+  if (!select || !tabs.length) return;
+  var OPTIONS = {
+    rent: [['', 'Any budget'], ['1500', '$1,500/mo'], ['2500', '$2,500/mo'], ['4000', '$4,000/mo']],
+    buy:  [['', 'Any budget'], ['300000', '$300,000'], ['500000', '$500,000'], ['750000', '$750,000'], ['1000000', '$1,000,000']]
+  };
+  function build(kind) {
+    select.innerHTML = '';
+    OPTIONS[kind].forEach(function (o) {
+      var opt = document.createElement('option');
+      opt.value = o[0]; opt.textContent = o[1];
+      select.appendChild(opt);
+    });
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener('change', function () { build(t.value === 'properties' ? 'buy' : 'rent'); });
+  });
 })();
 </script>
 

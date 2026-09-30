@@ -6,7 +6,8 @@ from datetime import date
 from django.db.models import Case, Count, IntegerField, Q, Value, When
 
 from listings.models import Community, Favourite, Listing
-from listings.services.matching import explain_community_match, explain_match, score_community, score_listing
+from listings.services.match_prefs import MatchPrefs, remember, resolve_match_prefs
+from listings.services.matching import match_badge_class
 from listings.services.visibility import active_listings
 
 
@@ -246,101 +247,86 @@ def _compute_market_stats(params: SearchParams) -> dict:
     }
 
 
-def _score_listings_fmm(listings_qs, params: SearchParams) -> tuple[list, list, dict, dict, dict, dict]:
-    scored = []
-    for listing in list(listings_qs):
-        result = score_listing(
-            listing,
-            max_price=params.max_price_val,
-            requested_tags=params.quality_tags,
-            avail_date=params.avail_date,
-            accommodation_type=params.accommodation_type,
-            property_type=params.property_type,
-            bedrooms=params.bedrooms_int,
-        )
-        scored.append((listing, result.pct, result.reasons, result.tag_hits))
-    scored.sort(key=lambda x: (-x[1], -x[0].featured, x[0].created_at))
+def _prefs_from_params(params: SearchParams) -> MatchPrefs:
+    return MatchPrefs(
+        max_price=params.max_price_val,
+        tags=params.quality_tags,
+        bedrooms=params.bedrooms_int,
+        property_type=params.property_type,
+        accommodation_type=params.accommodation_type,
+        avail_date=params.avail_date,
+        source='your search',
+    )
 
-    exact = [item for item in scored if item[1] >= 50]
-    near = [item for item in scored if item[1] < 50]
-    if not exact and not near:
-        near = scored
-    elif not exact:
+
+def _score_items(items, score_fn, explain_fn) -> dict:
+    """
+    Score each item once and key everything the cards need by pk. Items with
+    no score (nothing to measure) are left out, so the card shows no badge.
+    """
+    out = {'scores': {}, 'classes': {}, 'reasons': {}, 'caveats': {}, 'explanations': {}}
+    for item in items:
+        result = score_fn(item)
+        if result.pct is None:
+            continue
+        out['scores'][item.pk] = result.pct
+        out['classes'][item.pk] = match_badge_class(result.pct)
+        out['reasons'][item.pk] = result.reasons
+        out['caveats'][item.pk] = result.caveats
+        if explain_fn:
+            out['explanations'][item.pk] = explain_fn(item, result.reasons)
+    return out
+
+
+def _score_listings_fmm(listings_qs, prefs: MatchPrefs) -> tuple[list, list, dict]:
+    listings = list(listings_qs)
+    scored = _score_items(listings, prefs.score, prefs.explain)
+    pct = scored['scores']
+    # Featured only breaks ties between equal scores; it never lifts a score.
+    if not pct:
+        # Nothing to measure: no exact/near split to make.
+        return listings, [], scored
+    listings.sort(key=lambda l: (-pct.get(l.pk, 0), -l.featured, l.created_at))
+
+    exact = [l for l in listings if pct.get(l.pk, 0) >= 50]
+    near = [l for l in listings if pct.get(l.pk, 0) < 50]
+    if not exact:
         exact, near = near[:6], near[6:]
-
-    final_listings = [item[0] for item in exact]
-    near_match_listings = [item[0] for item in near[:4]]
-    scores = {item[0].pk: item[1] for item in scored}
-    score_classes = {item[0].pk: 'high' if item[1] >= 85 else 'mid' for item in scored}
-    reasons = {item[0].pk: item[2] for item in scored}
-    explanations = {
-        item[0].pk: explain_match(
-            item[0], item[2],
-            max_price=params.max_price_val,
-            quality_tags=params.quality_tags,
-            accommodation_type=params.accommodation_type,
-            property_type=params.property_type,
-        )
-        for item in scored
-    }
-    return final_listings, near_match_listings, scores, score_classes, reasons, explanations
+    return exact, near[:4], scored
 
 
-def _score_communities_fmm(communities: list, params: SearchParams) -> tuple[list, dict, dict, dict, dict]:
-    scored = []
-    for community in communities:
-        result = score_community(
-            community,
-            max_price=params.max_price_val,
-            requested_tags=params.quality_tags,
-            property_type=params.property_type,
-            bedrooms=params.bedrooms_int,
-        )
-        scored.append((community, result.pct, result.reasons, result.tag_hits))
-    scored.sort(key=lambda x: (-x[1], -x[0].featured, x[0].created_at))
+def _score_communities_fmm(communities: list, prefs: MatchPrefs) -> tuple[list, dict]:
+    scored = _score_items(communities, prefs.score_community, prefs.explain_community)
+    pct = scored['scores']
+    ranked = sorted(communities, key=lambda c: (-pct.get(c.pk, 0), -c.featured, c.created_at))
+    return ranked, scored
 
-    ranked = [item[0] for item in scored]
-    scores = {item[0].pk: item[1] for item in scored}
-    score_classes = {item[0].pk: 'high' if item[1] >= 85 else 'mid' for item in scored}
-    reasons = {item[0].pk: item[2] for item in scored}
-    explanations = {
-        item[0].pk: explain_community_match(
-            item[0], item[2],
-            max_price=params.max_price_val,
-            quality_tags=params.quality_tags,
-            property_type=params.property_type,
-        )
-        for item in scored
-    }
-    return ranked, scores, score_classes, reasons, explanations
+
+def _score_context(listing_scored: dict, community_scored: dict) -> dict:
+    ctx = {}
+    for prefix, scored in (('listing', listing_scored), ('community', community_scored)):
+        ctx[f'{prefix}_scores'] = scored.get('scores', {})
+        ctx[f'{prefix}_score_classes'] = scored.get('classes', {})
+        ctx[f'{prefix}_reasons'] = scored.get('reasons', {})
+        ctx[f'{prefix}_caveats'] = scored.get('caveats', {})
+        ctx[f'{prefix}_explanations'] = scored.get('explanations', {})
+    return ctx
 
 
 def _build_fmm_context(listings_qs, communities: list, params: SearchParams) -> dict:
-    (
-        listings, near_match_listings,
-        listing_scores, listing_score_classes, listing_reasons, listing_explanations,
-    ) = _score_listings_fmm(listings_qs, params)
-
-    (
-        communities, community_scores, community_score_classes,
-        community_reasons, community_explanations,
-    ) = _score_communities_fmm(communities, params)
+    prefs = _prefs_from_params(params)
+    listings, near_match_listings, listing_scored = _score_listings_fmm(listings_qs, prefs)
+    communities, community_scored = _score_communities_fmm(communities, prefs)
 
     market = _compute_market_stats(params)
     avail_display = params.avail_date.strftime('%b %-d') if params.avail_date else params.available_by
 
     return {
+        'prefs': prefs,
         'listings': listings,
         'near_match_listings': near_match_listings,
         'communities': communities,
-        'listing_scores': listing_scores,
-        'listing_score_classes': listing_score_classes,
-        'listing_reasons': listing_reasons,
-        'listing_explanations': listing_explanations,
-        'community_scores': community_scores,
-        'community_score_classes': community_score_classes,
-        'community_reasons': community_reasons,
-        'community_explanations': community_explanations,
+        'scores': _score_context(listing_scored, community_scored),
         'fmm_inputs': {
             'city': params.city,
             'max_price': params.max_price,
@@ -410,9 +396,24 @@ def build_listing_search_context(request) -> dict:
         fmm = _build_fmm_context(listings_qs, communities, params)
         listings = fmm.pop('listings')
         communities = fmm.pop('communities')
+        prefs = fmm.pop('prefs')
+        # So the detail page a card links to scores against the same criteria.
+        if prefs.has_criteria:
+            remember(request, prefs)
+        scores = fmm.pop('scores')
     else:
         fmm = {}
         listings = list(listings_qs)
+        # Browsing keeps its own order; if the visitor has told us what they
+        # want, the cards still show how well each one fits.
+        prefs = resolve_match_prefs(request)
+        if prefs:
+            scores = _score_context(
+                _score_items(listings, prefs.score, None),
+                _score_items(communities, prefs.score_community, None),
+            )
+        else:
+            scores = _score_context({}, {})
 
     fav_ids = set()
     if request.user.is_authenticated:
@@ -444,13 +445,8 @@ def build_listing_search_context(request) -> dict:
         'fmm_inputs': fmm.get('fmm_inputs'),
         'fmm_market': fmm.get('fmm_market'),
         'near_match_listings': fmm.get('near_match_listings', []),
-        'listing_scores': fmm.get('listing_scores', {}),
-        'listing_score_classes': fmm.get('listing_score_classes', {}),
-        'listing_reasons': fmm.get('listing_reasons', {}),
-        'listing_explanations': fmm.get('listing_explanations', {}),
-        'community_scores': fmm.get('community_scores', {}),
-        'community_score_classes': fmm.get('community_score_classes', {}),
-        'community_reasons': fmm.get('community_reasons', {}),
-        'community_explanations': fmm.get('community_explanations', {}),
+        **scores,
+        # Drives the "Get your match score" chip and the sheet's defaults.
+        'match_prefs': prefs if prefs and prefs.has_criteria else None,
         'communities': communities,
     }

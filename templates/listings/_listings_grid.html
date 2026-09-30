@@ -52,8 +52,10 @@
             <div class="card-title-row">
                 <h3><a href="{% url 'community_detail' community.pk %}">{{ community.name }}</a></h3>
                 {% with community_scores|dict_get:community.pk as score %}
-                {% if score %}
+                {% if score != '' %}
                 <span class="match-score-badge match-score-{{ community_score_classes|dict_get:community.pk }}">{{ score }}% match</span>
+                {% elif not match_prefs %}
+                <button type="button" class="match-score-chip" data-match-sheet-open>Get match %</button>
                 {% endif %}
                 {% endwith %}
             </div>
@@ -92,10 +94,11 @@
             <p class="match-explanation">{{ explanation }}</p>
             {% endif %}
             {% endwith %}
-            {% with community_reasons|dict_get:community.pk as reasons %}
-            {% if reasons %}
+            {% with reasons=community_reasons|dict_get:community.pk caveats=community_caveats|dict_get:community.pk %}
+            {% if reasons or caveats %}
             <div class="match-reason-pills">
                 {% for r in reasons %}<span class="match-reason-pill">{{ r }}</span>{% endfor %}
+                {% for c in caveats %}<span class="match-reason-pill match-reason-pill-miss">{{ c }}</span>{% endfor %}
             </div>
             {% endif %}
             {% endwith %}
@@ -177,8 +180,10 @@
             <div class="card-title-row">
                 <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
                 {% with listing_scores|dict_get:listing.pk as score %}
-                {% if score %}
-                <span class="match-score-badge match-score-{{ listing_score_classes|dict_get:listing.pk }}">{{ score }}%</span>
+                {% if score != '' %}
+                <span class="match-score-badge match-score-{{ listing_score_classes|dict_get:listing.pk }}">{{ score }}% match</span>
+                {% elif not match_prefs %}
+                <button type="button" class="match-score-chip" data-match-sheet-open>Get match %</button>
                 {% elif user.is_authenticated %}
                 <button type="button"
                     class="save-pill {% if listing.pk in fav_ids %}save-pill-active{% endif %}"
@@ -244,17 +249,18 @@
             {% endwith %}
 
             {# Why this result is here — the card's one piece of reasoning. #}
-            {% with explanation=listing_explanations|dict_get:listing.pk reasons=listing_reasons|dict_get:listing.pk %}
-            {% if explanation or reasons %}
+            {% with explanation=listing_explanations|dict_get:listing.pk reasons=listing_reasons|dict_get:listing.pk caveats=listing_caveats|dict_get:listing.pk %}
+            {% if explanation or reasons or caveats %}
             <div class="match-factor">
                 <p class="match-factor-head">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9z"/></svg>
                     Match factor
                 </p>
                 {% if explanation %}<p class="match-factor-body">{{ explanation }}</p>{% endif %}
-                {% if reasons %}
+                {% if reasons or caveats %}
                 <div class="match-reason-pills">
                     {% for r in reasons %}<span class="match-reason-pill">{{ r }}</span>{% endfor %}
+                    {% for c in caveats %}<span class="match-reason-pill match-reason-pill-miss">{{ c }}</span>{% endfor %}
                 </div>
                 {% endif %}
             </div>

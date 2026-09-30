@@ -36,7 +36,7 @@ def build_curated(lead: Lead, limit: int = 6) -> list[dict]:
             'caveats': result.caveats,
         })
 
-    curated.sort(key=lambda item: -item['match_pct'])
+    curated.sort(key=lambda item: -(item['match_pct'] or 0))
     return curated[:limit]
 
 

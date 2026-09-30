@@ -3,8 +3,8 @@
 {% block content %}
 
 <style>
-.back-nav-link { display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.18);transition:background .15s,color .15s;margin-bottom:.75rem; }
-.back-nav-link:hover { background:rgba(37,99,235,.18); }
+.back-nav-link { display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;color:var(--primary);text-decoration:none;padding:.45rem .9rem;border-radius:999px;background:rgba(26,93,212,.08);border:1px solid rgba(26,93,212,.18);transition:background .15s,color .15s;margin-bottom:.75rem; }
+.back-nav-link:hover { background:rgba(26,93,212,.18); }
 
 /* ── Owner management bar ── */
 .ld-mgmt { background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
@@ -272,7 +272,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
               {% if unit.get_tags_list %}
               <div style="display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.75rem;">
                 {% for t in unit.get_tags_list|slice:":5" %}
-                <span style="background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.15);border-radius:999px;padding:.2rem .65rem;font-size:.75rem;color:var(--primary);">{{ t }}</span>
+                <span style="background:rgba(26,93,212,.07);border:1px solid rgba(26,93,212,.15);border-radius:999px;padding:.2rem .65rem;font-size:.75rem;color:var(--primary);">{{ t }}</span>
                 {% endfor %}
               </div>
               {% endif %}
@@ -604,7 +604,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                     {{ match.pct }}% match score
                     <span class="ld-match-flag">{{ match.label }}</span>
                   </p>
-                  <p class="ld-match-sub">Scored against {{ match.source }} — budget, must-haves and property type.</p>
+                  <p class="ld-match-sub">Scored against {{ match.source }} — budget, bedrooms and must-haves. <button type="button" class="ld-match-edit" data-match-sheet-open>Change</button></p>
                 </div>
 
                 {# Dial. The arc length is the score, so it cannot disagree with the number beside it. #}
@@ -647,6 +647,11 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
               </div>
               {% endif %}
             </section>
+            {% else %}
+            <div class="ld-match-cta">
+              <p><strong>How well does this fit you?</strong> Answer three questions to see your match score.</p>
+              <button type="button" class="match-score-chip" data-match-sheet-open>Get my match score</button>
+            </div>
             {% endif %}
 
             {# Floor plan image #}
@@ -856,4 +861,5 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
 {# ── Photo viewer for the collage above ── #}
 {% include 'listings/_photo_lightbox.html' %}
 
+{% include 'listings/_match_prefs_sheet.html' %}
 {% endblock %}

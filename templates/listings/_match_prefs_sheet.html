@@ -1,0 +1,73 @@
+{% comment %}
+  "Get your match score" — three questions, kept in the session, so every card
+  and detail page can show a real score instead of one measured against
+  nothing. Any element with [data-match-sheet-open] opens it; the listener is
+  delegated so cards loaded over XHR work too.
+
+  Expects: match_prefs (MatchPrefs or None) for the defaults.
+{% endcomment %}
+{% with initial=match_prefs.as_form_initial %}
+<dialog class="match-sheet" id="match-sheet" aria-labelledby="match-sheet-title">
+  <form method="post" action="{% url 'match_prefs_update' %}" class="match-sheet-form">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <div class="match-sheet-head">
+      <h2 id="match-sheet-title">{% if match_prefs %}Your match preferences{% else %}Get your match score{% endif %}</h2>
+      <button type="button" class="match-sheet-close" data-match-sheet-close aria-label="Close">&times;</button>
+    </div>
+    <p class="match-sheet-sub">Three quick answers. Every listing then shows how well it fits, and why.</p>
+
+    <label class="match-sheet-field">
+      <span>Monthly budget</span>
+      <span class="match-sheet-money"><i aria-hidden="true">$</i>
+        <input type="number" name="max_price" inputmode="numeric" min="0" step="50"
+               placeholder="1800" value="{{ initial.max_price }}">
+      </span>
+    </label>
+
+    <fieldset class="match-sheet-field">
+      <legend>Bedrooms</legend>
+      <div class="match-sheet-seg">
+        <label><input type="radio" name="bedrooms" value="0" {% if initial.bedrooms|stringformat:"s" == "0" %}checked{% endif %}><span>Studio</span></label>
+        <label><input type="radio" name="bedrooms" value="1" {% if initial.bedrooms|stringformat:"s" == "1" %}checked{% endif %}><span>1</span></label>
+        <label><input type="radio" name="bedrooms" value="2" {% if initial.bedrooms|stringformat:"s" == "2" %}checked{% endif %}><span>2</span></label>
+        <label><input type="radio" name="bedrooms" value="3" {% if initial.bedrooms|stringformat:"s" == "3" %}checked{% endif %}><span>3</span></label>
+        <label><input type="radio" name="bedrooms" value="4" {% if initial.bedrooms|stringformat:"s" == "4" %}checked{% endif %}><span>4</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset class="match-sheet-field">
+      <legend>Must-haves</legend>
+      <div class="match-sheet-tags">
+        <label><input type="checkbox" name="tags" value="pet-friendly" {% if "pet-friendly" in initial.tags %}checked{% endif %}><span>Pet friendly</span></label>
+        <label><input type="checkbox" name="tags" value="parking" {% if "parking" in initial.tags %}checked{% endif %}><span>Parking</span></label>
+        <label><input type="checkbox" name="tags" value="washer/dryer" {% if "washer/dryer" in initial.tags %}checked{% endif %}><span>Washer/dryer</span></label>
+        <label><input type="checkbox" name="tags" value="gym" {% if "gym" in initial.tags %}checked{% endif %}><span>Gym</span></label>
+        <label><input type="checkbox" name="tags" value="pool" {% if "pool" in initial.tags %}checked{% endif %}><span>Pool</span></label>
+        <label><input type="checkbox" name="tags" value="furnished" {% if "furnished" in initial.tags %}checked{% endif %}><span>Furnished</span></label>
+      </div>
+    </fieldset>
+
+    <div class="match-sheet-actions">
+      <button type="submit" class="card-btn-primary">Show my match scores</button>
+    </div>
+  </form>
+</dialog>
+{% endwith %}
+<script>
+(function () {
+  if (window.__matchSheetBound) return;
+  window.__matchSheetBound = true;
+  document.addEventListener('click', function (e) {
+    var sheet = document.getElementById('match-sheet');
+    if (!sheet) return;
+    if (e.target.closest('[data-match-sheet-open]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      sheet.showModal();
+    } else if (e.target.closest('[data-match-sheet-close]') || e.target === sheet) {
+      sheet.close();
+    }
+  }, true);
+})();
+</script>

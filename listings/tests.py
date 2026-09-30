@@ -2119,3 +2119,74 @@ class HeroCarouselWeightTests(TestCase):
         self.assertEqual(len(slides), 12)
         self.assertEqual(slides[0], 'hc-slide hc-active hc-loaded')
         self.assertFalse(any('hc-loaded' in c for c in slides[1:]))
+
+
+class MatchScoreTests(TestCase):
+    """The match score is measured against real preferences, the same everywhere."""
+
+    def setUp(self):
+        from listings.services import matching
+        self.matching = matching
+        self.owner = User.objects.create_user(username='ms-owner', password='pw')
+        self.listing = Listing.objects.create(
+            owner=self.owner, title='Two bed near Las Colinas', description='Bright unit',
+            category='rentals', city='Irving', price=Decimal('1500.00'), bedrooms=2,
+            status='active', tags='pet-friendly, parking',
+        )
+
+    def test_no_preferences_gives_no_score(self):
+        self.assertIsNone(self.matching.score_listing(self.listing).pct)
+
+    def test_featured_does_not_raise_the_score(self):
+        before = self.matching.score_listing(self.listing, max_price=1600, bedrooms=3).pct
+        self.listing.featured = True
+        after = self.matching.score_listing(self.listing, max_price=1600, bedrooms=3).pct
+        self.assertEqual(before, after)
+
+    def test_freshness_does_not_raise_the_score(self):
+        fresh = self.matching.score_listing(self.listing, bedrooms=3)
+        Listing.objects.filter(pk=self.listing.pk).update(created_at=timezone.now() - timedelta(days=30))
+        self.listing.refresh_from_db()
+        stale = self.matching.score_listing(self.listing, bedrooms=3)
+        self.assertEqual(fresh.pct, stale.pct)
+        self.assertIn('Just listed', fresh.reasons)
+
+    def test_bedrooms_one_extra_is_partial_and_studio_counts(self):
+        self.assertEqual(self.matching.score_listing(self.listing, bedrooms=2).pct, 100)
+        self.assertEqual(self.matching.score_listing(self.listing, bedrooms=1).pct, 60)
+        self.assertEqual(self.matching.score_listing(self.listing, bedrooms=3).pct, 0)
+        self.listing.bedrooms = 0
+        self.assertEqual(self.matching.score_listing(self.listing, bedrooms=0).pct, 100)
+
+    def test_missing_must_have_is_named(self):
+        result = self.matching.score_listing(self.listing, requested_tags=['pet-friendly', 'pool'])
+        self.assertIn('No pool', result.caveats)
+
+    def test_detail_page_hides_score_and_offers_sheet_without_preferences(self):
+        response = self.client.get(reverse('listing_detail', args=[self.listing.pk]))
+        self.assertIsNone(response.context['match'])
+        self.assertContains(response, 'Get my match score')
+
+    def test_sheet_answers_score_the_card_and_the_detail_page_the_same(self):
+        self.client.post(reverse('match_prefs_update'), {
+            'max_price': '1,700', 'bedrooms': '2', 'tags': ['pet-friendly', 'pool'],
+            'next': reverse('listing_list'),
+        })
+        listing_page = self.client.get(reverse('listing_list'))
+        card_pct = listing_page.context['listing_scores'][self.listing.pk]
+        detail = self.client.get(reverse('listing_detail', args=[self.listing.pk]))
+        self.assertEqual(detail.context['match']['pct'], card_pct)
+        self.assertLess(card_pct, 100)
+        self.assertIn('No pool', listing_page.context['listing_caveats'][self.listing.pk])
+
+    def test_find_my_match_search_is_what_the_detail_page_scores_against(self):
+        listing_page = self.client.get(reverse('listing_list'), {'fmm': '1', 'max_price': '1600', 'bedrooms': '2', 'tags': 'pool'})
+        card_pct = listing_page.context['listing_scores'][self.listing.pk]
+        detail = self.client.get(reverse('listing_detail', args=[self.listing.pk]))
+        self.assertEqual(detail.context['match']['pct'], card_pct)
+
+    def test_sheet_rejects_offsite_redirect(self):
+        response = self.client.post(reverse('match_prefs_update'), {
+            'max_price': '1500', 'next': 'https://evil.example.com/',
+        })
+        self.assertEqual(response['Location'], reverse('listing_list'))

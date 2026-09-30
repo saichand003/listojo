@@ -10,13 +10,18 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_POST
 from datetime import timedelta, date
 
 from listojo.services.notifications import send_listing_inquiry_email
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Community, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry, SavedSearch
+from listings.services import match_prefs
 from listings.services.amenities import PICKER_GROUPS
+from listings.services.match_prefs import resolve_match_prefs
+from listings.services.matching import match_band
 from listings.services.search import build_listing_search_context, live_inventory_count, live_match_preview
 from listings.services.valuation import predict_price
 from listings.services.visibility import active_listings
@@ -222,6 +227,12 @@ def guided_search(request):
         # Store lead pk in session so listing list can show the CTA
         request.session['gs_lead_id'] = lead.pk
 
+        # Every later score this visit — cards, detail pages — is measured
+        # against these answers.
+        answers = match_prefs.from_mapping(request.POST, 'your guided search')
+        if answers.has_criteria:
+            match_prefs.remember(request, answers)
+
         # Persist guided search so returning users can resume it
         if request.user.is_authenticated:
             search_type = 'buy' if category == 'properties' else 'rent'
@@ -326,83 +337,59 @@ def _detail_match(request, listing):
 
     The reference design shows a match score on every detail page. A score is
     only meaningful against preferences someone actually gave us, so this
-    returns None when there are none — the module is hidden rather than filled
-    with a number that means nothing. Preferences come from the visitor's most
-    recent saved search, falling back to the guided-search criteria still in
-    their session.
+    returns None when there are none — the page offers the match-score sheet
+    instead of a number that means nothing. Preferences resolve through
+    match_prefs, the same as the search cards, so a card and the page it links
+    to always agree.
     """
-    from listings.services.matching import score_listing, explain_match
-
-    pref = None
-    if request.user.is_authenticated:
-        pref = (SavedSearch.objects
-                .filter(user=request.user)
-                .order_by('-last_updated')
-                .first())
-
-    if pref:
-        max_price = float(pref.max_budget) if pref.max_budget else None
-        tags = [t.strip() for t in (pref.amenities or '').split(',') if t.strip()]
-        bedrooms = pref.bedrooms
-        property_type = pref.property_type or ''
-        accommodation_type = pref.accommodation_type or ''
-        source = 'your saved search'
-    else:
-        gs = request.session.get('gs_criteria') or {}
-        if not gs:
-            return None
-        max_price = _parse_money(gs.get('max_price'))
-        tags = [t.strip() for t in (gs.get('tags') or '').split(',') if t.strip()]
-        bedrooms = _parse_int(gs.get('bedrooms'))
-        property_type = gs.get('property_type') or ''
-        accommodation_type = gs.get('accommodation_type') or ''
-        source = 'your guided search'
-
-    # With nothing to score against, the result would be a constant.
-    if not any([max_price, tags, bedrooms, property_type, accommodation_type]):
+    prefs = resolve_match_prefs(request)
+    if not prefs:
         return None
 
-    result = score_listing(
-        listing,
-        max_price=max_price,
-        requested_tags=tags,
-        bedrooms=bedrooms,
-        property_type=property_type,
-        accommodation_type=accommodation_type,
-    )
-    explanation = explain_match(
-        listing,
-        result.reasons,
-        max_price=max_price,
-        quality_tags=tags,
-        accommodation_type=accommodation_type,
-        property_type=property_type,
-    )
+    result = prefs.score(listing)
+    if result.pct is None:
+        return None
 
+    band = match_band(result.pct)
     return {
         'pct': result.pct,
-        'band': 'strong' if result.pct >= 85 else 'fair' if result.pct >= 65 else 'weak',
-        'label': 'Excellent fit' if result.pct >= 85 else 'Good fit' if result.pct >= 65 else 'Partial fit',
+        'band': band,
+        'label': {'strong': 'Excellent fit', 'fair': 'Good fit', 'weak': 'Partial fit'}[band],
         'reasons': result.reasons,
         'caveats': result.caveats,
-        'explanation': explanation,
-        'source': source,
-        'max_price': max_price,
+        'explanation': prefs.explain(listing, result.reasons),
+        'source': prefs.source,
+        'max_price': prefs.max_price,
     }
 
 
-def _parse_money(v):
-    try:
-        return float(v)
-    except (TypeError, ValueError):
-        return None
+@require_POST
+def match_prefs_update(request):
+    """
+    The "Get your match score" sheet: budget, bedrooms and must-haves, kept in
+    the session. Anything the visitor set earlier (property type, move-in date
+    from a guided search) is kept; these three fields are replaced.
+    """
+    base = resolve_match_prefs(request) or match_prefs.MatchPrefs()
+    sheet = match_prefs.from_mapping({
+        'max_price': request.POST.get('max_price', ''),
+        'bedrooms': request.POST.get('bedrooms', ''),
+        'tags': ','.join(request.POST.getlist('tags')),
+    }, 'your match preferences')
+    base.max_price = sheet.max_price
+    base.bedrooms = sheet.bedrooms
+    base.tags = sheet.tags
 
+    if base.has_criteria:
+        match_prefs.remember(request, base)
+    else:
+        match_prefs.forget(request)
 
-def _parse_int(v):
-    try:
-        return int(v)
-    except (TypeError, ValueError):
-        return None
+    next_url = request.POST.get('next', '')
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()},
+                                           require_https=request.is_secure()):
+        next_url = reverse('listing_list')
+    return redirect(next_url)
 
 
 def listing_detail(request, pk):
@@ -459,6 +446,7 @@ def listing_detail(request, pk):
             'inquiry_form': inquiry_form,
             'render_as_community': False,
             'match': _detail_match(request, listing),
+            'match_prefs': resolve_match_prefs(request),
             # Drives the save button's initial state; the toggle endpoint owns
             # it from there.
             'is_favourite': (

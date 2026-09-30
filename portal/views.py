@@ -214,12 +214,9 @@ def _build_leads_data(leads_qs):
                 property_type=pref.property_type or '',
                 bedrooms=pref.bedrooms,
             )
-            match_pct = result_score.pct
-        elif pref:
-            criteria = ['city', 'bedrooms', 'max_budget', 'amenities', 'move_in_date']
-            filled = sum(1 for c in criteria if getattr(pref, c, None))
-            match_pct = max(60, min(95, 60 + filled * 7)) if filled else 0
+            match_pct = result_score.pct or 0
         else:
+            # No specific listing to measure against, so no score to show.
             match_pct = 0
 
         result.append({
