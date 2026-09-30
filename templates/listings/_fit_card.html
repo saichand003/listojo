@@ -1,3 +1,4 @@
+{% comment %}Fit, not flaws: why this listing suits the renter; the only downside is where it differs from what they asked for.{% endcomment %}
 <div class="match-factor">
     {% if fit.best_of %}<p class="fit-card-best">{{ fit.best_of }}</p>{% endif %}
     {% if fit.strengths %}
@@ -5,6 +6,6 @@
         {% for s in fit.strengths %}<span class="match-reason-pill">{{ s }}</span>{% endfor %}
     </div>
     {% endif %}
-    <p class="fit-card-catch fit-catch-{{ fit.catch_tone }}"><b>{% if fit.catch_tone == 'bad' %}The catch:{% elif fit.catch_tone == 'clear' %}No catch found:{% else %}Too early to say:{% endif %}</b> {{ fit.catch }}</p>
+    {% if fit.mismatches %}<p class="fit-card-miss">{{ fit.mismatches|join:" · " }}</p>{% endif %}
     <p class="fit-card-foot">Based on {{ fit.covered }} of {{ fit.possible }} factors</p>
 </div>

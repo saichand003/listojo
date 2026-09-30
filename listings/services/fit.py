@@ -1,31 +1,35 @@
 """
-The Fit Report: what a match score means for this renter, listing by listing.
+The Fit Report: how a listing fits this renter — never a grade on the property.
 
-A bare percentage tells a renter nothing they didn't type into the filters.
-The report says what the number is made of, what this place does better than
-the other places they're looking at, and what the catch is.
+Listojo is two-sided. Renters need to know why a place suits them; landlords
+and communities list here to fill units, so nothing a renter sees may read as
+a mark against the home. The report therefore follows "fit, not flaws":
 
-Three rules hold everywhere in this module:
-
-1. Every claim comes from a field we hold. A dimension without data is shown
-   as "no data", never guessed, and the report says how many factors it could
-   actually check ("based on 4 of 6").
+1. Every claim comes from a field we hold. A fact we don't have is shown as
+   "not available yet", never guessed, and the report says how many factors it
+   could actually check ("based on 4 of 6").
 2. The fit percentage only counts what the renter asked for (budget, bedrooms,
-   must-haves, move-in). Commute, errands, schools and walkability are shown as
-   context — facts about the place — but never move the number, because the
-   renter didn't ask us to weigh them.
-3. Reasons are chosen by what tells this listing apart. If every match has two
-   bedrooms, "2 bed, as asked" is true of all of them and says nothing, so it is
-   dropped; "cheapest of your 7 matches" is kept.
+   must-haves, move-in). Commute, groceries, schools and walkability are
+   neutral "good to know" facts: they never move the number and are never
+   scored in front of the renter.
+3. The only downside shown is a mismatch with the renter's OWN criteria —
+   over their budget, a must-have not listed, fewer bedrooms, a later move-in —
+   worded neutrally. Hiding those would only waste the landlord's tour slot.
+4. Comparisons across the renter's matches are positive-only ("cheapest of
+   your 5 matches"); no listing is ever called the worst of anything.
+5. Reasons are chosen by what tells this listing apart: a strength every match
+   shares ("2 bed, as asked") says nothing and is dropped.
+
+Gaps a landlord can fix (no photos, no square footage) are not renter-facing
+at all — see listings.services.listing_strength, shown in the landlord portal.
 
 Usage:
-    reports = build_reports(listings, prefs)          # {pk: FitReport} for a results page
-    report  = build_report(listing, prefs, detail=True)  # one listing, with price-vs-market
+    reports = build_reports(listings, prefs)             # {pk: FitReport} for a results page
+    report  = build_report(listing, prefs, detail=True)  # one listing, for its page
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from statistics import median
 
 from listings.services.matching import (
     UTILITIES_CREDIT,
@@ -36,19 +40,23 @@ from listings.services.matching import (
 
 BAND_LABELS = {'strong': 'Excellent fit', 'fair': 'Good fit', 'weak': 'Partial fit'}
 
-# A comparison across the results only means something with a few to compare.
-MIN_TO_COMPARE = 3
+# Two matches is already a choice the renter is making, so compare from two.
+MIN_TO_COMPARE = 2
 
 
 @dataclass
 class Dimension:
     key: str
     label: str
-    score: int | None          # 0-100; None = we hold no data for it
-    evidence: str              # the fact behind the score, in words
+    score: int | None          # 0-100 for the renter's criteria; for context, internal only
+    evidence: str              # the fact, in words
     source: str = ''
-    counted: bool = True       # part of the fit %, or context only
+    counted: bool = True       # a criterion the renter gave us, or a context fact
     metric: float | None = None  # raw value used to compare across matches
+
+    @property
+    def available(self) -> bool:
+        return self.score is not None
 
 
 @dataclass
@@ -66,10 +74,8 @@ class FitReport:
     dimensions: list[Dimension]
     strengths: list[str] = field(default_factory=list)
     best_of: str | None = None
-    catch: str | None = None
-    # 'bad' = a real downside, 'clear' = nothing flagged in the data we hold,
-    # 'unknown' = too little data to say.
-    catch_tone: str = 'bad'
+    # Where the listing doesn't meet what the renter asked for, in their terms.
+    mismatches: list[str] = field(default_factory=list)
     covered: int = 0
     possible: int = 0
     sources: list[str] = field(default_factory=list)
@@ -79,7 +85,7 @@ class FitReport:
         return [d for d in self.dimensions if d.counted]
 
     @property
-    def context(self) -> list[Dimension]:
+    def good_to_know(self) -> list[Dimension]:
         return [d for d in self.dimensions if not d.counted]
 
 
@@ -143,15 +149,16 @@ class _Subject:
         return list(rel.all()) if rel is not None else []
 
 
-# ── Dimensions the renter asked for (counted in the %) ─────────────────────
+# ── The renter's criteria (counted in the %) ────────────────────────────────
+# Each returns (Dimension, mismatch-or-None).
 
-def _budget(s: _Subject, prefs) -> Dimension | None:
+def _budget(s: _Subject, prefs):
     if not prefs.max_price:
-        return None
+        return None, None
     budget = float(prefs.max_price)
     eff = s.effective_price
     if eff is None:
-        return Dimension('budget', 'Budget', None, 'No price listed', metric=None)
+        return Dimension('budget', 'Budget', None, 'Price not listed'), None
     headroom = budget - eff
     price_txt = ('From ' if s.from_price else '') + _money(eff) + s.per
     if s.bills:
@@ -160,44 +167,48 @@ def _budget(s: _Subject, prefs) -> Dimension | None:
         score = 70 + int(round(30 * min(1.0, headroom / (0.3 * budget))))
         evidence = f"{price_txt} · {_money(headroom)} under your {_money(budget)} budget" if headroom >= 25 \
             else f"{price_txt} · right at your {_money(budget)} budget"
-    else:
-        over = -headroom
-        score = max(0, int(round(60 - over / budget * 400)))
-        evidence = f"{price_txt} · {_money(over)} over your {_money(budget)} budget"
-    return Dimension('budget', 'Budget', score, evidence, metric=eff)
+        return Dimension('budget', 'Budget', score, evidence, metric=eff), None
+    over = -headroom
+    score = max(0, int(round(60 - over / budget * 400)))
+    miss = f"{_money(over)} over your {_money(budget)} budget"
+    return Dimension('budget', 'Budget', score, f"{price_txt} · {miss}", metric=eff), miss
 
 
 def _bed_label(n: int) -> str:
     return 'Studio' if n == 0 else f"{n} bed"
 
 
-def _space(s: _Subject, prefs) -> Dimension | None:
+def _space(s: _Subject, prefs):
     want = prefs.bedrooms
     if want is None:
-        return None
+        return None, None
+    want_txt = _bed_label(want).lower()
     if s.is_community:
         if not s.bedroom_set:
-            return Dimension('space', 'Bedrooms', None, 'Floor plans not listed')
+            return Dimension('space', 'Bedrooms', None, 'Floor plans not listed'), None
         if want in s.bedroom_set:
-            return Dimension('space', 'Bedrooms', 100, f"Has {_bed_label(want).lower()} units, as asked")
+            return Dimension('space', 'Bedrooms', 100, f"Has {want_txt} units, as asked"), None
         if want + 1 in s.bedroom_set:
-            return Dimension('space', 'Bedrooms', 70, f"No {_bed_label(want).lower()} units; has {want + 1} bed")
-        return Dimension('space', 'Bedrooms', 0, f"No {_bed_label(want).lower()} units")
+            return Dimension('space', 'Bedrooms', 70, f"Has {want + 1} bed units"), None
+        miss = f"No {want_txt} units listed"
+        return Dimension('space', 'Bedrooms', 0, miss), miss
     have = s.bedrooms
     if have is None:
-        return Dimension('space', 'Bedrooms', None, 'Bedrooms not listed')
+        return Dimension('space', 'Bedrooms', None, 'Bedrooms not listed'), None
     if have == want:
-        return Dimension('space', 'Bedrooms', 100, f"{_bed_label(have)}, as asked")
+        return Dimension('space', 'Bedrooms', 100, f"{_bed_label(have)}, as asked"), None
     if have == want + 1:
-        return Dimension('space', 'Bedrooms', 70, f"{_bed_label(have)}, one more than you asked for")
+        return Dimension('space', 'Bedrooms', 70, f"{_bed_label(have)}, one more than you asked for"), None
     if have > want:
-        return Dimension('space', 'Bedrooms', 40, f"{_bed_label(have)}, more than you asked for")
-    return Dimension('space', 'Bedrooms', 0, f"{_bed_label(have)}; you asked for {_bed_label(want).lower()}")
+        return Dimension('space', 'Bedrooms', 40, f"{_bed_label(have)}, more than you asked for"), None
+    miss = f"{_bed_label(have)}; you asked for {want_txt}"
+    return Dimension('space', 'Bedrooms', 0, miss), miss
 
 
-def _must_haves(s: _Subject, prefs) -> tuple[Dimension | None, list[str], list[str]]:
+def _must_haves(s: _Subject, prefs):
+    """(Dimension, mismatch, met tags)."""
     if not prefs.tags:
-        return None, [], []
+        return None, None, []
     met, near, missing = [], [], []
     for tag in prefs.tags:
         t = tag.lower().strip()
@@ -208,24 +219,24 @@ def _must_haves(s: _Subject, prefs) -> tuple[Dimension | None, list[str], list[s
         else:
             missing.append(tag)
     score = int(round((len(met) + 0.4 * len(near)) / len(prefs.tags) * 100))
-    parts = [f"{t} ✓" for t in met] + [f"{t} (similar)" for t in near] + [f"{t} ✗" for t in missing]
-    dim = Dimension('musthaves', 'Must-haves', score, ' · '.join(parts),
-                    metric=len(met) / len(prefs.tags))
-    return dim, met, missing
+    parts = [f"{t} ✓" for t in met] + [f"{t} (similar)" for t in near] + [f"{t}: not listed" for t in missing]
+    dim = Dimension('musthaves', 'Must-haves', score, ' · '.join(parts), metric=len(met) / len(prefs.tags))
+    miss = f"Doesn't list: {', '.join(missing)}" if missing else None
+    return dim, miss, met
 
 
-def _move_in(s: _Subject, prefs) -> Dimension | None:
+def _move_in(s: _Subject, prefs):
     if not prefs.avail_date or s.is_community:
-        return None
+        return None, None
     when = s.available_from
     if not when or when <= prefs.avail_date:
         txt = 'Available now' if not when else f"Available {when:%b} {when.day}, before your move-in"
-        return Dimension('movein', 'Move-in', 100, txt)
-    return Dimension('movein', 'Move-in', 0,
-                     f"Available {when:%b} {when.day}, after your {prefs.avail_date:%b} {prefs.avail_date.day} move-in")
+        return Dimension('movein', 'Move-in', 100, txt), None
+    miss = f"Available {when:%b} {when.day}, after your {prefs.avail_date:%b} {prefs.avail_date.day} move-in"
+    return Dimension('movein', 'Move-in', 0, miss), miss
 
 
-# ── Context: facts about the place (never counted in the %) ────────────────
+# ── Good to know: facts about the place (never scored in front of renters) ──
 
 def _commute(s: _Subject) -> Dimension:
     item = s.item
@@ -238,27 +249,25 @@ def _commute(s: _Subject) -> Dimension:
         link = stations[0]
         walk = getattr(link, 'walk_minutes', None)
         where = f"{walk} min walk" if walk else f"{link.distance_miles} mi"
-        parts.append(f"{link.station.name} ({link.station.get_mode_display().lower()}) {where}")
+        parts.append(f"{link.station.name} ({link.station.get_mode_display().lower()}), {where}")
     score = getattr(item, 'commute_score', None)
     if score is None and minutes:
         score = _falloff(minutes, 15, 60)
-    if score is None:
-        return Dimension('commute', 'Commute', None, 'No commute data for this address yet', counted=False)
-    label = getattr(item, 'commute_score_label', '') or ''
-    evidence = ' · '.join(([label] if label else []) + parts) or f"Commute score {score}/100"
-    return Dimension('commute', 'Commute', score, evidence, 'Listojo commute score · Google Routes',
+    if score is None or not parts:
+        return Dimension('commute', 'Getting around', None, 'Not available yet for this address', counted=False)
+    return Dimension('commute', 'Getting around', score, ' · '.join(parts), 'Google Routes',
                      counted=False, metric=float(minutes) if minutes else None)
 
 
 def _errands(s: _Subject) -> Dimension:
     stores = [g for g in s.related('nearby_groceries') if g.drive_minutes or g.distance_miles]
     if not stores:
-        return Dimension('errands', 'Groceries', None, 'No grocery data for this address yet', counted=False)
+        return Dimension('errands', 'Groceries', None, 'Not available yet for this address', counted=False)
     nearest = min(stores, key=lambda g: (g.drive_minutes or 99, float(g.distance_miles or 99)))
     chain = nearest.store.chain or nearest.store.name
     if nearest.drive_minutes:
         return Dimension('errands', 'Groceries', _falloff(nearest.drive_minutes, 5, 25),
-                         f"{chain}, {nearest.drive_minutes} min drive", 'Google Places · Google Routes',
+                         f"{chain}, {nearest.drive_minutes} min drive", 'Google Places',
                          counted=False, metric=float(nearest.drive_minutes))
     miles = float(nearest.distance_miles)
     return Dimension('errands', 'Groceries', _falloff(miles, 1, 8), f"{chain}, {miles:g} mi",
@@ -270,25 +279,29 @@ def _schools(s: _Subject) -> Dimension | None:
         return None
     rated = [l for l in s.related('nearby_schools') if l.school.rating]
     if not rated:
-        return Dimension('schools', 'Schools', None, 'No school ratings for this address yet', counted=False)
-    best = max(rated, key=lambda l: (l.school.rating, -float(l.distance_miles or 99)))
-    dist = f" · {best.distance_miles} mi" if best.distance_miles is not None else ''
-    return Dimension('schools', 'Schools', best.school.rating * 10,
-                     f"Best nearby: {best.school.name}, {best.school.rating}/10{dist}", 'GreatSchools',
-                     counted=False, metric=float(best.school.rating))
+        return Dimension('schools', 'Schools', None, 'Not available yet for this address', counted=False)
+    nearest = min(rated, key=lambda l: float(l.distance_miles or 99))
+    dist = f", {nearest.distance_miles} mi" if nearest.distance_miles is not None else ''
+    return Dimension('schools', 'Schools', nearest.school.rating * 10,
+                     f"{nearest.school.name}{dist} · rated {nearest.school.rating}/10", 'GreatSchools',
+                     counted=False, metric=float(nearest.school.rating))
 
 
 def _walkability(s: _Subject) -> Dimension:
     score = getattr(s.item, 'walk_score', None)
     if score is None:
-        return Dimension('walk', 'Walkability', None, 'No walkability data yet', counted=False)
+        return Dimension('walk', 'Walkability', None, 'Not available yet for this address', counted=False)
     desc = getattr(s.item, 'walk_score_description', '') or ''
     return Dimension('walk', 'Walkability', score, f"Walk Score {score}" + (f" · {desc}" if desc else ''),
                      'Walk Score', counted=False, metric=float(score))
 
 
 def _market(s: _Subject) -> Dimension | None:
-    """Price against the Listojo price model — detail page only (it loads a model)."""
+    """
+    Price against the Listojo price model — detail page only (it loads a
+    model). Shown only when the listing is at or below the estimate: a price
+    above it is the landlord's call, and not something to grade in public.
+    """
     if s.is_community or not s.monthly or s.price is None:
         return None
     try:
@@ -299,24 +312,20 @@ def _market(s: _Subject) -> Dimension | None:
     if not est or not est.get('estimate') or est.get('confidence') == 'low':
         return None
     estimate = float(est['estimate'])
-    delta = s.price - estimate
-    pct = delta / estimate * 100
-    if abs(pct) < 3:
-        txt = f"In line with similar homes (Listojo estimate {_money(estimate)})"
-    elif delta < 0:
-        txt = f"{_money(-delta)} below similar homes (Listojo estimate {_money(estimate)})"
-    else:
-        txt = f"{_money(delta)} above similar homes (Listojo estimate {_money(estimate)})"
-    score = max(0, min(100, int(round(60 - pct * 4))))
-    return Dimension('market', 'Price vs market', score, txt, 'Listojo price model', counted=False,
-                     metric=pct)
+    pct = (s.price - estimate) / estimate * 100
+    if pct > 3:
+        return None
+    txt = (f"In line with similar homes (Listojo estimate {_money(estimate)})" if pct > -3
+           else f"{_money(estimate - s.price)} below similar homes (Listojo estimate {_money(estimate)})")
+    return Dimension('market', 'Price vs similar homes', 60 - int(round(pct * 4)), txt,
+                     'Listojo price model', counted=False, metric=pct)
 
 
-# ── Strengths and the catch ─────────────────────────────────────────────────
+# ── Strengths ───────────────────────────────────────────────────────────────
 
 def _priority_weight(prefs, key: str) -> int:
     favoured = {
-        'price': {'budget'},
+        'price': {'budget', 'market'},
         'location': {'commute', 'errands', 'walk'},
         'features': {'musthaves'},
     }.get(getattr(prefs, 'priority', '') or '', set())
@@ -330,7 +339,7 @@ def _strengths(dims: dict[str, Dimension], met: list[str], prefs) -> list[_Candi
         out.append(_Candidate(key, text, _priority_weight(prefs, key)))
 
     d = dims.get('budget')
-    if d and d.score is not None and d.score >= 80 and d.metric is not None:
+    if d and d.available and d.score >= 80 and d.metric is not None:
         add('budget', f"{_money(float(prefs.max_price) - d.metric)} under budget")
     d = dims.get('musthaves')
     if d and d.score == 100:
@@ -342,16 +351,16 @@ def _strengths(dims: dict[str, Dimension], met: list[str], prefs) -> list[_Candi
     if d and d.score == 100:
         add('movein', 'Ready by your move-in')
     d = dims.get('commute')
-    if d and d.score is not None and d.score >= 70:
+    if d and d.available and d.score >= 70:
         add('commute', d.evidence.split(' · ')[0])
     d = dims.get('errands')
-    if d and d.score is not None and d.score >= 75:
-        add('errands', f"Groceries close: {d.evidence}")
+    if d and d.available and d.score >= 75:
+        add('errands', f"Groceries nearby: {d.evidence}")
     d = dims.get('schools')
-    if d and d.score is not None and d.score >= 80:
-        add('schools', d.evidence.replace('Best nearby: ', 'Strong school nearby: '))
+    if d and d.available and d.score >= 80:
+        add('schools', f"Well-rated school nearby: {d.evidence}")
     d = dims.get('walk')
-    if d and d.score is not None and d.score >= 70:
+    if d and d.available and d.score >= 70:
         add('walk', d.evidence)
     d = dims.get('market')
     if d and d.metric is not None and d.metric <= -3:
@@ -359,48 +368,39 @@ def _strengths(dims: dict[str, Dimension], met: list[str], prefs) -> list[_Candi
     return out
 
 
-def _own_catch(s: _Subject, dims: dict[str, Dimension], missing: list[str], prefs) -> str | None:
-    """The most serious downside we can state from this listing's own data."""
-    d = dims.get('budget')
-    if d and d.score is not None and d.score < 70:
-        return d.evidence.split(' · ')[-1].capitalize()
-    if missing:
-        names = ', '.join(missing[:2])
-        return f"No {names} listed" + (f" (+{len(missing) - 2} more)" if len(missing) > 2 else '')
-    d = dims.get('space')
-    if d and d.score is not None and d.score < 50:
-        return d.evidence
-    d = dims.get('movein')
-    if d and d.score == 0:
-        return d.evidence
-    d = dims.get('market')
-    if d and d.metric is not None and d.metric >= 8:
-        return d.evidence
-    d = dims.get('errands')
-    if d and d.metric is not None and d.metric > 12:
-        return f"Nearest groceries are a drive: {d.evidence}"
-    d = dims.get('commute')
-    if d and d.score is not None and d.score < 40:
-        return f"Car-dependent: {d.evidence}"
-    d = dims.get('walk')
-    if d and d.score is not None and d.score < 25:
-        return f"Car-dependent: {d.evidence}"
-    d = dims.get('schools')
-    if d and d.score is not None and d.score <= 40 and (prefs.bedrooms or 0) >= 3:
-        return f"Schools rate low: {d.evidence.replace('Best nearby: ', 'best nearby is ')}"
-    return None
+def _top_facts(dims, limit: int = 2) -> list[str]:
+    """
+    The place's best measured facts, when nothing stands out as a distinct
+    strength — so a card always says something concrete about the home.
+    """
+    facts = sorted((d for d in dims.values() if not d.counted and d.available), key=lambda d: -d.score)
+    return [d.evidence for d in facts[:limit]]
 
 
 # ── Building reports ────────────────────────────────────────────────────────
 
-def _dimensions(s: _Subject, prefs, detail: bool) -> tuple[dict[str, Dimension], list[str], list[str]]:
+_ORDER = ['budget', 'space', 'musthaves', 'movein', 'commute', 'errands', 'schools', 'walk', 'market']
+
+
+def _dimensions(s: _Subject, prefs, detail: bool):
+    """(dims by key, mismatches, met must-haves)."""
     dims: dict[str, Dimension] = {}
-    for d in (_budget(s, prefs), _space(s, prefs), _move_in(s, prefs)):
-        if d:
-            dims[d.key] = d
-    must, met, missing = _must_haves(s, prefs)
+    mismatches: list[str] = []
+    for dim, miss in (_budget(s, prefs), _space(s, prefs)):
+        if dim:
+            dims[dim.key] = dim
+        if miss:
+            mismatches.append(miss)
+    must, miss, met = _must_haves(s, prefs)
     if must:
         dims[must.key] = must
+    if miss:
+        mismatches.append(miss)
+    dim, miss = _move_in(s, prefs)
+    if dim:
+        dims[dim.key] = dim
+    if miss:
+        mismatches.append(miss)
     for d in (_commute(s), _errands(s), _schools(s), _walkability(s)):
         if d:
             dims[d.key] = d
@@ -408,15 +408,12 @@ def _dimensions(s: _Subject, prefs, detail: bool) -> tuple[dict[str, Dimension],
         d = _market(s)
         if d:
             dims[d.key] = d
-    return dims, met, missing
+    return dims, mismatches, met
 
 
-_ORDER = ['budget', 'space', 'musthaves', 'movein', 'commute', 'errands', 'schools', 'walk', 'market']
-
-
-def _assemble(pct: int, dims, strengths, catch, tone, best_of) -> FitReport:
+def _assemble(pct: int, dims, strengths, mismatches, best_of) -> FitReport:
     ordered = [dims[k] for k in _ORDER if k in dims]
-    covered = [d for d in ordered if d.score is not None]
+    covered = [d for d in ordered if d.available]
     sources = []
     for d in covered:
         for src in filter(None, (x.strip() for x in d.source.split('·'))):
@@ -425,16 +422,9 @@ def _assemble(pct: int, dims, strengths, catch, tone, best_of) -> FitReport:
     band = match_band(pct)
     return FitReport(
         pct=pct, band=band, label=BAND_LABELS[band], dimensions=ordered,
-        strengths=strengths, best_of=best_of, catch=catch, catch_tone=tone,
+        strengths=strengths, best_of=best_of, mismatches=mismatches,
         covered=len(covered), possible=len(ordered), sources=sources,
     )
-
-
-def _fallback_catch(dims) -> tuple[str, str]:
-    context = [d for d in dims.values() if not d.counted]
-    if context and all(d.score is None for d in context):
-        return 'No commute or neighborhood data for this address yet', 'unknown'
-    return 'No red flags in the data we have', 'clear'
 
 
 def _score(item, prefs):
@@ -443,28 +433,46 @@ def _score(item, prefs):
 
 
 def build_report(item, prefs, *, detail: bool = False) -> FitReport | None:
-    """One listing on its own — the detail page, where there's no result set to compare to."""
+    """One listing on its own — its page, where there's no result set to compare to."""
     result = _score(item, prefs)
     if result.pct is None:
         return None
-    s = _Subject(item)
-    dims, met, missing = _dimensions(s, prefs, detail)
+    dims, mismatches, met = _dimensions(_Subject(item), prefs, detail)
     cands = sorted(_strengths(dims, met, prefs), key=lambda c: -c.weight)
-    catch = _own_catch(s, dims, missing, prefs)
-    tone = 'bad'
-    if not catch:
-        catch, tone = _fallback_catch(dims)
-    return _assemble(result.pct, dims, [c.text for c in cands[:3]], catch, tone, None)
+    strengths = [c.text for c in cands[:3]] or _top_facts(dims)
+    return _assemble(result.pct, dims, strengths, mismatches, None)
 
 
-# Comparisons across a results page: metric key, better = 'low'|'high', phrasing.
-_COMPARISONS = {
-    'budget': ('low', lambda n, v, gap: f"Cheapest of your {n} matches, {_money(gap)} less than the next"),
-    'commute': ('low', lambda n, v, gap: f"Shortest drive to downtown of your {n} matches ({int(v)} min)"),
-    'errands': ('low', lambda n, v, gap: f"Closest groceries of your {n} matches"),
-    'schools': ('high', lambda n, v, gap: f"Best-rated nearby school of your {n} matches ({int(v)}/10)"),
-    'walk': ('high', lambda n, v, gap: f"Most walkable of your {n} matches (Walk Score {int(v)})"),
-}
+# Positive-only comparisons across a results page: metric, which direction is
+# better, and how to say it (with two matches, "than your other match").
+_COMPARISONS = {'budget': 'low', 'commute': 'low', 'errands': 'low', 'schools': 'high', 'walk': 'high'}
+
+
+def _best_phrase(key, n, v, gap, total=None):
+    if total is not None and n < total:
+        # Only some matches have this data: don't pass a partial count off as all of them.
+        return {
+            'budget': f"Cheapest of your matches, {_money(gap)} less than the next",
+            'commute': f"Shortest drive to downtown among your matches with drive data ({int(v)} min)",
+            'errands': "Closest groceries among your matches with grocery data",
+            'schools': f"Highest-rated nearby school among your matches with ratings ({int(v)}/10)",
+            'walk': f"Most walkable among your matches with a Walk Score ({int(v)})",
+        }[key]
+    if n == 2:
+        return {
+            'budget': f"Cheaper than your other match by {_money(gap)}",
+            'commute': f"Shorter drive to downtown than your other match ({int(v)} min)",
+            'errands': "Closer to groceries than your other match",
+            'schools': f"Higher-rated nearby school than your other match ({int(v)}/10)",
+            'walk': f"More walkable than your other match (Walk Score {int(v)})",
+        }[key]
+    return {
+        'budget': f"Cheapest of your {n} matches, {_money(gap)} less than the next",
+        'commute': f"Shortest drive to downtown of your {n} matches ({int(v)} min)",
+        'errands': f"Closest groceries of your {n} matches",
+        'schools': f"Highest-rated nearby school of your {n} matches ({int(v)}/10)",
+        'walk': f"Most walkable of your {n} matches (Walk Score {int(v)})",
+    }[key]
 
 
 def _comparison_order(prefs) -> list[str]:
@@ -483,55 +491,38 @@ def build_reports(items, prefs) -> dict:
         result = _score(item, prefs)
         if result.pct is None:
             continue
-        s = _Subject(item)
-        dims, met, missing = _dimensions(s, prefs, detail=False)
-        rows.append((item, result.pct, s, dims, met, missing))
+        dims, mismatches, met = _dimensions(_Subject(item), prefs, detail=False)
+        rows.append((item, result.pct, dims, mismatches, met))
     if not rows:
         return {}
 
-    n = len(rows)
     # A strength every match shares tells the renter nothing about this one.
-    cand_by_pk = {r[0].pk: _strengths(r[3], r[4], prefs) for r in rows}
+    cand_by_pk = {r[0].pk: _strengths(r[2], r[4], prefs) for r in rows}
     shared = set()
-    if n >= 2:
-        key_sets = [{c.key for c in cands} for cands in cand_by_pk.values()]
-        shared = set.intersection(*key_sets)
+    if len(rows) >= 2:
+        shared = set.intersection(*({c.key for c in cands} for cands in cand_by_pk.values()))
 
-    # Best-of and relative catches, per comparable dimension.
     best_of: dict = {}
-    worst: dict = {}
     for key in _comparison_order(prefs):
-        better, phrase = _COMPARISONS[key]
-        values = [(r[0].pk, r[3][key].metric) for r in rows
-                  if key in r[3] and r[3][key].metric is not None and r[3][key].score is not None]
+        better = _COMPARISONS[key]
+        values = [(r[0].pk, r[2][key].metric) for r in rows
+                  if key in r[2] and r[2][key].metric is not None and r[2][key].available]
         if len(values) < MIN_TO_COMPARE:
             continue
         ranked = sorted(values, key=lambda kv: kv[1], reverse=(better == 'high'))
         (top_pk, top_v), (_, next_v) = ranked[0], ranked[1]
         if top_v != next_v and top_pk not in best_of:
-            best_of[top_pk] = (key, phrase(len(values), top_v, abs(next_v - top_v)))
-        mid = median(v for _, v in values)
-        (low_pk, low_v) = ranked[-1]
-        if low_pk not in worst and low_v != ranked[-2][1] and mid:
-            off = (low_v - mid) / mid if better == 'low' else (mid - low_v) / mid
-            if off >= 0.1:
-                if key == 'budget':
-                    worst[low_pk] = f"Priciest of your {len(values)} matches, {_money(low_v - mid)} above the median"
-                elif key == 'commute':
-                    worst[low_pk] = f"Longest drive to downtown of your {len(values)} matches ({int(low_v)} min)"
-                elif key == 'errands':
-                    worst[low_pk] = f"Furthest from groceries of your {len(values)} matches"
+            best_of[top_pk] = (key, _best_phrase(key, len(values), top_v, abs(next_v - top_v),
+                                                 total=len(rows)))
 
     reports = {}
-    for item, pct, s, dims, met, missing in rows:
+    for item, pct, dims, mismatches, met in rows:
         best = best_of.get(item.pk)
         cands = [c for c in cand_by_pk[item.pk]
                  if c.key not in shared and not (best and c.key == best[0])]
         cands.sort(key=lambda c: -c.weight)
-        catch = _own_catch(s, dims, missing, prefs) or worst.get(item.pk)
-        tone = 'bad'
-        if not catch:
-            catch, tone = _fallback_catch(dims)
-        reports[item.pk] = _assemble(pct, dims, [c.text for c in cands[:2]], catch, tone,
-                                     best[1] if best else None)
+        strengths = [c.text for c in cands[:2]]
+        if not strengths and not best:
+            strengths = _top_facts(dims)
+        reports[item.pk] = _assemble(pct, dims, strengths, mismatches, best[1] if best else None)
     return reports

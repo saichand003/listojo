@@ -625,22 +625,33 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
               <p class="ld-match-why">{{ r.strengths|join:" · " }}</p>
               {% endif %}
 
-              {# Every row: what we measured, how it scored, and the fact behind it. #}
+              {# Your criteria: scored, because they are what the % measures. #}
               <div class="fit-group">
-                <p class="fit-group-head">Your criteria <span>counted in the score</span></p>
+                <p class="fit-group-head">Your criteria <span>what the score measures</span></p>
                 {% for d in r.criteria %}{% include 'listings/_fit_row.html' %}{% endfor %}
               </div>
+
+              {% if r.mismatches %}
+              <div class="fit-differs">
+                <span class="fit-differs-k">Differs from your search</span>
+                <ul>{% for m in r.mismatches %}<li>{{ m }}</li>{% endfor %}</ul>
+              </div>
+              {% endif %}
+
+              {# Good to know: facts about the place, never scored. #}
               <div class="fit-group">
-                <p class="fit-group-head">About the place <span>context, not scored</span></p>
-                {% for d in r.context %}{% include 'listings/_fit_row.html' %}{% endfor %}
+                <p class="fit-group-head">Good to know</p>
+                <dl class="fit-facts">
+                  {% for d in r.good_to_know %}
+                  <div class="fit-fact{% if not d.available %} fit-fact-empty{% endif %}">
+                    <dt>{{ d.label }}</dt>
+                    <dd>{{ d.evidence }}{% if d.available and d.source %} <em>· {{ d.source }}</em>{% endif %}</dd>
+                  </div>
+                  {% endfor %}
+                </dl>
               </div>
 
-              <div class="fit-catch fit-catch-{{ r.catch_tone }}">
-                <span class="fit-catch-k">{% if r.catch_tone == 'bad' %}The catch{% elif r.catch_tone == 'clear' %}No catch found{% else %}Too early to say{% endif %}</span>
-                <span>{{ r.catch }}</span>
-              </div>
-
-              <p class="fit-foot">Based on {{ r.covered }} of {{ r.possible }} factors{% if r.sources %} · {{ r.sources|join:" · " }}{% endif %}</p>
+              <p class="fit-foot">Based on {{ r.covered }} of {{ r.possible }} factors</p>
               {% endwith %}
             </section>
             {% else %}
