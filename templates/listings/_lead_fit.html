@@ -1,0 +1,8 @@
+{% comment %}How the home fits the renter who wrote in: expects `fit` (an inquiry's fit_snapshot).{% endcomment %}
+{% if fit %}
+<div class="lead-fit">
+  <p class="lead-fit-head"><b>{{ fit.pct }}% match</b>{% if fit.fits %} · {{ fit.fits }}{% endif %}</p>
+  {% if fit.wants %}<p class="lead-fit-line"><span>Looking for</span> {{ fit.wants|join:" · " }}</p>{% endif %}
+  {% if fit.differs %}<p class="lead-fit-line"><span>Differs</span> {{ fit.differs|join:" · " }}</p>{% endif %}
+</div>
+{% endif %}

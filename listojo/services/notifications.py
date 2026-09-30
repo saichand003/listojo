@@ -70,6 +70,22 @@ def notify_user(user, *, subject: str, email_body: str, html_body: str | None = 
     return sent
 
 
+def _fit_summary_text(snapshot) -> str:
+    """How the home fits this renter, from their Listojo search; empty if they hadn't set one."""
+    if not snapshot:
+        return ''
+    lines = ['How your home fits this renter (from their Listojo search):']
+    head = f"- {snapshot.get('pct')}% match"
+    if snapshot.get('fits'):
+        head += f" · {snapshot['fits']}"
+    lines.append(head)
+    if snapshot.get('wants'):
+        lines.append('- Looking for: ' + ' · '.join(snapshot['wants']))
+    if snapshot.get('differs'):
+        lines.append('- Differs: ' + ' · '.join(snapshot['differs']))
+    return '\n'.join(lines) + '\n\n'
+
+
 def send_listing_inquiry_email(listing, inquiry) -> None:
     """Send an inquiry notification to a listing owner when email is available."""
     if not listing.owner.email:
@@ -80,7 +96,8 @@ def send_listing_inquiry_email(listing, inquiry) -> None:
             f'Hi {listing.owner.get_full_name() or listing.owner.email or listing.owner.username},\n\n'
             f'{inquiry.name} sent an inquiry about your listing "{listing.title}".\n\n'
             f'Message:\n{inquiry.message}\n\n'
-            f'Reply to: {inquiry.email}'
+            + _fit_summary_text(getattr(inquiry, 'fit_snapshot', None))
+            + f'Reply to: {inquiry.email}'
             + (f'\nPhone: {inquiry.phone}' if inquiry.phone else '')
         ),
         from_email=settings.DEFAULT_FROM_EMAIL,

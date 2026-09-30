@@ -18,6 +18,7 @@
           Re: <a href="{% url 'listing_detail' inq.listing.pk %}" style="color:var(--primary);text-decoration:none;font-weight:600">{{ inq.listing.title|truncatechars:50 }}</a>
         </div>
         <div style="font-size:.875rem;color:var(--text);line-height:1.55">{{ inq.message|truncatechars:200 }}</div>
+        {% include 'listings/_lead_fit.html' with fit=inq.fit_snapshot %}
         {% if inq.phone %}<div style="font-size:.78rem;color:var(--muted);margin-top:.3rem">📞 {{ inq.phone }}</div>{% endif %}
       </div>
       <a href="{% url 'inquiry_detail' inq.pk %}" style="flex-shrink:0;padding:6px 14px;background:#F3F4F6;border-radius:8px;font-size:.78rem;font-weight:600;text-decoration:none;color:#111827;white-space:nowrap">View inquiry</a>

@@ -667,6 +667,10 @@ class ListingInquiry(models.Model):
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
+    # How the listing fit what this renter was looking for when they wrote in
+    # (see listings.services.fit.lead_snapshot). Empty when they hadn't told
+    # us their preferences.
+    fit_snapshot = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ['-created_at']

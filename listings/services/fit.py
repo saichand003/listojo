@@ -526,3 +526,29 @@ def build_reports(items, prefs) -> dict:
             strengths = _top_facts(dims)
         reports[item.pk] = _assemble(pct, dims, strengths, mismatches, best[1] if best else None)
     return reports
+
+
+def lead_snapshot(report: FitReport, prefs) -> dict:
+    """
+    What a landlord sees with an inquiry: what the renter was looking for and
+    how this home fits it. Stored on the inquiry, so it stays true to the
+    moment they wrote in even if the listing or their search changes later.
+    """
+    wants = []
+    if prefs.max_price:
+        wants.append(f"Budget {_money(float(prefs.max_price))}/mo")
+    if prefs.bedrooms is not None:
+        wants.append(_bed_label(prefs.bedrooms))
+    if prefs.tags:
+        wants.append('Needs ' + ', '.join(prefs.tags))
+    if prefs.avail_date:
+        wants.append(f"Moving by {prefs.avail_date:%b} {prefs.avail_date.day}")
+    scored = [d for d in report.criteria if d.available]
+    met = [d for d in scored if d.score >= 70]
+    return {
+        'pct': report.pct,
+        'label': report.label,
+        'wants': wants,
+        'fits': f"Fits {len(met)} of {len(scored)} of their criteria" if scored else '',
+        'differs': list(report.mismatches),
+    }

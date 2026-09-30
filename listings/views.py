@@ -21,7 +21,7 @@ from .models import CityWaitlist, Community, Favourite, GuidedSearchEvent, Listi
 from listings.services import match_prefs, saved_searches
 from listings.services.amenities import PICKER_GROUPS
 from listings.services.match_prefs import resolve_match_prefs
-from listings.services.fit import build_report
+from listings.services.fit import build_report, lead_snapshot
 from listings.services.search import build_listing_search_context, live_inventory_count, live_match_preview
 from listings.services.valuation import predict_price
 from listings.services.visibility import active_listings
@@ -410,6 +410,12 @@ def listing_detail(request, pk):
         if inquiry_form.is_valid():
             inquiry = inquiry_form.save(commit=False)
             inquiry.listing = listing
+            # The landlord sees how their home fits this renter, when the
+            # renter has told us what they're looking for.
+            prefs = resolve_match_prefs(request)
+            report = build_report(listing, prefs) if prefs else None
+            if report:
+                inquiry.fit_snapshot = lead_snapshot(report, prefs)
             inquiry.save()
             send_listing_inquiry_email(listing, inquiry)
             # Create a lead record and auto-assign to the least-loaded staff agent

@@ -38,6 +38,7 @@
     <div>
       <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6B7280;margin-bottom:10px">Message</div>
       <div style="padding:18px 20px;border:1px solid #E5E7EB;border-radius:14px;background:#F9FAFB;font-size:16px;line-height:1.7;color:#1F2937;white-space:pre-line">{{ inquiry.message }}</div>
+      {% include 'listings/_lead_fit.html' with fit=inquiry.fit_snapshot %}
     </div>
   </div>
 </div>
