@@ -676,7 +676,11 @@ body.lj-map-active #view-wrapper { align-items: flex-start; }
 }
 #list-panel.map-mode .card-title-row h3 a:hover { color: var(--primary) !important; }
 #list-panel.map-mode .card-title-row .save-pill { display: none !important; }
-#list-panel.map-mode .match-score-badge { display: none !important; }
+/* Split is the default view, so the score has to show here too. The column
+   is narrow (the price owns the right), so the badge sits under the title
+   rather than squeezing it. */
+#list-panel.map-mode .card-title-row { flex-wrap: wrap !important; row-gap: .35rem !important; }
+#list-panel.map-mode .card-title-row h3 { flex: 1 1 100%; min-width: 0; }
 
 #list-panel.map-mode .price {
   grid-column: 2 !important;
