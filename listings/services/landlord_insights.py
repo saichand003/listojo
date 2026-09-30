@@ -161,7 +161,8 @@ def renter_demand(item) -> Demand:
     events = UserListingEvent.objects.filter(
         **({'community': item} if is_community else {'listing': item}),
         event_type__in=_VIEW_EVENTS,
-    ).only('user_id', 'session_key', 'user_features_snapshot')
+    ).exclude(user_id=item.owner_id).only('user_id', 'session_key', 'user_features_snapshot')
+    # The owner looking at their own listing is not a renter.
     wants = _viewer_wants(events)
     n = len(wants)
     if n < MIN_RENTERS:

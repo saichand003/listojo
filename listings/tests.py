@@ -93,21 +93,24 @@ class ListingWorkflowTests(TestCase):
         )
 
     def test_listing_list_hides_expired_listing(self):
-        response = self.client.get('/')
+        response = self.client.get(reverse('listing_list'))
         self.assertEqual(response.status_code, 200)
         listings = response.context['listings']
         self.assertIn(self.active_listing, listings)
         self.assertNotIn(self.expired_listing, listings)
 
-    def test_listing_list_hides_authenticated_users_own_listings(self):
+    def test_listing_list_includes_owners_own_listings_badged(self):
+        # Owners search to see how renters see them; hiding their own inventory
+        # made the match count disagree with the live-inventory total.
         self.client.force_login(self.owner)
 
-        response = self.client.get('/')
+        response = self.client.get(reverse('listing_list'))
 
         self.assertEqual(response.status_code, 200)
         listings = response.context['listings']
-        self.assertNotIn(self.active_listing, listings)
+        self.assertIn(self.active_listing, listings)
         self.assertIn(self.other_listing, listings)
+        self.assertContains(response, 'Your listing')
 
     def test_guided_search_post_creates_lead_preference_and_session(self):
         user = User.objects.create_user(
@@ -129,7 +132,7 @@ class ListingWorkflowTests(TestCase):
         })
 
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.url.startswith('/?'))
+        self.assertTrue(response.url.startswith(reverse('listing_list') + '?'))
         lead = Lead.objects.get(email='priya@example.com', source='guided_search')
         self.assertEqual(lead.preference.city, 'Plano')
         self.assertEqual(lead.preference.bedrooms, 2)
@@ -141,7 +144,7 @@ class ListingWorkflowTests(TestCase):
         self.community.community_amenities = 'pool, gym'
         self.community.save(update_fields=['community_amenities'])
 
-        response = self.client.get('/', {
+        response = self.client.get(reverse('listing_list'), {
             'category': 'rentals',
             'city': 'Irving',
             'property_type': 'apartment',
@@ -155,7 +158,7 @@ class ListingWorkflowTests(TestCase):
         self.assertIn(self.community, response.context['communities'])
         self.assertEqual(response.context['total_matches'], len(response.context['listings']) + 1)
         self.assertContains(response, 'The Reserve')
-        self.assertContains(response, 'Apartment Complex')
+        self.assertContains(response, 'Verified community')
         self.assertContains(response, 'Pool')
         self.assertContains(response, 'match')
 

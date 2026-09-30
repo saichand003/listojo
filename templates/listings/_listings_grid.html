@@ -48,7 +48,7 @@
             {% endif %}
         </div>
         <div class="listing-body">
-            <p class="card-kicker"><span class="card-kicker-chip">Verified community</span><span>{{ community.city }}{% if community.zip_code %} &bull; {{ community.zip_code }}{% endif %}</span></p>
+            <p class="card-kicker"><span class="card-kicker-chip">Verified community</span>{% if user.is_authenticated and community.owner_id == user.id %}<span class="own-badge">Your listing</span>{% endif %}<span>{{ community.city }}{% if community.zip_code %} &bull; {{ community.zip_code }}{% endif %}</span></p>
             <div class="card-title-row">
                 <h3><a href="{% url 'community_detail' community.pk %}">{{ community.name }}</a></h3>
                 {% with community_scores|dict_get:community.pk as score %}
@@ -163,7 +163,7 @@
         <div class="listing-body">
             {# Tag line: who is letting it, and where. #}
             <p class="card-kicker">
-                <span class="card-kicker-chip">{% if listing.organization_id %}Managed community{% elif listing.category == 'properties' %}Owner sale{% elif listing.category == 'roommates' %}Room share{% else %}Direct landlord{% endif %}</span>
+                <span class="card-kicker-chip">{% if listing.organization_id %}Managed community{% elif listing.category == 'properties' %}Owner sale{% elif listing.category == 'roommates' %}Room share{% else %}Direct landlord{% endif %}</span>{% if user.is_authenticated and listing.owner_id == user.id %}<span class="own-badge">Your listing</span>{% endif %}
                 <span>{{ listing.city }}{% if listing.zip_code %} &bull; {{ listing.zip_code }}{% endif %}</span>
             </p>
             {# Title row with match score or save pill #}

@@ -8623,3 +8623,10 @@ button.ld-cta-ghost { cursor: pointer; }
 .lead-fit-line { margin: .2rem 0 0; line-height: 1.45; }
 .lead-fit-line span { font-weight: 700; color: var(--muted); margin-right: .25rem; }
 
+/* An owner's own listing in their search results. */
+.own-badge {
+  display: inline-flex; align-items: center; padding: .1rem .5rem; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--border-2);
+  font-size: .6875rem; font-weight: 700; color: var(--text-2); white-space: nowrap;
+}
+

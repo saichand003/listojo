@@ -107,9 +107,10 @@ def _parse_search_params(request) -> SearchParams:
 
 def _apply_listing_filters(listings_qs, params: SearchParams, user):
     listings = active_listings(listings_qs)
+    # An owner's own listings stay in their search (badged "Your listing" on
+    # the card): landlords search to see how renters see them, and hiding them
+    # made the match count disagree with the live-inventory total.
     listings = listings.filter(parent__isnull=True)
-    if user.is_authenticated:
-        listings = listings.exclude(owner=user)
 
     for term in params.terms:
         listings = listings.filter(
@@ -185,8 +186,6 @@ def _apply_listing_ordering(listings_qs, params: SearchParams):
 def _matching_communities(user, params: SearchParams) -> list[Community]:
     cqs = Community.objects.filter(status='active').select_related('nearest_downtown').prefetch_related(
         'images', 'floor_plans__units', 'nearby_groceries__store', 'nearby_transit__station')
-    if user.is_authenticated:
-        cqs = cqs.exclude(owner=user)
     if params.city:
         cqs = cqs.filter(city__icontains=params.city)
     if params.bedrooms_int is not None:
