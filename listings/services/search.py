@@ -6,6 +6,7 @@ from datetime import date
 from django.db.models import Case, Count, IntegerField, Q, Value, When
 
 from listings.models import Community, Favourite, Listing
+from listings.services.fit import build_reports
 from listings.services.match_prefs import MatchPrefs, remember, resolve_match_prefs
 from listings.services.matching import match_badge_class
 from listings.services.visibility import active_listings
@@ -68,6 +69,7 @@ class SearchParams:
     property_type: str = ''
     bedrooms: str = ''
     fmm: bool = False
+    priority: str = ''
     # Derived typed values
     terms: list[str] = field(default_factory=list)
     bedrooms_int: int | None = None
@@ -92,6 +94,7 @@ def _parse_search_params(request) -> SearchParams:
         property_type=request.GET.get('property_type', '').strip(),
         bedrooms=request.GET.get('bedrooms', '').strip(),
         fmm=request.GET.get('fmm', '').strip() == '1',
+        priority=request.GET.get('priority', '').strip(),
     )
     p.terms = [t.strip() for t in p.q.split(',') if t.strip()] if p.q else []
     p.bedrooms_int = _parse_int(p.bedrooms)
@@ -180,7 +183,8 @@ def _apply_listing_ordering(listings_qs, params: SearchParams):
 
 
 def _matching_communities(user, params: SearchParams) -> list[Community]:
-    cqs = Community.objects.filter(status='active').prefetch_related('images', 'floor_plans__units')
+    cqs = Community.objects.filter(status='active').select_related('nearest_downtown').prefetch_related(
+        'images', 'floor_plans__units', 'nearby_groceries__store', 'nearby_transit__station')
     if user.is_authenticated:
         cqs = cqs.exclude(owner=user)
     if params.city:
@@ -255,32 +259,29 @@ def _prefs_from_params(params: SearchParams) -> MatchPrefs:
         property_type=params.property_type,
         accommodation_type=params.accommodation_type,
         avail_date=params.avail_date,
+        priority=params.priority,
         source='your search',
     )
 
 
-def _score_items(items, score_fn, explain_fn) -> dict:
+def _score_items(items, score_fn) -> dict:
     """
-    Score each item once and key everything the cards need by pk. Items with
-    no score (nothing to measure) are left out, so the card shows no badge.
+    Score each item once and key the badge by pk. Items with no score (nothing
+    to measure) are left out, so the card shows no badge.
     """
-    out = {'scores': {}, 'classes': {}, 'reasons': {}, 'caveats': {}, 'explanations': {}}
+    out = {'scores': {}, 'classes': {}}
     for item in items:
         result = score_fn(item)
         if result.pct is None:
             continue
         out['scores'][item.pk] = result.pct
         out['classes'][item.pk] = match_badge_class(result.pct)
-        out['reasons'][item.pk] = result.reasons
-        out['caveats'][item.pk] = result.caveats
-        if explain_fn:
-            out['explanations'][item.pk] = explain_fn(item, result.reasons)
     return out
 
 
 def _score_listings_fmm(listings_qs, prefs: MatchPrefs) -> tuple[list, list, dict]:
     listings = list(listings_qs)
-    scored = _score_items(listings, prefs.score, prefs.explain)
+    scored = _score_items(listings, prefs.score)
     pct = scored['scores']
     # Featured only breaks ties between equal scores; it never lifts a score.
     if not pct:
@@ -296,7 +297,7 @@ def _score_listings_fmm(listings_qs, prefs: MatchPrefs) -> tuple[list, list, dic
 
 
 def _score_communities_fmm(communities: list, prefs: MatchPrefs) -> tuple[list, dict]:
-    scored = _score_items(communities, prefs.score_community, prefs.explain_community)
+    scored = _score_items(communities, prefs.score_community)
     pct = scored['scores']
     ranked = sorted(communities, key=lambda c: (-pct.get(c.pk, 0), -c.featured, c.created_at))
     return ranked, scored
@@ -307,9 +308,6 @@ def _score_context(listing_scored: dict, community_scored: dict) -> dict:
     for prefix, scored in (('listing', listing_scored), ('community', community_scored)):
         ctx[f'{prefix}_scores'] = scored.get('scores', {})
         ctx[f'{prefix}_score_classes'] = scored.get('classes', {})
-        ctx[f'{prefix}_reasons'] = scored.get('reasons', {})
-        ctx[f'{prefix}_caveats'] = scored.get('caveats', {})
-        ctx[f'{prefix}_explanations'] = scored.get('explanations', {})
     return ctx
 
 
@@ -384,7 +382,10 @@ def build_listing_search_context(request) -> dict:
     """Shared search/listing context for the consumer discovery experience."""
     params = _parse_search_params(request)
 
-    base_qs = Listing.objects.select_related('owner').prefetch_related('images')
+    # The Fit Report reads each card's nearby places; prefetch them so a page
+    # of cards is a handful of queries, not a handful per card.
+    base_qs = Listing.objects.select_related('owner', 'nearest_downtown').prefetch_related(
+        'images', 'nearby_schools__school', 'nearby_groceries__store', 'nearby_transit__station')
     listings_qs = _apply_listing_filters(base_qs, params, request.user)
     listings_qs = _apply_listing_ordering(listings_qs, params)
 
@@ -401,6 +402,10 @@ def build_listing_search_context(request) -> dict:
         if prefs.has_criteria:
             remember(request, prefs)
         scores = fmm.pop('scores')
+        fit_reports = {
+            'listing_fit': build_reports(listings + fmm['near_match_listings'], prefs),
+            'community_fit': build_reports(communities, prefs),
+        }
     else:
         fmm = {}
         listings = list(listings_qs)
@@ -409,11 +414,16 @@ def build_listing_search_context(request) -> dict:
         prefs = resolve_match_prefs(request)
         if prefs:
             scores = _score_context(
-                _score_items(listings, prefs.score, None),
-                _score_items(communities, prefs.score_community, None),
+                _score_items(listings, prefs.score),
+                _score_items(communities, prefs.score_community),
             )
+            fit_reports = {
+                'listing_fit': build_reports(listings, prefs),
+                'community_fit': build_reports(communities, prefs),
+            }
         else:
             scores = _score_context({}, {})
+            fit_reports = {'listing_fit': {}, 'community_fit': {}}
 
     fav_ids = set()
     if request.user.is_authenticated:
@@ -446,6 +456,7 @@ def build_listing_search_context(request) -> dict:
         'fmm_market': fmm.get('fmm_market'),
         'near_match_listings': fmm.get('near_match_listings', []),
         **scores,
+        **fit_reports,
         # Drives the "Get your match score" chip and the sheet's defaults.
         'match_prefs': prefs if prefs and prefs.has_criteria else None,
         'communities': communities,

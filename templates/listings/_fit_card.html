@@ -1,0 +1,10 @@
+<div class="match-factor">
+    {% if fit.best_of %}<p class="fit-card-best">{{ fit.best_of }}</p>{% endif %}
+    {% if fit.strengths %}
+    <div class="match-reason-pills">
+        {% for s in fit.strengths %}<span class="match-reason-pill">{{ s }}</span>{% endfor %}
+    </div>
+    {% endif %}
+    <p class="fit-card-catch fit-catch-{{ fit.catch_tone }}"><b>{% if fit.catch_tone == 'bad' %}The catch:{% elif fit.catch_tone == 'clear' %}No catch found:{% else %}Too early to say:{% endif %}</b> {{ fit.catch }}</p>
+    <p class="fit-card-foot">Based on {{ fit.covered }} of {{ fit.possible }} factors</p>
+</div>

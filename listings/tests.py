@@ -2177,7 +2177,7 @@ class MatchScoreTests(TestCase):
         detail = self.client.get(reverse('listing_detail', args=[self.listing.pk]))
         self.assertEqual(detail.context['match']['pct'], card_pct)
         self.assertLess(card_pct, 100)
-        self.assertIn('No pool', listing_page.context['listing_caveats'][self.listing.pk])
+        self.assertIn('pool', listing_page.context['listing_fit'][self.listing.pk].catch)
 
     def test_find_my_match_search_is_what_the_detail_page_scores_against(self):
         listing_page = self.client.get(reverse('listing_list'), {'fmm': '1', 'max_price': '1600', 'bedrooms': '2', 'tags': 'pool'})
@@ -2235,3 +2235,85 @@ class SavedSearchVisibilityTests(TestCase):
         self.assertNotIn('room-card sel" id="rc-whole"', html)
         self.assertRegex(html, r'<input id="max_price"(?![^>]*value=)[^>]*>')
         self.assertIn("var roomType = '';", html)
+
+
+class FitReportTests(TestCase):
+    """The Fit Report: every claim from real data, reasons chosen by what sets a listing apart."""
+
+    def setUp(self):
+        from listings.services.match_prefs import MatchPrefs
+        self.MatchPrefs = MatchPrefs
+        self.owner = User.objects.create_user(username='fit-owner', password='pw')
+
+        def make(title, price, tags='pet-friendly, parking', bedrooms=2):
+            return Listing.objects.create(
+                owner=self.owner, title=title, description='x', category='rentals', city='Irving',
+                price=Decimal(price), price_unit='mo', bedrooms=bedrooms, status='active', tags=tags)
+
+        self.cheap = make('Cheap', '1400')
+        self.mid = make('Mid', '1600')
+        self.dear = make('Dear', '1950', tags='pet-friendly')
+
+    def reports(self, **prefs):
+        from listings.services.fit import build_reports
+        return build_reports([self.cheap, self.mid, self.dear], self.MatchPrefs(**prefs))
+
+    def test_no_preferences_no_report(self):
+        self.assertEqual(self.reports(), {})
+
+    def test_best_of_names_the_cheapest_and_the_gap(self):
+        r = self.reports(max_price=2000, bedrooms=2)
+        self.assertEqual(r[self.cheap.pk].best_of, 'Cheapest of your 3 matches, $200 less than the next')
+        self.assertIsNone(r[self.mid.pk].best_of)
+
+    def test_a_strength_every_match_shares_is_dropped(self):
+        r = self.reports(max_price=2000, bedrooms=2)
+        for report in r.values():
+            self.assertNotIn('2 bed, as asked', report.strengths)
+
+    def test_missing_must_have_is_the_catch_and_caps_the_score(self):
+        r = self.reports(max_price=2000, tags=['pet-friendly', 'parking'])
+        self.assertEqual(r[self.dear.pk].catch, 'No parking listed')
+        self.assertLessEqual(r[self.dear.pk].pct, 69)
+
+    def test_over_budget_is_the_catch(self):
+        r = self.reports(max_price=1800)
+        self.assertEqual(r[self.dear.pk].catch, '$150 over your $1,800 budget')
+
+    def test_no_neighbourhood_data_says_so_instead_of_inventing(self):
+        r = self.reports(max_price=2000, bedrooms=2)
+        report = r[self.mid.pk]
+        self.assertEqual(report.catch_tone, 'unknown')
+        self.assertEqual(report.catch, 'No commute or neighborhood data for this address yet')
+        # Budget and bedrooms scored; commute, groceries, schools, walkability have no data.
+        self.assertEqual((report.covered, report.possible), (2, 6))
+
+    def test_grocery_distance_becomes_a_fact_with_its_source(self):
+        from listings.models import GroceryStore, ListingGroceryStore
+        store = GroceryStore.objects.create(place_id='p1', chain='Kroger', name='Kroger')
+        ListingGroceryStore.objects.create(listing=self.mid, store=store,
+                                           distance_miles=Decimal('6.0'), drive_minutes=16)
+        from listings.services.fit import build_report
+        report = build_report(self.mid, self.MatchPrefs(max_price=2000))
+        errands = next(d for d in report.dimensions if d.key == 'errands')
+        self.assertEqual(errands.evidence, 'Kroger, 16 min drive')
+        self.assertIn('Google Places', report.sources)
+        self.assertEqual(report.catch, 'Nearest groceries are a drive: Kroger, 16 min drive')
+
+    def test_utilities_tag_counts_as_included(self):
+        from listings.services.matching import utilities_included
+        self.mid.tags = 'utilities included, gym'
+        self.assertTrue(utilities_included(self.mid))
+        from listings.services.fit import build_report
+        report = build_report(self.mid, self.MatchPrefs(max_price=2000))
+        budget = next(d for d in report.dimensions if d.key == 'budget')
+        self.assertIn('$1,450/mo after utilities', budget.evidence)
+
+    def test_detail_page_shows_the_breakdown(self):
+        session = self.client.session
+        session['gs_criteria'] = {'max_price': 2000, 'bedrooms': 2, 'tags': 'pet-friendly,pool'}
+        session.save()
+        response = self.client.get(reverse('listing_detail', args=[self.mid.pk]))
+        self.assertContains(response, 'The catch')
+        self.assertContains(response, 'No pool listed')
+        self.assertContains(response, 'Based on 3 of 7 factors')

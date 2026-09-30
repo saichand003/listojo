@@ -6,6 +6,11 @@ from typing import NamedTuple
 from django.utils import timezone
 
 
+# A listing without one of the renter's must-haves is at best a partial fit,
+# however well it does on everything else.
+MISSING_MUST_HAVE_CAP = 69
+
+
 class MatchResult(NamedTuple):
     # None when there was nothing to score against: a percentage computed
     # from no preferences is a constant, not a match.
@@ -41,6 +46,23 @@ _TAG_LABELS: dict[str, str] = {
     'balcony': 'Balcony',
     'high-speed internet': 'High-speed internet',
 }
+
+
+# What an included-utilities listing is worth against a budget, per month.
+UTILITIES_CREDIT = 150
+
+_UTILITY_TAGS = ('utilities included', 'bills included', 'all bills paid')
+
+
+def utilities_included(listing) -> bool:
+    """
+    One answer to "are utilities included?". Landlords set it as the field or
+    as a tag, sometimes only one of the two, so either counts.
+    """
+    if getattr(listing, 'bills_included', False):
+        return True
+    tags = (getattr(listing, 'tags', '') or '').lower()
+    return any(t in tags for t in _UTILITY_TAGS)
 
 
 def match_band(pct: int | None) -> str | None:
@@ -98,19 +120,6 @@ def _score_tags(requested_tags: list[str], text_blob: str) -> tuple[int, int, in
     return pts, max_pts, tag_hits, reasons, missing
 
 
-def _format_explanation(parts: list[str], fallback_location: str | None = None) -> str | None:
-    """Build the 'Good fit: …' sentence from a list of reason fragments."""
-    if not parts:
-        return f"Good fit: located in {fallback_location} and aligned with your search criteria." if fallback_location else None
-    if len(parts) == 1:
-        sentence = f"Good fit: {parts[0]}."
-    elif len(parts) == 2:
-        sentence = f"Good fit: {parts[0]}, and {parts[1]}."
-    else:
-        sentence = f"Good fit: {parts[0]}. Also — {', '.join(parts[1:])}."
-    return sentence[0].upper() + sentence[1:]
-
-
 def score_listing(
     listing,
     *,
@@ -126,20 +135,22 @@ def score_listing(
     reasons: list[str] = []
     caveats: list[str] = []
     tag_hits = 0
+    tag_missing: list[str] = []
     tags_lower = (listing.tags or '').lower()
 
     if max_price and max_price > 0:
         max_pts += 40
         if listing.price:
             price = float(listing.price)
-            effective = price - (150 if listing.bills_included else 0)
+            bills = utilities_included(listing)
+            effective = price - (UTILITIES_CREDIT if bills else 0)
             headroom = float(max_price) - effective
             if headroom >= 0:
                 ratio = headroom / float(max_price)
                 # Linear from 28 (at budget) to 40 (100% under budget).
                 # Old formula capped at ratio=0.5, making cheap listings indistinguishable.
                 pts += 28 + min(12, int(ratio * 12))
-                if listing.bills_included:
+                if bills:
                     reasons.append(f"Bills included (effective ~${int(effective):,}/mo)")
                 elif headroom >= 100:
                     reasons.append(f"${int(headroom):,} under budget")
@@ -198,6 +209,8 @@ def score_listing(
         reasons.append("No deposit")
 
     pct = int(round(pts / max_pts * 100))
+    if tag_missing:
+        pct = min(pct, MISSING_MUST_HAVE_CAP)
     return MatchResult(min(100, max(0, pct)), reasons[:5], caveats[:3], tag_hits)
 
 
@@ -227,71 +240,6 @@ def score_for_preference(listing, preference) -> MatchResult:
     return base
 
 
-def explain_match(
-    listing,
-    reasons: list[str],
-    *,
-    max_price: float | None = None,
-    quality_tags: list[str] | None = None,
-    accommodation_type: str = '',
-    property_type: str = '',
-) -> str | None:
-    parts: list[str] = []
-    quality_tags = quality_tags or []
-
-    accom = listing.get_accommodation_type_display() if listing.accommodation_type else ''
-    prop = listing.get_property_type_display() if listing.property_type else ''
-    if property_type and listing.property_type == property_type and prop:
-        parts.append(f"it's exactly the {prop.lower()} you're looking for")
-    elif accommodation_type and listing.accommodation_type == accommodation_type:
-        label = 'whole place' if accommodation_type == 'whole' else 'private room'
-        parts.append(f"it's a {label}{(' — ' + prop.lower()) if prop else ''}")
-
-    if listing.price and max_price:
-        price = float(listing.price)
-        budget = float(max_price)
-        headroom = int(budget - price)
-        if listing.bills_included:
-            effective = int(price - 150)
-            parts.append(
-                f"bills are included — effective cost is ~${effective:,}/mo, saving you ${int(budget - effective):,} vs your budget"
-            )
-        elif headroom >= 500:
-            parts.append(f"at ${int(price):,}/mo it's ${headroom:,} under your ${int(budget):,} budget — gives you room to save")
-        elif headroom >= 100:
-            parts.append(f"priced at ${int(price):,}/mo, ${headroom:,} under your budget")
-        elif headroom >= 0:
-            parts.append(f"right at your ${int(budget):,}/mo budget")
-
-    matched = [t for t in quality_tags if t.lower() in (listing.tags or '').lower()]
-    if matched:
-        if len(matched) >= 3:
-            parts.append(f"it has all your must-haves: {', '.join(matched)}")
-        elif len(matched) == 2:
-            parts.append(f"it includes {matched[0]} and {matched[1]}")
-        else:
-            parts.append(f"it has {matched[0]}")
-
-    tags_lower = (listing.tags or '').lower()
-    perks = []
-    if 'pet-friendly' in tags_lower and 'pet-friendly' not in [t.lower() for t in quality_tags]:
-        perks.append('pet-friendly')
-    if 'no deposit' in tags_lower or 'no-deposit' in tags_lower:
-        perks.append('no deposit required')
-    if 'furnished' in tags_lower and 'furnished' not in [t.lower() for t in quality_tags]:
-        perks.append('fully furnished')
-    if perks:
-        parts.append(f"bonus: {', '.join(perks[:2])}")
-
-    age_days = (timezone.now() - listing.created_at).days
-    if age_days == 0:
-        parts.append("just listed today — move fast")
-    elif age_days <= 3:
-        parts.append(f"listed {age_days}d ago, still fresh")
-
-    return _format_explanation(parts, listing.city or None)
-
-
 def score_community(
     community,
     *,
@@ -304,6 +252,7 @@ def score_community(
     reasons: list[str] = []
     caveats: list[str] = []
     tag_hits = 0
+    tag_missing: list[str] = []
 
     amenity_blob = ' '.join([
         community.community_amenities or '',
@@ -376,56 +325,6 @@ def score_community(
         reasons.append("Recently added" if age_days else "Just added")
 
     pct = int(round(pts / max_pts * 100))
+    if tag_missing:
+        pct = min(pct, MISSING_MUST_HAVE_CAP)
     return MatchResult(min(100, max(0, pct)), reasons[:5], caveats[:3], tag_hits)
-
-
-def explain_community_match(
-    community,
-    reasons: list[str],
-    *,
-    max_price: float | None = None,
-    quality_tags: list[str] | None = None,
-    property_type: str = '',
-) -> str | None:
-    parts: list[str] = []
-    quality_tags = quality_tags or []
-
-    community_type_label = community.get_community_type_display() if community.community_type else ''
-    if property_type == 'apartment' and community.community_type == 'apartment_complex':
-        parts.append("it's an apartment complex, which matches the apartment search you selected")
-    elif property_type == 'condo' and community.community_type == 'condo_building':
-        parts.append("it's a condo building that matches your selected property type")
-    elif property_type == 'townhouse' and community.community_type == 'townhouse_complex':
-        parts.append("it's a townhouse complex that matches your selected property type")
-    elif community_type_label:
-        parts.append(f"it offers {community_type_label.lower()} inventory")
-
-    min_price, _ = community.price_range
-    if min_price is not None and max_price:
-        starting_price = float(min_price)
-        budget = float(max_price)
-        headroom = int(budget - starting_price)
-        if headroom >= 300:
-            parts.append(f"units start at ${int(starting_price):,}/mo, well under your ${int(budget):,} budget")
-        elif headroom >= 0:
-            parts.append(f"units start at ${int(starting_price):,}/mo, within your budget")
-
-    amenity_blob = ' '.join([
-        community.community_amenities or '',
-        community.in_unit_amenities or '',
-        community.description or '',
-        community.special_offer or '',
-    ]).lower()
-    matched = [t for t in quality_tags if t.lower() in amenity_blob]
-    if matched:
-        if len(matched) >= 3:
-            parts.append(f"it covers several of your must-haves: {', '.join(matched[:3])}")
-        elif len(matched) == 2:
-            parts.append(f"it includes {matched[0]} and {matched[1]}")
-        else:
-            parts.append(f"it includes {matched[0]}")
-
-    if community.available_unit_count:
-        parts.append(f"{community.available_unit_count} unit{'s' if community.available_unit_count != 1 else ''} available")
-
-    return _format_explanation(parts, community.city or None)

@@ -21,7 +21,7 @@ from .models import CityWaitlist, Community, Favourite, GuidedSearchEvent, Listi
 from listings.services import match_prefs, saved_searches
 from listings.services.amenities import PICKER_GROUPS
 from listings.services.match_prefs import resolve_match_prefs
-from listings.services.matching import match_band
+from listings.services.fit import build_report
 from listings.services.search import build_listing_search_context, live_inventory_count, live_match_preview
 from listings.services.valuation import predict_price
 from listings.services.visibility import active_listings
@@ -340,20 +340,15 @@ def _detail_match(request, listing):
     if not prefs:
         return None
 
-    result = prefs.score(listing)
-    if result.pct is None:
+    report = build_report(listing, prefs, detail=True)
+    if report is None:
         return None
-
-    band = match_band(result.pct)
     return {
-        'pct': result.pct,
-        'band': band,
-        'label': {'strong': 'Excellent fit', 'fair': 'Good fit', 'weak': 'Partial fit'}[band],
-        'reasons': result.reasons,
-        'caveats': result.caveats,
-        'explanation': prefs.explain(listing, result.reasons),
+        'pct': report.pct,
+        'band': report.band,
+        'label': report.label,
+        'report': report,
         'source': prefs.source,
-        'max_price': prefs.max_price,
     }
 
 

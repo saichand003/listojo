@@ -1,5 +1,5 @@
 {% load listing_extras humanize %}
-{% comment %}listing_explanations is only present in FMM mode — dict_get returns '' otherwise{% endcomment %}
+{% comment %}listing_fit / community_fit hold a Fit Report per pk when the visitor has preferences; dict_get returns '' otherwise{% endcomment %}
 <section class="grid grid-listings" id="listings-grid">
 
 {# ── Community cards ── #}
@@ -89,18 +89,8 @@
                     <span style="font-size:1rem;font-weight:600;-webkit-text-fill-color:var(--muted);background:none;">Contact for pricing</span>
                 {% endif %}
             </p>
-            {% with community_explanations|dict_get:community.pk as explanation %}
-            {% if explanation %}
-            <p class="match-explanation">{{ explanation }}</p>
-            {% endif %}
-            {% endwith %}
-            {% with reasons=community_reasons|dict_get:community.pk caveats=community_caveats|dict_get:community.pk %}
-            {% if reasons or caveats %}
-            <div class="match-reason-pills">
-                {% for r in reasons %}<span class="match-reason-pill">{{ r }}</span>{% endfor %}
-                {% for c in caveats %}<span class="match-reason-pill match-reason-pill-miss">{{ c }}</span>{% endfor %}
-            </div>
-            {% endif %}
+            {% with fit=community_fit|dict_get:community.pk %}
+            {% if fit %}{% include 'listings/_fit_card.html' %}{% endif %}
             {% endwith %}
             <div class="card-actions">
                 <a href="{% url 'community_detail' community.pk %}#floor-plans" class="card-btn-primary" onclick="event.stopPropagation()" style="white-space:nowrap;font-size:.78rem;">Check Availability</a>
@@ -248,23 +238,10 @@
             {% if inc %}<p class="card-income-hint">Income req. ~${{ inc|floatformat:0|intcomma }}/mo</p>{% endif %}
             {% endwith %}
 
-            {# Why this result is here — the card's one piece of reasoning. #}
-            {% with explanation=listing_explanations|dict_get:listing.pk reasons=listing_reasons|dict_get:listing.pk caveats=listing_caveats|dict_get:listing.pk %}
-            {% if explanation or reasons or caveats %}
-            <div class="match-factor">
-                <p class="match-factor-head">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9z"/></svg>
-                    Match factor
-                </p>
-                {% if explanation %}<p class="match-factor-body">{{ explanation }}</p>{% endif %}
-                {% if reasons or caveats %}
-                <div class="match-reason-pills">
-                    {% for r in reasons %}<span class="match-reason-pill">{{ r }}</span>{% endfor %}
-                    {% for c in caveats %}<span class="match-reason-pill match-reason-pill-miss">{{ c }}</span>{% endfor %}
-                </div>
-                {% endif %}
-            </div>
-            {% endif %}
+            {% comment %}Why this result is here: the one thing it does best among the
+               renter's matches, what else stands out, and the catch.{% endcomment %}
+            {% with fit=listing_fit|dict_get:listing.pk %}
+            {% if fit %}{% include 'listings/_fit_card.html' %}{% endif %}
             {% endwith %}
 
             {# Feature tag pills (max 4) #}

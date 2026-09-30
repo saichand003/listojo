@@ -18,13 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 
-from listings.services.matching import (
-    MatchResult,
-    explain_community_match,
-    explain_match,
-    score_community,
-    score_listing,
-)
+from listings.services.matching import MatchResult, score_community, score_listing
 
 SESSION_KEY = 'gs_criteria'
 
@@ -65,6 +59,9 @@ class MatchPrefs:
     property_type: str = ''
     accommodation_type: str = ''
     avail_date: date | None = None
+    # What the renter said matters most ('price', 'location' or 'features');
+    # orders the reasons, never changes the score.
+    priority: str = ''
     source: str = ''
 
     @property
@@ -94,23 +91,6 @@ class MatchPrefs:
             bedrooms=self.bedrooms,
         )
 
-    def explain(self, listing, reasons) -> str | None:
-        return explain_match(
-            listing, reasons,
-            max_price=self.max_price,
-            quality_tags=self.tags,
-            accommodation_type=self.accommodation_type,
-            property_type=self.property_type,
-        )
-
-    def explain_community(self, community, reasons) -> str | None:
-        return explain_community_match(
-            community, reasons,
-            max_price=self.max_price,
-            quality_tags=self.tags,
-            property_type=self.property_type,
-        )
-
     def as_form_initial(self) -> dict:
         return {
             'max_price': int(self.max_price) if self.max_price else '',
@@ -128,6 +108,7 @@ def from_mapping(data, source: str) -> MatchPrefs:
         property_type=(data.get('property_type') or '').strip(),
         accommodation_type=(data.get('accommodation_type') or '').strip(),
         avail_date=_to_date(data.get('available_by')),
+        priority=(data.get('priority') or '').strip(),
         source=source,
     )
 
@@ -141,6 +122,7 @@ def remember(request, prefs: MatchPrefs) -> None:
         'property_type': prefs.property_type,
         'accommodation_type': prefs.accommodation_type,
         'available_by': prefs.avail_date.isoformat() if prefs.avail_date else '',
+        'priority': prefs.priority,
     }
 
 
@@ -170,6 +152,7 @@ def resolve_match_prefs(request) -> MatchPrefs | None:
                 property_type=saved.property_type or '',
                 accommodation_type=saved.accommodation_type or '',
                 avail_date=_to_date(saved.available_by),
+                priority=saved.priority or '',
                 source='your saved search',
             )
             if prefs.has_criteria:

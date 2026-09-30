@@ -1,0 +1,11 @@
+<div class="fit-row{% if d.score is None %} fit-row-empty{% endif %}">
+  <span class="fit-row-k">{{ d.label }}</span>
+  {% if d.score is not None %}
+  <span class="fit-bar" role="img" aria-label="{{ d.score }} out of 100"><i style="width:{{ d.score }}%"></i></span>
+  <b class="fit-row-n">{{ d.score }}</b>
+  {% else %}
+  <span class="fit-bar fit-bar-empty"></span>
+  <b class="fit-row-n">&mdash;</b>
+  {% endif %}
+  <span class="fit-row-v">{{ d.evidence }}{% if d.source and d.score is not None %} <em>· {{ d.source }}</em>{% endif %}</span>
+</div>

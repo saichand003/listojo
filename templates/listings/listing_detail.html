@@ -620,32 +620,28 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 </div>
               </div>
 
-              {% if match.explanation %}
-              <p class="ld-match-why">{{ match.explanation }}</p>
+              {% with r=match.report %}
+              {% if r.strengths %}
+              <p class="ld-match-why">{{ r.strengths|join:" · " }}</p>
               {% endif %}
 
-              {% if match.reasons or match.caveats %}
-              <div class="ld-match-factors">
-                {% for r in match.reasons|slice:":3" %}
-                <div class="ld-match-factor">
-                  <p class="ld-match-factor-k">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
-                    Why it fits
-                  </p>
-                  <p class="ld-match-factor-v">{{ r }}</p>
-                </div>
-                {% endfor %}
-                {% for c in match.caveats|slice:":2" %}
-                <div class="ld-match-factor ld-match-factor-warn">
-                  <p class="ld-match-factor-k">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" aria-hidden="true"><path d="M12 8.5v5"/><path d="M12 16.8h.01"/><circle cx="12" cy="12" r="9"/></svg>
-                    Worth knowing
-                  </p>
-                  <p class="ld-match-factor-v">{{ c }}</p>
-                </div>
-                {% endfor %}
+              {# Every row: what we measured, how it scored, and the fact behind it. #}
+              <div class="fit-group">
+                <p class="fit-group-head">Your criteria <span>counted in the score</span></p>
+                {% for d in r.criteria %}{% include 'listings/_fit_row.html' %}{% endfor %}
               </div>
-              {% endif %}
+              <div class="fit-group">
+                <p class="fit-group-head">About the place <span>context, not scored</span></p>
+                {% for d in r.context %}{% include 'listings/_fit_row.html' %}{% endfor %}
+              </div>
+
+              <div class="fit-catch fit-catch-{{ r.catch_tone }}">
+                <span class="fit-catch-k">{% if r.catch_tone == 'bad' %}The catch{% elif r.catch_tone == 'clear' %}No catch found{% else %}Too early to say{% endif %}</span>
+                <span>{{ r.catch }}</span>
+              </div>
+
+              <p class="fit-foot">Based on {{ r.covered }} of {{ r.possible }} factors{% if r.sources %} · {{ r.sources|join:" · " }}{% endif %}</p>
+              {% endwith %}
             </section>
             {% else %}
             <div class="ld-match-cta">
