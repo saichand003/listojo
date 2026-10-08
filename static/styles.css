@@ -4697,11 +4697,11 @@ footer {
 }
 .hero-split--photo .hc-overlay {
   background:
-    linear-gradient(to right, rgba(8,18,38,.84) 0%, rgba(8,18,38,.58) 48%, rgba(8,18,38,.22) 100%),
-    linear-gradient(to top, rgba(8,18,38,.55) 0%, transparent 45%);
+    linear-gradient(to right, rgba(8,18,38,.72) 0%, rgba(8,18,38,.35) 48%, rgba(8,18,38,.10) 100%),
+    linear-gradient(to top, rgba(8,18,38,.30) 0%, transparent 45%);
 }
 @media (max-width: 1080px) {
-  .hero-split--photo .hc-overlay { background: rgba(8,18,38,.66); }
+  .hero-split--photo .hc-overlay { background: rgba(8,18,38,.55); }
 }
 .hero-split--photo .hero-display { color: #fff; }
 .hero-split--photo .hero-display-accent { color: var(--primary-2); }
