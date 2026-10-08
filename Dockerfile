@@ -11,9 +11,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# psycopg2 needs libpq; gcc needed to compile it
+# psycopg2 needs libpq; gcc needed to compile it. gettext compiles the
+# Spanish catalog (the .mo is build output, not checked in).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq-dev gcc \
+    libpq-dev gcc gettext \
     && rm -rf /var/lib/apt/lists/*
 
 # Install deps first (cached layer — only re-runs when requirements.txt changes)
@@ -25,6 +26,9 @@ COPY . .
 
 # Collect static files at build time
 RUN python manage.py collectstatic --noinput
+
+# Compile translations (locale/*/LC_MESSAGES/django.po -> .mo)
+RUN python manage.py compilemessages
 
 EXPOSE 8000
 

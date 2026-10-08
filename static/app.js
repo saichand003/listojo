@@ -1,17 +1,3 @@
-/* ── THEME ───────────────────────────────────────────────────── */
-(function () {
-  var key  = 'listojo-theme';
-  var root = document.documentElement;
-  if (localStorage.getItem(key) === 'dark') root.classList.add('dark');
-
-  document.addEventListener('click', function(e) {
-    var btn = e.target.closest('[data-theme-toggle]');
-    if (!btn) return;
-    root.classList.toggle('dark');
-    localStorage.setItem(key, root.classList.contains('dark') ? 'dark' : 'light');
-  });
-})();
-
 /* ── BACK TO TOP — show/hide only; navigation handled by href="#page-top" ── */
 (function () {
   var btn = document.getElementById('back-to-top');

@@ -36,6 +36,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -64,6 +65,7 @@ TEMPLATES = [
                 'listojo.context_processors.google_maps',
                 'listojo.context_processors.feature_flags',
                 'listojo.context_processors.sidebar_counts',
+                'listojo.context_processors.language_switch',
             ],
         },
     },
@@ -89,7 +91,16 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-LANGUAGE_CODE = 'en-us'
+# English is served at the bare URLs; Spanish lives under /es/ for the
+# renter-facing pages (see i18n_patterns in listojo/urls.py). Pages outside
+# that block — accounts, chat, portals, admin — are English only for now.
+LANGUAGE_CODE = 'en'
+LANGUAGES = [
+    ('en', 'English'),
+    ('es', 'Español'),
+]
+LOCALE_PATHS = [BASE_DIR / 'locale']
+FORMAT_MODULE_PATH = ['listojo.formats']
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True

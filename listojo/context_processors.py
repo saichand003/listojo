@@ -1,10 +1,12 @@
 import os
 from django.conf import settings
+from django.urls import translate_url
+from django.utils.translation import get_language
 
 
 def ui_asset_version(request):
     return {
-        'UI_ASSET_VERSION': os.getenv('UI_ASSET_VERSION', '2026-09-30-logo-blue'),
+        'UI_ASSET_VERSION': os.getenv('UI_ASSET_VERSION', '2026-10-08-es-light'),
     }
 
 
@@ -63,3 +65,22 @@ def feature_flags(request):
         'TURNSTILE_SITE_KEY': getattr(settings, 'TURNSTILE_SITE_KEY', ''),
         'TURNSTILE_ENABLED': bool(getattr(settings, 'TURNSTILE_SITE_KEY', '') and getattr(settings, 'TURNSTILE_SECRET_KEY', '')),
     }
+
+
+def language_switch(request):
+    """
+    The EN | ES links in the nav: the current page in the other language.
+
+    Only pages that exist in both languages get the switch. Elsewhere
+    translate_url hands back the same URL, and a toggle that does nothing
+    is worse than no toggle.
+    """
+    current = get_language() or settings.LANGUAGE_CODE
+    path = request.get_full_path()
+    links = []
+    for code, label in settings.LANGUAGES:
+        url = path if code == current else translate_url(path, code)
+        if code != current and url == path:
+            return {}
+        links.append({'code': code, 'label': code.upper(), 'name': label, 'url': url, 'active': code == current})
+    return {'language_links': links, 'LANGUAGE_CODE': current}

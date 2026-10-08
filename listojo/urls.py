@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.templatetags.static import static as static_url
@@ -28,10 +29,16 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/', include('allauth.urls')),
     path('chat/', include('chatapp.urls')),
-    path('', include('listings.urls')),
     path('portal/', include('portal.urls')),
     path('partners/', include('partners.urls')),
 ]
+
+# Renter-facing pages in English at the bare URL and in Spanish under /es/.
+# English keeps its existing URLs, so links, bookmarks and SEO are unchanged.
+urlpatterns += i18n_patterns(
+    path('', include('listings.urls')),
+    prefix_default_language=False,
+)
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

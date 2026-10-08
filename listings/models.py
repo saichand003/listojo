@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
 
 
 class ProximityDisplayMixin:
@@ -382,10 +383,10 @@ class Listing(GalleryDisplayMixin, AmenityDisplayMixin, ProximityDisplayMixin, m
 
     PRICE_UNIT_CHOICES = [
         ('',    '— select —'),
-        ('mo',  '/Month'),
-        ('wk',  '/Week'),
-        ('day', '/Day'),
-        ('hr',  '/Hour'),
+        ('mo',  _('/Month')),
+        ('wk',  _('/Week')),
+        ('day', _('/Day')),
+        ('hr',  _('/Hour')),
     ]
 
     STATUS_CHOICES = [

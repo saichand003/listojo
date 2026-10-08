@@ -1,4 +1,4 @@
-{% load humanize %}
+{% load humanize i18n %}
 {% comment %}
   Trending card for a community, the twin of _trend_card.html: same frame,
   chips, spec strip, callout and button, filled from the community and its
@@ -13,17 +13,17 @@
     {% if hero %}
       <img src="{{ hero.image.url }}" alt="" loading="lazy">
     {% else %}
-      <span class="trend-card-empty" role="img" aria-label="No photo provided"></span>
+      <span class="trend-card-empty" role="img" aria-label="{% translate "No photo provided" %}"></span>
     {% endif %}
     <span class="trend-chips">
-      <span class="trend-chip">For Rent</span>
-      <span class="trend-chip trend-chip-soft">Community</span>
+      <span class="trend-chip">{% translate "For Rent" %}</span>
+      <span class="trend-chip trend-chip-soft">{% translate "Community" %}</span>
     </span>
-    {% if units %}<span class="trend-score">{{ units }} unit{{ units|pluralize }} available</span>{% endif %}
+    {% if units %}<span class="trend-score">{% blocktranslate trimmed count n=units %}{{ n }} unit available{% plural %}{{ n }} units available{% endblocktranslate %}</span>{% endif %}
     {% if community.owner or community.managed_by %}
     <span class="trend-verified">
       <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z" opacity=".3"/><path d="m8.6 12.2 2.3 2.3 4.5-4.6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Community Direct
+      {% translate "Community Direct" %}
     </span>
     {% endif %}
   </a>
@@ -31,7 +31,7 @@
   <div class="trend-card-body">
     <div class="trend-card-pricerow">
       <span class="trend-card-price">
-        {% if pr.0 %}<span class="trend-card-per">From </span>${{ pr.0|floatformat:0|intcomma }}<span class="trend-card-per">/mo</span>{% else %}Contact for pricing{% endif %}
+        {% if pr.0 %}<span class="trend-card-per">{% translate "From" %} </span>${{ pr.0|floatformat:0|intcomma }}<span class="trend-card-per">{% translate "/mo" context "per month" %}</span>{% else %}{% translate "Contact for pricing" %}{% endif %}
       </span>
     </div>
 
@@ -48,17 +48,17 @@
     <ul class="trend-card-specs">
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7"/><path d="M3 15h18"/><path d="M6 9V6.5A1.5 1.5 0 0 1 7.5 5h3A1.5 1.5 0 0 1 12 6.5V9"/><path d="M3 18v2m18-2v2"/></svg>
-        {% if btypes %}{% for b in btypes %}{% if b == 0 %}Studio{% else %}{{ b }} BR{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}Floor plans on request{% endif %}
+        {% if btypes %}{% for b in btypes %}{% if b == 0 %}{% translate "Studio" %}{% else %}{% blocktranslate with n=b %}{{ n }} BR{% endblocktranslate %}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}{% translate "Floor plans on request" %}{% endif %}
       </li>
     </ul>
     {% endwith %}
 
     <p class="trend-reason">
       <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9zM18.5 14l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg>
-      <span>{% if community.special_offer %}{{ community.special_offer }}{% elif community.downtown_drive_minutes and community.nearest_downtown %}{{ community.downtown_drive_minutes }} min drive to {{ community.nearest_downtown.name }}{% else %}Leasing team replies directly, no agency fee{% endif %}</span>
+      <span>{% if community.special_offer %}{{ community.special_offer }}{% elif community.downtown_drive_minutes and community.nearest_downtown %}{% blocktranslate trimmed with minutes=community.downtown_drive_minutes place=community.nearest_downtown.name %}{{ minutes }} min drive to {{ place }}{% endblocktranslate %}{% else %}{% translate "Leasing team replies directly, no agency fee" %}{% endif %}</span>
     </p>
 
-    <a href="{% url 'community_detail' community.pk %}" class="trend-card-cta">View community &rarr;</a>
+    <a href="{% url 'community_detail' community.pk %}" class="trend-card-cta">{% translate "View community" %} &rarr;</a>
   </div>
 </article>
 {% endwith %}

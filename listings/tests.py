@@ -2429,3 +2429,42 @@ class LandlordInsightTests(TestCase):
         self.assertContains(response, 'How renters see your listings')
         self.assertContains(response, 'Add photos (aim for 5)')
         self.assertContains(response, 'more renters with preferences set have viewed')
+
+
+class SpanishHomePageTests(TestCase):
+    """
+    The renter-facing pages are served in English at their existing URLs and
+    in Spanish under /es/. Needs the compiled catalog (`make translations`).
+    """
+
+    def test_english_home_keeps_its_url_and_offers_spanish(self):
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<html lang="en">')
+        self.assertContains(response, 'Find your next home')
+        self.assertContains(response, 'href="/es/"')
+
+    def test_spanish_home_is_translated(self):
+        response = self.client.get('/es/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<html lang="es">')
+        self.assertContains(response, 'Encuentra tu próximo hogar')
+        self.assertContains(response, 'hreflang="en" href="http://testserver/"')
+
+    def test_links_on_a_spanish_page_stay_in_spanish(self):
+        response = self.client.get('/es/')
+        self.assertContains(response, 'href="/es/listings/?category=rentals"')
+
+    def test_spanish_prices_keep_us_number_format(self):
+        owner = User.objects.create_user('es-owner', password='pw')
+        Listing.objects.create(
+            owner=owner, title='Casa', category='rentals', city='Irving', state='TX',
+            price=Decimal('1450'), price_unit='mo', status='active', view_count=50,
+        )
+        response = self.client.get('/es/')
+        self.assertContains(response, '$1,450')
+        self.assertContains(response, '/mes')
+
+    def test_english_only_pages_hide_the_switch(self):
+        response = self.client.get(reverse('login'))
+        self.assertNotContains(response, 'nav-lang-opt')

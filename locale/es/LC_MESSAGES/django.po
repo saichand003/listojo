@@ -1,0 +1,864 @@
+# Listojo, Spanish (US/Mexican, informal tú).
+# Renter-facing pages only: home, nav, footer and listing cards.
+# Regenerate with `make messages`; compiled at image build time.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Listojo\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-08 05:35+0000\n"
+"PO-Revision-Date: 2026-10-08 00:00-0500\n"
+"Last-Translator: Listojo\n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: listings/models.py:386
+msgid "/Month"
+msgstr "/mes"
+
+#: listings/models.py:387
+msgid "/Week"
+msgstr "/semana"
+
+#: listings/models.py:388
+msgid "/Day"
+msgstr "/día"
+
+#: listings/models.py:389
+msgid "/Hour"
+msgstr "/hora"
+
+#: templates/base.html:33
+msgid "Listojo: Dallas–Fort Worth's Premier Home Search"
+msgstr "Listojo: la mejor búsqueda de vivienda en Dallas–Fort Worth"
+
+#: templates/base.html:35
+msgid ""
+"Find your next home with confidence. Search rentals, roommates and homes for "
+"sale across Dallas–Fort Worth, and connect directly with owners and managers."
+msgstr ""
+"Encuentra tu próximo hogar con confianza. Busca rentas, cuartos compartidos "
+"y casas en venta en todo Dallas–Fort Worth, y conecta directamente con "
+"dueños y administradores."
+
+#: templates/base.html:130
+msgid "Use my location"
+msgstr "Usar mi ubicación"
+
+#: templates/base.html:133
+msgid "Search city…"
+msgstr "Buscar ciudad…"
+
+#: templates/base.html:135
+msgid "All DFW"
+msgstr "Todo DFW"
+
+#: templates/base.html:154
+msgid "Browse"
+msgstr "Explorar"
+
+#: templates/base.html:156
+msgid "Rent"
+msgstr "Rentar"
+
+#: templates/base.html:158
+msgid "Buy"
+msgstr "Comprar"
+
+#: templates/base.html:160 templates/base.html:247
+msgid "Roommates"
+msgstr "Compañeros de cuarto"
+
+#: templates/base.html:164
+msgid "AI Guided Search"
+msgstr "Búsqueda guiada con IA"
+
+#: templates/base.html:171
+msgid "Language"
+msgstr "Idioma"
+
+#: templates/base.html:179 templates/base.html:251
+msgid "Sign in"
+msgstr "Iniciar sesión"
+
+#: templates/base.html:184
+msgid "Post Listing"
+msgstr "Publicar anuncio"
+
+#: templates/base.html:194
+msgid "Account menu"
+msgstr "Menú de cuenta"
+
+#: templates/base.html:194
+msgid "Sign in menu"
+msgstr "Menú de inicio de sesión"
+
+#: templates/base.html:206
+msgid "Admin"
+msgstr "Administrador"
+
+#: templates/base.html:206
+msgid "Agent"
+msgstr "Agente"
+
+#: templates/base.html:206
+msgid "Member"
+msgstr "Miembro"
+
+#: templates/base.html:211 templates/base.html:242
+msgid "Discover"
+msgstr "Descubrir"
+
+#: templates/base.html:212 templates/base.html:243 templates/base.html:287
+msgid "Home"
+msgstr "Inicio"
+
+#: templates/base.html:213 templates/base.html:244
+msgid "Guided Search"
+msgstr "Búsqueda guiada"
+
+#: templates/base.html:214
+msgid "Saved"
+msgstr "Guardados"
+
+#: templates/base.html:215 templates/base.html:299
+msgid "Messages"
+msgstr "Mensajes"
+
+#: templates/base.html:219
+msgid "Listings"
+msgstr "Anuncios"
+
+#: templates/base.html:220
+msgid "My Listings"
+msgstr "Mis anuncios"
+
+#: templates/base.html:221 templates/base.html:366
+msgid "Post a Listing"
+msgstr "Publicar un anuncio"
+
+#: templates/base.html:222 templates/base.html:367
+#: templates/listings/home.html:657
+msgid "List a Community"
+msgstr "Publicar una comunidad"
+
+#: templates/base.html:223
+msgid "My Communities"
+msgstr "Mis comunidades"
+
+#: templates/base.html:224
+msgid "Inquiries"
+msgstr "Consultas"
+
+#: templates/base.html:225
+msgid "Performance"
+msgstr "Rendimiento"
+
+#: templates/base.html:227
+msgid "Agent Dashboard"
+msgstr "Panel de agente"
+
+#: templates/base.html:232 templates/base.html:250
+msgid "Account"
+msgstr "Cuenta"
+
+#: templates/base.html:233
+msgid "Profile settings"
+msgstr "Configuración del perfil"
+
+#: templates/base.html:234
+msgid "Admin portal"
+msgstr "Portal de administración"
+
+#: templates/base.html:237
+msgid "Sign out"
+msgstr "Cerrar sesión"
+
+#: templates/base.html:245 templates/base.html:341
+#: templates/listings/home.html:271 templates/listings/home.html:341
+msgid "Rentals"
+msgstr "Rentas"
+
+#: templates/base.html:246 templates/base.html:350
+#: templates/listings/home.html:275
+msgid "Homes for Sale"
+msgstr "Casas en venta"
+
+#: templates/base.html:252 templates/base.html:372
+msgid "Create an account"
+msgstr "Crear una cuenta"
+
+#: templates/base.html:284
+msgid "Mobile navigation"
+msgstr "Navegación móvil"
+
+#: templates/base.html:291
+msgid "Search"
+msgstr "Buscar"
+
+#: templates/base.html:295
+msgid "Post"
+msgstr "Publicar"
+
+#: templates/base.html:304
+msgid "Profile"
+msgstr "Perfil"
+
+#: templates/base.html:309
+msgid "Login"
+msgstr "Entrar"
+
+#: templates/base.html:329
+msgid ""
+"Dallas–Fort Worth's home search and verified rental exchange. Discover "
+"apartments, homes for sale, and curated co-living without commission "
+"friction."
+msgstr ""
+"La búsqueda de vivienda y el mercado de rentas verificadas de Dallas–Fort "
+"Worth. Descubre departamentos, casas en venta y espacios compartidos "
+"seleccionados, sin comisiones de por medio."
+
+#: templates/base.html:336
+msgid "Verified listings & direct owners"
+msgstr "Anuncios verificados y dueños directos"
+
+#: templates/base.html:342
+msgid "All DFW Rentals"
+msgstr "Todas las rentas en DFW"
+
+#: templates/base.html:343
+msgid "1-Bedroom Apartments"
+msgstr "Departamentos de 1 recámara"
+
+#: templates/base.html:344
+msgid "Under $1,500/mo"
+msgstr "Menos de $1,500/mes"
+
+#: templates/base.html:345
+msgid "Rooms & Co-Living"
+msgstr "Cuartos y vivienda compartida"
+
+#: templates/base.html:349
+msgid "Buy & Invest"
+msgstr "Comprar e invertir"
+
+#: templates/base.html:351
+msgid "3+ Bedroom Homes"
+msgstr "Casas de 3+ recámaras"
+
+#: templates/base.html:352
+msgid "New to Market"
+msgstr "Recién publicadas"
+
+#: templates/base.html:353
+msgid "Find My Match"
+msgstr "Encontrar mi opción ideal"
+
+#: templates/base.html:357
+msgid "DFW Metroplex"
+msgstr "Metroplex de DFW"
+
+#: templates/base.html:358
+msgid "Dallas Urban Core"
+msgstr "Centro de Dallas"
+
+#: templates/base.html:365
+msgid "Landlords & AI"
+msgstr "Propietarios e IA"
+
+#: templates/base.html:368
+msgid "AI Match Engine"
+msgstr "Motor de afinidad con IA"
+
+#: templates/base.html:377
+msgid "Company"
+msgstr "Empresa"
+
+#: templates/base.html:378
+msgid "About Listojo"
+msgstr "Acerca de Listojo"
+
+#: templates/base.html:379 templates/base.html:389
+msgid "Terms of Service"
+msgstr "Términos del servicio"
+
+#: templates/base.html:380 templates/base.html:388
+msgid "Privacy Policy"
+msgstr "Política de privacidad"
+
+#: templates/base.html:386
+msgid ""
+"© 2026 Listojo, Inc. Dallas–Fort Worth, TX. All rights reserved. Equal "
+"Housing Opportunity."
+msgstr ""
+"© 2026 Listojo, Inc. Dallas–Fort Worth, TX. Todos los derechos reservados. "
+"Igualdad de oportunidades en la vivienda."
+
+#: templates/base.html:387
+msgid "Footer legal links"
+msgstr "Enlaces legales"
+
+#: templates/base.html:390
+msgid "Fair Housing Notice"
+msgstr "Aviso de vivienda justa"
+
+#: templates/listings/_trend_card.html:21
+#: templates/listings/_trend_card_community.html:16
+msgid "No photo provided"
+msgstr "Sin foto"
+
+#: templates/listings/_trend_card.html:26 templates/listings/home.html:342
+msgid "For Sale"
+msgstr "En venta"
+
+#: templates/listings/_trend_card.html:26
+#: templates/listings/_trend_card_community.html:19
+msgid "For Rent"
+msgstr "En renta"
+
+#: templates/listings/_trend_card.html:27
+#: templates/listings/_trend_card.html:92
+msgid "Private room"
+msgstr "Cuarto privado"
+
+#: templates/listings/_trend_card.html:31
+msgid "Featured"
+msgstr "Destacado"
+
+#: templates/listings/_trend_card.html:36
+msgid "Popular"
+msgstr "Popular"
+
+#: templates/listings/_trend_card.html:42
+msgid "Commute score"
+msgstr "Puntaje de traslado"
+
+#: templates/listings/_trend_card.html:42
+#, python-format
+msgid "%(score)s Commute"
+msgstr "Traslado %(score)s"
+
+#: templates/listings/_trend_card.html:48
+#: templates/listings/_trend_card_community.html:26
+msgid "Community Direct"
+msgstr "Directo de la comunidad"
+
+#: templates/listings/_trend_card.html:48
+msgid "Direct Owner Sale"
+msgstr "Venta directa del dueño"
+
+#: templates/listings/_trend_card.html:48
+msgid "Verified Landlord Direct"
+msgstr "Propietario verificado directo"
+
+#: templates/listings/_trend_card.html:59
+msgid "Price cut"
+msgstr "Bajó de precio"
+
+#: templates/listings/_trend_card.html:66
+msgid "Remove from saved"
+msgstr "Quitar de guardados"
+
+#: templates/listings/_trend_card.html:66
+msgid "Save listing"
+msgstr "Guardar anuncio"
+
+#: templates/listings/_trend_card.html:71
+msgid "Sign in to save this listing"
+msgstr "Inicia sesión para guardar este anuncio"
+
+#: templates/listings/_trend_card.html:92
+#: templates/listings/_trend_card_community.html:51
+msgid "Studio"
+msgstr "Estudio"
+
+#: templates/listings/_trend_card.html:92
+#, python-format
+msgid "%(n)s Bed"
+msgid_plural "%(n)s Beds"
+msgstr[0] "%(n)s rec."
+msgstr[1] "%(n)s rec."
+
+#: templates/listings/_trend_card.html:98
+msgid "Bath"
+msgstr "Baño"
+
+#: templates/listings/_trend_card.html:98
+msgid "Baths"
+msgstr "Baños"
+
+#: templates/listings/_trend_card.html:104
+msgid "sq ft"
+msgstr "pies²"
+
+#: templates/listings/_trend_card.html:118
+#: templates/listings/_trend_card_community.html:58
+#, python-format
+msgid "%(minutes)s min drive to %(place)s"
+msgstr "A %(minutes)s min en auto de %(place)s"
+
+#: templates/listings/_trend_card.html:122
+#, python-format
+msgid "%(shown)s view from DFW home seekers"
+msgid_plural "%(shown)s views from DFW home seekers"
+msgstr[0] "%(shown)s visita de personas buscando vivienda en DFW"
+msgstr[1] "%(shown)s visitas de personas buscando vivienda en DFW"
+
+#: templates/listings/_trend_card.html:123
+msgid "Message the owner directly, no agency fee"
+msgstr "Escríbele directo al dueño, sin comisión de agencia"
+
+#: templates/listings/_trend_card.html:129
+msgid "View listing"
+msgstr "Ver anuncio"
+
+#: templates/listings/_trend_card_community.html:20
+msgid "Community"
+msgstr "Comunidad"
+
+#: templates/listings/_trend_card_community.html:22
+#, python-format
+msgid "%(n)s unit available"
+msgid_plural "%(n)s units available"
+msgstr[0] "%(n)s unidad disponible"
+msgstr[1] "%(n)s unidades disponibles"
+
+#: templates/listings/_trend_card_community.html:34
+msgid "From"
+msgstr "Desde"
+
+#: templates/listings/_trend_card_community.html:34
+#: templates/listings/home.html:9
+msgctxt "per month"
+msgid "/mo"
+msgstr "/mes"
+
+#: templates/listings/_trend_card_community.html:34
+msgid "Contact for pricing"
+msgstr "Consulta el precio"
+
+#: templates/listings/_trend_card_community.html:51
+#, python-format
+msgid "%(n)s BR"
+msgstr "%(n)s rec."
+
+#: templates/listings/_trend_card_community.html:51
+msgid "Floor plans on request"
+msgstr "Planos a solicitud"
+
+#: templates/listings/_trend_card_community.html:58
+msgid "Leasing team replies directly, no agency fee"
+msgstr "El equipo de renta responde directo, sin comisión de agencia"
+
+#: templates/listings/_trend_card_community.html:61
+msgid "View community"
+msgstr "Ver comunidad"
+
+#: templates/listings/home.html:9 templates/listings/home.html:305
+msgid "Any budget"
+msgstr "Cualquier presupuesto"
+
+#: templates/listings/home.html:215
+msgid "Search Dallas–Fort Worth homes"
+msgstr "Buscar viviendas en Dallas–Fort Worth"
+
+#: templates/listings/home.html:250
+msgid "Dallas–Fort Worth's Premier Home Search"
+msgstr "La mejor búsqueda de vivienda en Dallas–Fort Worth"
+
+#: templates/listings/home.html:254
+msgid "Find your next home"
+msgstr "Encuentra tu próximo hogar"
+
+#: templates/listings/home.html:255
+msgid "with confidence."
+msgstr "con confianza."
+
+#: templates/listings/home.html:259
+msgid ""
+"Real listings. Smart match scoring. No noise. We show you exactly why each "
+"home fits your lifestyle — so you decide fast."
+msgstr ""
+"Anuncios reales. Afinidad inteligente. Sin ruido. Te mostramos exactamente "
+"por qué cada vivienda va con tu estilo de vida, para que decidas rápido."
+
+#: templates/listings/home.html:268
+msgid "What are you looking for?"
+msgstr "¿Qué estás buscando?"
+
+#: templates/listings/home.html:279 templates/listings/home.html:343
+msgid "Rooms"
+msgstr "Cuartos"
+
+#: templates/listings/home.html:287
+msgid "Metroplex / City"
+msgstr "Metroplex / Ciudad"
+
+#: templates/listings/home.html:289
+msgid "Dallas, Irving, Frisco, Plano…"
+msgstr "Dallas, Irving, Frisco, Plano…"
+
+#: templates/listings/home.html:295
+msgid "Max Budget"
+msgstr "Presupuesto máx."
+
+#: templates/listings/home.html:315
+msgid "Bedrooms"
+msgstr "Recámaras"
+
+#: templates/listings/home.html:317
+msgid "Any beds"
+msgstr "Cualquier cantidad"
+
+#: templates/listings/home.html:318 templates/listings/home.html:344
+msgid "1 Bed"
+msgstr "1 rec."
+
+#: templates/listings/home.html:319
+msgid "2 Beds"
+msgstr "2 rec."
+
+#: templates/listings/home.html:320
+msgid "3 Beds"
+msgstr "3 rec."
+
+#: templates/listings/home.html:327
+msgid "Search homes"
+msgstr "Buscar viviendas"
+
+#: templates/listings/home.html:333
+msgid "Or let AI Guided Search narrow it for you"
+msgstr "O deja que la búsqueda guiada con IA lo reduzca por ti"
+
+#: templates/listings/home.html:340
+msgid "Quick search:"
+msgstr "Búsqueda rápida:"
+
+#: templates/listings/home.html:345
+msgid "2 Bed"
+msgstr "2 rec."
+
+#: templates/listings/home.html:346
+msgid "3 Bed"
+msgstr "3 rec."
+
+#: templates/listings/home.html:347
+msgid "Under $1,500"
+msgstr "Menos de $1,500"
+
+#: templates/listings/home.html:348
+msgid "Under $2,500"
+msgstr "Menos de $2,500"
+
+#: templates/listings/home.html:355
+msgid "Slide navigation"
+msgstr "Navegación de imágenes"
+
+#: templates/listings/home.html:379
+msgid "Dallas–Fort Worth market snapshot"
+msgstr "Panorama del mercado de Dallas–Fort Worth"
+
+#: templates/listings/home.html:383
+msgid "Live now"
+msgstr "En vivo"
+
+#: templates/listings/home.html:385
+msgid "Active Listings"
+msgstr "Anuncios activos"
+
+#: templates/listings/home.html:386
+msgid "Posted directly by verified property owners"
+msgstr "Publicados directamente por dueños verificados"
+
+#: templates/listings/home.html:391
+msgid "DFW metroplex"
+msgstr "Metroplex de DFW"
+
+#: templates/listings/home.html:393
+msgid "Cities Covered"
+msgstr "Ciudades cubiertas"
+
+#: templates/listings/home.html:394
+msgid "Irving, Dallas, Frisco, Plano, Fort Worth & more"
+msgstr "Irving, Dallas, Frisco, Plano, Fort Worth y más"
+
+#: templates/listings/home.html:399
+msgid "Direct"
+msgstr "Directo"
+
+#: templates/listings/home.html:401
+msgid "Verified Owners"
+msgstr "Dueños verificados"
+
+#: templates/listings/home.html:402
+msgid "No anonymous spam or ghost duplicate posts"
+msgstr "Sin spam anónimo ni anuncios duplicados falsos"
+
+#: templates/listings/home.html:407
+msgid "Guaranteed"
+msgstr "Garantizado"
+
+#: templates/listings/home.html:409
+msgid "Agency Fees, Ever"
+msgstr "En comisiones de agencia, nunca"
+
+#: templates/listings/home.html:410
+msgid "Renters and buyers connect without agent markups"
+msgstr "Inquilinos y compradores conectan sin sobrecostos de agentes"
+
+#: templates/listings/home.html:418
+msgid "Simple Process"
+msgstr "Proceso sencillo"
+
+#: templates/listings/home.html:419
+msgid "How Listojo Works"
+msgstr "Cómo funciona Listojo"
+
+#: templates/listings/home.html:420
+msgid ""
+"From initial search to signed lease — in 3 transparent steps. Takes under 2 "
+"minutes."
+msgstr ""
+"De la primera búsqueda al contrato firmado, en 3 pasos transparentes. Toma "
+"menos de 2 minutos."
+
+#: templates/listings/home.html:422
+msgid "Start guided search"
+msgstr "Iniciar búsqueda guiada"
+
+#: templates/listings/home.html:435
+msgid "Input preferences"
+msgstr "Tus preferencias"
+
+#: templates/listings/home.html:437
+msgid "Tell us what you need"
+msgstr "Cuéntanos qué necesitas"
+
+#: templates/listings/home.html:439
+msgid ""
+"Set your budget, target city, bedroom count, and everyday non-negotiables. "
+"Guided search remembers your answers, so coming back a week later picks up "
+"where you left off."
+msgstr ""
+"Define tu presupuesto, la ciudad, el número de recámaras y lo que no puede "
+"faltar. La búsqueda guiada recuerda tus respuestas, así que si regresas una "
+"semana después, sigues donde te quedaste."
+
+#: templates/listings/home.html:446
+msgid "Auto-synced"
+msgstr "Sincronizado"
+
+#: templates/listings/home.html:447
+msgid "Budget · City · Beds · Must-haves"
+msgstr "Presupuesto · Ciudad · Recámaras · Imprescindibles"
+
+#: templates/listings/home.html:455
+msgid "Algorithmic clarity"
+msgstr "Claridad en cada resultado"
+
+#: templates/listings/home.html:457
+msgid "We score every match"
+msgstr "Evaluamos cada opción"
+
+#: templates/listings/home.html:459
+msgid ""
+"Every listing gets a transparent match percentage and a plain-English "
+"explanation, so you can tell at a glance why it fits and which requirement "
+"it misses."
+msgstr ""
+"Cada anuncio recibe un porcentaje de afinidad transparente y una explicación "
+"clara, para que veas de un vistazo por qué te conviene y qué requisito no "
+"cumple."
+
+#: templates/listings/home.html:466
+msgid "Reasoning"
+msgstr "Por qué"
+
+#: templates/listings/home.html:467
+msgid "12 mins to DFW Airport, fully inside budget ceiling"
+msgstr "A 12 min del aeropuerto DFW, dentro de tu presupuesto"
+
+#: templates/listings/home.html:475
+msgid "Direct connection"
+msgstr "Conexión directa"
+
+#: templates/listings/home.html:477
+msgid "Connect with the owner"
+msgstr "Conecta con el dueño"
+
+#: templates/listings/home.html:479
+msgid ""
+"Message the owner directly or request a tour. No listing agent in the "
+"middle, no placement commission, no fee to send a message."
+msgstr ""
+"Escríbele directo al dueño o pide una visita. Sin agente de por medio, sin "
+"comisión de colocación y sin costo por enviar mensajes."
+
+#: templates/listings/home.html:485
+msgid "Direct chat"
+msgstr "Chat directo"
+
+#: templates/listings/home.html:486
+msgid "$0 in agency fees"
+msgstr "$0 en comisiones de agencia"
+
+#: templates/listings/home.html:501
+msgid "Hot in DFW"
+msgstr "Lo más buscado en DFW"
+
+#: templates/listings/home.html:502
+msgid "Trending Rentals & Properties"
+msgstr "Rentas y propiedades en tendencia"
+
+#: templates/listings/home.html:503
+msgid "Most-viewed homes, verified rooms, and homes for sale right now."
+msgstr ""
+"Las viviendas más vistas, cuartos verificados y casas en venta ahora mismo."
+
+#: templates/listings/home.html:505
+msgid "Explore all DFW listings"
+msgstr "Ver todos los anuncios en DFW"
+
+#: templates/listings/home.html:525
+msgid "Real Stories"
+msgstr "Historias reales"
+
+#: templates/listings/home.html:526
+msgid "What DFW residents say"
+msgstr "Lo que dicen los residentes de DFW"
+
+#: templates/listings/home.html:527
+msgid "Authentic experiences from tenants and landlords across the metroplex."
+msgstr "Experiencias de inquilinos y propietarios de todo el metroplex."
+
+#: templates/listings/home.html:534 templates/listings/home.html:546
+#: templates/listings/home.html:558
+msgid "5 out of 5 stars"
+msgstr "5 de 5 estrellas"
+
+#: templates/listings/home.html:535
+msgid ""
+"\"Found my apartment in Irving in 3 days. The AI match score explained "
+"exactly why each place fit my budget — I didn't have to guess or scroll "
+"endlessly.\""
+msgstr ""
+"\"Encontré mi departamento en Irving en 3 días. La afinidad con IA me "
+"explicó exactamente por qué cada lugar cabía en mi presupuesto. No tuve que "
+"adivinar ni buscar sin fin.\""
+
+#: templates/listings/home.html:540 templates/listings/home.html:552
+msgid "Renter"
+msgstr "Inquilino"
+
+#: templates/listings/home.html:547
+msgid ""
+"\"The guided search is brilliant. It saved my preferences and when I came "
+"back a week later, it remembered exactly what I needed. No other platform "
+"does this.\""
+msgstr ""
+"\"La búsqueda guiada es genial. Guardó mis preferencias y cuando regresé una "
+"semana después, recordaba exactamente lo que necesitaba. Ninguna otra "
+"plataforma hace esto.\""
+
+#: templates/listings/home.html:559
+msgid ""
+"\"Listed my condo and had serious inquiries within 48 hours. Zero agency "
+"fees, zero headaches. I'm in direct contact with every renter. This is how "
+"it should work.\""
+msgstr ""
+"\"Publiqué mi condominio y tuve consultas serias en 48 horas. Cero "
+"comisiones, cero dolores de cabeza. Estoy en contacto directo con cada "
+"inquilino. Así debería funcionar.\""
+
+#: templates/listings/home.html:564
+msgid "Landlord"
+msgstr "Propietario"
+
+#: templates/listings/home.html:581
+msgid "DFW Metroplex Hubs"
+msgstr "Zonas del metroplex de DFW"
+
+#: templates/listings/home.html:582
+msgid "Explore by City"
+msgstr "Explora por ciudad"
+
+#: templates/listings/home.html:583
+msgid ""
+"Fast-track your neighborhood discovery across Dallas–Fort Worth's premier "
+"districts."
+msgstr "Descubre rápido los mejores vecindarios de Dallas–Fort Worth."
+
+#: templates/listings/home.html:585
+#, python-format
+msgid "%(n)s connected municipality"
+msgid_plural "%(n)s connected municipalities"
+msgstr[0] "%(n)s municipio conectado"
+msgstr[1] "%(n)s municipios conectados"
+
+#: templates/listings/home.html:599
+msgid "Active"
+msgstr "Activa"
+
+#: templates/listings/home.html:615
+msgid "Get notified when new DFW listings match your criteria"
+msgstr ""
+"Recibe avisos cuando haya anuncios nuevos en DFW que coincidan con lo que "
+"buscas"
+
+#: templates/listings/home.html:616
+msgid ""
+"Create a free search profile and we'll alert you the minute a verified "
+"listing meets your parameters."
+msgstr ""
+"Crea un perfil de búsqueda gratis y te avisaremos en cuanto un anuncio "
+"verificado cumpla con tus criterios."
+
+#: templates/listings/home.html:620
+msgid "Email address"
+msgstr "Correo electrónico"
+
+#: templates/listings/home.html:621
+msgid "Enter your email address…"
+msgstr "Escribe tu correo electrónico…"
+
+#: templates/listings/home.html:622
+msgid "Set up alerts"
+msgstr "Activar avisos"
+
+#: templates/listings/home.html:640
+msgid "For landlords & sellers"
+msgstr "Para propietarios y vendedores"
+
+#: templates/listings/home.html:641
+msgid "Have a property to rent or sell?"
+msgstr "¿Tienes una propiedad para rentar o vender?"
+
+#: templates/listings/home.html:643
+msgid ""
+"Search freely. Connect directly. Reach serious tenants and buyers in your "
+"city — no agency headaches, no commissions, no gatekeeping."
+msgstr ""
+"Busca libremente. Conecta directamente. Llega a inquilinos y compradores "
+"serios en tu ciudad, sin complicaciones de agencias, sin comisiones y sin "
+"intermediarios."
+
+#: templates/listings/home.html:649
+#, python-format
+msgid "100%% free to list your property"
+msgstr "Publicar tu propiedad es 100%% gratis"
+
+#: templates/listings/home.html:650
+msgid "Match scoring surfaces you to the right renters"
+msgstr "La afinidad te muestra a los inquilinos correctos"
+
+#: templates/listings/home.html:651
+msgid "Direct chat with prospective tenants and buyers"
+msgstr "Chat directo con posibles inquilinos y compradores"
+
+#: templates/listings/home.html:656
+msgid "List a Property"
+msgstr "Publicar una propiedad"

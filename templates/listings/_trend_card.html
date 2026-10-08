@@ -1,4 +1,4 @@
-{% load humanize %}
+{% load humanize i18n %}
 {% comment %}
   Trending card, shaped after the reference design: photo with the category
   and popularity chips top-left, the commute score top-right, a verified strip
@@ -18,34 +18,34 @@
     {% elif listing.image %}
       <img src="{{ listing.image.url }}" alt="" loading="lazy">
     {% else %}
-      <span class="trend-card-empty" role="img" aria-label="No photo provided"></span>
+      <span class="trend-card-empty" role="img" aria-label="{% translate "No photo provided" %}"></span>
     {% endif %}
     {% endwith %}
 
     <span class="trend-chips">
-      <span class="trend-chip {% if sale %}trend-chip-sale{% endif %}">{% if sale %}For Sale{% else %}For Rent{% endif %}</span>
-      {% if listing.accommodation_type == 'room' or listing.category == 'roommates' %}<span class="trend-chip trend-chip-soft">Private room</span>{% endif %}
+      <span class="trend-chip {% if sale %}trend-chip-sale{% endif %}">{% if sale %}{% translate "For Sale" %}{% else %}{% translate "For Rent" %}{% endif %}</span>
+      {% if listing.accommodation_type == 'room' or listing.category == 'roommates' %}<span class="trend-chip trend-chip-soft">{% translate "Private room" %}</span>{% endif %}
       {% if listing.featured %}
         <span class="trend-chip trend-chip-soft">
           <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8z"/></svg>
-          Featured
+          {% translate "Featured" %}
         </span>
       {% elif listing.view_count > 20 %}
         <span class="trend-chip trend-chip-soft">
           <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" aria-hidden="true"><path d="M12 2c1 3.5 5 5.8 5 11a5 5 0 0 1-10 0c0-2.4 1.2-3.9 2.3-5 .2 1.6 1 2.7 2 3.1C11 8.5 11.3 5 12 2Z"/></svg>
-          Popular
+          {% translate "Popular" %}
         </span>
       {% endif %}
     </span>
 
     {% if listing.commute_score %}
-      <span class="trend-score" title="Commute score{% if listing.commute_score_label %}: {{ listing.commute_score_label }}{% endif %}">{{ listing.commute_score }} Commute</span>
+      <span class="trend-score" title="{% translate "Commute score" %}{% if listing.commute_score_label %}: {{ listing.commute_score_label }}{% endif %}">{% blocktranslate with score=listing.commute_score %}{{ score }} Commute{% endblocktranslate %}</span>
     {% endif %}
 
     {% if listing.owner %}
     <span class="trend-verified">
       <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z" opacity=".3"/><path d="m8.6 12.2 2.3 2.3 4.5-4.6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      {% if listing.organization_id %}Community Direct{% elif sale %}Direct Owner Sale{% else %}Verified Landlord Direct{% endif %}
+      {% if listing.organization_id %}{% translate "Community Direct" %}{% elif sale %}{% translate "Direct Owner Sale" %}{% else %}{% translate "Verified Landlord Direct" %}{% endif %}
     </span>
     {% endif %}
   </a>
@@ -56,19 +56,19 @@
         ${{ listing.price|floatformat:0|intcomma }}{% if listing.price_unit %}<span class="trend-card-per">{{ listing.get_price_unit_display }}</span>{% endif %}
       </span>
       {% if listing.original_price and listing.original_price > listing.price %}
-        <span class="trend-card-cut">Price cut</span>
+        <span class="trend-card-cut">{% translate "Price cut" %}</span>
       {% endif %}
       {% if user.is_authenticated %}
         <button type="button"
           class="trend-fav save-pill {% if listing.pk in fav_ids %}save-pill-active{% endif %}"
           data-fav-url="{% url 'toggle_favourite' listing.pk %}"
           data-csrf="{{ csrf_token }}"
-          aria-label="{% if listing.pk in fav_ids %}Remove from saved{% else %}Save listing{% endif %}"
+          aria-label="{% if listing.pk in fav_ids %}{% translate "Remove from saved" %}{% else %}{% translate "Save listing" %}{% endif %}"
           aria-pressed="{% if listing.pk in fav_ids %}true{% else %}false{% endif %}">
           <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 4 4.5 7.3 4.5c2 0 3.6 1.1 4.7 2.7 1.1-1.6 2.7-2.7 4.7-2.7 3.3 0 5.7 3.1 4.5 6.6-1.7 4.8-9.2 9.4-9.2 9.4Z"/></svg>
         </button>
       {% else %}
-        <a class="trend-fav" href="{% url 'login' %}?next={{ request.path|urlencode }}" aria-label="Sign in to save this listing">
+        <a class="trend-fav" href="{% url 'login' %}?next={{ request.path|urlencode }}" aria-label="{% translate "Sign in to save this listing" %}">
           <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 4 4.5 7.3 4.5c2 0 3.6 1.1 4.7 2.7 1.1-1.6 2.7-2.7 4.7-2.7 3.3 0 5.7 3.1 4.5 6.6-1.7 4.8-9.2 9.4-9.2 9.4Z"/></svg>
         </a>
       {% endif %}
@@ -88,19 +88,19 @@
       {% if listing.accommodation_type == 'room' or listing.category == 'roommates' or listing.bedrooms is not None %}
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7"/><path d="M3 15h18"/><path d="M6 9V6.5A1.5 1.5 0 0 1 7.5 5h3A1.5 1.5 0 0 1 12 6.5V9"/><path d="M3 18v2m18-2v2"/></svg>
-        {% if listing.accommodation_type == 'room' or listing.category == 'roommates' %}Private room{% elif listing.bedrooms == 0 %}Studio{% else %}{{ listing.bedrooms }} Bed{{ listing.bedrooms|pluralize }}{% endif %}
+        {% if listing.accommodation_type == 'room' or listing.category == 'roommates' %}{% translate "Private room" %}{% elif listing.bedrooms == 0 %}{% translate "Studio" %}{% else %}{% blocktranslate trimmed count n=listing.bedrooms %}{{ n }} Bed{% plural %}{{ n }} Beds{% endblocktranslate %}{% endif %}
       </li>
       {% endif %}
       {% if listing.bathrooms %}
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M6 12V5.5A1.5 1.5 0 0 1 7.5 4c.8 0 1.5.7 1.5 1.5"/><path d="M7 19l-1 2m11-2 1 2"/></svg>
-        {{ listing.bathrooms|floatformat:"-1" }} Bath{{ listing.bathrooms|floatformat:"-1"|pluralize }}
+        {{ listing.bathrooms|floatformat:"-1" }} {% if listing.bathrooms == 1 %}{% translate "Bath" %}{% else %}{% translate "Baths" %}{% endif %}
       </li>
       {% endif %}
       {% if listing.square_footage %}
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M4 20V4h4v2m-4 4h3m-3 4h4m-4 4h3"/><path d="M4 20h16v-4m-8 4v-3m4 3v-4"/></svg>
-        {{ listing.square_footage|intcomma }} sq ft
+        {{ listing.square_footage|intcomma }} {% translate "sq ft" %}
       </li>
       {% endif %}
     </ul>
@@ -113,17 +113,17 @@
       <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9zM18.5 14l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg>
       <span>
         {% if listing.downtown_drive_minutes and listing.nearest_downtown %}
-          {{ listing.downtown_drive_minutes }} min drive to {{ listing.nearest_downtown.name }}{% with tags=listing.get_tags_list %}{% if tags %} &bull; {{ tags.0 }}{% endif %}{% endwith %}
+          {% blocktranslate trimmed with minutes=listing.downtown_drive_minutes place=listing.nearest_downtown.name %}{{ minutes }} min drive to {{ place }}{% endblocktranslate %}{% with tags=listing.get_tags_list %}{% if tags %} &bull; {{ tags.0 }}{% endif %}{% endwith %}
         {% else %}
           {% with tags=listing.get_tags_list %}
             {% if tags %}{{ tags.0 }}{% if tags.1 %} &bull; {{ tags.1 }}{% endif %}
-            {% elif listing.view_count %}{{ listing.view_count|intcomma }} view{{ listing.view_count|pluralize }} from DFW home seekers
-            {% else %}Message the owner directly, no agency fee{% endif %}
+            {% elif listing.view_count %}{% blocktranslate trimmed count n=listing.view_count with shown=listing.view_count|intcomma %}{{ shown }} view from DFW home seekers{% plural %}{{ shown }} views from DFW home seekers{% endblocktranslate %}
+            {% else %}{% translate "Message the owner directly, no agency fee" %}{% endif %}
           {% endwith %}
         {% endif %}
       </span>
     </p>
 
-    <a href="{% url 'listing_detail' listing.pk %}" class="trend-card-cta">View listing &rarr;</a>
+    <a href="{% url 'listing_detail' listing.pk %}" class="trend-card-cta">{% translate "View listing" %} &rarr;</a>
   </div>
 </article>

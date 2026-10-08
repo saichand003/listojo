@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
-{% load static humanize %}
+{% load static humanize i18n %}
 {% block head_extra %}
 {# The first hero photo, fetched before the stylesheet names it, at the size the screen will use. #}
 <link rel="preload" as="image" href="{% static 'images/hero/opt/sean-pollock-PhYq704ffdA-unsplash-2400.jpg' %}" media="(min-width: 761px)" fetchpriority="high">
 <link rel="preload" as="image" href="{% static 'images/hero/opt/sean-pollock-PhYq704ffdA-unsplash-1280.jpg' %}" media="(max-width: 760px)" fetchpriority="high">
 {% endblock %}
 {% block content %}
+{% translate "/mo" context "per month" as per_mo %}{% translate "Any budget" as any_budget %}
 <style>
 /* ── Home page card button variants ──────────────────────────── */
 .card-btn-rent {
@@ -211,7 +212,7 @@
   full-bleed photo carousel from the earlier home page: twelve slides, 5s each,
   with dots, a progress bar, hover pause, arrow keys and swipe.
 {% endcomment %}
-<section class="hero-split hero-split--photo" id="home-hero" aria-label="Search Dallas–Fort Worth homes">
+<section class="hero-split hero-split--photo" id="home-hero" aria-label="{% translate "Search Dallas–Fort Worth homes" %}">
 
   {% comment %}
     Slides: all 12 photos, 5s each. Each carries a 2400px and a 1280px copy
@@ -245,34 +246,36 @@
 
       <p class="hero-eyebrow">
         <span class="hero-eyebrow-dot" aria-hidden="true"></span>
-        Dallas–Fort Worth's Premier Home Search
+        {% translate "Dallas–Fort Worth's Premier Home Search" %}
       </p>
 
       <h1 class="hero-display">
-        Find your next home<br>
-        <span class="hero-display-accent">with confidence.</span>
+        {% translate "Find your next home" %}<br>
+        <span class="hero-display-accent">{% translate "with confidence." %}</span>
       </h1>
 
       <p class="hero-split-sub">
+        {% blocktranslate trimmed %}
         Real listings. Smart match scoring. No noise. We show you exactly why each
         home fits your lifestyle — so you decide fast.
+        {% endblocktranslate %}
       </p>
 
       {# ── Search console ── #}
       <form class="hero-console" action="{% url 'listing_list' %}" method="get" role="search">
 
-        <div class="hero-console-tabs" role="tablist" aria-label="What are you looking for?">
+        <div class="hero-console-tabs" role="tablist" aria-label="{% translate "What are you looking for?" %}">
           <label class="hero-tab">
             <input type="radio" name="category" value="rentals" checked>
-            <span>Rentals</span>
+            <span>{% translate "Rentals" %}</span>
           </label>
           <label class="hero-tab">
             <input type="radio" name="category" value="properties">
-            <span>Homes for Sale</span>
+            <span>{% translate "Homes for Sale" %}</span>
           </label>
           <label class="hero-tab">
             <input type="radio" name="category" value="roommates">
-            <span>Rooms</span>
+            <span>{% translate "Rooms" %}</span>
           </label>
         </div>
 
@@ -280,15 +283,15 @@
           <div class="hero-field hero-field-loc">
             <svg class="hero-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
             <span class="hero-field-body">
-              <label class="hero-field-label" for="hero-city">Metroplex / City</label>
+              <label class="hero-field-label" for="hero-city">{% translate "Metroplex / City" %}</label>
               <input class="hero-field-input" id="hero-city" type="text" name="city"
-                     placeholder="Dallas, Irving, Frisco, Plano…" autocomplete="off">
+                     placeholder="{% translate "Dallas, Irving, Frisco, Plano…" %}" autocomplete="off">
             </span>
           </div>
 
           <div class="hero-field">
             <span class="hero-field-body">
-              <label class="hero-field-label" for="hero-budget">Max Budget</label>
+              <label class="hero-field-label" for="hero-budget">{% translate "Max Budget" %}</label>
               {% comment %}
                 Starts at "Any budget": a preset cap filtered searches nobody
                 asked to filter, and on Homes for Sale it capped $300k homes
@@ -297,57 +300,57 @@
                 at the end of this page).
               {% endcomment %}
               <select class="hero-field-select" id="hero-budget" name="max_price">
-                <option value="">Any budget</option>
-                <option value="1500">$1,500/mo</option>
-                <option value="2500">$2,500/mo</option>
-                <option value="4000">$4,000/mo</option>
+                <option value="">{% translate "Any budget" %}</option>
+                <option value="1500">$1,500{{ per_mo }}</option>
+                <option value="2500">$2,500{{ per_mo }}</option>
+                <option value="4000">$4,000{{ per_mo }}</option>
               </select>
             </span>
           </div>
 
           <div class="hero-field">
             <span class="hero-field-body">
-              <label class="hero-field-label" for="hero-beds">Bedrooms</label>
+              <label class="hero-field-label" for="hero-beds">{% translate "Bedrooms" %}</label>
               <select class="hero-field-select" id="hero-beds" name="bedrooms">
-                <option value="">Any beds</option>
-                <option value="1">1 Bed</option>
-                <option value="2">2 Beds</option>
-                <option value="3">3 Beds</option>
+                <option value="">{% translate "Any beds" %}</option>
+                <option value="1">{% translate "1 Bed" %}</option>
+                <option value="2">{% translate "2 Beds" %}</option>
+                <option value="3">{% translate "3 Beds" %}</option>
               </select>
             </span>
           </div>
 
           <button type="submit" class="hero-console-submit">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4-4"/></svg>
-            Search homes
+            {% translate "Search homes" %}
           </button>
         </div>
 
         <a class="hero-console-ai" href="{% url 'guided_search' %}">
           <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9zM18.5 14l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg>
-          Or let AI Guided Search narrow it for you
+          {% translate "Or let AI Guided Search narrow it for you" %}
           <span aria-hidden="true">&rarr;</span>
         </a>
       </form>
 
       {# ── Quick search chips ── #}
       <div class="hero-chips">
-        <span class="hero-chips-label">Quick search:</span>
-        <a href="{% url 'listing_list' %}?category=rentals" class="hero-chip">Rentals</a>
-        <a href="{% url 'listing_list' %}?category=properties" class="hero-chip">For Sale</a>
-        <a href="{% url 'listing_list' %}?category=roommates" class="hero-chip">Rooms</a>
-        <a href="{% url 'listing_list' %}?bedrooms=1" class="hero-chip">1 Bed</a>
-        <a href="{% url 'listing_list' %}?bedrooms=2" class="hero-chip">2 Bed</a>
-        <a href="{% url 'listing_list' %}?bedrooms=3" class="hero-chip">3 Bed</a>
-        <a href="{% url 'listing_list' %}?max_price=1500" class="hero-chip">Under $1,500</a>
-        <a href="{% url 'listing_list' %}?max_price=2500" class="hero-chip">Under $2,500</a>
+        <span class="hero-chips-label">{% translate "Quick search:" %}</span>
+        <a href="{% url 'listing_list' %}?category=rentals" class="hero-chip">{% translate "Rentals" %}</a>
+        <a href="{% url 'listing_list' %}?category=properties" class="hero-chip">{% translate "For Sale" %}</a>
+        <a href="{% url 'listing_list' %}?category=roommates" class="hero-chip">{% translate "Rooms" %}</a>
+        <a href="{% url 'listing_list' %}?bedrooms=1" class="hero-chip">{% translate "1 Bed" %}</a>
+        <a href="{% url 'listing_list' %}?bedrooms=2" class="hero-chip">{% translate "2 Bed" %}</a>
+        <a href="{% url 'listing_list' %}?bedrooms=3" class="hero-chip">{% translate "3 Bed" %}</a>
+        <a href="{% url 'listing_list' %}?max_price=1500" class="hero-chip">{% translate "Under $1,500" %}</a>
+        <a href="{% url 'listing_list' %}?max_price=2500" class="hero-chip">{% translate "Under $2,500" %}</a>
       </div>
     </div>
 
   </div>
 
   {# Navigation dots — one per slide #}
-  <div class="hc-dots" role="tablist" aria-label="Slide navigation">
+  <div class="hc-dots" role="tablist" aria-label="{% translate "Slide navigation" %}">
     <button type="button" class="hc-dot hc-dot-active" data-slide="0" role="tab" aria-label="Slide 1" aria-selected="true"></button>
     <button type="button" class="hc-dot" data-slide="1" role="tab" aria-label="Slide 2" aria-selected="false"></button>
     <button type="button" class="hc-dot" data-slide="2" role="tab" aria-label="Slide 3" aria-selected="false"></button>
@@ -371,38 +374,38 @@
   card grid so the figure leads and the qualifier sits under it, instead of
   three same-weight lines stacked in a strip.
 {% endcomment %}
-<section class="metrics-bar" aria-label="Dallas–Fort Worth market snapshot">
+<section class="metrics-bar" aria-label="{% translate "Dallas–Fort Worth market snapshot" %}">
   <div class="metric-card">
     <div class="metric-top">
       <span class="metric-num">{{ stats.listing_count|default:0 }}+</span>
-      <span class="metric-flag metric-flag-up">&uarr; Live now</span>
+      <span class="metric-flag metric-flag-up">&uarr; {% translate "Live now" %}</span>
     </div>
-    <span class="metric-label">Active Listings</span>
-    <span class="metric-note">Posted directly by verified property owners</span>
+    <span class="metric-label">{% translate "Active Listings" %}</span>
+    <span class="metric-note">{% translate "Posted directly by verified property owners" %}</span>
   </div>
   <div class="metric-card">
     <div class="metric-top">
       <span class="metric-num metric-num-primary">{{ stats.city_count|default:0 }}</span>
-      <span class="metric-flag">DFW metroplex</span>
+      <span class="metric-flag">{% translate "DFW metroplex" %}</span>
     </div>
-    <span class="metric-label">Cities Covered</span>
-    <span class="metric-note">Irving, Dallas, Frisco, Plano, Fort Worth &amp; more</span>
+    <span class="metric-label">{% translate "Cities Covered" %}</span>
+    <span class="metric-note">{% translate "Irving, Dallas, Frisco, Plano, Fort Worth & more" %}</span>
   </div>
   <div class="metric-card">
     <div class="metric-top">
       <span class="metric-num metric-num-accent">{{ stats.landlord_count|default:0 }}+</span>
-      <span class="metric-flag metric-flag-ok">&check; Direct</span>
+      <span class="metric-flag metric-flag-ok">&check; {% translate "Direct" %}</span>
     </div>
-    <span class="metric-label">Verified Owners</span>
-    <span class="metric-note">No anonymous spam or ghost duplicate posts</span>
+    <span class="metric-label">{% translate "Verified Owners" %}</span>
+    <span class="metric-note">{% translate "No anonymous spam or ghost duplicate posts" %}</span>
   </div>
   <div class="metric-card">
     <div class="metric-top">
       <span class="metric-num">$0</span>
-      <span class="metric-flag metric-flag-ok">Guaranteed</span>
+      <span class="metric-flag metric-flag-ok">{% translate "Guaranteed" %}</span>
     </div>
-    <span class="metric-label">Agency Fees, Ever</span>
-    <span class="metric-note">Renters and buyers connect without agent markups</span>
+    <span class="metric-label">{% translate "Agency Fees, Ever" %}</span>
+    <span class="metric-note">{% translate "Renters and buyers connect without agent markups" %}</span>
   </div>
 </section>
 
@@ -410,11 +413,11 @@
 <section class="home-band">
   <div class="section-header home-sec-hdr">
     <div class="section-header-left">
-      <div class="section-eyebrow eyebrow-blue">Simple Process</div>
-      <h2 class="section-title-xl">How Listojo Works</h2>
-      <p class="section-sub">From initial search to signed lease — in 3 transparent steps. Takes under 2 minutes.</p>
+      <div class="section-eyebrow eyebrow-blue">{% translate "Simple Process" %}</div>
+      <h2 class="section-title-xl">{% translate "How Listojo Works" %}</h2>
+      <p class="section-sub">{% translate "From initial search to signed lease — in 3 transparent steps. Takes under 2 minutes." %}</p>
     </div>
-    <a href="{% url 'guided_search' %}" class="section-pill-link">Start guided search &rarr;</a>
+    <a href="{% url 'guided_search' %}" class="section-pill-link">{% translate "Start guided search" %} &rarr;</a>
   </div>
   {% comment %}
     Three cards, each with its own step colour (cobalt, emerald, ink), a
@@ -426,17 +429,19 @@
       <span class="hiw-card-n hiw-card-n-1" aria-hidden="true">01</span>
       <p class="hiw-card-kicker hiw-kicker-1">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M4 6h10m4 0h2M4 12h4m4 0h8M4 18h12m4 0h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
-        Input preferences
+        {% translate "Input preferences" %}
       </p>
-      <h3 class="hiw-card-title">Tell us what you need</h3>
+      <h3 class="hiw-card-title">{% translate "Tell us what you need" %}</h3>
       <p class="hiw-card-body">
+        {% blocktranslate trimmed %}
         Set your budget, target city, bedroom count, and everyday non-negotiables.
         Guided search remembers your answers, so coming back a week later picks up
         where you left off.
+        {% endblocktranslate %}
       </p>
       <p class="hiw-card-proof">
-        <span class="hiw-card-proof-k">Auto-synced</span>
-        Budget &middot; City &middot; Beds &middot; Must-haves
+        <span class="hiw-card-proof-k">{% translate "Auto-synced" %}</span>
+        {% translate "Budget · City · Beds · Must-haves" %}
       </p>
     </article>
 
@@ -444,17 +449,19 @@
       <span class="hiw-card-n hiw-card-n-2" aria-hidden="true">02</span>
       <p class="hiw-card-kicker hiw-kicker-2">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M9.5 3a4.5 4.5 0 0 0-4.4 5.5A4 4 0 0 0 6 16h1v3.5a1.5 1.5 0 0 0 1.5 1.5H12V3.3A4.5 4.5 0 0 0 9.5 3Z"/><path d="M14.5 3a4.5 4.5 0 0 1 4.4 5.5A4 4 0 0 1 18 16h-1v3.5a1.5 1.5 0 0 1-1.5 1.5H12"/></svg>
-        Algorithmic clarity
+        {% translate "Algorithmic clarity" %}
       </p>
-      <h3 class="hiw-card-title">We score every match</h3>
+      <h3 class="hiw-card-title">{% translate "We score every match" %}</h3>
       <p class="hiw-card-body">
+        {% blocktranslate trimmed %}
         Every listing gets a transparent match percentage and a plain-English
         explanation, so you can tell at a glance why it fits and which
         requirement it misses.
+        {% endblocktranslate %}
       </p>
       <p class="hiw-card-proof hiw-card-proof-ok">
-        <span class="hiw-card-proof-k">Reasoning</span>
-        &ldquo;12 mins to DFW Airport, fully inside budget ceiling&rdquo;
+        <span class="hiw-card-proof-k">{% translate "Reasoning" %}</span>
+        &ldquo;{% translate "12 mins to DFW Airport, fully inside budget ceiling" %}&rdquo;
       </p>
     </article>
 
@@ -462,16 +469,18 @@
       <span class="hiw-card-n hiw-card-n-3" aria-hidden="true">03</span>
       <p class="hiw-card-kicker hiw-kicker-3">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.4A8.5 8.5 0 1 1 21 12Z"/></svg>
-        Direct connection
+        {% translate "Direct connection" %}
       </p>
-      <h3 class="hiw-card-title">Connect with the owner</h3>
+      <h3 class="hiw-card-title">{% translate "Connect with the owner" %}</h3>
       <p class="hiw-card-body">
+        {% blocktranslate trimmed %}
         Message the owner directly or request a tour. No listing agent in the
         middle, no placement commission, no fee to send a message.
+        {% endblocktranslate %}
       </p>
       <p class="hiw-card-proof hiw-card-proof-row">
-        <span class="hiw-card-proof-k">Direct chat</span>
-        <span class="hiw-card-proof-ok-text">$0 in agency fees</span>
+        <span class="hiw-card-proof-k">{% translate "Direct chat" %}</span>
+        <span class="hiw-card-proof-ok-text">{% translate "$0 in agency fees" %}</span>
       </p>
     </article>
 
@@ -486,11 +495,11 @@
 <section class="home-band home-band-tint">
   <div class="section-header home-sec-hdr">
     <div class="section-header-left">
-      <div class="section-eyebrow eyebrow-green">Hot in DFW</div>
-      <h2 class="section-title-xl">Trending Rentals &amp; Properties</h2>
-      <p class="section-sub">Most-viewed homes, verified rooms, and homes for sale right now.</p>
+      <div class="section-eyebrow eyebrow-green">{% translate "Hot in DFW" %}</div>
+      <h2 class="section-title-xl">{% translate "Trending Rentals & Properties" %}</h2>
+      <p class="section-sub">{% translate "Most-viewed homes, verified rooms, and homes for sale right now." %}</p>
     </div>
-    <a href="{% url 'listing_list' %}" class="section-link">Explore all DFW listings &rarr;</a>
+    <a href="{% url 'listing_list' %}" class="section-link">{% translate "Explore all DFW listings" %} &rarr;</a>
   </div>
   <div class="trend-grid">
     {% for item in trend_rent_items %}
@@ -510,46 +519,46 @@
 {# ── TESTIMONIALS ─────────────────────────────────────────────── #}
 <section class="home-band">
   <div class="section-header-center">
-    <div class="section-eyebrow eyebrow-green">Real Stories</div>
-    <h2 class="section-title-xl">What DFW residents say</h2>
-    <p class="section-sub">Authentic experiences from tenants and landlords across the metroplex.</p>
+    <div class="section-eyebrow eyebrow-green">{% translate "Real Stories" %}</div>
+    <h2 class="section-title-xl">{% translate "What DFW residents say" %}</h2>
+    <p class="section-sub">{% translate "Authentic experiences from tenants and landlords across the metroplex." %}</p>
   </div>
   <div class="home-testimonials-grid">
 
     {% with star='<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true"><path d="m12 2.8 2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/></svg>' %}
 
     <figure class="testimonial-v2">
-      <div class="testimonial-stars" role="img" aria-label="5 out of 5 stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
-      <blockquote class="testimonial-quote">"Found my apartment in Irving in 3 days. The AI match score explained exactly why each place fit my budget — I didn't have to guess or scroll endlessly."</blockquote>
+      <div class="testimonial-stars" role="img" aria-label="{% translate "5 out of 5 stars" %}">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
+      <blockquote class="testimonial-quote">{% blocktranslate trimmed %}"Found my apartment in Irving in 3 days. The AI match score explained exactly why each place fit my budget — I didn't have to guess or scroll endlessly."{% endblocktranslate %}</blockquote>
       <figcaption class="testimonial-author">
         <div class="testimonial-avatar testimonial-avatar-1">P</div>
         <div>
           <div class="testimonial-name">Priya M.</div>
-          <div class="testimonial-role">Renter &middot; Irving, TX</div>
+          <div class="testimonial-role">{% translate "Renter" %} &middot; Irving, TX</div>
         </div>
       </figcaption>
     </figure>
 
     <figure class="testimonial-v2">
-      <div class="testimonial-stars" role="img" aria-label="5 out of 5 stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
-      <blockquote class="testimonial-quote">"The guided search is brilliant. It saved my preferences and when I came back a week later, it remembered exactly what I needed. No other platform does this."</blockquote>
+      <div class="testimonial-stars" role="img" aria-label="{% translate "5 out of 5 stars" %}">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
+      <blockquote class="testimonial-quote">{% blocktranslate trimmed %}"The guided search is brilliant. It saved my preferences and when I came back a week later, it remembered exactly what I needed. No other platform does this."{% endblocktranslate %}</blockquote>
       <figcaption class="testimonial-author">
         <div class="testimonial-avatar testimonial-avatar-2">M</div>
         <div>
           <div class="testimonial-name">Marcus T.</div>
-          <div class="testimonial-role">Renter &middot; Las Colinas, TX</div>
+          <div class="testimonial-role">{% translate "Renter" %} &middot; Las Colinas, TX</div>
         </div>
       </figcaption>
     </figure>
 
     <figure class="testimonial-v2">
-      <div class="testimonial-stars" role="img" aria-label="5 out of 5 stars">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
-      <blockquote class="testimonial-quote">"Listed my condo and had serious inquiries within 48 hours. Zero agency fees, zero headaches. I'm in direct contact with every renter. This is how it should work."</blockquote>
+      <div class="testimonial-stars" role="img" aria-label="{% translate "5 out of 5 stars" %}">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
+      <blockquote class="testimonial-quote">{% blocktranslate trimmed %}"Listed my condo and had serious inquiries within 48 hours. Zero agency fees, zero headaches. I'm in direct contact with every renter. This is how it should work."{% endblocktranslate %}</blockquote>
       <figcaption class="testimonial-author">
         <div class="testimonial-avatar testimonial-avatar-3">R</div>
         <div>
           <div class="testimonial-name">Rohan K.</div>
-          <div class="testimonial-role">Landlord &middot; Frisco, TX</div>
+          <div class="testimonial-role">{% translate "Landlord" %} &middot; Frisco, TX</div>
         </div>
       </figcaption>
     </figure>
@@ -566,11 +575,11 @@
 <section class="home-band home-band-tint">
   <div class="section-header home-sec-hdr">
     <div class="section-header-left">
-      <div class="section-eyebrow eyebrow-blue">DFW Metroplex Hubs</div>
-      <h2 class="section-title-xl">Explore by City</h2>
-      <p class="section-sub">Fast-track your neighborhood discovery across Dallas–Fort Worth's premier districts.</p>
+      <div class="section-eyebrow eyebrow-blue">{% translate "DFW Metroplex Hubs" %}</div>
+      <h2 class="section-title-xl">{% translate "Explore by City" %}</h2>
+      <p class="section-sub">{% translate "Fast-track your neighborhood discovery across Dallas–Fort Worth's premier districts." %}</p>
     </div>
-    <span class="city-grid-count">{{ city_hubs|length }} connected municipalities</span>
+    <span class="city-grid-count">{% blocktranslate trimmed count n=city_hubs|length %}{{ n }} connected municipality{% plural %}{{ n }} connected municipalities{% endblocktranslate %}</span>
   </div>
 
   <div class="city-grid">
@@ -584,7 +593,7 @@
         {% else %}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M20 10.5c0 5.5-8 11.5-8 11.5s-8-6-8-11.5a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.8"/></svg>
         {% endif %}
-        <span class="city-tile-flag {% if not hub.active %}city-tile-flag-muted{% endif %}">{% if hub.active %}Active{% else %}DFW{% endif %}</span>
+        <span class="city-tile-flag {% if not hub.active %}city-tile-flag-muted{% endif %}">{% if hub.active %}{% translate "Active" %}{% else %}DFW{% endif %}</span>
       </span>
       <span class="city-tile-name">{{ hub.name }}</span>
       <span class="city-tile-sub">{{ hub.district }}</span>
@@ -600,14 +609,14 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M18 8.6a6 6 0 1 0-12 0c0 6.4-2.5 8.2-2.5 8.2h17S18 15 18 8.6"/><path d="M13.7 20.5a2 2 0 0 1-3.4 0"/><path d="M20.5 4.5a8 8 0 0 1 1.5 4M3.5 4.5A8 8 0 0 0 2 8.5"/></svg>
   </span>
   <div class="alerts-band-copy">
-    <p class="alerts-band-title">Get notified when new DFW listings match your criteria</p>
-    <p class="alerts-band-sub">Create a free search profile and we'll alert you the minute a verified listing meets your parameters.</p>
+    <p class="alerts-band-title">{% translate "Get notified when new DFW listings match your criteria" %}</p>
+    <p class="alerts-band-sub">{% translate "Create a free search profile and we'll alert you the minute a verified listing meets your parameters." %}</p>
   </div>
   {# Carries the address into sign-up so it doesn't have to be typed twice. #}
   <form class="alerts-band-form" action="{% url 'register' %}" method="get">
-    <label class="sr-only" for="alerts-email">Email address</label>
-    <input class="alerts-band-input" id="alerts-email" type="email" name="email" placeholder="Enter your email address…" autocomplete="email">
-    <button type="submit" class="alerts-band-btn">Set up alerts &rarr;</button>
+    <label class="sr-only" for="alerts-email">{% translate "Email address" %}</label>
+    <input class="alerts-band-input" id="alerts-email" type="email" name="email" placeholder="{% translate "Enter your email address…" %}" autocomplete="email">
+    <button type="submit" class="alerts-band-btn">{% translate "Set up alerts" %} &rarr;</button>
   </form>
 </section>
 {% endif %}
@@ -625,22 +634,24 @@
   </div>
 
   <div class="landlord-cta-copy">
-    <p class="landlord-cta-eyebrow">For landlords &amp; sellers</p>
-    <h2 class="landlord-cta-title">Have a property to rent or sell?</h2>
+    <p class="landlord-cta-eyebrow">{% translate "For landlords & sellers" %}</p>
+    <h2 class="landlord-cta-title">{% translate "Have a property to rent or sell?" %}</h2>
     <p class="landlord-cta-sub">
+      {% blocktranslate trimmed %}
       Search freely. Connect directly. Reach serious tenants and buyers in your city —
       no agency headaches, no commissions, no gatekeeping.
+      {% endblocktranslate %}
     </p>
     <ul class="landlord-cta-points">
-      <li>100% free to list your property</li>
-      <li>Match scoring surfaces you to the right renters</li>
-      <li>Direct chat with prospective tenants and buyers</li>
+      <li>{% translate "100% free to list your property" %}</li>
+      <li>{% translate "Match scoring surfaces you to the right renters" %}</li>
+      <li>{% translate "Direct chat with prospective tenants and buyers" %}</li>
     </ul>
   </div>
 
   <div class="landlord-cta-actions">
-    <a href="{% url 'create_listing' %}" class="landlord-cta-btn">List a Property &rarr;</a>
-    <a href="{% url 'create_community' %}" class="landlord-cta-btn landlord-cta-btn-ghost">List a Community &rarr;</a>
+    <a href="{% url 'create_listing' %}" class="landlord-cta-btn">{% translate "List a Property" %} &rarr;</a>
+    <a href="{% url 'create_community' %}" class="landlord-cta-btn landlord-cta-btn-ghost">{% translate "List a Community" %} &rarr;</a>
   </div>
 </section>
 
@@ -757,9 +768,11 @@
   var select = document.getElementById('hero-budget');
   var tabs = document.querySelectorAll('.hero-console-tabs input[name="category"]');
   if (!select || !tabs.length) return;
+  var ANY = '{{ any_budget|escapejs }}';
+  var PER_MO = '{{ per_mo|escapejs }}';
   var OPTIONS = {
-    rent: [['', 'Any budget'], ['1500', '$1,500/mo'], ['2500', '$2,500/mo'], ['4000', '$4,000/mo']],
-    buy:  [['', 'Any budget'], ['300000', '$300,000'], ['500000', '$500,000'], ['750000', '$750,000'], ['1000000', '$1,000,000']]
+    rent: [['', ANY], ['1500', '$1,500' + PER_MO], ['2500', '$2,500' + PER_MO], ['4000', '$4,000' + PER_MO]],
+    buy:  [['', ANY], ['300000', '$300,000'], ['500000', '$500,000'], ['750000', '$750,000'], ['1000000', '$1,000,000']]
   };
   function build(kind) {
     select.innerHTML = '';
