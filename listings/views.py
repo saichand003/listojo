@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import pgettext
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 from datetime import timedelta, date
@@ -301,7 +302,7 @@ def _preview_item(item):
             'city': item.city,
             'state': item.state,
             'price': float(low) if low else None,
-            'unit': '/mo',
+            'unit': pgettext('per month', '/mo'),
             'from_price': True,
             'bedrooms': None,
             'bathrooms': None,

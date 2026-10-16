@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Listojo\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 05:35+0000\n"
+"POT-Creation-Date: 2026-10-16 06:59+0000\n"
 "PO-Revision-Date: 2026-10-08 00:00-0500\n"
 "Last-Translator: Listojo\n"
 "Language-Team: Spanish\n"
@@ -31,6 +31,12 @@ msgstr "/día"
 #: listings/models.py:389
 msgid "/Hour"
 msgstr "/hora"
+
+#: listings/views.py:305 templates/listings/_trend_card_community.html:34
+#: templates/listings/home.html:9
+msgctxt "per month"
+msgid "/mo"
+msgstr "/mes"
 
 #: templates/base.html:33
 msgid "Listojo: Dallas–Fort Worth's Premier Home Search"
@@ -179,7 +185,8 @@ msgid "Sign out"
 msgstr "Cerrar sesión"
 
 #: templates/base.html:245 templates/base.html:341
-#: templates/listings/home.html:271 templates/listings/home.html:341
+#: templates/listings/guided_search.html:615 templates/listings/home.html:271
+#: templates/listings/home.html:341
 msgid "Rentals"
 msgstr "Rentas"
 
@@ -322,6 +329,7 @@ msgstr "En renta"
 
 #: templates/listings/_trend_card.html:27
 #: templates/listings/_trend_card.html:92
+#: templates/listings/guided_search.html:260
 msgid "Private room"
 msgstr "Cuarto privado"
 
@@ -373,6 +381,8 @@ msgstr "Inicia sesión para guardar este anuncio"
 
 #: templates/listings/_trend_card.html:92
 #: templates/listings/_trend_card_community.html:51
+#: templates/listings/guided_search.html:303
+#: templates/listings/guided_search.html:630
 msgid "Studio"
 msgstr "Estudio"
 
@@ -432,12 +442,6 @@ msgid "From"
 msgstr "Desde"
 
 #: templates/listings/_trend_card_community.html:34
-#: templates/listings/home.html:9
-msgctxt "per month"
-msgid "/mo"
-msgstr "/mes"
-
-#: templates/listings/_trend_card_community.html:34
 msgid "Contact for pricing"
 msgstr "Consulta el precio"
 
@@ -457,6 +461,733 @@ msgstr "El equipo de renta responde directo, sin comisión de agencia"
 #: templates/listings/_trend_card_community.html:61
 msgid "View community"
 msgstr "Ver comunidad"
+
+#: templates/listings/guided_search.html:139
+msgid "Guided match engine"
+msgstr "Motor de búsqueda guiada"
+
+#: templates/listings/guided_search.html:143
+msgid "Smart match builder"
+msgstr "Buscador inteligente"
+
+#: templates/listings/guided_search.html:143
+msgid "— find the right property to buy"
+msgstr "— encuentra la propiedad ideal para comprar"
+
+#: templates/listings/guided_search.html:143
+msgid "— find the right rental for you"
+msgstr "— encuentra la renta ideal para ti"
+
+#: templates/listings/guided_search.html:143
+msgid "— find the right home, not just a listing"
+msgstr "— encuentra el hogar ideal, no solo un anuncio"
+
+#: templates/listings/guided_search.html:148
+msgid "DFW inventory live"
+msgstr "Inventario de DFW en vivo"
+
+#: templates/listings/guided_search.html:151
+msgid "<strong id=\"gsx-inventory\">—</strong> listings"
+msgstr "<strong id=\"gsx-inventory\">—</strong> anuncios"
+
+#: templates/listings/guided_search.html:155
+msgid ""
+"Zero brokerage friction. Every answer narrows the live DFW inventory, and "
+"the panel beside the questions shows exactly what is left."
+msgstr "Sin comisiones de agentes. Cada respuesta acota el inventario en vivo de DFW, y el panel junto a las preguntas te muestra exactamente lo que queda."
+
+#: templates/listings/guided_search.html:170
+msgid "Guided search progress"
+msgstr "Progreso de la búsqueda guiada"
+
+#: templates/listings/guided_search.html:174
+#: templates/listings/guided_search.html:181
+#: templates/listings/guided_search.html:188
+#: templates/listings/guided_search.html:195
+#: templates/listings/guided_search.html:215
+#: templates/listings/guided_search.html:249
+#: templates/listings/guided_search.html:292
+#: templates/listings/guided_search.html:340
+#: templates/listings/guided_search.html:364
+#: templates/listings/guided_search.html:403
+#: templates/listings/guided_search.html:449
+#: templates/listings/guided_search.html:491
+#, python-format
+msgid "Step %(n)s"
+msgstr "Paso %(n)s"
+
+#: templates/listings/guided_search.html:175
+#: templates/listings/guided_search.html:215
+msgid "Search target"
+msgstr "Qué buscas"
+
+#: templates/listings/guided_search.html:182
+msgid "Location & budget"
+msgstr "Ubicación y presupuesto"
+
+#: templates/listings/guided_search.html:189
+msgid "Must-haves & timing"
+msgstr "Imprescindibles y fechas"
+
+#: templates/listings/guided_search.html:196
+msgid "Calibrated feed"
+msgstr "Resultados a tu medida"
+
+#: templates/listings/guided_search.html:203
+#: templates/listings/guided_search.html:603
+msgid "Getting started"
+msgstr "Para empezar"
+
+#: templates/listings/guided_search.html:216
+msgid "Are you looking to rent or buy?"
+msgstr "¿Buscas rentar o comprar?"
+
+#: templates/listings/guided_search.html:217
+msgid "This helps us show the right types of listings for you."
+msgstr "Así te mostramos los tipos de anuncios correctos."
+
+#: templates/listings/guided_search.html:228
+msgid "Rent a Place"
+msgstr "Rentar un lugar"
+
+#: templates/listings/guided_search.html:229
+msgid "Rooms, apartments, houses & more"
+msgstr "Cuartos, departamentos, casas y más"
+
+#: templates/listings/guided_search.html:239
+msgid "Buy a Property"
+msgstr "Comprar una propiedad"
+
+#: templates/listings/guided_search.html:240
+msgid "Houses, land, ranches & more"
+msgstr "Casas, terrenos, ranchos y más"
+
+#: templates/listings/guided_search.html:249
+msgid "Occupancy model"
+msgstr "Tipo de espacio"
+
+#: templates/listings/guided_search.html:251
+msgid "What type of space do you need?"
+msgstr "¿Qué tipo de espacio necesitas?"
+
+#: templates/listings/guided_search.html:252
+msgid "Pick one, or skip to see both."
+msgstr "Elige uno, u omite este paso para ver ambos."
+
+#: templates/listings/guided_search.html:256
+msgid "Entire place"
+msgstr "Lugar completo"
+
+#: templates/listings/guided_search.html:256
+msgid "A whole apartment or house to yourself"
+msgstr "Un departamento o una casa completa solo para ti"
+
+#: templates/listings/guided_search.html:260
+msgid "Your own room, share common areas"
+msgstr "Tu propio cuarto, con áreas comunes compartidas"
+
+#: templates/listings/guided_search.html:265
+msgid "What's your goal with this property?"
+msgstr "¿Cuál es tu objetivo con esta propiedad?"
+
+#: templates/listings/guided_search.html:266
+msgid "Helps us surface the most relevant listings for your situation."
+msgstr "Nos ayuda a mostrarte los anuncios más relevantes para tu situación."
+
+#: templates/listings/guided_search.html:270
+msgid "Primary home"
+msgstr "Vivienda principal"
+
+#: templates/listings/guided_search.html:270
+msgid "I'll be living here"
+msgstr "Voy a vivir aquí"
+
+#: templates/listings/guided_search.html:274
+msgid "Investment / rental"
+msgstr "Inversión / renta"
+
+#: templates/listings/guided_search.html:274
+msgid "I plan to rent it out"
+msgstr "Pienso rentarla"
+
+#: templates/listings/guided_search.html:278
+msgid "Just browsing"
+msgstr "Solo estoy viendo"
+
+#: templates/listings/guided_search.html:278
+msgid "Exploring what's available"
+msgstr "Explorando lo disponible"
+
+#: templates/listings/guided_search.html:283
+#: templates/listings/guided_search.html:331
+#: templates/listings/guided_search.html:355
+#: templates/listings/guided_search.html:394
+#: templates/listings/guided_search.html:440
+#: templates/listings/guided_search.html:482
+#: templates/listings/guided_search.html:512
+msgid "← Back"
+msgstr "← Atrás"
+
+#: templates/listings/guided_search.html:284
+#: templates/listings/guided_search.html:332
+#: templates/listings/guided_search.html:356
+#: templates/listings/guided_search.html:395
+#: templates/listings/guided_search.html:441
+#: templates/listings/guided_search.html:483
+msgid "Continue →"
+msgstr "Continuar →"
+
+#: templates/listings/guided_search.html:292
+msgid "Dwelling architecture"
+msgstr "Tipo de vivienda"
+
+#: templates/listings/guided_search.html:293
+msgid "What type of property?"
+msgstr "¿Qué tipo de propiedad?"
+
+#: templates/listings/guided_search.html:294
+msgid "Pick everything that works — we'll show all matching types."
+msgstr "Elige todo lo que te sirva; te mostraremos todos los tipos que coincidan."
+
+#: templates/listings/guided_search.html:297
+#: templates/listings/guided_search.html:310
+#: templates/listings/guided_search.html:605
+msgid "Property type"
+msgstr "Tipo de propiedad"
+
+#: templates/listings/guided_search.html:299
+msgid "Apartment"
+msgstr "Departamento"
+
+#: templates/listings/guided_search.html:300
+msgid "House"
+msgstr "Casa"
+
+#: templates/listings/guided_search.html:301
+#: templates/listings/guided_search.html:314
+msgid "Condo"
+msgstr "Condominio"
+
+#: templates/listings/guided_search.html:302
+msgid "Townhouse"
+msgstr "Casa adosada"
+
+#: templates/listings/guided_search.html:304
+msgid "Basement"
+msgstr "Sótano"
+
+#: templates/listings/guided_search.html:305
+msgid "Loft"
+msgstr "Loft"
+
+#: templates/listings/guided_search.html:306
+msgid "Trailer"
+msgstr "Casa rodante"
+
+#: templates/listings/guided_search.html:312
+msgid "Single-family home"
+msgstr "Casa unifamiliar"
+
+#: templates/listings/guided_search.html:313
+msgid "Ranch house"
+msgstr "Casa de un piso"
+
+#: templates/listings/guided_search.html:315
+msgid "Land"
+msgstr "Terreno"
+
+#: templates/listings/guided_search.html:316
+msgid "Ranch"
+msgstr "Rancho"
+
+#: templates/listings/guided_search.html:321
+#: templates/listings/guided_search.html:621 templates/listings/home.html:315
+msgid "Bedrooms"
+msgstr "Recámaras"
+
+#: templates/listings/guided_search.html:323
+msgid "Any"
+msgstr "Cualquiera"
+
+#: templates/listings/guided_search.html:324
+msgid "1 bed"
+msgstr "1 rec."
+
+#: templates/listings/guided_search.html:325
+msgid "2 bed"
+msgstr "2 rec."
+
+#: templates/listings/guided_search.html:326
+msgid "3 bed"
+msgstr "3 rec."
+
+#: templates/listings/guided_search.html:327
+msgid "4+ bed"
+msgstr "4+ rec."
+
+#: templates/listings/guided_search.html:340
+msgid "Location geometry"
+msgstr "Ubicación"
+
+#: templates/listings/guided_search.html:341
+msgid "Where are you looking?"
+msgstr "¿Dónde estás buscando?"
+
+#: templates/listings/guided_search.html:342
+msgid "Enter a city or neighborhood — we'll focus results there."
+msgstr "Escribe una ciudad o colonia; enfocaremos los resultados ahí."
+
+#: templates/listings/guided_search.html:344
+msgid "City / Area"
+msgstr "Ciudad / zona"
+
+#: templates/listings/guided_search.html:345
+msgid "e.g. Irving, TX or Las Colinas"
+msgstr "p. ej., Irving, TX o Las Colinas"
+
+#: templates/listings/guided_search.html:364
+msgid "Financial envelope"
+msgstr "Presupuesto"
+
+#: templates/listings/guided_search.html:365
+msgid "What's your budget?"
+msgstr "¿Cuál es tu presupuesto?"
+
+#: templates/listings/guided_search.html:366
+#: templates/listings/guided_search.html:614
+msgid ""
+"Set your monthly max — we'll show listings that fit and flag how much you'd "
+"save."
+msgstr "Fija tu máximo mensual; te mostraremos los anuncios que te alcanzan y cuánto ahorrarías."
+
+#: templates/listings/guided_search.html:368
+#: templates/listings/guided_search.html:612
+msgid "Monthly budget"
+msgstr "Presupuesto mensual"
+
+#: templates/listings/guided_search.html:370
+msgid "per month"
+msgstr "al mes"
+
+#: templates/listings/guided_search.html:377
+msgid "Min $ (optional)"
+msgstr "Mín. $ (opcional)"
+
+#: templates/listings/guided_search.html:378
+msgid "to"
+msgstr "a"
+
+#: templates/listings/guided_search.html:379
+msgid "Max $"
+msgstr "Máx. $"
+
+#: templates/listings/guided_search.html:383
+msgid "Monthly household income"
+msgstr "Ingreso mensual del hogar"
+
+#: templates/listings/guided_search.html:383
+msgid "(before taxes, optional)"
+msgstr "(antes de impuestos, opcional)"
+
+#: templates/listings/guided_search.html:385
+msgid "Most landlords require 2.5–3× the monthly rent"
+msgstr "La mayoría de los arrendadores piden de 2.5 a 3 veces la renta mensual"
+
+#: templates/listings/guided_search.html:403
+msgid "Lifestyle integration"
+msgstr "Estilo de vida"
+
+#: templates/listings/guided_search.html:404
+msgid "What are your must-haves?"
+msgstr "¿Qué es imprescindible para ti?"
+
+#: templates/listings/guided_search.html:405
+msgid ""
+"Select everything that applies — we'll weight results to show what actually "
+"fits."
+msgstr "Selecciona todo lo que aplique; ordenaremos los resultados según lo que de verdad te queda."
+
+#: templates/listings/guided_search.html:407
+msgid "Features"
+msgstr "Características"
+
+#: templates/listings/guided_search.html:409
+msgid "Pet friendly"
+msgstr "Acepta mascotas"
+
+#: templates/listings/guided_search.html:410
+msgid "Washer/dryer"
+msgstr "Lavadora/secadora"
+
+#: templates/listings/guided_search.html:411
+msgid "Parking"
+msgstr "Estacionamiento"
+
+#: templates/listings/guided_search.html:412
+msgid "Central AC"
+msgstr "Aire acondicionado central"
+
+#: templates/listings/guided_search.html:413
+msgid "Gym"
+msgstr "Gimnasio"
+
+#: templates/listings/guided_search.html:414
+msgid "Pool"
+msgstr "Alberca"
+
+#: templates/listings/guided_search.html:415
+msgid "Balcony"
+msgstr "Balcón"
+
+#: templates/listings/guided_search.html:416
+msgid "Gated"
+msgstr "Acceso controlado"
+
+#: templates/listings/guided_search.html:417
+msgid "High-speed internet"
+msgstr "Internet de alta velocidad"
+
+#: templates/listings/guided_search.html:418
+msgid "Bills included"
+msgstr "Servicios incluidos"
+
+#: templates/listings/guided_search.html:419
+msgid "Furnished"
+msgstr "Amueblado"
+
+#: templates/listings/guided_search.html:420
+msgid "No deposit"
+msgstr "Sin depósito"
+
+#: templates/listings/guided_search.html:423
+msgid "+ Add your own feature…"
+msgstr "+ Agrega tu propia característica…"
+
+#: templates/listings/guided_search.html:427
+msgid "Neighborhood vibe"
+msgstr "Ambiente del vecindario"
+
+#: templates/listings/guided_search.html:429
+msgid "Quiet & residential"
+msgstr "Tranquilo y residencial"
+
+#: templates/listings/guided_search.html:430
+msgid "Urban & walkable"
+msgstr "Urbano y caminable"
+
+#: templates/listings/guided_search.html:431
+msgid "Near good schools"
+msgstr "Cerca de buenas escuelas"
+
+#: templates/listings/guided_search.html:432
+msgid "Diverse community"
+msgstr "Comunidad diversa"
+
+#: templates/listings/guided_search.html:433
+msgid "Near grocery stores"
+msgstr "Cerca de supermercados"
+
+#: templates/listings/guided_search.html:436
+msgid "+ Add your own vibe…"
+msgstr "+ Agrega tu propio ambiente…"
+
+#: templates/listings/guided_search.html:449
+msgid "Temporal readiness"
+msgstr "Fechas"
+
+#: templates/listings/guided_search.html:450
+msgid "When do you want to move?"
+msgstr "¿Cuándo te quieres mudar?"
+
+#: templates/listings/guided_search.html:451
+msgid "Helps us filter by availability and understand your urgency."
+msgstr "Nos ayuda a filtrar por disponibilidad y entender qué tan pronto lo necesitas."
+
+#: templates/listings/guided_search.html:453
+msgid "Move-in timeline"
+msgstr "Fecha de mudanza"
+
+#: templates/listings/guided_search.html:457
+msgid "ASAP — within 2 weeks"
+msgstr "Lo antes posible — en 2 semanas"
+
+#: templates/listings/guided_search.html:457
+msgid "Show what's available now"
+msgstr "Muestra lo disponible ahora"
+
+#: templates/listings/guided_search.html:461
+msgid "Next month"
+msgstr "El próximo mes"
+
+#: templates/listings/guided_search.html:461
+msgid "Flexible on exact date"
+msgstr "Flexible con la fecha exacta"
+
+#: templates/listings/guided_search.html:465
+msgid "In 2–3 months"
+msgstr "En 2–3 meses"
+
+#: templates/listings/guided_search.html:465
+msgid "Planning ahead"
+msgstr "Planeando con tiempo"
+
+#: templates/listings/guided_search.html:469
+msgid "No specific timeline"
+msgstr "Sin fecha específica"
+
+#: templates/listings/guided_search.html:469
+msgid "Show all available listings"
+msgstr "Muestra todos los anuncios disponibles"
+
+#: templates/listings/guided_search.html:474
+msgid "Lease preference"
+msgstr "Contrato preferido"
+
+#: templates/listings/guided_search.html:476
+msgid "12 months"
+msgstr "12 meses"
+
+#: templates/listings/guided_search.html:477
+msgid "6 months"
+msgstr "6 meses"
+
+#: templates/listings/guided_search.html:478
+msgid "Month-to-month"
+msgstr "Mes a mes"
+
+#: templates/listings/guided_search.html:491
+msgid "Priority calibration"
+msgstr "Prioridades"
+
+#: templates/listings/guided_search.html:492
+msgid "What matters most to you?"
+msgstr "¿Qué es lo más importante para ti?"
+
+#: templates/listings/guided_search.html:493
+msgid ""
+"This helps us rank your results — the top matches will be optimized for what "
+"you care about most."
+msgstr "Así ordenamos tus resultados: las mejores coincidencias priorizan lo que más te importa."
+
+#: templates/listings/guided_search.html:497
+msgid "Best price"
+msgstr "Mejor precio"
+
+#: templates/listings/guided_search.html:498
+msgid "Most affordable for what I get"
+msgstr "Lo más económico por lo que recibo"
+
+#: templates/listings/guided_search.html:502
+msgid "Right location"
+msgstr "Ubicación ideal"
+
+#: templates/listings/guided_search.html:503
+msgid "City, commute, and neighborhood first"
+msgstr "Primero la ciudad, el trayecto y el vecindario"
+
+#: templates/listings/guided_search.html:507
+msgid "Best features"
+msgstr "Mejores características"
+
+#: templates/listings/guided_search.html:508
+msgid "Amenities, space, and quality above all"
+msgstr "Amenidades, espacio y calidad ante todo"
+
+#: templates/listings/guided_search.html:513
+msgid "Show my matches →"
+msgstr "Ver mis coincidencias →"
+
+#: templates/listings/guided_search.html:527
+msgid "Live match preview"
+msgstr "Vista previa de coincidencias en vivo"
+
+#: templates/listings/guided_search.html:531
+msgid "Matching right now"
+msgstr "Coincidencias ahora"
+
+#: templates/listings/guided_search.html:532
+msgid "Answer a question to start"
+msgstr "Responde una pregunta para empezar"
+
+#: templates/listings/guided_search.html:545
+msgid "of <span id=\"gsx-inv2\">—</span> live listings"
+msgstr "de <span id=\"gsx-inv2\">—</span> anuncios activos"
+
+#: templates/listings/guided_search.html:550
+#: templates/listings/guided_search.html:636
+msgid "The share of DFW inventory still matching your answers."
+msgstr "La parte del inventario de DFW que aún coincide con tus respuestas."
+
+#: templates/listings/guided_search.html:556
+msgid "Match calibration"
+msgstr "Ajuste de coincidencias"
+
+#: templates/listings/guided_search.html:557
+msgid "What you've told us"
+msgstr "Lo que nos has dicho"
+
+#: templates/listings/guided_search.html:560
+#: templates/listings/guided_search.html:627
+msgid "Nothing yet — your answers appear here as you go."
+msgstr "Nada aún; tus respuestas aparecerán aquí conforme avances."
+
+#: templates/listings/guided_search.html:566
+msgid "Top matches so far"
+msgstr "Mejores coincidencias hasta ahora"
+
+#: templates/listings/guided_search.html:567
+msgid "Compare all"
+msgstr "Comparar todos"
+
+#: templates/listings/guided_search.html:577
+msgid "Direct owners only"
+msgstr "Solo dueños directos"
+
+#: templates/listings/guided_search.html:579
+msgid ""
+"Every listing here is posted by the owner or manager. No agency fees, and no "
+"duplicate re-posts of the same unit."
+msgstr "Cada anuncio lo publica el dueño o administrador. Sin comisiones de agencia ni anuncios duplicados de la misma unidad."
+
+#: templates/listings/guided_search.html:588
+msgid "Renter story"
+msgstr "Historia de un inquilino"
+
+#: templates/listings/guided_search.html:590
+msgid ""
+"The guided search is brilliant. It saved my preferences and when I came back "
+"a week later, it remembered exactly what I needed."
+msgstr "La búsqueda guiada es genial. Guardó mis preferencias y cuando regresé una semana después, recordaba exactamente lo que necesitaba."
+
+#: templates/listings/guided_search.html:591 templates/listings/home.html:540
+#: templates/listings/home.html:552
+msgid "Renter"
+msgstr "Inquilino"
+
+#: templates/listings/guided_search.html:602
+#, python-brace-format
+msgid "Step {n} of {total}"
+msgstr "Paso {n} de {total}"
+
+#: templates/listings/guided_search.html:604
+msgid "Space type"
+msgstr "Tipo de espacio"
+
+#: templates/listings/guided_search.html:606
+msgid "Location"
+msgstr "Ubicación"
+
+#: templates/listings/guided_search.html:607
+msgid "Budget & Income"
+msgstr "Presupuesto e ingresos"
+
+#: templates/listings/guided_search.html:608
+msgid "Must-haves"
+msgstr "Imprescindibles"
+
+#: templates/listings/guided_search.html:609
+msgid "Timeline & Urgency"
+msgstr "Fechas y urgencia"
+
+#: templates/listings/guided_search.html:610
+msgid "Priorities"
+msgstr "Prioridades"
+
+#: templates/listings/guided_search.html:611
+msgid "Purchase budget"
+msgstr "Presupuesto de compra"
+
+#: templates/listings/guided_search.html:613
+msgid "Set your price range for the purchase."
+msgstr "Fija tu rango de precio para la compra."
+
+#: templates/listings/guided_search.html:616
+msgid "Homes for sale"
+msgstr "Casas en venta"
+
+#: templates/listings/guided_search.html:617
+msgid "Rooms & co-living"
+msgstr "Cuartos y vivienda compartida"
+
+#: templates/listings/guided_search.html:618
+msgid "Looking for"
+msgstr "Buscas"
+
+#: templates/listings/guided_search.html:619
+msgid "Space"
+msgstr "Espacio"
+
+#: templates/listings/guided_search.html:620
+msgid "City"
+msgstr "Ciudad"
+
+#: templates/listings/guided_search.html:622
+msgid "Budget"
+msgstr "Presupuesto"
+
+#: templates/listings/guided_search.html:623
+msgid "Must have"
+msgstr "Imprescindible"
+
+#: templates/listings/guided_search.html:624
+msgid "A private room"
+msgstr "Un cuarto privado"
+
+#: templates/listings/guided_search.html:625
+msgid "An entire place"
+msgstr "Un lugar completo"
+
+#: templates/listings/guided_search.html:626
+#, python-brace-format
+msgid "Up to {price}"
+msgstr "Hasta {price}"
+
+#: templates/listings/guided_search.html:628
+#, python-brace-format
+msgid "From {price}"
+msgstr "Desde {price}"
+
+#: templates/listings/guided_search.html:629
+msgid "Contact for price"
+msgstr "Consulta el precio"
+
+#: templates/listings/guided_search.html:631
+#, python-brace-format
+msgid "{n} bed"
+msgstr "{n} rec."
+
+#: templates/listings/guided_search.html:632
+msgid "No matches"
+msgstr "Sin coincidencias"
+
+#: templates/listings/guided_search.html:633
+msgid ""
+"Nothing matches every answer. Loosening the budget or the must-haves is "
+"usually what opens it up."
+msgstr "Nada coincide con todas tus respuestas. Ampliar el presupuesto o quitar algún imprescindible suele abrir opciones."
+
+#: templates/listings/guided_search.html:634
+msgid "1 match"
+msgstr "1 coincidencia"
+
+#: templates/listings/guided_search.html:635
+#, python-brace-format
+msgid "{n} matches"
+msgstr "{n} coincidencias"
+
+#: templates/listings/guided_search.html:637
+#, python-brace-format
+msgid "{n} available"
+msgstr "{n} disponibles"
+
+#: templates/listings/guided_search.html:638
+#, python-brace-format
+msgid "Compare all {n}"
+msgstr "Comparar los {n}"
+
+#: templates/listings/guided_search.html:639
+msgid "Remove"
+msgstr "Quitar"
 
 #: templates/listings/home.html:9 templates/listings/home.html:305
 msgid "Any budget"
@@ -505,10 +1236,6 @@ msgstr "Dallas, Irving, Frisco, Plano…"
 #: templates/listings/home.html:295
 msgid "Max Budget"
 msgstr "Presupuesto máx."
-
-#: templates/listings/home.html:315
-msgid "Bedrooms"
-msgstr "Recámaras"
 
 #: templates/listings/home.html:317
 msgid "Any beds"
@@ -749,10 +1476,6 @@ msgstr ""
 "\"Encontré mi departamento en Irving en 3 días. La afinidad con IA me "
 "explicó exactamente por qué cada lugar cabía en mi presupuesto. No tuve que "
 "adivinar ni buscar sin fin.\""
-
-#: templates/listings/home.html:540 templates/listings/home.html:552
-msgid "Renter"
-msgstr "Inquilino"
 
 #: templates/listings/home.html:547
 msgid ""

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <style>
 .gs-wrap{max-width:680px;margin:0 auto;padding:32px 16px 80px}
@@ -135,26 +136,24 @@
 <header class="gsx-header">
   <p class="gsx-eyebrow">
     <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9z"/></svg>
-    Guided match engine
+    {% translate "Guided match engine" %}
   </p>
   <div class="gsx-header-row">
     <h1 class="gsx-title">
-      {% if gs_mode == 'buy' %}Smart match builder <span class="gsx-title-rest">— find the right property to buy</span>
-      {% elif gs_mode == 'rent' %}Smart match builder <span class="gsx-title-rest">— find the right rental for you</span>
-      {% else %}Smart match builder <span class="gsx-title-rest">— find the right home, not just a listing</span>{% endif %}
+      {% translate "Smart match builder" %} <span class="gsx-title-rest">{% if gs_mode == 'buy' %}{% translate "— find the right property to buy" %}{% elif gs_mode == 'rent' %}{% translate "— find the right rental for you" %}{% else %}{% translate "— find the right home, not just a listing" %}{% endif %}</span>
     </h1>
     <div class="gsx-live" id="gsx-live">
       <span class="gsx-live-chip">
         <span class="gsx-live-dot" aria-hidden="true"></span>
-        DFW inventory live
+        {% translate "DFW inventory live" %}
       </span>
       <span class="gsx-live-sep" aria-hidden="true"></span>
-      <span class="gsx-live-chip gsx-live-count"><strong id="gsx-inventory">—</strong> listings</span>
+      <span class="gsx-live-chip gsx-live-count">{% blocktranslate trimmed %}<strong id="gsx-inventory">—</strong> listings{% endblocktranslate %}</span>
     </div>
   </div>
   <p class="gsx-sub">
-    Zero brokerage friction. Every answer narrows the live DFW inventory, and the
-    panel beside the questions shows exactly what is left.
+    {% blocktranslate trimmed %}Zero brokerage friction. Every answer narrows the live DFW inventory, and the
+    panel beside the questions shows exactly what is left.{% endblocktranslate %}
   </p>
 </header>
 
@@ -167,41 +166,41 @@
     step with the progress bar underneath.
   {% endcomment %}
   <div class="gsx-stepper">
-    <ol class="gsx-phases" id="gsx-phases" aria-label="Guided search progress">
+    <ol class="gsx-phases" id="gsx-phases" aria-label="{% translate "Guided search progress" %}">
       <li class="gsx-phase is-active" data-phase="1">
         <span class="gsx-phase-n" aria-hidden="true">1</span>
         <span class="gsx-phase-body">
-          <span class="gsx-phase-k">Step 1</span>
-          <span class="gsx-phase-title">Search target</span>
+          <span class="gsx-phase-k">{% blocktranslate with n=1 %}Step {{ n }}{% endblocktranslate %}</span>
+          <span class="gsx-phase-title">{% translate "Search target" %}</span>
         </span>
       </li>
       <li class="gsx-phase" data-phase="2">
         <span class="gsx-phase-n" aria-hidden="true">2</span>
         <span class="gsx-phase-body">
-          <span class="gsx-phase-k">Step 2</span>
-          <span class="gsx-phase-title">Location & budget</span>
+          <span class="gsx-phase-k">{% blocktranslate with n=2 %}Step {{ n }}{% endblocktranslate %}</span>
+          <span class="gsx-phase-title">{% translate "Location & budget" %}</span>
         </span>
       </li>
       <li class="gsx-phase" data-phase="3">
         <span class="gsx-phase-n" aria-hidden="true">3</span>
         <span class="gsx-phase-body">
-          <span class="gsx-phase-k">Step 3</span>
-          <span class="gsx-phase-title">Must-haves & timing</span>
+          <span class="gsx-phase-k">{% blocktranslate with n=3 %}Step {{ n }}{% endblocktranslate %}</span>
+          <span class="gsx-phase-title">{% translate "Must-haves & timing" %}</span>
         </span>
       </li>
       <li class="gsx-phase" data-phase="4">
         <span class="gsx-phase-n" aria-hidden="true">4</span>
         <span class="gsx-phase-body">
-          <span class="gsx-phase-k">Step 4</span>
-          <span class="gsx-phase-title">Calibrated feed</span>
+          <span class="gsx-phase-k">{% blocktranslate with n=4 %}Step {{ n }}{% endblocktranslate %}</span>
+          <span class="gsx-phase-title">{% translate "Calibrated feed" %}</span>
         </span>
       </li>
     </ol>
   {# ── Progress bar ── #}
   <div class="gs-progress-wrap">
     <div class="gs-progress-meta">
-      <span class="gs-progress-label" id="progress-section-label">Getting started</span>
-      <span class="gs-progress-step" id="progress-step-text">Step 1 of 8</span>
+      <span class="gs-progress-label" id="progress-section-label">{% translate "Getting started" %}</span>
+      <span class="gs-progress-step" id="progress-step-text"></span>
     </div>
     <div class="gs-progress-track">
       <div class="gs-progress-fill" id="progress-fill" style="width:11%"></div>
@@ -212,9 +211,9 @@
   {# ── Step 1: Rent or Buy ── #}
   <div id="step1">
     <div class="gs-card">
-      <div class="gs-card-label">Step 1 <span aria-hidden="true">&middot;</span> Search target</div>
-      <h2>Are you looking to rent or buy?</h2>
-      <p class="gs-sub">This helps us show the right types of listings for you.</p>
+      <div class="gs-card-label">{% blocktranslate with n=1 %}Step {{ n }}{% endblocktranslate %} <span aria-hidden="true">&middot;</span> {% translate "Search target" %}</div>
+      <h2>{% translate "Are you looking to rent or buy?" %}</h2>
+      <p class="gs-sub">{% translate "This helps us show the right types of listings for you." %}</p>
       <div class="choice-grid">
         <div class="choice-card" id="cc-rent" onclick="selectRentBuy('rent')">
           <span class="cc-icon" aria-hidden="true">
@@ -225,8 +224,8 @@
               <path d="M8.8 15.2 11.3 17.7"></path>
             </svg>
           </span>
-          <div class="cc-title">Rent a Place</div>
-          <div class="cc-sub">Rooms, apartments, houses &amp; more</div>
+          <div class="cc-title">{% translate "Rent a Place" %}</div>
+          <div class="cc-sub">{% translate "Rooms, apartments, houses & more" %}</div>
         </div>
         <div class="choice-card" id="cc-buy" onclick="selectRentBuy('buy')">
           <span class="cc-icon" aria-hidden="true">
@@ -236,8 +235,8 @@
               <path d="M10 20v-5h4v5"></path>
             </svg>
           </span>
-          <div class="cc-title">Buy a Property</div>
-          <div class="cc-sub">Houses, land, ranches &amp; more</div>
+          <div class="cc-title">{% translate "Buy a Property" %}</div>
+          <div class="cc-sub">{% translate "Houses, land, ranches & more" %}</div>
         </div>
       </div>
     </div>
@@ -246,42 +245,42 @@
   {# ── Step 2: Room type ── #}
   <div id="step2" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 2 <span aria-hidden="true">&middot;</span> Occupancy model</div>
+      <div class="gs-card-label">{% blocktranslate with n=2 %}Step {{ n }}{% endblocktranslate %} <span aria-hidden="true">&middot;</span> {% translate "Occupancy model" %}</div>
       <div id="room-q-rent">
-        <h2>What type of space do you need?</h2>
-        <p class="gs-sub">Pick one, or skip to see both.</p>
+        <h2>{% translate "What type of space do you need?" %}</h2>
+        <p class="gs-sub">{% translate "Pick one, or skip to see both." %}</p>
         <div class="room-grid">
           <div class="room-card" id="rc-whole" onclick="selectRoom('whole')">
             <span class="rc-icon">🏠</span>
-            <div><div class="rc-title">Entire place</div><div class="rc-sub">A whole apartment or house to yourself</div></div>
+            <div><div class="rc-title">{% translate "Entire place" %}</div><div class="rc-sub">{% translate "A whole apartment or house to yourself" %}</div></div>
           </div>
           <div class="room-card" id="rc-room" onclick="selectRoom('room')">
             <span class="rc-icon">🚪</span>
-            <div><div class="rc-title">Private room</div><div class="rc-sub">Your own room, share common areas</div></div>
+            <div><div class="rc-title">{% translate "Private room" %}</div><div class="rc-sub">{% translate "Your own room, share common areas" %}</div></div>
           </div>
         </div>
       </div>
       <div id="room-q-buy" style="display:none">
-        <h2>What's your goal with this property?</h2>
-        <p class="gs-sub">Helps us surface the most relevant listings for your situation.</p>
+        <h2>{% translate "What's your goal with this property?" %}</h2>
+        <p class="gs-sub">{% translate "Helps us surface the most relevant listings for your situation." %}</p>
         <div class="room-grid">
           <div class="room-card sel" id="rc-primary" onclick="selectBuyPurpose('primary')">
             <span class="rc-icon">🏡</span>
-            <div><div class="rc-title">Primary home</div><div class="rc-sub">I'll be living here</div></div>
+            <div><div class="rc-title">{% translate "Primary home" %}</div><div class="rc-sub">{% translate "I'll be living here" %}</div></div>
           </div>
           <div class="room-card" id="rc-invest" onclick="selectBuyPurpose('investment')">
             <span class="rc-icon">📈</span>
-            <div><div class="rc-title">Investment / rental</div><div class="rc-sub">I plan to rent it out</div></div>
+            <div><div class="rc-title">{% translate "Investment / rental" %}</div><div class="rc-sub">{% translate "I plan to rent it out" %}</div></div>
           </div>
           <div class="room-card" id="rc-browse" onclick="selectBuyPurpose('browse')">
             <span class="rc-icon">👀</span>
-            <div><div class="rc-title">Just browsing</div><div class="rc-sub">Exploring what's available</div></div>
+            <div><div class="rc-title">{% translate "Just browsing" %}</div><div class="rc-sub">{% translate "Exploring what's available" %}</div></div>
           </div>
         </div>
       </div>
       <div class="gs-actions">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(1)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(3)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(1)">{% translate "← Back" %}</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(3)">{% translate "Continue →" %} <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -289,47 +288,47 @@
   {# ── Step 3: Property type + bedrooms ── #}
   <div id="step3" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 3 <span aria-hidden="true">&middot;</span> Dwelling architecture</div>
-      <h2>What type of property?</h2>
-      <p class="gs-sub">Pick everything that works — we'll show all matching types.</p>
+      <div class="gs-card-label">{% blocktranslate with n=3 %}Step {{ n }}{% endblocktranslate %} <span aria-hidden="true">&middot;</span> {% translate "Dwelling architecture" %}</div>
+      <h2>{% translate "What type of property?" %}</h2>
+      <p class="gs-sub">{% translate "Pick everything that works — we'll show all matching types." %}</p>
       <div class="gs-group">
         <div id="type-rent-options">
-          <label class="gs-label">Property type</label>
+          <label class="gs-label">{% translate "Property type" %}</label>
           <div class="type-grid" id="type-group">
-            <div class="type-chip" data-val="apartment" onclick="toggleType(this)">🏢 Apartment</div>
-            <div class="type-chip" data-val="house" onclick="toggleType(this)">🏠 House</div>
-            <div class="type-chip" data-val="condo" onclick="toggleType(this)">🏙️ Condo</div>
-            <div class="type-chip" data-val="townhouse" onclick="toggleType(this)">🏘️ Townhouse</div>
-            <div class="type-chip" data-val="studio" onclick="toggleType(this)">🛏️ Studio</div>
-            <div class="type-chip" data-val="basement" onclick="toggleType(this)">🏚️ Basement</div>
-            <div class="type-chip" data-val="loft" onclick="toggleType(this)">🌃 Loft</div>
-            <div class="type-chip" data-val="trailer" onclick="toggleType(this)">🚐 Trailer</div>
+            <div class="type-chip" data-val="apartment" onclick="toggleType(this)">🏢 {% translate "Apartment" %}</div>
+            <div class="type-chip" data-val="house" onclick="toggleType(this)">🏠 {% translate "House" %}</div>
+            <div class="type-chip" data-val="condo" onclick="toggleType(this)">🏙️ {% translate "Condo" %}</div>
+            <div class="type-chip" data-val="townhouse" onclick="toggleType(this)">🏘️ {% translate "Townhouse" %}</div>
+            <div class="type-chip" data-val="studio" onclick="toggleType(this)">🛏️ {% translate "Studio" %}</div>
+            <div class="type-chip" data-val="basement" onclick="toggleType(this)">🏚️ {% translate "Basement" %}</div>
+            <div class="type-chip" data-val="loft" onclick="toggleType(this)">🌃 {% translate "Loft" %}</div>
+            <div class="type-chip" data-val="trailer" onclick="toggleType(this)">🚐 {% translate "Trailer" %}</div>
           </div>
         </div>
         <div id="type-buy-options" style="display:none">
-          <label class="gs-label">Property type</label>
+          <label class="gs-label">{% translate "Property type" %}</label>
           <div class="type-grid" id="type-buy-group">
-            <div class="type-chip" data-val="single_family" onclick="toggleType(this)">🏡 Single-family home</div>
-            <div class="type-chip" data-val="ranch_house" onclick="toggleType(this)">🏠 Ranch house</div>
-            <div class="type-chip" data-val="condo" onclick="toggleType(this)">🏙️ Condo</div>
-            <div class="type-chip" data-val="land" onclick="toggleType(this)">🌿 Land</div>
-            <div class="type-chip" data-val="ranch" onclick="toggleType(this)">🐄 Ranch</div>
+            <div class="type-chip" data-val="single_family" onclick="toggleType(this)">🏡 {% translate "Single-family home" %}</div>
+            <div class="type-chip" data-val="ranch_house" onclick="toggleType(this)">🏠 {% translate "Ranch house" %}</div>
+            <div class="type-chip" data-val="condo" onclick="toggleType(this)">🏙️ {% translate "Condo" %}</div>
+            <div class="type-chip" data-val="land" onclick="toggleType(this)">🌿 {% translate "Land" %}</div>
+            <div class="type-chip" data-val="ranch" onclick="toggleType(this)">🐄 {% translate "Ranch" %}</div>
           </div>
         </div>
       </div>
       <div class="gs-group" id="bedrooms-group">
-        <label class="gs-label">Bedrooms</label>
+        <label class="gs-label">{% translate "Bedrooms" %}</label>
         <div class="tag-grid" id="beds-group">
-          <div class="tag-pill sel" data-val="">Any</div>
-          <div class="tag-pill" data-val="1">1 bed</div>
-          <div class="tag-pill" data-val="2">2 bed</div>
-          <div class="tag-pill" data-val="3">3 bed</div>
-          <div class="tag-pill" data-val="4">4+ bed</div>
+          <div class="tag-pill sel" data-val="">{% translate "Any" %}</div>
+          <div class="tag-pill" data-val="1">{% translate "1 bed" %}</div>
+          <div class="tag-pill" data-val="2">{% translate "2 bed" %}</div>
+          <div class="tag-pill" data-val="3">{% translate "3 bed" %}</div>
+          <div class="tag-pill" data-val="4">{% translate "4+ bed" %}</div>
         </div>
       </div>
       <div class="gs-actions">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(2)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(4)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(2)">{% translate "← Back" %}</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(4)">{% translate "Continue →" %} <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -337,12 +336,12 @@
   {# ── Step 4: City ── #}
   <div id="step4" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 4 <span aria-hidden="true">&middot;</span> Location geometry</div>
-      <h2>Where are you looking?</h2>
-      <p class="gs-sub">Enter a city or neighborhood — we'll focus results there.</p>
+      <div class="gs-card-label">{% blocktranslate with n=4 %}Step {{ n }}{% endblocktranslate %} <span aria-hidden="true">&middot;</span> {% translate "Location geometry" %}</div>
+      <h2>{% translate "Where are you looking?" %}</h2>
+      <p class="gs-sub">{% translate "Enter a city or neighborhood — we'll focus results there." %}</p>
       <div class="gs-group">
-        <label class="gs-label">City / Area</label>
-        <input id="city" class="gs-input" placeholder="e.g. Irving, TX or Las Colinas" autocomplete="off">
+        <label class="gs-label">{% translate "City / Area" %}</label>
+        <input id="city" class="gs-input" placeholder="{% translate "e.g. Irving, TX or Las Colinas" %}" autocomplete="off">
         <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px">
           <span class="tag-pill" onclick="setCity('Irving, TX')">📍 Irving, TX</span>
           <span class="tag-pill" onclick="setCity('Las Colinas, TX')">📍 Las Colinas, TX</span>
@@ -352,8 +351,8 @@
         </div>
       </div>
       <div class="gs-actions">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(3)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(5)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(3)">{% translate "← Back" %}</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(5)">{% translate "Continue →" %} <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -361,28 +360,28 @@
   {# ── Step 5: Budget + Income ── #}
   <div id="step5" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 5 <span aria-hidden="true">&middot;</span> Financial envelope</div>
-      <h2>What's your budget?</h2>
-      <p class="gs-sub" id="budget-sub">Set your monthly max — we'll show listings that fit and flag how much you'd save.</p>
+      <div class="gs-card-label">{% blocktranslate with n=5 %}Step {{ n }}{% endblocktranslate %} <span aria-hidden="true">&middot;</span> {% translate "Financial envelope" %}</div>
+      <h2>{% translate "What's your budget?" %}</h2>
+      <p class="gs-sub" id="budget-sub">{% translate "Set your monthly max — we'll show listings that fit and flag how much you'd save." %}</p>
       <div class="gs-group">
-        <label class="gs-label" id="budget-label">Monthly budget</label>
+        <label class="gs-label" id="budget-label">{% translate "Monthly budget" %}</label>
         <div class="income-display" id="budget_disp">$3,000</div>
-        <div class="income-hint">per month</div>
+        <div class="income-hint">{% translate "per month" %}</div>
         <input type="range" class="gs-slider" id="budget_slider" min="500" max="10000" step="50" value="3000"
                oninput="onBudgetSlide(this.value)">
         <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:2px">
           <span>$500</span><span>$10,000</span>
         </div>
         <div style="margin-top:16px;display:flex;gap:12px;align-items:center">
-          <input id="min_price" class="gs-input" placeholder="Min $ (optional)" type="number" min="0" style="flex:1">
-          <span class="gs-sep">to</span>
-          <input id="max_price" class="gs-input" placeholder="Max $" type="number" min="0" style="flex:1">
+          <input id="min_price" class="gs-input" placeholder="{% translate "Min $ (optional)" %}" type="number" min="0" style="flex:1">
+          <span class="gs-sep">{% translate "to" %}</span>
+          <input id="max_price" class="gs-input" placeholder="{% translate "Max $" %}" type="number" min="0" style="flex:1">
         </div>
       </div>
       <div class="gs-group" style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px;">
-        <label class="gs-label">Monthly household income <span style="font-weight:400;color:var(--muted)">(before taxes, optional)</span></label>
+        <label class="gs-label">{% translate "Monthly household income" %} <span style="font-weight:400;color:var(--muted)">{% translate "(before taxes, optional)" %}</span></label>
         <div class="income-display" id="income_disp">$5,000</div>
-        <div class="income-hint">Most landlords require 2.5–3× the monthly rent</div>
+        <div class="income-hint">{% translate "Most landlords require 2.5–3× the monthly rent" %}</div>
         <input type="range" class="gs-slider" id="income_slider" min="1000" max="30000" step="250" value="5000"
                oninput="onIncomeSlide(this.value)">
         <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:2px">
@@ -391,8 +390,8 @@
         <input type="hidden" id="monthly_income_val" value="5000">
       </div>
       <div class="gs-actions">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(4)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(6)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(4)">{% translate "← Back" %}</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(6)">{% translate "Continue →" %} <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -400,45 +399,45 @@
   {# ── Step 6: Must-haves ── #}
   <div id="step6" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 6 <span aria-hidden="true">&middot;</span> Lifestyle integration</div>
-      <h2>What are your must-haves?</h2>
-      <p class="gs-sub">Select everything that applies — we'll weight results to show what actually fits.</p>
+      <div class="gs-card-label">{% blocktranslate with n=6 %}Step {{ n }}{% endblocktranslate %} <span aria-hidden="true">&middot;</span> {% translate "Lifestyle integration" %}</div>
+      <h2>{% translate "What are your must-haves?" %}</h2>
+      <p class="gs-sub">{% translate "Select everything that applies — we'll weight results to show what actually fits." %}</p>
       <div class="gs-group">
-        <label class="gs-label">Features</label>
+        <label class="gs-label">{% translate "Features" %}</label>
         <div class="tag-grid" id="features-grid">
-          <div class="tag-pill" data-group="features" data-val="pet friendly" onclick="toggleTag(this)">🐾 Pet friendly</div>
-          <div class="tag-pill" data-group="features" data-val="washer dryer" onclick="toggleTag(this)">🚿 Washer/dryer</div>
-          <div class="tag-pill" data-group="features" data-val="parking" onclick="toggleTag(this)">🅿️ Parking</div>
-          <div class="tag-pill" data-group="features" data-val="central ac" onclick="toggleTag(this)">❄️ Central AC</div>
-          <div class="tag-pill" data-group="features" data-val="gym" onclick="toggleTag(this)">🏋️ Gym</div>
-          <div class="tag-pill" data-group="features" data-val="pool" onclick="toggleTag(this)">🌊 Pool</div>
-          <div class="tag-pill" data-group="features" data-val="balcony" onclick="toggleTag(this)">🌇 Balcony</div>
-          <div class="tag-pill" data-group="features" data-val="gated" onclick="toggleTag(this)">🔒 Gated</div>
-          <div class="tag-pill" data-group="features" data-val="high-speed internet" onclick="toggleTag(this)">📶 High-speed internet</div>
-          <div class="tag-pill" data-group="features" data-val="bills included" onclick="toggleTag(this)">💡 Bills included</div>
-          <div class="tag-pill" data-group="features" data-val="furnished" onclick="toggleTag(this)">🛋️ Furnished</div>
-          <div class="tag-pill" data-group="features" data-val="no deposit" onclick="toggleTag(this)">✅ No deposit</div>
+          <div class="tag-pill" data-group="features" data-val="pet friendly" onclick="toggleTag(this)">🐾 {% translate "Pet friendly" %}</div>
+          <div class="tag-pill" data-group="features" data-val="washer dryer" onclick="toggleTag(this)">🚿 {% translate "Washer/dryer" %}</div>
+          <div class="tag-pill" data-group="features" data-val="parking" onclick="toggleTag(this)">🅿️ {% translate "Parking" %}</div>
+          <div class="tag-pill" data-group="features" data-val="central ac" onclick="toggleTag(this)">❄️ {% translate "Central AC" %}</div>
+          <div class="tag-pill" data-group="features" data-val="gym" onclick="toggleTag(this)">🏋️ {% translate "Gym" %}</div>
+          <div class="tag-pill" data-group="features" data-val="pool" onclick="toggleTag(this)">🌊 {% translate "Pool" %}</div>
+          <div class="tag-pill" data-group="features" data-val="balcony" onclick="toggleTag(this)">🌇 {% translate "Balcony" %}</div>
+          <div class="tag-pill" data-group="features" data-val="gated" onclick="toggleTag(this)">🔒 {% translate "Gated" %}</div>
+          <div class="tag-pill" data-group="features" data-val="high-speed internet" onclick="toggleTag(this)">📶 {% translate "High-speed internet" %}</div>
+          <div class="tag-pill" data-group="features" data-val="bills included" onclick="toggleTag(this)">💡 {% translate "Bills included" %}</div>
+          <div class="tag-pill" data-group="features" data-val="furnished" onclick="toggleTag(this)">🛋️ {% translate "Furnished" %}</div>
+          <div class="tag-pill" data-group="features" data-val="no deposit" onclick="toggleTag(this)">✅ {% translate "No deposit" %}</div>
         </div>
         <div class="tag-custom-row">
-          <input type="text" class="tag-custom-input" id="features-custom-input" placeholder="+ Add your own feature…" autocomplete="off">
+          <input type="text" class="tag-custom-input" id="features-custom-input" placeholder="{% translate "+ Add your own feature…" %}" autocomplete="off">
         </div>
       </div>
       <div class="gs-group">
-        <label class="gs-label">Neighborhood vibe</label>
+        <label class="gs-label">{% translate "Neighborhood vibe" %}</label>
         <div class="tag-grid" id="vibe-grid">
-          <div class="tag-pill" data-group="vibe" data-val="quiet" onclick="toggleTag(this)">🏘️ Quiet &amp; residential</div>
-          <div class="tag-pill" data-group="vibe" data-val="walkable" onclick="toggleTag(this)">🌆 Urban &amp; walkable</div>
-          <div class="tag-pill" data-group="vibe" data-val="schools" onclick="toggleTag(this)">🏫 Near good schools</div>
-          <div class="tag-pill" data-group="vibe" data-val="diverse community" onclick="toggleTag(this)">🌍 Diverse community</div>
-          <div class="tag-pill" data-group="vibe" data-val="near grocery" onclick="toggleTag(this)">🛒 Near grocery stores</div>
+          <div class="tag-pill" data-group="vibe" data-val="quiet" onclick="toggleTag(this)">🏘️ {% translate "Quiet & residential" %}</div>
+          <div class="tag-pill" data-group="vibe" data-val="walkable" onclick="toggleTag(this)">🌆 {% translate "Urban & walkable" %}</div>
+          <div class="tag-pill" data-group="vibe" data-val="schools" onclick="toggleTag(this)">🏫 {% translate "Near good schools" %}</div>
+          <div class="tag-pill" data-group="vibe" data-val="diverse community" onclick="toggleTag(this)">🌍 {% translate "Diverse community" %}</div>
+          <div class="tag-pill" data-group="vibe" data-val="near grocery" onclick="toggleTag(this)">🛒 {% translate "Near grocery stores" %}</div>
         </div>
         <div class="tag-custom-row">
-          <input type="text" class="tag-custom-input" id="vibe-custom-input" placeholder="+ Add your own vibe…" autocomplete="off">
+          <input type="text" class="tag-custom-input" id="vibe-custom-input" placeholder="{% translate "+ Add your own vibe…" %}" autocomplete="off">
         </div>
       </div>
       <div class="gs-actions">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(5)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(7)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(5)">{% translate "← Back" %}</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(7)">{% translate "Continue →" %} <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -446,41 +445,41 @@
   {# ── Step 7: Timeline + Urgency (merged) ── #}
   <div id="step7" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 7 <span aria-hidden="true">&middot;</span> Temporal readiness</div>
-      <h2>When do you want to move?</h2>
-      <p class="gs-sub">Helps us filter by availability and understand your urgency.</p>
+      <div class="gs-card-label">{% blocktranslate with n=7 %}Step {{ n }}{% endblocktranslate %} <span aria-hidden="true">&middot;</span> {% translate "Temporal readiness" %}</div>
+      <h2>{% translate "When do you want to move?" %}</h2>
+      <p class="gs-sub">{% translate "Helps us filter by availability and understand your urgency." %}</p>
       <div class="gs-group">
-        <label class="gs-label">Move-in timeline</label>
+        <label class="gs-label">{% translate "Move-in timeline" %}</label>
         <div class="gs-options" id="timeline-group">
           <div class="gs-option" data-days="14" onclick="selectOption(this,'timeline')">
             <div class="radio"></div>
-            <div><div class="gs-option-title">ASAP — within 2 weeks</div><div class="gs-option-sub">Show what's available now</div></div>
+            <div><div class="gs-option-title">{% translate "ASAP — within 2 weeks" %}</div><div class="gs-option-sub">{% translate "Show what's available now" %}</div></div>
           </div>
           <div class="gs-option sel" data-days="30" onclick="selectOption(this,'timeline')">
             <div class="radio"></div>
-            <div><div class="gs-option-title">Next month</div><div class="gs-option-sub">Flexible on exact date</div></div>
+            <div><div class="gs-option-title">{% translate "Next month" %}</div><div class="gs-option-sub">{% translate "Flexible on exact date" %}</div></div>
           </div>
           <div class="gs-option" data-days="90" onclick="selectOption(this,'timeline')">
             <div class="radio"></div>
-            <div><div class="gs-option-title">In 2–3 months</div><div class="gs-option-sub">Planning ahead</div></div>
+            <div><div class="gs-option-title">{% translate "In 2–3 months" %}</div><div class="gs-option-sub">{% translate "Planning ahead" %}</div></div>
           </div>
           <div class="gs-option" data-days="" onclick="selectOption(this,'timeline')">
             <div class="radio"></div>
-            <div><div class="gs-option-title">No specific timeline</div><div class="gs-option-sub">Show all available listings</div></div>
+            <div><div class="gs-option-title">{% translate "No specific timeline" %}</div><div class="gs-option-sub">{% translate "Show all available listings" %}</div></div>
           </div>
         </div>
       </div>
       <div class="gs-group" id="lease-group" style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px;">
-        <label class="gs-label">Lease preference</label>
+        <label class="gs-label">{% translate "Lease preference" %}</label>
         <div class="tag-grid">
-          <div class="tag-pill" data-group="lease" data-val="12 month lease" onclick="toggleTag(this)">12 months</div>
-          <div class="tag-pill" data-group="lease" data-val="6 month lease" onclick="toggleTag(this)">6 months</div>
-          <div class="tag-pill" data-group="lease" data-val="month-to-month" onclick="toggleTag(this)">Month-to-month</div>
+          <div class="tag-pill" data-group="lease" data-val="12 month lease" onclick="toggleTag(this)">{% translate "12 months" %}</div>
+          <div class="tag-pill" data-group="lease" data-val="6 month lease" onclick="toggleTag(this)">{% translate "6 months" %}</div>
+          <div class="tag-pill" data-group="lease" data-val="month-to-month" onclick="toggleTag(this)">{% translate "Month-to-month" %}</div>
         </div>
       </div>
       <div class="gs-actions">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(6)">← Back</button>
-        <button class="gs-btn gs-btn-primary" onclick="goStep(8)">Continue → <span class="gs-btn-count" data-live-count hidden></span></button>
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(6)">{% translate "← Back" %}</button>
+        <button class="gs-btn gs-btn-primary" onclick="goStep(8)">{% translate "Continue →" %} <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -488,29 +487,29 @@
   {# ── Step 8: Priority + Submit ── #}
   <div id="step8" style="display:none">
     <div class="gs-card">
-      <div class="gs-card-label">Step 8 <span aria-hidden="true">&middot;</span> Priority calibration</div>
-      <h2>What matters most to you?</h2>
-      <p class="gs-sub">This helps us rank your results — the top matches will be optimized for what you care about most.</p>
+      <div class="gs-card-label">{% blocktranslate with n=8 %}Step {{ n }}{% endblocktranslate %} <span aria-hidden="true">&middot;</span> {% translate "Priority calibration" %}</div>
+      <h2>{% translate "What matters most to you?" %}</h2>
+      <p class="gs-sub">{% translate "This helps us rank your results — the top matches will be optimized for what you care about most." %}</p>
       <div class="priority-grid" id="priority-group">
         <div class="priority-card" id="pc-price" onclick="selectPriority('price')">
           <div class="pc-icon">💰</div>
-          <div class="pc-title">Best price</div>
-          <div class="pc-sub">Most affordable for what I get</div>
+          <div class="pc-title">{% translate "Best price" %}</div>
+          <div class="pc-sub">{% translate "Most affordable for what I get" %}</div>
         </div>
         <div class="priority-card" id="pc-location" onclick="selectPriority('location')">
           <div class="pc-icon">📍</div>
-          <div class="pc-title">Right location</div>
-          <div class="pc-sub">City, commute, and neighborhood first</div>
+          <div class="pc-title">{% translate "Right location" %}</div>
+          <div class="pc-sub">{% translate "City, commute, and neighborhood first" %}</div>
         </div>
         <div class="priority-card" id="pc-features" onclick="selectPriority('features')">
           <div class="pc-icon">✨</div>
-          <div class="pc-title">Best features</div>
-          <div class="pc-sub">Amenities, space, and quality above all</div>
+          <div class="pc-title">{% translate "Best features" %}</div>
+          <div class="pc-sub">{% translate "Amenities, space, and quality above all" %}</div>
         </div>
       </div>
       <div class="gs-actions" style="margin-top:24px">
-        <button class="gs-btn gs-btn-ghost" onclick="goStep(7)">← Back</button>
-        <button class="gs-btn gs-btn-primary gs-btn-lg gs-btn-submit" onclick="submitSearch()">Show my matches → <span class="gs-btn-count" data-live-count hidden></span></button>
+        <button class="gs-btn gs-btn-ghost" onclick="goStep(7)">{% translate "← Back" %}</button>
+        <button class="gs-btn gs-btn-primary gs-btn-lg gs-btn-submit" onclick="submitSearch()">{% translate "Show my matches →" %} <span class="gs-btn-count" data-live-count hidden></span></button>
       </div>
     </div>
   </div>
@@ -524,12 +523,12 @@
   reports the real count and the real top matches. Nothing here is projected.
 {% endcomment %}
 <aside class="gsx-rail" id="gsx-rail" data-url="{% url 'guided_match_preview' %}"
-       aria-label="Live match preview" aria-live="polite">
+       aria-label="{% translate "Live match preview" %}" aria-live="polite">
 
   <section class="gsx-card gsx-card-lead">
     <header class="gsx-card-head">
-      <span class="gsx-card-title">Matching right now</span>
-      <span class="gsx-card-note" id="gsx-state">Answer a question to start</span>
+      <span class="gsx-card-title">{% translate "Matching right now" %}</span>
+      <span class="gsx-card-note" id="gsx-state">{% translate "Answer a question to start" %}</span>
     </header>
 
     <div class="gsx-gauge">
@@ -542,29 +541,29 @@
       </svg>
       <div class="gsx-gauge-body">
         <span class="gsx-gauge-num" id="gsx-total">—</span>
-        <span class="gsx-gauge-lbl">of <span id="gsx-inv2">—</span> live listings</span>
+        <span class="gsx-gauge-lbl">{% blocktranslate trimmed %}of <span id="gsx-inv2">—</span> live listings{% endblocktranslate %}</span>
       </div>
     </div>
 
     <p class="gsx-gauge-foot" id="gsx-foot">
-      The share of DFW inventory still matching your answers.
+      {% translate "The share of DFW inventory still matching your answers." %}
     </p>
   </section>
 
   <section class="gsx-card">
     <header class="gsx-card-head">
-      <span class="gsx-card-title">Match calibration</span>
-      <span class="gsx-card-note">What you've told us</span>
+      <span class="gsx-card-title">{% translate "Match calibration" %}</span>
+      <span class="gsx-card-note">{% translate "What you've told us" %}</span>
     </header>
     <ul class="gsx-criteria" id="gsx-criteria">
-      <li class="gsx-criteria-empty">Nothing yet — your answers appear here as you go.</li>
+      <li class="gsx-criteria-empty">{% translate "Nothing yet — your answers appear here as you go." %}</li>
     </ul>
   </section>
 
   <section class="gsx-card" id="gsx-matches-card" hidden>
     <header class="gsx-card-head">
-      <span class="gsx-card-title">Top matches so far</span>
-      <a class="gsx-card-link" id="gsx-compare" href="{% url 'listing_list' %}">Compare all</a>
+      <span class="gsx-card-title">{% translate "Top matches so far" %}</span>
+      <a class="gsx-card-link" id="gsx-compare" href="{% url 'listing_list' %}">{% translate "Compare all" %}</a>
     </header>
     <div class="gsx-matches" id="gsx-matches"></div>
   </section>
@@ -574,10 +573,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z"/><path d="m8.8 12.2 2.2 2.2 4.2-4.4"/></svg>
     </span>
     <div>
-      <p class="gsx-shield-title">Direct owners only</p>
+      <p class="gsx-shield-title">{% translate "Direct owners only" %}</p>
       <p class="gsx-shield-body">
-        Every listing here is posted by the owner or manager. No agency fees,
-        and no duplicate re-posts of the same unit.
+        {% blocktranslate trimmed %}Every listing here is posted by the owner or manager. No agency fees,
+        and no duplicate re-posts of the same unit.{% endblocktranslate %}
       </p>
     </div>
   </section>
@@ -585,10 +584,10 @@
   <figure class="gsx-card gsx-quote">
     <p class="gsx-quote-k">
       <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="m12 2.8 2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/></svg>
-      Renter story
+      {% translate "Renter story" %}
     </p>
-    <blockquote>&ldquo;The guided search is brilliant. It saved my preferences and when I came back a week later, it remembered exactly what I needed.&rdquo;</blockquote>
-    <figcaption>Marcus T. &middot; Renter, Las Colinas</figcaption>
+    <blockquote>&ldquo;{% blocktranslate trimmed %}The guided search is brilliant. It saved my preferences and when I came back a week later, it remembered exactly what I needed.{% endblocktranslate %}&rdquo;</blockquote>
+    <figcaption>Marcus T. &middot; {% translate "Renter" %}, Las Colinas</figcaption>
   </figure>
 </aside>
 </div>{# /gsx-layout #}
@@ -596,7 +595,56 @@
 {# Hidden POST form — populated and submitted by submitSearch() #}
 <form id="gs-submit-form" method="post" action="{% url 'guided_search' %}{% if gs_mode %}?mode={{ gs_mode }}{% endif %}" style="display:none">{% csrf_token %}</form>
 
+{# Text the script writes into the page, translated here so the Spanish page
+   stays Spanish after the first click. Read through gsT() below. #}
+<div id="gs-i18n" hidden
+     data-step-of="{% translate "Step {n} of {total}" %}"
+     data-l1="{% translate "Getting started" %}"
+     data-l2="{% translate "Space type" %}"
+     data-l3="{% translate "Property type" %}"
+     data-l4="{% translate "Location" %}"
+     data-l5="{% translate "Budget & Income" %}"
+     data-l6="{% translate "Must-haves" %}"
+     data-l7="{% translate "Timeline & Urgency" %}"
+     data-l8="{% translate "Priorities" %}"
+     data-budget-buy="{% translate "Purchase budget" %}"
+     data-budget-rent="{% translate "Monthly budget" %}"
+     data-sub-buy="{% translate "Set your price range for the purchase." %}"
+     data-sub-rent="{% translate "Set your monthly max — we'll show listings that fit and flag how much you'd save." %}"
+     data-cat-rentals="{% translate "Rentals" %}"
+     data-cat-properties="{% translate "Homes for sale" %}"
+     data-cat-roommates="{% translate "Rooms & co-living" %}"
+     data-k-looking="{% translate "Looking for" %}"
+     data-k-space="{% translate "Space" %}"
+     data-k-city="{% translate "City" %}"
+     data-k-beds="{% translate "Bedrooms" %}"
+     data-k-budget="{% translate "Budget" %}"
+     data-k-must="{% translate "Must have" %}"
+     data-v-room="{% translate "A private room" %}"
+     data-v-whole="{% translate "An entire place" %}"
+     data-up-to="{% translate "Up to {price}" %}"
+     data-empty="{% translate "Nothing yet — your answers appear here as you go." %}"
+     data-from="{% translate "From {price}" %}"
+     data-contact="{% translate "Contact for price" %}"
+     data-studio="{% translate "Studio" %}"
+     data-n-bed="{% translate "{n} bed" %}"
+     data-no-matches="{% translate "No matches" %}"
+     data-no-matches-foot="{% translate "Nothing matches every answer. Loosening the budget or the must-haves is usually what opens it up." %}"
+     data-one-match="{% translate "1 match" %}"
+     data-n-matches="{% translate "{n} matches" %}"
+     data-share-foot="{% translate "The share of DFW inventory still matching your answers." %}"
+     data-n-available="{% translate "{n} available" %}"
+     data-compare-all="{% translate "Compare all {n}" %}"
+     data-remove="{% translate "Remove" %}"></div>
+
 <script>
+var GS_I18N = document.getElementById('gs-i18n').dataset;
+// gsT('n-matches', {n: 3}) -> "3 matches", or the Spanish for it.
+function gsT(key, vars) {
+  var s = GS_I18N[key.replace(/-([a-z])/g, function (_, c) { return c.toUpperCase(); })] || '';
+  return s.replace(/\{(\w+)\}/g, function (m, k) { return vars && k in vars ? vars[k] : m; });
+}
+
 var TOTAL_STEPS = 8;
 // Nothing is chosen until the visitor chooses it: the live rail reports these
 // as "what you've told us" and filters on them, so a default here is an
@@ -608,11 +656,8 @@ var selectedPriority = '';
 var selectedUrgency = 'no_hurry';
 var GS_MODE = '{{ gs_mode|escapejs }}';
 
-var STEP_LABELS = [
-  '', 'Getting started', 'Space type', 'Property type',
-  'Location', 'Budget & Income', 'Must-haves', 'Timeline & Urgency',
-  'Priorities'
-];
+var STEP_LABELS = ['', gsT('l1'), gsT('l2'), gsT('l3'), gsT('l4'),
+                   gsT('l5'), gsT('l6'), gsT('l7'), gsT('l8')];
 
 function goStep(n) {
   for (var i = 1; i <= TOTAL_STEPS; i++) {
@@ -622,7 +667,7 @@ function goStep(n) {
   // Update progress bar
   var pct = Math.round((n / TOTAL_STEPS) * 100);
   document.getElementById('progress-fill').style.width = pct + '%';
-  document.getElementById('progress-step-text').textContent = 'Step ' + n + ' of ' + TOTAL_STEPS;
+  document.getElementById('progress-step-text').textContent = gsT('step-of', {n: n, total: TOTAL_STEPS});
   document.getElementById('progress-section-label').textContent = STEP_LABELS[n] || '';
   // Steps 1–3, 4–5, 6–7 and 8 are the four phases of the stepper.
   var phase = n <= 3 ? 1 : n <= 5 ? 2 : n <= 7 ? 3 : 4;
@@ -650,10 +695,8 @@ function selectRentBuy(val) {
   document.getElementById('type-rent-options').style.display = val === 'rent' ? '' : 'none';
   document.getElementById('type-buy-options').style.display  = val === 'buy'  ? '' : 'none';
   document.getElementById('bedrooms-group').style.display    = val === 'rent' ? '' : 'none';
-  document.getElementById('budget-label').textContent = val === 'buy' ? 'Purchase budget' : 'Monthly budget';
-  document.getElementById('budget-sub').textContent   = val === 'buy'
-    ? 'Set your price range for the purchase.'
-    : 'Set your monthly max — we\'ll show listings that fit and flag how much you\'d save.';
+  document.getElementById('budget-label').textContent = gsT(val === 'buy' ? 'budget-buy' : 'budget-rent');
+  document.getElementById('budget-sub').textContent   = gsT(val === 'buy' ? 'sub-buy' : 'sub-rent');
   if (val === 'buy') {
     document.getElementById('budget_slider').max = '2000000';
     document.getElementById('budget_slider').step = '10000';
@@ -810,7 +853,7 @@ function submitSearch() {
       pill.dataset.group = group;
       pill.dataset.val   = val;
       pill.dataset.custom = '1';
-      pill.innerHTML = '✏️ ' + val + ' <span class="custom-tag-remove" title="Remove">×</span>';
+      pill.innerHTML = '✏️ ' + val + ' <span class="custom-tag-remove" title="' + gsT('remove') + '">×</span>';
       pill.querySelector('.custom-tag-remove').addEventListener('click', function(e) {
         e.stopPropagation(); pill.remove();
       });
@@ -831,6 +874,8 @@ function submitSearch() {
   setupCustomInput('features-custom-input', 'features-grid', 'features');
   setupCustomInput('vibe-custom-input',     'vibe-grid',     'vibe');
 })();
+
+document.getElementById('progress-step-text').textContent = gsT('step-of', {n: 1, total: TOTAL_STEPS});
 
 // Auto-skip step 1 if mode was passed via URL
 if (GS_MODE === 'rent' || GS_MODE === 'buy') {
@@ -901,26 +946,39 @@ if (GS_MODE === 'rent' || GS_MODE === 'buy') {
   }
 
   /* Human-readable rows for "what you've told us". */
-  var CAT_LABEL = { rentals: 'Rentals', properties: 'Homes for sale', roommates: 'Rooms & co-living' };
+  var CAT_LABEL = { rentals: gsT('cat-rentals'), properties: gsT('cat-properties'), roommates: gsT('cat-roommates') };
+
+  /* A must-have is sent as its English filter value ("pet friendly"); show
+     the visitor the chip label they clicked instead. */
+  function tagLabel(val) {
+    var pill = document.querySelector('.tag-pill[data-val="' + val.replace(/"/g, '\\"') + '"]');
+    if (!pill || pill.dataset.custom) return val;
+    return pill.textContent.replace(/^[^\p{L}\p{N}]+/u, '').trim() || val;
+  }
 
   function describe(f) {
     var rows = [];
-    if (f.category) rows.push(['Looking for', CAT_LABEL[f.category] || f.category]);
-    if (f.accommodation_type) rows.push(['Space', f.accommodation_type === 'room' ? 'A private room' : 'An entire place']);
-    if (f.city)     rows.push(['City', f.city]);
-    if (f.bedrooms) rows.push(['Bedrooms', f.bedrooms + '+']);
+    if (f.category) rows.push([gsT('k-looking'), CAT_LABEL[f.category] || f.category]);
+    if (f.accommodation_type) rows.push([gsT('k-space'), gsT(f.accommodation_type === 'room' ? 'v-room' : 'v-whole')]);
+    if (f.city)     rows.push([gsT('k-city'), f.city]);
+    if (f.bedrooms) rows.push([gsT('k-beds'), f.bedrooms + '+']);
     if (f.max_price) {
-      rows.push(['Budget', (f.min_price ? money(f.min_price) + ' – ' : 'Up to ') + money(f.max_price)]);
+      rows.push([gsT('k-budget'), f.min_price ? money(f.min_price) + ' – ' + money(f.max_price)
+                                                : gsT('up-to', {price: money(f.max_price)})]);
     }
     if (f.tags) {
-      f.tags.split(',').forEach(function (t) { rows.push(['Must have', t]); });
+      f.tags.split(',').forEach(function (t) { rows.push([gsT('k-must'), tagLabel(t)]); });
     }
     return rows;
   }
 
   function renderCriteria(rows) {
     if (!rows.length) {
-      critEl.innerHTML = '<li class="gsx-criteria-empty">Nothing yet — your answers appear here as you go.</li>';
+      critEl.innerHTML = '';
+      var empty = document.createElement('li');
+      empty.className = 'gsx-criteria-empty';
+      empty.textContent = gsT('empty');
+      critEl.appendChild(empty);
       return;
     }
     critEl.innerHTML = rows.map(function (r) {
@@ -955,7 +1013,9 @@ if (GS_MODE === 'rent' || GS_MODE === 'buy') {
 
       var price = document.createElement('span');
       price.className = 'gsx-match-price';
-      price.textContent = m.price ? (m.from_price ? 'From ' : '') + money(m.price) + (m.unit || '') : 'Contact for price';
+      price.textContent = m.price
+        ? (m.from_price ? gsT('from', {price: money(m.price)}) : money(m.price)) + (m.unit || '')
+        : gsT('contact');
 
       var title = document.createElement('span');
       title.className = 'gsx-match-title';
@@ -966,7 +1026,7 @@ if (GS_MODE === 'rent' || GS_MODE === 'buy') {
       var bits = [];
       if (m.city) bits.push(m.city + (m.state ? ', ' + m.state : ''));
       if (m.bedrooms !== null && m.bedrooms !== undefined) {
-        bits.push(m.bedrooms === 0 ? 'Studio' : m.bedrooms + ' bed');
+        bits.push(m.bedrooms === 0 ? gsT('studio') : gsT('n-bed', {n: m.bedrooms}));
       }
       meta.textContent = bits.join(' · ');
 
@@ -986,23 +1046,23 @@ if (GS_MODE === 'rent' || GS_MODE === 'buy') {
     ring.style.strokeDashoffset = String(RING_LEN * (1 - frac));
 
     if (total === 0) {
-      stateEl.textContent = 'No matches';
-      footEl.textContent  = 'Nothing matches every answer. Loosening the budget or the must-haves is usually what opens it up.';
+      stateEl.textContent = gsT('no-matches');
+      footEl.textContent  = gsT('no-matches-foot');
       ring.setAttribute('stroke', 'var(--featured)');
     } else {
-      stateEl.textContent = total === 1 ? '1 match' : total + ' matches';
-      footEl.textContent  = 'The share of DFW inventory still matching your answers.';
+      stateEl.textContent = total === 1 ? gsT('one-match') : gsT('n-matches', {n: total.toLocaleString('en-US')});
+      footEl.textContent  = gsT('share-foot');
       ring.setAttribute('stroke', 'var(--primary)');
     }
     renderMatches(d.listings || []);
 
     document.querySelectorAll('[data-live-count]').forEach(function (b) {
       b.hidden = false;
-      b.textContent = total.toLocaleString('en-US') + ' available';
+      b.textContent = gsT('n-available', {n: total.toLocaleString('en-US')});
     });
     var compare = document.getElementById('gsx-compare');
     if (compare) {
-      compare.textContent = 'Compare all ' + total.toLocaleString('en-US');
+      compare.textContent = gsT('compare-all', {n: total.toLocaleString('en-US')});
       compare.href = compare.href.split('?')[0] + (lastQs ? '?' + lastQs : '');
     }
   }
