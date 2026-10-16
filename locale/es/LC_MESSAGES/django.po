@@ -77,11 +77,11 @@ msgstr "Comprar"
 
 #: templates/base.html:160 templates/base.html:247
 msgid "Roommates"
-msgstr "Compañeros de cuarto"
+msgstr "Cuartos"
 
 #: templates/base.html:164
 msgid "AI Guided Search"
-msgstr "Búsqueda guiada con IA"
+msgstr "Buscar con IA"
 
 #: templates/base.html:171
 msgid "Language"
@@ -89,11 +89,11 @@ msgstr "Idioma"
 
 #: templates/base.html:179 templates/base.html:251
 msgid "Sign in"
-msgstr "Iniciar sesión"
+msgstr "Entrar"
 
 #: templates/base.html:184
 msgid "Post Listing"
-msgstr "Publicar anuncio"
+msgstr "Publicar"
 
 #: templates/base.html:194
 msgid "Account menu"
@@ -150,7 +150,7 @@ msgstr "Publicar un anuncio"
 #: templates/base.html:222 templates/base.html:367
 #: templates/listings/home.html:657
 msgid "List a Community"
-msgstr "Publicar una comunidad"
+msgstr "Nueva comunidad"
 
 #: templates/base.html:223
 msgid "My Communities"
@@ -235,19 +235,19 @@ msgstr "Anuncios verificados y dueños directos"
 
 #: templates/base.html:342
 msgid "All DFW Rentals"
-msgstr "Todas las rentas en DFW"
+msgstr "Rentas en DFW"
 
 #: templates/base.html:343
 msgid "1-Bedroom Apartments"
-msgstr "Departamentos de 1 recámara"
+msgstr "Deptos. de 1 rec."
 
 #: templates/base.html:344
 msgid "Under $1,500/mo"
-msgstr "Menos de $1,500/mes"
+msgstr "Hasta $1,500/mes"
 
 #: templates/base.html:345
 msgid "Rooms & Co-Living"
-msgstr "Cuartos y vivienda compartida"
+msgstr "Compartir casa"
 
 #: templates/base.html:349
 msgid "Buy & Invest"
@@ -255,7 +255,7 @@ msgstr "Comprar e invertir"
 
 #: templates/base.html:351
 msgid "3+ Bedroom Homes"
-msgstr "Casas de 3+ recámaras"
+msgstr "Casas de 3+ rec."
 
 #: templates/base.html:352
 msgid "New to Market"
@@ -263,7 +263,7 @@ msgstr "Recién publicadas"
 
 #: templates/base.html:353
 msgid "Find My Match"
-msgstr "Encontrar mi opción ideal"
+msgstr "Mi opción ideal"
 
 #: templates/base.html:357
 msgid "DFW Metroplex"
@@ -279,7 +279,7 @@ msgstr "Propietarios e IA"
 
 #: templates/base.html:368
 msgid "AI Match Engine"
-msgstr "Motor de afinidad con IA"
+msgstr "Afinidad con IA"
 
 #: templates/base.html:377
 msgid "Company"
@@ -291,11 +291,11 @@ msgstr "Acerca de Listojo"
 
 #: templates/base.html:379 templates/base.html:389
 msgid "Terms of Service"
-msgstr "Términos del servicio"
+msgstr "Términos"
 
 #: templates/base.html:380 templates/base.html:388
 msgid "Privacy Policy"
-msgstr "Política de privacidad"
+msgstr "Privacidad"
 
 #: templates/base.html:386
 msgid ""
@@ -311,7 +311,7 @@ msgstr "Enlaces legales"
 
 #: templates/base.html:390
 msgid "Fair Housing Notice"
-msgstr "Aviso de vivienda justa"
+msgstr "Vivienda justa"
 
 #: templates/listings/_trend_card.html:21
 #: templates/listings/_trend_card_community.html:16
@@ -464,7 +464,7 @@ msgstr "Ver comunidad"
 
 #: templates/listings/guided_search.html:139
 msgid "Guided match engine"
-msgstr "Motor de búsqueda guiada"
+msgstr "Búsqueda guiada"
 
 #: templates/listings/guided_search.html:143
 msgid "Smart match builder"
@@ -472,19 +472,19 @@ msgstr "Buscador inteligente"
 
 #: templates/listings/guided_search.html:143
 msgid "— find the right property to buy"
-msgstr "— encuentra la propiedad ideal para comprar"
+msgstr "— la propiedad ideal para comprar"
 
 #: templates/listings/guided_search.html:143
 msgid "— find the right rental for you"
-msgstr "— encuentra la renta ideal para ti"
+msgstr "— la renta ideal para ti"
 
 #: templates/listings/guided_search.html:143
 msgid "— find the right home, not just a listing"
-msgstr "— encuentra el hogar ideal, no solo un anuncio"
+msgstr "— tu hogar ideal, no solo un anuncio"
 
 #: templates/listings/guided_search.html:148
 msgid "DFW inventory live"
-msgstr "Inventario de DFW en vivo"
+msgstr "DFW en vivo"
 
 #: templates/listings/guided_search.html:151
 msgid "<strong id=\"gsx-inventory\">—</strong> listings"
@@ -494,7 +494,7 @@ msgstr "<strong id=\"gsx-inventory\">—</strong> anuncios"
 msgid ""
 "Zero brokerage friction. Every answer narrows the live DFW inventory, and "
 "the panel beside the questions shows exactly what is left."
-msgstr "Sin comisiones de agentes. Cada respuesta acota el inventario en vivo de DFW, y el panel junto a las preguntas te muestra exactamente lo que queda."
+msgstr "Sin comisiones. Cada respuesta acota el inventario de DFW, y el panel de al lado te muestra lo que queda."
 
 #: templates/listings/guided_search.html:170
 msgid "Guided search progress"
@@ -548,15 +548,15 @@ msgstr "Así te mostramos los tipos de anuncios correctos."
 
 #: templates/listings/guided_search.html:228
 msgid "Rent a Place"
-msgstr "Rentar un lugar"
+msgstr "Rentar"
 
 #: templates/listings/guided_search.html:229
 msgid "Rooms, apartments, houses & more"
-msgstr "Cuartos, departamentos, casas y más"
+msgstr "Cuartos, deptos., casas y más"
 
 #: templates/listings/guided_search.html:239
 msgid "Buy a Property"
-msgstr "Comprar una propiedad"
+msgstr "Comprar"
 
 #: templates/listings/guided_search.html:240
 msgid "Houses, land, ranches & more"
@@ -707,7 +707,7 @@ msgstr "Recámaras"
 
 #: templates/listings/guided_search.html:323
 msgid "Any"
-msgstr "Cualquiera"
+msgstr "Todas"
 
 #: templates/listings/guided_search.html:324
 msgid "1 bed"
@@ -813,23 +813,23 @@ msgstr "Características"
 
 #: templates/listings/guided_search.html:409
 msgid "Pet friendly"
-msgstr "Acepta mascotas"
+msgstr "Mascotas"
 
 #: templates/listings/guided_search.html:410
 msgid "Washer/dryer"
-msgstr "Lavadora/secadora"
+msgstr "Lavadora"
 
 #: templates/listings/guided_search.html:411
 msgid "Parking"
-msgstr "Estacionamiento"
+msgstr "Cochera"
 
 #: templates/listings/guided_search.html:412
 msgid "Central AC"
-msgstr "Aire acondicionado central"
+msgstr "A/C central"
 
 #: templates/listings/guided_search.html:413
 msgid "Gym"
-msgstr "Gimnasio"
+msgstr "Gym"
 
 #: templates/listings/guided_search.html:414
 msgid "Pool"
@@ -841,15 +841,15 @@ msgstr "Balcón"
 
 #: templates/listings/guided_search.html:416
 msgid "Gated"
-msgstr "Acceso controlado"
+msgstr "Privada"
 
 #: templates/listings/guided_search.html:417
 msgid "High-speed internet"
-msgstr "Internet de alta velocidad"
+msgstr "Internet rápido"
 
 #: templates/listings/guided_search.html:418
 msgid "Bills included"
-msgstr "Servicios incluidos"
+msgstr "Con servicios"
 
 #: templates/listings/guided_search.html:419
 msgid "Furnished"
@@ -869,15 +869,15 @@ msgstr "Ambiente del vecindario"
 
 #: templates/listings/guided_search.html:429
 msgid "Quiet & residential"
-msgstr "Tranquilo y residencial"
+msgstr "Zona tranquila"
 
 #: templates/listings/guided_search.html:430
 msgid "Urban & walkable"
-msgstr "Urbano y caminable"
+msgstr "Céntrico, a pie"
 
 #: templates/listings/guided_search.html:431
 msgid "Near good schools"
-msgstr "Cerca de buenas escuelas"
+msgstr "Buenas escuelas"
 
 #: templates/listings/guided_search.html:432
 msgid "Diverse community"
@@ -885,7 +885,7 @@ msgstr "Comunidad diversa"
 
 #: templates/listings/guided_search.html:433
 msgid "Near grocery stores"
-msgstr "Cerca de supermercados"
+msgstr "Cerca del súper"
 
 #: templates/listings/guided_search.html:436
 msgid "+ Add your own vibe…"
@@ -995,7 +995,7 @@ msgstr "Amenidades, espacio y calidad ante todo"
 
 #: templates/listings/guided_search.html:513
 msgid "Show my matches →"
-msgstr "Ver mis coincidencias →"
+msgstr "Ver resultados →"
 
 #: templates/listings/guided_search.html:527
 msgid "Live match preview"
@@ -1016,7 +1016,7 @@ msgstr "de <span id=\"gsx-inv2\">—</span> anuncios activos"
 #: templates/listings/guided_search.html:550
 #: templates/listings/guided_search.html:636
 msgid "The share of DFW inventory still matching your answers."
-msgstr "La parte del inventario de DFW que aún coincide con tus respuestas."
+msgstr "Lo que queda del inventario de DFW según tus respuestas."
 
 #: templates/listings/guided_search.html:556
 msgid "Match calibration"
@@ -1024,12 +1024,12 @@ msgstr "Ajuste de coincidencias"
 
 #: templates/listings/guided_search.html:557
 msgid "What you've told us"
-msgstr "Lo que nos has dicho"
+msgstr "Lo que nos dijiste"
 
 #: templates/listings/guided_search.html:560
 #: templates/listings/guided_search.html:627
 msgid "Nothing yet — your answers appear here as you go."
-msgstr "Nada aún; tus respuestas aparecerán aquí conforme avances."
+msgstr "Nada aún; aquí verás tus respuestas al avanzar."
 
 #: templates/listings/guided_search.html:566
 msgid "Top matches so far"
@@ -1178,12 +1178,12 @@ msgstr "{n} coincidencias"
 #: templates/listings/guided_search.html:637
 #, python-brace-format
 msgid "{n} available"
-msgstr "{n} disponibles"
+msgstr "{n} libres"
 
 #: templates/listings/guided_search.html:638
 #, python-brace-format
 msgid "Compare all {n}"
-msgstr "Comparar los {n}"
+msgstr "Ver los {n}"
 
 #: templates/listings/guided_search.html:639
 msgid "Remove"
@@ -1191,7 +1191,7 @@ msgstr "Quitar"
 
 #: templates/listings/home.html:9 templates/listings/home.html:305
 msgid "Any budget"
-msgstr "Cualquier presupuesto"
+msgstr "Sin límite"
 
 #: templates/listings/home.html:215
 msgid "Search Dallas–Fort Worth homes"
@@ -1203,7 +1203,7 @@ msgstr "La mejor búsqueda de vivienda en Dallas–Fort Worth"
 
 #: templates/listings/home.html:254
 msgid "Find your next home"
-msgstr "Encuentra tu próximo hogar"
+msgstr "Tu próximo hogar,"
 
 #: templates/listings/home.html:255
 msgid "with confidence."
@@ -1213,9 +1213,7 @@ msgstr "con confianza."
 msgid ""
 "Real listings. Smart match scoring. No noise. We show you exactly why each "
 "home fits your lifestyle — so you decide fast."
-msgstr ""
-"Anuncios reales. Afinidad inteligente. Sin ruido. Te mostramos exactamente "
-"por qué cada vivienda va con tu estilo de vida, para que decidas rápido."
+msgstr "Anuncios reales. Afinidad inteligente. Sin ruido. Te decimos por qué cada casa va contigo, para que decidas rápido."
 
 #: templates/listings/home.html:268
 msgid "What are you looking for?"
@@ -1227,7 +1225,7 @@ msgstr "Cuartos"
 
 #: templates/listings/home.html:287
 msgid "Metroplex / City"
-msgstr "Metroplex / Ciudad"
+msgstr "Ciudad / zona"
 
 #: templates/listings/home.html:289
 msgid "Dallas, Irving, Frisco, Plano…"
@@ -1235,11 +1233,11 @@ msgstr "Dallas, Irving, Frisco, Plano…"
 
 #: templates/listings/home.html:295
 msgid "Max Budget"
-msgstr "Presupuesto máx."
+msgstr "Precio máx."
 
 #: templates/listings/home.html:317
 msgid "Any beds"
-msgstr "Cualquier cantidad"
+msgstr "Todas"
 
 #: templates/listings/home.html:318 templates/listings/home.html:344
 msgid "1 Bed"
@@ -1255,11 +1253,11 @@ msgstr "3 rec."
 
 #: templates/listings/home.html:327
 msgid "Search homes"
-msgstr "Buscar viviendas"
+msgstr "Buscar casas"
 
 #: templates/listings/home.html:333
 msgid "Or let AI Guided Search narrow it for you"
-msgstr "O deja que la búsqueda guiada con IA lo reduzca por ti"
+msgstr "O deja que la IA te ayude a elegir"
 
 #: templates/listings/home.html:340
 msgid "Quick search:"
@@ -1275,11 +1273,11 @@ msgstr "3 rec."
 
 #: templates/listings/home.html:347
 msgid "Under $1,500"
-msgstr "Menos de $1,500"
+msgstr "Hasta $1,500"
 
 #: templates/listings/home.html:348
 msgid "Under $2,500"
-msgstr "Menos de $2,500"
+msgstr "Hasta $2,500"
 
 #: templates/listings/home.html:355
 msgid "Slide navigation"
@@ -1355,7 +1353,7 @@ msgstr ""
 
 #: templates/listings/home.html:422
 msgid "Start guided search"
-msgstr "Iniciar búsqueda guiada"
+msgstr "Búsqueda guiada"
 
 #: templates/listings/home.html:435
 msgid "Input preferences"
@@ -1448,7 +1446,7 @@ msgstr ""
 
 #: templates/listings/home.html:505
 msgid "Explore all DFW listings"
-msgstr "Ver todos los anuncios en DFW"
+msgstr "Ver todo en DFW"
 
 #: templates/listings/home.html:525
 msgid "Real Stories"
@@ -1550,7 +1548,7 @@ msgstr "Escribe tu correo electrónico…"
 
 #: templates/listings/home.html:622
 msgid "Set up alerts"
-msgstr "Activar avisos"
+msgstr "Crear alertas"
 
 #: templates/listings/home.html:640
 msgid "For landlords & sellers"
@@ -1558,16 +1556,13 @@ msgstr "Para propietarios y vendedores"
 
 #: templates/listings/home.html:641
 msgid "Have a property to rent or sell?"
-msgstr "¿Tienes una propiedad para rentar o vender?"
+msgstr "¿Tienes algo que rentar o vender?"
 
 #: templates/listings/home.html:643
 msgid ""
 "Search freely. Connect directly. Reach serious tenants and buyers in your "
 "city — no agency headaches, no commissions, no gatekeeping."
-msgstr ""
-"Busca libremente. Conecta directamente. Llega a inquilinos y compradores "
-"serios en tu ciudad, sin complicaciones de agencias, sin comisiones y sin "
-"intermediarios."
+msgstr "Publica gratis. Conecta directo. Llega a inquilinos y compradores serios en tu ciudad, sin agencias ni comisiones."
 
 #: templates/listings/home.html:649
 #, python-format
@@ -1584,4 +1579,4 @@ msgstr "Chat directo con posibles inquilinos y compradores"
 
 #: templates/listings/home.html:656
 msgid "List a Property"
-msgstr "Publicar una propiedad"
+msgstr "Publicar casa"

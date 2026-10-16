@@ -301,7 +301,9 @@ p { line-height: 1.65; }
 @media (hover:hover) and (pointer:fine) {
   .nav-market-btn:hover { background: var(--surface-3); border-color: var(--border-2); }
 }
-@media (max-width: 1180px) { .nav-market { display: none; } }
+/* The picker and the tabs share one row; below 1240px they collide, so the
+   picker goes first (the hero and results pages still carry a city field). */
+@media (max-width: 1240px) { .nav-market { display: none; } }
 
 /* The dropdown keeps its old class names so the switcher JS is untouched. */
 .sb-city-dropdown {
@@ -4578,7 +4580,7 @@ footer {
   outline: none;
 }
 .hero-field-input::placeholder { color: var(--muted); font-weight: 500; }
-.hero-field-select { cursor: pointer; appearance: none; }
+.hero-field-select { cursor: pointer; appearance: none; text-overflow: ellipsis; }
 
 .hero-console-submit {
   display: inline-flex;
