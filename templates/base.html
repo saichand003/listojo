@@ -59,8 +59,9 @@
        The button and its positioning now live in styles.css alongside the
        rest of the header; what stays here is the panel's interior, which is
        specific enough to this one control not to earn a place there. */
-    .sb-city-search{display:block;width:calc(100% - 1.2rem);margin:.35rem .6rem .45rem;padding:.45rem .6rem;border:1px solid var(--border);border-radius:var(--r-sm);font-size:.8125rem;font-family:inherit;outline:none;background:var(--surface-2);color:var(--text);}
-    .sb-city-search:focus{border-color:var(--primary);background:var(--surface);}
+    #sb-city-dropdown .sb-city-search{display:block;width:calc(100% - 1.2rem);margin:.35rem .6rem .45rem;padding:.45rem .6rem;border:1px solid var(--border);border-radius:var(--r-sm);font-size:.8125rem;font-family:inherit;outline:none;background:var(--surface-2);color:var(--text);}
+    #sb-city-dropdown .sb-city-search:focus{border-color:var(--primary);background:var(--surface);}
+    @media (pointer:coarse){#sb-city-dropdown .sb-city-search{font-size:16px;}}
     .sb-city-list{list-style:none;margin:0;padding:0;max-height:240px;overflow-y:auto;overscroll-behavior:contain;}
     .sb-city-list li{padding:.45rem .9rem;font-size:.875rem;font-weight:500;color:var(--text);cursor:pointer;transition:background .12s;}
     .sb-city-list li:hover,.sb-city-list li.sb-city-active{background:var(--primary-soft);color:var(--primary);}
