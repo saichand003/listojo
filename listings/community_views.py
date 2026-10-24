@@ -7,6 +7,8 @@ from .forms import CommunityForm, FloorPlanForm, ListingInquiryForm, UnitForm
 from .models import Community, CommunityImage, FloorPlan, Unit
 from .services.community_service import handle_tour_request
 from .services.event_tracker import log_community_event
+from .services.match_prefs import resolve_match_prefs
+from .views import _detail_match
 
 
 def community_detail(request, pk):
@@ -41,6 +43,8 @@ def community_detail(request, pk):
         'floor_plans': floor_plans,
         'plan_specs': _plan_specs(floor_plans),
         'inquiry_form': inquiry_form,
+        'match': _detail_match(request, community),
+        'match_prefs': resolve_match_prefs(request),
     })
 
 

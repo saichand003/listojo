@@ -325,9 +325,9 @@ def _preview_item(item):
     }
 
 
-def _detail_match(request, listing):
+def _detail_match(request, item):
     """
-    A real match score for this listing against this visitor's stated
+    A real match score for this listing or community against this visitor's stated
     preferences, or None.
 
     The reference design shows a match score on every detail page. A score is
@@ -341,7 +341,7 @@ def _detail_match(request, listing):
     if not prefs:
         return None
 
-    report = build_report(listing, prefs, detail=True)
+    report = build_report(item, prefs, detail=True)
     if report is None:
         return None
     return {

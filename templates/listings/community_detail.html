@@ -195,6 +195,8 @@
         </ul>
       </div>
       {% endif %}
+
+      {% include 'listings/_match_card.html' %}
     </article>
 
     {% if community.description %}
@@ -448,4 +450,6 @@
 {% include 'listings/_tour_rail_script.html' %}
 {# ── Photo viewer for the gallery above ── #}
 {% include 'listings/_photo_lightbox.html' %}
+
+{% include 'listings/_match_prefs_sheet.html' %}
 {% endblock %}
