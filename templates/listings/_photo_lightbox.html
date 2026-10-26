@@ -1,5 +1,5 @@
 {% comment %}
-The full-screen photo viewer the collage opens into, plus the collage's own
+The full-screen photo viewer the collage and the bento gallery open into, plus the collage's own
 paging. Include it once near the end of a page body that renders
 `_photo_collage.html` — outside the card, so the card's hover transform cannot
 become the containing block for this fixed overlay and clip it.
@@ -93,8 +93,14 @@ it needs no context of its own and no-ops on a page without photos.
   document.querySelectorAll('.lj-tile').forEach(function(tile) {
     tile.addEventListener('click', function(){ open(parseInt(tile.dataset.idx || '0', 10)); });
   });
-  var countBtn = document.getElementById('lj-collage-count');
-  if (countBtn) countBtn.addEventListener('click', function(){ open(0); });
+  // Bento gallery (listing / community detail): hero + tiles carry their index.
+  document.querySelectorAll('[data-lightbox-index]').forEach(function(el) {
+    el.addEventListener('click', function(){ open(parseInt(el.dataset.lightboxIndex || '0', 10)); });
+  });
+  ['lj-collage-count', 'bento-view-all'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (btn) btn.addEventListener('click', function(){ open(0); });
+  });
 
   document.getElementById('lb-close').addEventListener('click', close);
   document.getElementById('lb-prev').addEventListener('click', function(){ show(idx - 1); });

@@ -2124,6 +2124,34 @@ class HeroCarouselWeightTests(TestCase):
         self.assertFalse(any('hc-loaded' in c for c in slides[1:]))
 
 
+class BentoGalleryLightboxTests(TestCase):
+    """
+    Regression: the listing-detail bento gallery never fed the photo viewer.
+    The viewer reads `#gallery-data` and only the old collage wrote it, so the
+    hero, the tiles and "View all N photos" were all dead clicks.
+    """
+
+    def setUp(self):
+        owner = User.objects.create_user(username='bento-owner', password='pw')
+        self.listing = Listing.objects.create(
+            owner=owner, title='Bento', description='x', category='rentals', city='Irving',
+            price=Decimal('1500'), price_unit='mo', status='active')
+        for n in range(6):
+            ListingImage.objects.create(listing=self.listing, image=f'listing_images/p{n}.jpg')
+
+    def test_every_photo_reaches_the_viewer(self):
+        html = self.client.get(reverse('listing_detail', args=[self.listing.pk])).content.decode()
+        self.assertIn('id="gallery-data"', html)
+        self.assertEqual(len(re.findall(r'<span data-src="[^"]+p\d\.jpg"', html)), 6)
+        self.assertIn('id="lightbox"', html)
+
+    def test_hero_and_tiles_open_the_viewer(self):
+        html = self.client.get(reverse('listing_detail', args=[self.listing.pk])).content.decode()
+        self.assertIn('class="bento-tile bento-hero-btn" data-lightbox-index="0"', html)
+        self.assertEqual(re.findall(r'data-lightbox-index="(\d+)"', html), ['0', '1', '2', '3', '4'])
+        self.assertIn('id="bento-view-all"', html)
+
+
 class MatchScoreTests(TestCase):
     """The match score is measured against real preferences, the same everywhere."""
 

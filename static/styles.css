@@ -6804,6 +6804,9 @@ footer {
 }
 @media (max-width: 760px) { .bento-hero { height: 260px; } }
 .bento-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The hero is a bento-tile too, so it shares the tiles' hover zoom; it just
+   fills the hero frame instead of a grid cell. */
+.bento-hero-btn { position: absolute; inset: 0; border-radius: inherit; }
 .bento-empty {
   position: absolute;
   inset: 0;
@@ -6846,6 +6849,7 @@ footer {
 .bento-badges {
   position: absolute;
   top: .75rem; left: .75rem;
+  pointer-events: none;   /* clicks fall through to the hero photo */
   display: flex;
   flex-wrap: wrap;
   gap: .35rem;
