@@ -96,7 +96,8 @@ def home(request):
     communities = Community.objects.filter(status='active')
 
     trending_rentals = list(
-        live.filter(category='rentals')
+        # Roommates is folded into Rentals; a room share is a rental.
+        live.filter(category__in=('rentals', 'roommates'))
         .select_related('owner', 'nearest_downtown').prefetch_related('images')
         .order_by('-view_count', '-created_at')[:5]
     )

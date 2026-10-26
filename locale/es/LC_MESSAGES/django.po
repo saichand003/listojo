@@ -44,12 +44,12 @@ msgstr "Listojo: la mejor búsqueda de vivienda en Dallas–Fort Worth"
 
 #: templates/base.html:35
 msgid ""
-"Find your next home with confidence. Search rentals, roommates and homes for "
-"sale across Dallas–Fort Worth, and connect directly with owners and managers."
+"Find your next home with confidence. Search rentals and homes for sale "
+"across Dallas–Fort Worth, and connect directly with owners and managers."
 msgstr ""
-"Encuentra tu próximo hogar con confianza. Busca rentas, cuartos compartidos "
-"y casas en venta en todo Dallas–Fort Worth, y conecta directamente con "
-"dueños y administradores."
+"Encuentra tu próximo hogar con confianza. Busca rentas y casas en venta en "
+"todo Dallas–Fort Worth, y conecta directamente con dueños y "
+"administradores."
 
 #: templates/base.html:130
 msgid "Use my location"

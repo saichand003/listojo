@@ -2090,6 +2090,39 @@ class GuidedInventoryConsistencyTests(TestCase):
         self.assertEqual(response.context['stats']['listing_count'], 5)
 
 
+class RoommatesFoldedIntoRentalsTests(TestCase):
+    """
+    Roommates is no longer its own tab: a private room is a kind of rental.
+    Listings still filed under the old category must show under Rentals, and
+    old ?category=roommates links must land on rooms rather than nothing.
+    """
+
+    def setUp(self):
+        owner = User.objects.create_user(username='rooms-owner', password='pw')
+        mk = lambda title, **kw: Listing.objects.create(
+            owner=owner, title=title, description='x', city='Irving', status='active',
+            price=Decimal('900'), **kw)
+        self.whole = mk('Whole home', category='rentals', accommodation_type='whole')
+        self.room = mk('Private room', category='rentals', accommodation_type='room')
+        self.share = mk('Room share', category='roommates')
+        self.sale = mk('House for sale', category='properties')
+
+    def titles(self, **params):
+        return {l.title for l in self.client.get(reverse('listing_list'), params).context['listings']}
+
+    def test_rentals_include_old_roommate_listings(self):
+        self.assertEqual(self.titles(category='rentals'), {'Whole home', 'Private room', 'Room share'})
+
+    def test_old_roommates_link_shows_rooms_within_rentals(self):
+        self.assertEqual(self.titles(category='roommates'), {'Private room', 'Room share'})
+
+    def test_no_roommates_tab_anywhere(self):
+        for url in (reverse('home'), reverse('listing_list')):
+            html = self.client.get(url).content.decode()
+            self.assertNotIn('category=roommates', html, url)
+            self.assertNotIn('value="roommates"', html, url)
+
+
 class HeroCarouselWeightTests(TestCase):
     """
     Regression: the home carousel painted 12 camera originals (4000-7000px,

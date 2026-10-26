@@ -31,8 +31,6 @@
          class="results-scope-tab {% if filters.category == 'rentals' %}is-on{% endif %}">Rentals</a>
       <a href="?category=properties{% if filters.city %}&amp;city={{ filters.city|urlencode }}{% endif %}"
          class="results-scope-tab {% if filters.category == 'properties' %}is-on{% endif %}">For Sale</a>
-      <a href="?category=roommates{% if filters.city %}&amp;city={{ filters.city|urlencode }}{% endif %}"
-         class="results-scope-tab {% if filters.category == 'roommates' %}is-on{% endif %}">Roommates</a>
     </nav>
 
     <form method="get" class="results-search" id="search-form" role="search">

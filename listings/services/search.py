@@ -96,6 +96,12 @@ def _parse_search_params(request) -> SearchParams:
         fmm=request.GET.get('fmm', '').strip() == '1',
         priority=request.GET.get('priority', '').strip(),
     )
+    # Roommates is no longer its own tab: a room is a kind of rental. Old
+    # ?category=roommates links (bookmarks, saved searches) land on rooms
+    # within Rentals instead of an empty page.
+    if p.category == 'roommates':
+        p.category = 'rentals'
+        p.accommodation_type = p.accommodation_type or 'room'
     p.terms = [t.strip() for t in p.q.split(',') if t.strip()] if p.q else []
     p.bedrooms_int = _parse_int(p.bedrooms)
     p.min_price_val = _parse_float(p.min_price)
@@ -117,7 +123,10 @@ def _apply_listing_filters(listings_qs, params: SearchParams, user):
             Q(title__icontains=term) | Q(tags__icontains=term) | Q(description__icontains=term)
         )
 
-    if params.category:
+    if params.category == 'rentals':
+        # Listings posted under the retired Roommates category are rentals too.
+        listings = listings.filter(category__in=('rentals', 'roommates'))
+    elif params.category:
         listings = listings.filter(category=params.category)
     if params.city:
         listings = listings.filter(city__icontains=params.city)

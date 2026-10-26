@@ -29,7 +29,7 @@
     {% endcomment %}
     <title>{% block title %}{% translate "Listojo: Dallas–Fort Worth's Premier Home Search" %}{% endblock %}</title>
     {# Without this Google scrapes arbitrary body copy for the snippet. #}
-    <meta name="description" content="{% block meta_description %}{% translate "Find your next home with confidence. Search rentals, roommates and homes for sale across Dallas–Fort Worth, and connect directly with owners and managers." %}{% endblock %}">
+    <meta name="description" content="{% block meta_description %}{% translate "Find your next home with confidence. Search rentals and homes for sale across Dallas–Fort Worth, and connect directly with owners and managers." %}{% endblock %}">
 
     {% comment %}
       Favicons. The .ico is what Google probes and what older browsers want;
@@ -152,8 +152,6 @@
          class="nav-tab {% if request.GET.category == 'rentals' or not request.GET.category and request.resolver_match.url_name == 'listing_list' %}nav-tab-active{% endif %}">{% translate "Rent" %}</a>
       <a href="{% url 'listing_list' %}?category=properties"
          class="nav-tab {% if request.GET.category == 'properties' %}nav-tab-active{% endif %}">{% translate "Buy" %}</a>
-      <a href="{% url 'listing_list' %}?category=roommates"
-         class="nav-tab {% if request.GET.category == 'roommates' %}nav-tab-active{% endif %}">{% translate "Roommates" %}</a>
       <a href="{% url 'guided_search' %}"
          class="nav-tab nav-tab-ai {% if request.resolver_match.url_name == 'guided_search' %}nav-tab-active{% endif %}">
         <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9zM18.5 14l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg>
@@ -239,7 +237,6 @@
               <a role="menuitem" href="{% url 'guided_search' %}">{% translate "Guided Search" %}</a>
               <a role="menuitem" href="{% url 'listing_list' %}?category=rentals">{% translate "Rentals" %}</a>
               <a role="menuitem" href="{% url 'listing_list' %}?category=properties">{% translate "Homes for Sale" %}</a>
-              <a role="menuitem" href="{% url 'listing_list' %}?category=roommates">{% translate "Roommates" %}</a>
             </div>
             <div class="nav-menu-group">
               <span class="nav-menu-label">{% translate "Account" %}</span>
@@ -337,7 +334,6 @@
         <a href="{% url 'listing_list' %}?category=rentals">{% translate "All DFW Rentals" %}</a>
         <a href="{% url 'listing_list' %}?category=rentals&amp;bedrooms=1">{% translate "1-Bedroom Apartments" %}</a>
         <a href="{% url 'listing_list' %}?category=rentals&amp;max_price=1500">{% translate "Under $1,500/mo" %}</a>
-        <a href="{% url 'listing_list' %}?category=roommates">{% translate "Rooms & Co-Living" %}</a>
       </div>
 
       <div class="site-footer-col">
