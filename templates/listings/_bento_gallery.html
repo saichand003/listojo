@@ -18,7 +18,10 @@
     {% if total %}
       <button type="button" class="bento-tile bento-hero-btn" data-lightbox-index="0"
               aria-label="Open photo 1 of {{ total }}">
-        <img src="{{ urls.0 }}" alt="{{ label }}" loading="eager">
+        {# Same URL twice: one blurred copy fills the frame, the real photo sits #}
+        {# on top uncropped, so a portrait shot keeps its shape. #}
+        <img class="bento-hero-fill" src="{{ urls.0 }}" alt="" aria-hidden="true">
+        <img class="bento-hero-photo" src="{{ urls.0 }}" alt="{{ label }}" loading="eager">
       </button>
     {% else %}
       <span class="bento-empty" role="img" aria-label="No photo provided"></span>

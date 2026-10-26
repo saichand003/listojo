@@ -6806,7 +6806,21 @@ footer {
 .bento-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
 /* The hero is a bento-tile too, so it shares the tiles' hover zoom; it just
    fills the hero frame instead of a grid cell. */
-.bento-hero-btn { position: absolute; inset: 0; border-radius: inherit; }
+.bento-hero-btn { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; }
+/* The hero never crops: the photo is contained at its own aspect ratio and a
+   blurred copy of it fills whatever the frame has left over. */
+.bento-hero-btn .bento-hero-fill {
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+  filter: blur(28px) brightness(.8);
+  transform: scale(1.15);     /* pushes the blur's soft edge outside the frame */
+  transition: none;
+}
+.bento-hero-btn .bento-hero-photo { position: relative; object-fit: contain; }
+@media (hover:hover) and (pointer:fine) {
+  .bento-hero-btn:hover .bento-hero-fill { transform: scale(1.15); }
+}
 .bento-empty {
   position: absolute;
   inset: 0;
