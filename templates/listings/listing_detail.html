@@ -480,11 +480,8 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                 </div>
               </div>
 
+              {% if listing.security_deposit or listing.bills_included or listing.available_from or listing.category == 'rentals' or listing.hoa_fee %}
               <div class="ld-terms-row">
-              <div class="ld-term">
-                <span class="ld-term-k">Agency fee</span>
-                <span class="ld-term-v ld-term-good">$0 &mdash; always</span>
-              </div>
               {% if listing.security_deposit %}
               <div class="ld-term">
                 <span class="ld-term-k">Security deposit</span>
@@ -515,6 +512,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
               </div>
               {% endif %}
               </div>
+              {% endif %}
             </div>
 
             {# Floor plan + tour details for unit listings #}
@@ -714,10 +712,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
 
           <button type="submit" class="ld-cta ld-cta-send">Send to {% if listing.organization %}the team{% else %}the owner{% endif %}</button>
           <p class="ld-rail-note">Goes straight to the lister by email. No agent in between.</p>
-          <div class="ld-rail-policy">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M12 2 4 5.5v6c0 5 3.4 9.3 8 10.5 4.6-1.2 8-5.5 8-10.5v-6z"/><path d="m8.8 12.2 2.2 2.2 4.2-4.4"/></svg>
-            <span><strong>Listojo zero-markup policy</strong>$0 agency fee and no charge to message the lister. The price you see is the price they set.</span>
-          </div>
         </form>
         {% endif %}
       </section>

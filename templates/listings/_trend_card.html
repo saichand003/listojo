@@ -118,7 +118,7 @@
           {% with tags=listing.get_tags_list %}
             {% if tags %}{{ tags.0 }}{% if tags.1 %} &bull; {{ tags.1 }}{% endif %}
             {% elif listing.view_count %}{% blocktranslate trimmed count n=listing.view_count with shown=listing.view_count|intcomma %}{{ shown }} view from DFW home seekers{% plural %}{{ shown }} views from DFW home seekers{% endblocktranslate %}
-            {% else %}{% translate "Message the owner directly, no agency fee" %}{% endif %}
+            {% else %}{% translate "Message the owner directly" %}{% endif %}
           {% endwith %}
         {% endif %}
       </span>

@@ -220,14 +220,8 @@ msgid "Login"
 msgstr "Entrar"
 
 #: templates/base.html:329
-msgid ""
-"Dallas–Fort Worth's home search and verified rental exchange. Discover "
-"apartments, homes for sale, and curated co-living without commission "
-"friction."
-msgstr ""
-"La búsqueda de vivienda y el mercado de rentas verificadas de Dallas–Fort "
-"Worth. Descubre departamentos, casas en venta y espacios compartidos "
-"seleccionados, sin comisiones de por medio."
+msgid "Dallas–Fort Worth's home search and verified rental exchange. Discover apartments and homes for sale, posted directly by owners and managers."
+msgstr "La búsqueda de vivienda y el mercado de rentas verificadas de Dallas–Fort Worth. Descubre departamentos y casas en venta, publicados directamente por dueños y administradores."
 
 #: templates/base.html:336
 msgid "Verified listings & direct owners"
@@ -419,8 +413,8 @@ msgstr[0] "%(shown)s visita de personas buscando vivienda en DFW"
 msgstr[1] "%(shown)s visitas de personas buscando vivienda en DFW"
 
 #: templates/listings/_trend_card.html:123
-msgid "Message the owner directly, no agency fee"
-msgstr "Escríbele directo al dueño, sin comisión de agencia"
+msgid "Message the owner directly"
+msgstr "Escríbele directo al dueño"
 
 #: templates/listings/_trend_card.html:129
 msgid "View listing"
@@ -455,8 +449,8 @@ msgid "Floor plans on request"
 msgstr "Planos a solicitud"
 
 #: templates/listings/_trend_card_community.html:58
-msgid "Leasing team replies directly, no agency fee"
-msgstr "El equipo de renta responde directo, sin comisión de agencia"
+msgid "Leasing team replies directly"
+msgstr "El equipo de renta responde directo"
 
 #: templates/listings/_trend_card_community.html:61
 msgid "View community"
@@ -491,10 +485,8 @@ msgid "<strong id=\"gsx-inventory\">—</strong> listings"
 msgstr "<strong id=\"gsx-inventory\">—</strong> anuncios"
 
 #: templates/listings/guided_search.html:155
-msgid ""
-"Zero brokerage friction. Every answer narrows the live DFW inventory, and "
-"the panel beside the questions shows exactly what is left."
-msgstr "Sin comisiones. Cada respuesta acota el inventario de DFW, y el panel de al lado te muestra lo que queda."
+msgid "Every answer narrows the live DFW inventory, and the panel beside the questions shows exactly what is left."
+msgstr "Cada respuesta acota el inventario de DFW, y el panel de al lado te muestra lo que queda."
 
 #: templates/listings/guided_search.html:170
 msgid "Guided search progress"
@@ -1044,10 +1036,8 @@ msgid "Direct owners only"
 msgstr "Solo dueños directos"
 
 #: templates/listings/guided_search.html:579
-msgid ""
-"Every listing here is posted by the owner or manager. No agency fees, and no "
-"duplicate re-posts of the same unit."
-msgstr "Cada anuncio lo publica el dueño o administrador. Sin comisiones de agencia ni anuncios duplicados de la misma unidad."
+msgid "Every listing here is posted by the owner or manager, with no duplicate re-posts of the same unit."
+msgstr "Cada anuncio lo publica el dueño o administrador, sin anuncios duplicados de la misma unidad."
 
 #: templates/listings/guided_search.html:588
 msgid "Renter story"
@@ -1324,16 +1314,16 @@ msgid "No anonymous spam or ghost duplicate posts"
 msgstr "Sin spam anónimo ni anuncios duplicados falsos"
 
 #: templates/listings/home.html:407
-msgid "Guaranteed"
-msgstr "Garantizado"
+msgid "Verified"
+msgstr "Verificado"
 
 #: templates/listings/home.html:409
-msgid "Agency Fees, Ever"
-msgstr "En comisiones de agencia, nunca"
+msgid "Apartment Communities"
+msgstr "Comunidades"
 
 #: templates/listings/home.html:410
-msgid "Renters and buyers connect without agent markups"
-msgstr "Inquilinos y compradores conectan sin sobrecostos de agentes"
+msgid "Floor plans and live unit availability"
+msgstr "Planos y unidades disponibles al día"
 
 #: templates/listings/home.html:418
 msgid "Simple Process"
@@ -1416,20 +1406,16 @@ msgid "Connect with the owner"
 msgstr "Conecta con el dueño"
 
 #: templates/listings/home.html:479
-msgid ""
-"Message the owner directly or request a tour. No listing agent in the "
-"middle, no placement commission, no fee to send a message."
-msgstr ""
-"Escríbele directo al dueño o pide una visita. Sin agente de por medio, sin "
-"comisión de colocación y sin costo por enviar mensajes."
+msgid "Message the owner directly or request a tour. No listing agent in the middle, just you and the person who sets the price."
+msgstr "Escríbele directo al dueño o pide una visita. Sin agente de por medio, solo tú y quien fija el precio."
 
 #: templates/listings/home.html:485
 msgid "Direct chat"
 msgstr "Chat directo"
 
 #: templates/listings/home.html:486
-msgid "$0 in agency fees"
-msgstr "$0 en comisiones de agencia"
+msgid "Owner replies"
+msgstr "Responde el dueño"
 
 #: templates/listings/home.html:501
 msgid "Hot in DFW"
@@ -1486,14 +1472,8 @@ msgstr ""
 "plataforma hace esto.\""
 
 #: templates/listings/home.html:559
-msgid ""
-"\"Listed my condo and had serious inquiries within 48 hours. Zero agency "
-"fees, zero headaches. I'm in direct contact with every renter. This is how "
-"it should work.\""
-msgstr ""
-"\"Publiqué mi condominio y tuve consultas serias en 48 horas. Cero "
-"comisiones, cero dolores de cabeza. Estoy en contacto directo con cada "
-"inquilino. Así debería funcionar.\""
+msgid "\"Listed my condo and had serious inquiries within 48 hours. I'm in direct contact with every renter. This is how it should work.\""
+msgstr "\"Publiqué mi condominio y tuve consultas serias en 48 horas. Estoy en contacto directo con cada inquilino. Así debería funcionar.\""
 
 #: templates/listings/home.html:564
 msgid "Landlord"
@@ -1559,15 +1539,12 @@ msgid "Have a property to rent or sell?"
 msgstr "¿Tienes algo que rentar o vender?"
 
 #: templates/listings/home.html:643
-msgid ""
-"Search freely. Connect directly. Reach serious tenants and buyers in your "
-"city — no agency headaches, no commissions, no gatekeeping."
-msgstr "Publica gratis. Conecta directo. Llega a inquilinos y compradores serios en tu ciudad, sin agencias ni comisiones."
+msgid "Search freely. Connect directly. Reach serious tenants and buyers in your city, with no gatekeeping."
+msgstr "Busca libremente. Conecta directo. Llega a inquilinos y compradores serios en tu ciudad, sin intermediarios."
 
 #: templates/listings/home.html:649
-#, python-format
-msgid "100%% free to list your property"
-msgstr "Publicar tu propiedad es 100%% gratis"
+msgid "Verified direct-owner badge on your listing"
+msgstr "Insignia de dueño verificado en tu anuncio"
 
 #: templates/listings/home.html:650
 msgid "Match scoring surfaces you to the right renters"

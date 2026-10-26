@@ -55,7 +55,7 @@
 
     <p class="trend-reason">
       <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" aria-hidden="true"><path d="M12 2.5l1.9 4.9 4.9 1.9-4.9 1.9L12 16.1l-1.9-4.9L5.2 9.3l4.9-1.9zM18.5 14l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z"/></svg>
-      <span>{% if community.special_offer %}{{ community.special_offer }}{% elif community.downtown_drive_minutes and community.nearest_downtown %}{% blocktranslate trimmed with minutes=community.downtown_drive_minutes place=community.nearest_downtown.name %}{{ minutes }} min drive to {{ place }}{% endblocktranslate %}{% else %}{% translate "Leasing team replies directly, no agency fee" %}{% endif %}</span>
+      <span>{% if community.special_offer %}{{ community.special_offer }}{% elif community.downtown_drive_minutes and community.nearest_downtown %}{% blocktranslate trimmed with minutes=community.downtown_drive_minutes place=community.nearest_downtown.name %}{{ minutes }} min drive to {{ place }}{% endblocktranslate %}{% else %}{% translate "Leasing team replies directly" %}{% endif %}</span>
     </p>
 
     <a href="{% url 'community_detail' community.pk %}" class="trend-card-cta">{% translate "View community" %} &rarr;</a>

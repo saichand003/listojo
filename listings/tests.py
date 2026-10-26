@@ -2144,6 +2144,38 @@ class NoIncomeRequirementTests(TestCase):
             self.assertNotIn('$2,400', html, url)
 
 
+class NoFeePromiseTests(TestCase):
+    """
+    "$0 agency fees", "commission-free", "zero-markup" and "free to list" were
+    removed: they read as cheap and commit Listojo to never charging. No page a
+    renter or lister sees may make a fee promise, in English or Spanish.
+    """
+    PROMISES = ('agency fee', 'zero-markup', 'commission-free', 'zero fees',
+                'free to list', 'comisión de agencia', 'comisiones de agencia',
+                'publica gratis', '100% gratis')
+
+    def setUp(self):
+        owner = User.objects.create_user(username='fee-owner', password='pw')
+        self.owner = owner
+        self.listing = Listing.objects.create(
+            owner=owner, title='Rental', description='x', category='rentals', city='Irving',
+            price=Decimal('1500'), price_unit='mo', status='active')
+        self.community = Community.objects.create(
+            name='Maple Court', description='x', city='Irving', status='active', owner=owner)
+
+    def test_no_fee_promises(self):
+        self.client.force_login(self.owner)
+        urls = [reverse('home'), '/es/', reverse('listing_list'), reverse('guided_search'),
+                reverse('listing_detail', args=[self.listing.pk]),
+                reverse('community_detail', args=[self.community.pk]),
+                reverse('create_listing'), reverse('about')]
+        for url in urls:
+            html = self.client.get(url, follow=True).content.decode().lower()
+            for phrase in self.PROMISES:
+                self.assertNotIn(phrase, html, f'{url} still says {phrase!r}')
+            self.assertNotIn('$0', html, url)
+
+
 class HeroCarouselWeightTests(TestCase):
     """
     Regression: the home carousel painted 12 camera originals (4000-7000px,

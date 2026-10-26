@@ -156,6 +156,7 @@ def home(request):
             'listing_count': live_inventory_count(),
             'city_count': len(city_names),
             'landlord_count': len(owners),
+            'community_count': communities.count(),
         },
     })
 

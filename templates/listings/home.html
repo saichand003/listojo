@@ -396,11 +396,11 @@
   </div>
   <div class="metric-card">
     <div class="metric-top">
-      <span class="metric-num">$0</span>
-      <span class="metric-flag metric-flag-ok">{% translate "Guaranteed" %}</span>
+      <span class="metric-num">{{ stats.community_count|default:0 }}</span>
+      <span class="metric-flag metric-flag-ok">&check; {% translate "Verified" %}</span>
     </div>
-    <span class="metric-label">{% translate "Agency Fees, Ever" %}</span>
-    <span class="metric-note">{% translate "Renters and buyers connect without agent markups" %}</span>
+    <span class="metric-label">{% translate "Apartment Communities" %}</span>
+    <span class="metric-note">{% translate "Floor plans and live unit availability" %}</span>
   </div>
 </section>
 
@@ -470,12 +470,12 @@
       <p class="hiw-card-body">
         {% blocktranslate trimmed %}
         Message the owner directly or request a tour. No listing agent in the
-        middle, no placement commission, no fee to send a message.
+        middle, just you and the person who sets the price.
         {% endblocktranslate %}
       </p>
       <p class="hiw-card-proof hiw-card-proof-row">
         <span class="hiw-card-proof-k">{% translate "Direct chat" %}</span>
-        <span class="hiw-card-proof-ok-text">{% translate "$0 in agency fees" %}</span>
+        <span class="hiw-card-proof-ok-text">{% translate "Owner replies" %}</span>
       </p>
     </article>
 
@@ -548,7 +548,7 @@
 
     <figure class="testimonial-v2">
       <div class="testimonial-stars" role="img" aria-label="{% translate "5 out of 5 stars" %}">{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}{{ star|safe }}</div>
-      <blockquote class="testimonial-quote">{% blocktranslate trimmed %}"Listed my condo and had serious inquiries within 48 hours. Zero agency fees, zero headaches. I'm in direct contact with every renter. This is how it should work."{% endblocktranslate %}</blockquote>
+      <blockquote class="testimonial-quote">{% blocktranslate trimmed %}"Listed my condo and had serious inquiries within 48 hours. I'm in direct contact with every renter. This is how it should work."{% endblocktranslate %}</blockquote>
       <figcaption class="testimonial-author">
         <div class="testimonial-avatar testimonial-avatar-3">R</div>
         <div>
@@ -633,12 +633,12 @@
     <h2 class="landlord-cta-title">{% translate "Have a property to rent or sell?" %}</h2>
     <p class="landlord-cta-sub">
       {% blocktranslate trimmed %}
-      Search freely. Connect directly. Reach serious tenants and buyers in your city —
-      no agency headaches, no commissions, no gatekeeping.
+      Search freely. Connect directly. Reach serious tenants and buyers in your city,
+      with no gatekeeping.
       {% endblocktranslate %}
     </p>
     <ul class="landlord-cta-points">
-      <li>{% translate "100% free to list your property" %}</li>
+      <li>{% translate "Verified direct-owner badge on your listing" %}</li>
       <li>{% translate "Match scoring surfaces you to the right renters" %}</li>
       <li>{% translate "Direct chat with prospective tenants and buyers" %}</li>
     </ul>
