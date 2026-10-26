@@ -233,10 +233,6 @@
                 {% endif %}
             </p>
 
-            {# Income qualifier hint #}
-            {% with listing.recommended_income as inc %}
-            {% if inc %}<p class="card-income-hint">Income req. ~${{ inc|floatformat:0|intcomma }}/mo</p>{% endif %}
-            {% endwith %}
 
             {% comment %}Why this result is here: the one thing it does best among the
                renter's matches, what else stands out, and the catch.{% endcomment %}

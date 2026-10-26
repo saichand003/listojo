@@ -23,7 +23,6 @@ def create_or_update_lead(
     move_in_date: date | None = None,
     priority: str = '',
     urgency: str = '',
-    monthly_income: Decimal | None = None,
 ) -> Lead:
     lead = None
 
@@ -74,7 +73,6 @@ def create_or_update_lead(
             'move_in_date': move_in_date,
             'priority': priority,
             'urgency': urgency,
-            'monthly_income': monthly_income,
         }.items() if v not in (None, '', 0)}
     )
     return lead

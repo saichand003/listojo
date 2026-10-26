@@ -550,8 +550,6 @@ class Listing(GalleryDisplayMixin, AmenityDisplayMixin, ProximityDisplayMixin, m
     commute_score_label = models.CharField(max_length=40, blank=True, default='',
                               help_text="Band name shown under the score, e.g. 'Excellent Transit'")
 
-    INCOME_QUALIFIER_CATEGORIES = {'rentals', 'roommates'}
-
     @property
     def full_address(self):
         """Single-line address used for geocoding."""
@@ -572,12 +570,6 @@ class Listing(GalleryDisplayMixin, AmenityDisplayMixin, ProximityDisplayMixin, m
 
     def get_tags_list(self):
         return [t.strip() for t in self.tags.split(',') if t.strip()]
-
-    def recommended_income(self):
-        """3× monthly rent rule, only for rental categories."""
-        if self.category in self.INCOME_QUALIFIER_CATEGORIES and self.price:
-            return int(self.price * 3)
-        return None
 
     def clean(self):
         errors = {}
@@ -967,7 +959,6 @@ class SavedSearch(models.Model):
     available_by      = models.CharField(max_length=20, blank=True)
     priority          = models.CharField(max_length=20, blank=True)
     urgency           = models.CharField(max_length=20, blank=True)
-    monthly_income    = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     last_updated      = models.DateTimeField(auto_now=True)
 
     # ── Alerts ────────────────────────────────────────────────────────────

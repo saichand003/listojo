@@ -204,7 +204,6 @@ def guided_search(request):
         available_by  = request.POST.get('available_by', '').strip()
         priority      = request.POST.get('priority', '').strip()
         urgency       = request.POST.get('urgency', '').strip()
-        income_raw    = request.POST.get('monthly_income', '').strip()
         property_type = request.POST.get('property_type', '').strip()
         accommodation = request.POST.get('accommodation_type', '').strip()
 
@@ -229,7 +228,6 @@ def guided_search(request):
             move_in_date=parse_move_in(available_by),
             priority=priority,
             urgency=urgency,
-            monthly_income=parse_budget(income_raw),
         )
 
         # Store lead pk in session so listing list can show the CTA

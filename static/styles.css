@@ -1683,17 +1683,12 @@ footer {
   font-weight: 600;
 }
 
-/* ── Card availability + income hints ── */
+/* ── Card availability hint ── */
 .card-avail {
   font-size: .7rem;
   color: var(--accent);
   font-weight: 600;
   margin-bottom: .1rem;
-}
-.card-income-hint {
-  font-size: .68rem;
-  color: var(--muted);
-  margin-bottom: .2rem;
 }
 
 /* ── QUALITY FILTER CHIPS ───────────────────────────────────── */

@@ -14,7 +14,7 @@ from portal.services.lead_service import parse_budget
 PENDING_KEY = 'gs_pending_search'
 
 _FIELDS = ('category', 'city', 'bedrooms', 'max_price', 'tags', 'available_by',
-           'priority', 'urgency', 'monthly_income', 'property_type', 'accommodation_type')
+           'priority', 'urgency', 'property_type', 'accommodation_type')
 
 
 def answers_from_post(post) -> dict:
@@ -41,7 +41,6 @@ def save_answers(user, answers: dict) -> SavedSearch:
             'available_by': answers.get('available_by', ''),
             'priority': answers.get('priority', ''),
             'urgency': answers.get('urgency', ''),
-            'monthly_income': parse_budget(answers.get('monthly_income', '')),
         },
     )
     return search

@@ -2123,6 +2123,27 @@ class RoommatesFoldedIntoRentalsTests(TestCase):
             self.assertNotIn('value="roommates"', html, url)
 
 
+class NoIncomeRequirementTests(TestCase):
+    """
+    The income requirement (3x rent on cards and detail pages, and the income
+    slider in guided search) was removed: it read as a hard landlord rule we
+    could not stand behind. None of those surfaces may mention income.
+    """
+
+    def setUp(self):
+        owner = User.objects.create_user(username='inc-owner', password='pw')
+        self.listing = Listing.objects.create(
+            owner=owner, title='Rental', description='x', category='rentals', city='Irving',
+            price=Decimal('800'), price_unit='mo', status='active')
+
+    def test_no_income_anywhere_a_renter_looks(self):
+        for url in (reverse('listing_list'), reverse('listing_detail', args=[self.listing.pk]),
+                    reverse('guided_search')):
+            html = self.client.get(url).content.decode()
+            self.assertNotIn('Income', html, url)
+            self.assertNotIn('$2,400', html, url)
+
+
 class HeroCarouselWeightTests(TestCase):
     """
     Regression: the home carousel painted 12 camera originals (4000-7000px,

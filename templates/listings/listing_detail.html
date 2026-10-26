@@ -478,12 +478,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') ldClos
                   <span class="ld-price-flag">Price cut</span>
                   {% endif %}
                 </div>
-                {% if listing.recommended_income %}
-                <div class="ld-terms-aside">
-                  <span class="ld-term-k">Income guide</span>
-                  <span class="ld-term-v">${{ listing.recommended_income|intcomma }}/mo</span>
-                </div>
-                {% endif %}
               </div>
 
               <div class="ld-terms-row">

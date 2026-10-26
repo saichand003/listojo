@@ -102,9 +102,9 @@
 .priority-card .pc-title{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:4px}
 .priority-card .pc-sub{font-size:11.5px;color:var(--muted);line-height:1.4}
 
-/* ── Income display ── */
-.income-display{font-size:2rem;font-weight:800;color:var(--text);text-align:center;margin:8px 0 4px;letter-spacing:-.02em}
-.income-hint{font-size:12.5px;color:var(--text-3);text-align:center;margin-bottom:12px}
+/* ── Budget display ── */
+.budget-display{font-size:2rem;font-weight:800;color:var(--text);text-align:center;margin:8px 0 4px;letter-spacing:-.02em}
+.budget-hint{font-size:12.5px;color:var(--text-3);text-align:center;margin-bottom:12px}
 
 /* ── Action buttons ── */
 .gs-actions{display:flex;gap:12px;margin-top:28px}
@@ -357,7 +357,7 @@
     </div>
   </div>
 
-  {# ── Step 5: Budget + Income ── #}
+  {# ── Step 5: Budget ── #}
   <div id="step5" style="display:none">
     <div class="gs-card">
       <div class="gs-card-label">{% blocktranslate with n=5 %}Step {{ n }}{% endblocktranslate %} <span aria-hidden="true">&middot;</span> {% translate "Financial envelope" %}</div>
@@ -365,8 +365,8 @@
       <p class="gs-sub" id="budget-sub">{% translate "Set your monthly max — we'll show listings that fit and flag how much you'd save." %}</p>
       <div class="gs-group">
         <label class="gs-label" id="budget-label">{% translate "Monthly budget" %}</label>
-        <div class="income-display" id="budget_disp">$3,000</div>
-        <div class="income-hint">{% translate "per month" %}</div>
+        <div class="budget-display" id="budget_disp">$3,000</div>
+        <div class="budget-hint">{% translate "per month" %}</div>
         <input type="range" class="gs-slider" id="budget_slider" min="500" max="10000" step="50" value="3000"
                oninput="onBudgetSlide(this.value)">
         <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:2px">
@@ -377,17 +377,6 @@
           <span class="gs-sep">{% translate "to" %}</span>
           <input id="max_price" class="gs-input" placeholder="{% translate "Max $" %}" type="number" min="0" style="flex:1">
         </div>
-      </div>
-      <div class="gs-group" style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px;">
-        <label class="gs-label">{% translate "Monthly household income" %} <span style="font-weight:400;color:var(--muted)">{% translate "(before taxes, optional)" %}</span></label>
-        <div class="income-display" id="income_disp">$5,000</div>
-        <div class="income-hint">{% translate "Most landlords require 2.5–3× the monthly rent" %}</div>
-        <input type="range" class="gs-slider" id="income_slider" min="1000" max="30000" step="250" value="5000"
-               oninput="onIncomeSlide(this.value)">
-        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:2px">
-          <span>$1,000</span><span>$30,000</span>
-        </div>
-        <input type="hidden" id="monthly_income_val" value="5000">
       </div>
       <div class="gs-actions">
         <button class="gs-btn gs-btn-ghost" onclick="goStep(4)">{% translate "← Back" %}</button>
@@ -603,7 +592,7 @@
      data-l2="{% translate "Space type" %}"
      data-l3="{% translate "Property type" %}"
      data-l4="{% translate "Location" %}"
-     data-l5="{% translate "Budget & Income" %}"
+     data-l5="{% translate "Budget" %}"
      data-l6="{% translate "Must-haves" %}"
      data-l7="{% translate "Timeline & Urgency" %}"
      data-l8="{% translate "Priorities" %}"
@@ -764,11 +753,6 @@ function onBudgetSlide(val) {
   document.getElementById('max_price').value = val;
 }
 
-function onIncomeSlide(val) {
-  document.getElementById('income_disp').textContent = '$' + Number(val).toLocaleString();
-  document.getElementById('monthly_income_val').value = val;
-}
-
 function submitSearch() {
   var form = document.getElementById('gs-submit-form');
   var fields = {};
@@ -814,9 +798,6 @@ function submitSearch() {
   }
 
   if (selectedPriority) fields.priority = selectedPriority;
-
-  var income = document.getElementById('monthly_income_val').value;
-  if (income && income !== '5000') fields.monthly_income = income;
 
   fields.fmm = '1';
 
