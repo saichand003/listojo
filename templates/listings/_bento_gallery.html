@@ -4,8 +4,8 @@
   single wide frame rather than a hero next to four empty boxes.
 
   The hero frame takes the hero photo's own shape (measured on load, below),
-  so nothing is cropped. A portrait hero leaves more room beside it, so the
-  tiles widen to 3x2 and two extra photos show.
+  so nothing is cropped. A portrait hero also makes the gallery taller, so it
+  still reads as the big picture. Photos past the fifth wait behind "View all".
 
   Expects: place (Listing or Community), label. Optional `kind="community"`
   makes the verified badge read "Verified Community" instead of "Direct owner".
@@ -54,8 +54,8 @@
 
   {% if total > 1 %}
   <div class="bento-tiles">
-    {% for url in urls|slice:"1:7" %}
-    <button type="button" class="bento-tile{% if forloop.counter > 4 %} bento-tile-extra{% endif %}" data-lightbox-index="{{ forloop.counter }}"
+    {% for url in urls|slice:"1:5" %}
+    <button type="button" class="bento-tile" data-lightbox-index="{{ forloop.counter }}"
             aria-label="Open photo {{ forloop.counter|add:1 }} of {{ total }}">
       <img src="{{ url }}" alt="" loading="lazy">
     </button>
