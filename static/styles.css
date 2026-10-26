@@ -6781,18 +6781,29 @@ footer {
    LISTING DETAIL — bento gallery
    ═══════════════════════════════════════════════════════════════ */
 .bento {
+  --bento-h: clamp(320px, 42vw, 440px);
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: .5rem;
-  height: clamp(320px, 42vw, 440px);
+  height: var(--bento-h);
   margin-bottom: var(--sp-5);
 }
 /* One photo has nothing to sit beside, so it takes the full width rather
    than leaving four empty boxes. */
 .bento-solo { grid-template-columns: 1fr; }
+/* Once the hero photo has loaded, its column is exactly as wide as the photo
+   at the gallery's height, so the photo fills it uncropped. The 65% cap keeps
+   a panorama from squeezing the tiles out; past it the photo is contained. */
+.bento-fit { grid-template-columns: min(calc(var(--bento-h) * var(--hero-ar)), 65%) minmax(0, 1fr); }
+.bento-fit.bento-solo { grid-template-columns: min(calc(var(--bento-h) * var(--hero-ar)), 100%); justify-content: center; }
+/* A portrait hero frees up width, so the tiles go 3 across and show two more. */
+.bento-tile-extra { display: none; }
+.bento-portrait .bento-tile-extra { display: block; }
+.bento-portrait .bento-tiles:has(.bento-tile-extra) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bento-portrait .bento-tile-extra:nth-child(5):last-child { grid-column: span 2; }
 @media (max-width: 760px) {
-  .bento { grid-template-columns: 1fr; height: auto; }
+  .bento, .bento-fit, .bento-fit.bento-solo { grid-template-columns: 1fr; height: auto; }
 }
 
 .bento-hero {
@@ -6802,7 +6813,11 @@ footer {
   background: var(--surface-3);
   min-height: 0;
 }
-@media (max-width: 760px) { .bento-hero { height: 260px; } }
+@media (max-width: 760px) {
+  .bento-hero { height: 260px; }
+  /* Full width at the photo's own shape; only a very tall shot hits the cap. */
+  .bento-fit .bento-hero { height: auto; aspect-ratio: var(--hero-ar); max-height: 70vh; }
+}
 .bento-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
 /* The hero is a bento-tile too, so it shares the tiles' hover zoom; it just
    fills the hero frame instead of a grid cell. */
@@ -8494,7 +8509,8 @@ button.ld-cta-ghost { cursor: pointer; }
    button dropped under the chips. Photos themselves are unchanged.
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 760px) {
-  .bento-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: 64px; }
+  .bento-tiles, .bento-portrait .bento-tiles:has(.bento-tile-extra) { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: 64px; }
+  .bento-portrait .bento-tile-extra { display: none; }
   /* Sits on the main photo's corner, clear of the thumbnail row (64px + gap). */
   .bento:not(.bento-solo) .bento-actions { right: .75rem; bottom: calc(64px + .5rem + .75rem); }
   .bento-action { padding: .35rem .6rem; font-size: .75rem; }

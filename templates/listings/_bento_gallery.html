@@ -1,7 +1,11 @@
 {% comment %}
-  Bento gallery: one tall hero photo and up to four tiles beside it, the shape
+  Bento gallery: one hero photo and up to four tiles beside it, the shape
   the reference design uses. Degrades by photo count — with one photo it is a
   single wide frame rather than a hero next to four empty boxes.
+
+  The hero frame takes the hero photo's own shape (measured on load, below),
+  so nothing is cropped. A portrait hero leaves more room beside it, so the
+  tiles widen to 3x2 and two extra photos show.
 
   Expects: place (Listing or Community), label. Optional `kind="community"`
   makes the verified badge read "Verified Community" instead of "Direct owner".
@@ -12,14 +16,15 @@
 {% with urls=place.gallery_urls %}
 {% with total=urls|length %}
 
-<section class="bento {% if total <= 1 %}bento-solo{% endif %}" aria-label="Photos of {{ label }}">
+<section class="bento {% if total <= 1 %}bento-solo{% endif %}" id="bento" aria-label="Photos of {{ label }}">
 
   <div class="bento-hero">
     {% if total %}
       <button type="button" class="bento-tile bento-hero-btn" data-lightbox-index="0"
               aria-label="Open photo 1 of {{ total }}">
-        {# Same URL twice: one blurred copy fills the frame, the real photo sits #}
-        {# on top uncropped, so a portrait shot keeps its shape. #}
+        {# Same URL twice: the frame normally matches the photo exactly, but a #}
+        {# panorama past the width cap is contained, and the blurred copy fills #}
+        {# what it leaves over instead of a blank bar. #}
         <img class="bento-hero-fill" src="{{ urls.0 }}" alt="" aria-hidden="true">
         <img class="bento-hero-photo" src="{{ urls.0 }}" alt="{{ label }}" loading="eager">
       </button>
@@ -49,8 +54,8 @@
 
   {% if total > 1 %}
   <div class="bento-tiles">
-    {% for url in urls|slice:"1:5" %}
-    <button type="button" class="bento-tile" data-lightbox-index="{{ forloop.counter }}"
+    {% for url in urls|slice:"1:7" %}
+    <button type="button" class="bento-tile{% if forloop.counter > 4 %} bento-tile-extra{% endif %}" data-lightbox-index="{{ forloop.counter }}"
             aria-label="Open photo {{ forloop.counter|add:1 }} of {{ total }}">
       <img src="{{ url }}" alt="" loading="lazy">
     </button>
@@ -80,6 +85,26 @@
   </div>
   {% endif %}
 </section>
+{% if total %}
+<script>
+(function () {
+  // Give the hero frame the photo's aspect ratio once the browser knows it.
+  // Dimensions aren't stored with the upload, so this is the first point
+  // they're known; the frame height is fixed, so only the column widths move.
+  var bento = document.getElementById('bento');
+  var img = bento && bento.querySelector('.bento-hero-photo');
+  if (!img) return;
+  function fit() {
+    if (!img.naturalWidth || !img.naturalHeight) return;
+    var ar = img.naturalWidth / img.naturalHeight;
+    bento.style.setProperty('--hero-ar', ar.toFixed(4));
+    bento.classList.add('bento-fit');
+    bento.classList.toggle('bento-portrait', ar < 1);
+  }
+  if (img.complete) fit(); else img.addEventListener('load', fit);
+})();
+</script>
+{% endif %}
 
 {% endwith %}
 {% endwith %}

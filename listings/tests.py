@@ -2148,8 +2148,15 @@ class BentoGalleryLightboxTests(TestCase):
     def test_hero_and_tiles_open_the_viewer(self):
         html = self.client.get(reverse('listing_detail', args=[self.listing.pk])).content.decode()
         self.assertIn('class="bento-tile bento-hero-btn" data-lightbox-index="0"', html)
-        self.assertEqual(re.findall(r'data-lightbox-index="(\d+)"', html), ['0', '1', '2', '3', '4'])
+        self.assertEqual(re.findall(r'data-lightbox-index="(\d+)"', html), ['0', '1', '2', '3', '4', '5'])
         self.assertIn('id="bento-view-all"', html)
+
+    def test_extra_tiles_wait_for_a_portrait_hero(self):
+        # Tiles 5-6 only show when the hero turns out to be portrait (CSS keys
+        # off .bento-portrait, set once the hero photo's shape is known).
+        html = self.client.get(reverse('listing_detail', args=[self.listing.pk])).content.decode()
+        self.assertEqual(html.count('bento-tile-extra'), 1)
+        self.assertIn("classList.toggle('bento-portrait', ar < 1)", html)
 
 
 class MatchScoreTests(TestCase):
