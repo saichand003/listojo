@@ -1,137 +1,279 @@
 {% extends 'partners/base.html' %}
-{% block title %} — Portfolio{% endblock %}
+{% block title %} — Properties{% endblock %}
 {% block nav_dash %}active{% endblock %}
 
-{% block extra_css %}
-<style>
-  .btn-sm     { padding: .3rem .6rem; font-size: .8rem; }
-  .rights-form{ display: inline; }
-  .rights-by  { margin-top: .25rem; font-size: .75rem; color: var(--muted); }
-  .rights-note{ margin-top: .75rem; }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="page-head">
-  <h1>{{ organization.name }}</h1>
-  <p class="sub">Your inventory on Listojo.</p>
-</div>
-
-<div class="stats">
-  <div class="stat">
-    <div class="n">{{ communities|length }}</div>
-    <div class="l">Communities</div>
-  </div>
-  <div class="stat">
-    <div class="n">{{ unit_total }}</div>
-    <div class="l">Available units</div>
-  </div>
-  <div class="stat">
-    <div class="n">{{ standalone|length }}</div>
-    <div class="l">Standalone rentals</div>
-  </div>
-  <div class="stat">
-    <div class="n">
-      {% if last_run %}{{ last_run.created_at|timesince|truncatechars:14 }}{% else %}—{% endif %}
-    </div>
-    <div class="l">
-      {% if last_run %}Since last refresh{% else %}Never refreshed{% endif %}
-    </div>
-  </div>
-</div>
-
-{% if not last_run %}
-  <div class="card">
-    <h2>Get your listings live</h2>
-    <p class="sub" style="margin-bottom:1rem;">
-      Upload a CSV to publish your inventory, or tell us what software you use and
-      we will connect it for you.
+<div class="page-head split">
+  <div>
+    <div class="eyebrow">{{ organization.name }}</div>
+    <h1>Properties</h1>
+    <p class="sub">
+      {{ communities|length }} propert{{ communities|length|pluralize:"y,ies" }} ·
+      {% if last_run %}last import {{ last_run.created_at|date:"M j, Y" }}{% else %}no imports yet{% endif %}
     </p>
-    <a class="btn btn-primary" href="{% url 'partner_upload' %}">Upload inventory</a>
-    <a class="btn btn-ghost" href="{% url 'partner_onboarding' %}">Help me connect</a>
   </div>
-{% endif %}
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="/static/partner-csv-template.csv" download>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M3 14v3h14v-3"/></svg>CSV template
+    </a>
+    <button type="button" class="btn btn-primary" data-open-import>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 13V3M6 7l4-4 4 4M3 14v3h14v-3"/></svg>Import inventory
+    </button>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi">
+    <div class="l">Live properties</div>
+    <div class="n">{{ live_count }}<small> / {{ communities|length }}</small></div>
+    <div class="d">Visible to renters on Listojo</div>
+  </div>
+  <div class="kpi">
+    <div class="l">Available units</div>
+    <div class="n">{{ unit_total }}</div>
+    <div class="d">Across all floor plans</div>
+  </div>
+  <div class="kpi">
+    <div class="l">Needs attention</div>
+    <div class="n">{{ attention|length }}</div>
+    {% if attention %}
+      <div class="d warn">{{ attention_items }} open item{{ attention_items|pluralize }}</div>
+    {% else %}
+      <div class="d ok">All listings healthy</div>
+    {% endif %}
+  </div>
+  <div class="kpi">
+    <div class="l">Last inventory import</div>
+    {% if last_run %}
+      <div class="n" title="{{ last_run.created_at|date:'M j, Y g:i A' }}">{{ last_run.created_at|date:"M j" }}</div>
+      <div class="d {% if not last_run.succeeded %}warn{% endif %}">
+        {% if last_run.succeeded %}{{ last_run.created_at|timesince }} ago{% else %}Last file was rejected{% endif %}
+      </div>
+    {% else %}
+      <div class="n">—</div>
+      <div class="d">Import a CSV to go live</div>
+    {% endif %}
+  </div>
+</div>
 
 {% if pending_deactivation %}
-  <div class="card" style="border-color:#fcd34d;">
-    <h2>{{ pending_deactivation }} listing(s) missing from your last upload</h2>
-    <p class="sub">
-      They are still visible to renters. If your next upload also leaves them out,
-      they will be closed. Re-send the full file if this was a partial export.
-    </p>
+  <div class="msg" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a;">
+    <strong>{{ pending_deactivation }} listing{{ pending_deactivation|pluralize }} missing from your last import.</strong>
+    They stay visible for now; if the next import also leaves them out they will be closed.
+    Re-send the full file if this was a partial export.
   </div>
 {% endif %}
 
-<div class="card">
-  <h2>Communities</h2>
+{% if attention %}
+<div class="card flush">
+  <div class="card-head">
+    <h2>Needs attention<span class="count">{{ attention_items }}</span></h2>
+  </div>
+  <ul class="queue">
+    {% for c in attention %}
+      <li class="q-prop">
+        <div class="q-name">
+          <a class="prop-name" href="{% url 'edit_community' c.pk %}">{{ c.name }}</a>
+          <div class="prop-addr">{{ c.city }}{% if c.state %}, {{ c.state }}{% endif %}</div>
+        </div>
+        <ul class="q-issues">
+          {% for kind, text, action in c.issues %}
+          <li>
+            <span class="q-icon {% if kind == 'hidden' %}crit{% endif %}">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 6v5M10 14h.01"/></svg>
+            </span>
+            <span class="q-text">{{ text }}</span>
+            {% if action == 'confirm' %}
+              <form method="post" action="{% url 'confirm_community_availability' c.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'partner_dashboard' %}">
+                <button class="btn btn-ghost btn-sm" type="submit">Units are still accurate</button>
+              </form>
+            {% elif action == 'rights' %}
+              <form method="post" action="{% url 'partner_confirm_media_rights' c.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-ghost btn-sm" type="submit"
+                        title="Confirms your company is authorized to publish this property's photos. Your name and the date are recorded.">Confirm rights</button>
+              </form>
+            {% elif action == 'photos' %}
+              <a class="btn btn-ghost btn-sm" href="{% url 'edit_community' c.pk %}#photos">Add photos</a>
+            {% else %}
+              <a class="btn btn-ghost btn-sm" href="{% url 'edit_community' c.pk %}">Update units</a>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="card flush">
+  <div class="card-head">
+    <h2>All properties<span class="count" data-visible-count>{{ communities|length }}</span></h2>
+    {% if communities %}
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="M13 13l4 4"/></svg>
+        <input type="search" placeholder="Search name or city" data-prop-search aria-label="Search properties">
+      </label>
+      <div class="seg" role="group" aria-label="Filter by status">
+        <button type="button" aria-pressed="true" data-filter="all">All</button>
+        <button type="button" aria-pressed="false" data-filter="live">Live</button>
+        <button type="button" aria-pressed="false" data-filter="attention">Needs attention</button>
+        <button type="button" aria-pressed="false" data-filter="hidden">Hidden</button>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
   {% if communities %}
-    <table>
+  <div class="table-wrap">
+    <table class="data">
       <thead>
-        <tr><th>Property</th><th>City</th><th>Floor plans</th><th>Available units</th><th>Media rights</th><th></th></tr>
+        <tr>
+          <th>Property</th>
+          <th>Status</th>
+          <th class="num">Available</th>
+          <th class="num hide-sm">Rent</th>
+          <th class="hide-sm">Photos &amp; rights</th>
+          <th class="hide-sm">Availability</th>
+          <th><span class="sr-only" style="position:absolute;left:-9999px;">Actions</span></th>
+        </tr>
       </thead>
       <tbody>
         {% for c in communities %}
-          <tr>
-            <td><strong>{{ c.name }}</strong></td>
-            <td>{{ c.city }}</td>
-            <td>{{ c.floor_plans.count }}</td>
-            <td>{{ c.unit_total }}</td>
-            <td>
-              {% if c.media_rights_confirmed %}
-                <span class="pill pill-ok">Confirmed</span>
-                {% if c.media_rights_confirmed_at %}
-                  <div class="rights-by">
-                    {{ c.media_rights_confirmed_by.get_full_name|default:c.media_rights_confirmed_by.username|default:"—" }}
-                    · {{ c.media_rights_confirmed_at|date:"M j, Y" }}
-                  </div>
-                {% endif %}
+        <tr class="linked" data-href="{% url 'edit_community' c.pk %}" data-health="{{ c.health }}"
+            data-search="{{ c.name|lower }} {{ c.city|lower }} {{ c.address_line|lower }}">
+          <td>
+            <div class="prop">
+              {% if c.thumb %}
+                <div class="prop-thumb" style="background-image:url('{{ c.thumb.image.url }}')"></div>
               {% else %}
-                <form method="post" class="rights-form"
-                      action="{% url 'partner_confirm_media_rights' c.pk %}">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-ghost btn-sm">Confirm rights</button>
-                </form>
+                <div class="prop-thumb"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M3 13l4-4 4 4 2-2 4 4"/></svg></div>
               {% endif %}
-            </td>
-            <td><a class="btn btn-ghost btn-sm" href="{% url 'edit_community' c.pk %}">Edit &amp; photos</a></td>
-          </tr>
+              <div>
+                <a class="prop-name" href="{% url 'edit_community' c.pk %}">{{ c.name }}</a>
+                <div class="prop-addr">{% if c.address_line %}{{ c.address_line }}, {% endif %}{{ c.city }}{% if c.state %}, {{ c.state }}{% endif %}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            {% if c.health == 'live' %}<span class="status status-live">Live</span>
+            {% elif c.health == 'hidden' %}<span class="status status-hidden">Hidden</span>
+            {% else %}<span class="status status-attention">Needs attention</span>{% endif %}
+          </td>
+          <td class="num">{{ c.unit_total }}<span class="muted"> / {{ c.units_all }}</span></td>
+          <td class="num hide-sm">
+            {% if c.rent_min %}
+              ${{ c.rent_min|floatformat:"0g" }}{% if c.rent_max and c.rent_max != c.rent_min %}–{{ c.rent_max|floatformat:"0g" }}{% endif %}
+            {% else %}<span class="muted">—</span>{% endif %}
+          </td>
+          <td class="hide-sm">
+            {{ c.photo_total }} photo{{ c.photo_total|pluralize }}
+            {% if c.media_rights_confirmed %}
+              <span class="status-sub" title="Authorized to publish this property's photos">
+                Rights ✓{% if c.media_rights_confirmed_at %} {{ c.media_rights_confirmed_by.get_full_name|default:c.media_rights_confirmed_by.username|default:"—" }} · {{ c.media_rights_confirmed_at|date:"M j" }}{% endif %}
+              </span>
+            {% else %}
+              <span class="status-sub" style="color:#b45309;">Rights not confirmed</span>
+            {% endif %}
+          </td>
+          <td class="hide-sm">
+            {% if c.availability_hidden_at %}<span class="status-sub" style="color:#b91c1c;">Overdue</span>
+            {% elif c.confirmation_requested_at %}<span class="status-sub" style="color:#b45309;">Check requested</span>
+            {% else %}<span class="status-sub">Confirmed {{ c.last_confirmed_at|timesince }} ago</span>{% endif %}
+          </td>
+          <td class="actions">
+            <a class="icon-btn" href="{% url 'community_detail' c.pk %}" target="_blank" rel="noopener"
+               title="View public listing" aria-label="View {{ c.name }} public listing">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11 4h5v5M16 4l-7 7M14 12v4H4V6h4"/></svg>
+            </a>
+            <a class="btn btn-ghost btn-sm" href="{% url 'edit_community' c.pk %}">Manage</a>
+          </td>
+        </tr>
         {% endfor %}
+        <tr data-empty-row hidden><td colspan="7" class="empty" style="text-align:center;padding:1.5rem;">No properties match.</td></tr>
       </tbody>
     </table>
-    <p class="sub rights-note">
-      Confirming media rights means your company is authorized to publish that
-      property's photos on Listojo. The person and date are recorded. Add or
-      re-head photos with <strong>Edit &amp; photos</strong> on each community.
-    </p>
+  </div>
+  <div class="card-foot">
+    Manage a property to edit its details, floor plans, units and photos. Bulk changes go through
+    <a href="{% url 'partner_upload' %}">Imports</a>.
+  </div>
   {% else %}
-    <p class="empty">No communities yet.</p>
+    <div style="padding:2.5rem 1.25rem;text-align:center;">
+      <h2 style="font-family:'Montserrat',sans-serif;font-size:1.05rem;margin-bottom:.35rem;">Get your properties live</h2>
+      <p class="sub" style="margin-bottom:1rem;">Import a CSV of your current availability, or tell us which software you use and we'll connect it.</p>
+      <button type="button" class="btn btn-primary" data-open-import>Import inventory</button>
+      <a class="btn btn-ghost" href="{% url 'partner_onboarding' %}">Connect my software</a>
+    </div>
   {% endif %}
 </div>
 
-<div class="card">
-  <h2>Standalone rentals</h2>
-  {% if standalone %}
-    <table>
-      <thead><tr><th>Title</th><th>Address</th><th>Rent</th><th>Status</th></tr></thead>
+{% if standalone %}
+<div class="card flush">
+  <div class="card-head"><h2>Single-unit rentals<span class="count">{{ standalone|length }}</span></h2></div>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Listing</th><th>Address</th><th class="num">Rent</th><th>Status</th></tr></thead>
       <tbody>
         {% for l in standalone %}
           <tr>
             <td><strong>{{ l.title }}</strong></td>
-            <td>{{ l.address_line }}{% if l.city %}, {{ l.city }}{% endif %}</td>
-            <td>${{ l.price|floatformat:0 }}{% if l.price_unit %}/{{ l.price_unit }}{% endif %}</td>
+            <td class="muted">{{ l.address_line }}{% if l.city %}, {{ l.city }}{% endif %}</td>
+            <td class="num">${{ l.price|floatformat:"0g" }}{% if l.price_unit %}/{{ l.price_unit }}{% endif %}</td>
             <td>
-              {% if l.deactivation_pending_since %}
-                <span class="pill pill-warn">Missing from last file</span>
-              {% else %}
-                <span class="pill pill-ok">{{ l.get_status_display }}</span>
-              {% endif %}
+              {% if l.deactivation_pending_since %}<span class="status status-attention">Missing from last import</span>
+              {% else %}<span class="status status-live">{{ l.get_status_display }}</span>{% endif %}
             </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
-  {% else %}
-    <p class="empty">No standalone rentals.</p>
-  {% endif %}
+  </div>
 </div>
+{% endif %}
+
+{% include 'partners/_import_dialog.html' with form=upload_form %}
+
+<script>
+(function () {
+  // Whole row opens the property; inner links and buttons keep their own target.
+  document.querySelectorAll('tr.linked').forEach(function (row) {
+    row.addEventListener('click', function (e) {
+      if (e.target.closest('a, button, form')) return;
+      window.location = row.dataset.href;
+    });
+  });
+
+  var search = document.querySelector('[data-prop-search]');
+  var buttons = document.querySelectorAll('[data-filter]');
+  var rows = document.querySelectorAll('tr.linked');
+  var empty = document.querySelector('[data-empty-row]');
+  var count = document.querySelector('[data-visible-count]');
+  var filter = 'all';
+  function apply() {
+    var q = (search && search.value || '').trim().toLowerCase();
+    var shown = 0;
+    rows.forEach(function (row) {
+      var ok = (filter === 'all' || row.dataset.health === filter) &&
+               (!q || row.dataset.search.indexOf(q) !== -1);
+      row.hidden = !ok;
+      if (ok) shown++;
+    });
+    if (empty) empty.hidden = shown !== 0;
+    if (count) count.textContent = shown;
+  }
+  if (search) search.addEventListener('input', apply);
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      filter = b.dataset.filter;
+      buttons.forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      apply();
+    });
+  });
+})();
+</script>
 {% endblock %}

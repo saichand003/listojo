@@ -1,43 +1,38 @@
 {% extends 'partners/base.html' %}
-{% block title %} — Upload inventory{% endblock %}
+{% block title %} — Imports{% endblock %}
 {% block nav_upload %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  .imp-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+  .imp-side h3 { font-family: 'Montserrat', sans-serif; font-size: .92rem; margin-bottom: .5rem; }
+  .imp-side p { font-size: .82rem; color: var(--text-2); margin-bottom: .75rem; }
+  .imp-actions { display: flex; gap: .5rem; margin-top: 1rem; flex-wrap: wrap; }
+  .result-head { display: flex; align-items: center; gap: .6rem; margin-bottom: .5rem; }
+  .run-file { font-weight: 600; }
+  .run-sub { font-size: .76rem; color: var(--muted); }
+  @media (max-width: 900px) { .imp-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="page-head">
-  <h1>Upload inventory</h1>
-  <p class="sub">Send a CSV export of your current availability. Re-uploading replaces what we hold.</p>
-</div>
-
-<div class="card">
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <div class="field">
-      <label for="id_csv_file">Inventory CSV</label>
-      {{ form.csv_file }}
-      {{ form.csv_file.errors }}
-      <div class="help">
-        Use the <a href="/static/partner-csv-template.csv" download>Listojo template</a>.
-        One row per unit. Not sure how to export it?
-        <a href="{% url 'partner_onboarding' %}">Let us connect it for you</a>.
-      </div>
-      <div class="help">
-        Photos aren't part of the CSV. Add them from
-        <a href="{% url 'partner_dashboard' %}">Portfolio → Edit &amp; photos</a>, where every photo gets a heading
-        like “Community – Pool” or “2 Bedroom – Kitchen” — or email them to us and we'll upload them.
-      </div>
-    </div>
-    <button class="btn btn-ghost" type="submit" name="preview" value="1">Preview changes</button>
-    <button class="btn btn-primary" type="submit" name="apply" value="1">Publish inventory</button>
-  </form>
+  <div class="crumbs"><a href="{% url 'partner_dashboard' %}">Properties</a> / Imports</div>
+  <h1>Imports</h1>
+  <p class="sub">Bulk-update {{ organization.name }}'s inventory from a CSV, and review every import we've received.</p>
 </div>
 
 {% if result %}
-  <div class="card">
-    <h2>{% if was_preview %}Preview{% else %}Result{% endif %}</h2>
+  <div class="card" style="{% if not result.ok %}border-color:#fecaca;{% elif was_preview %}border-color:#bfdbfe;{% endif %}">
+    <div class="result-head">
+      {% if not result.ok %}<span class="status status-hidden">Import rejected</span>
+      {% elif was_preview %}<span class="status" style="color:var(--primary);">Preview — not published</span>
+      {% else %}<span class="status status-live">Published</span>{% endif %}
+    </div>
     {% if result.ok %}
-      <p style="margin-bottom:.75rem;">{{ result.summary }}</p>
+      <p style="margin-bottom:.5rem;">{{ result.summary }}</p>
       {% if was_preview %}
-        <p class="sub">Nothing has been published yet. Press <strong>Publish inventory</strong> to apply.</p>
+        <p class="sub">Nothing has been published yet. Choose the file again and press <strong>Publish inventory</strong> to apply.</p>
       {% endif %}
     {% else %}
       <div class="msg msg-error">{{ result.aborted_reason }}</div>
@@ -45,8 +40,8 @@
 
     {% if result.rejections %}
       <h2 style="margin-top:1rem;">Rows we could not read ({{ result.rejections|length }})</h2>
-      <table>
-        <thead><tr><th style="width:80px;">Row</th><th>Why</th></tr></thead>
+      <table class="data">
+        <thead><tr><th style="width:90px;">Row</th><th>Why</th></tr></thead>
         <tbody>
           {% for r in result.rejections|slice:":25" %}
             <tr><td>{% if r.row_number %}{{ r.row_number }}{% else %}File{% endif %}</td><td>{{ r.reason }}</td></tr>
@@ -65,4 +60,58 @@
     {% endif %}
   </div>
 {% endif %}
+
+<div class="imp-grid">
+  <div class="card">
+    <h2>New import</h2>
+    <form method="post" action="{% url 'partner_upload' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% include 'partners/_dropzone.html' %}
+      <div class="imp-actions">
+        <button class="btn btn-ghost" type="submit" name="preview" value="1">Preview changes</button>
+        <button class="btn btn-primary" type="submit" name="apply" value="1">Publish inventory</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card imp-side">
+    <h3>How imports work</h3>
+    <p>Each file is a full snapshot: one row per unit. Units missing from two imports in a row are closed.</p>
+    <p>Photos aren't part of the CSV. Add them under each property's <strong>Manage</strong> page, or email them and we'll upload them.</p>
+    <div class="imp-actions" style="margin-top:.25rem;">
+      <a class="btn btn-ghost btn-sm" href="/static/partner-csv-template.csv" download>Download template</a>
+      <a class="btn btn-ghost btn-sm" href="{% url 'partner_onboarding' %}">Automate with my PMS</a>
+    </div>
+  </div>
+</div>
+
+<div class="card flush">
+  <div class="card-head"><h2>Import history<span class="count">{{ runs|length }}</span></h2></div>
+  {% if runs %}
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>File</th><th>Result</th><th class="hide-sm">Summary</th><th class="num">Rejected rows</th><th class="hide-sm">Imported by</th></tr></thead>
+      <tbody>
+        {% for run in runs %}
+          <tr>
+            <td>
+              <div class="run-file">{{ run.filename|default:"Automated feed" }}</div>
+              <div class="run-sub">{{ run.created_at|date:"M j, Y · g:i A" }}</div>
+            </td>
+            <td>
+              {% if run.succeeded %}<span class="status status-live">Applied</span>
+              {% else %}<span class="status status-hidden">Rejected</span>{% endif %}
+            </td>
+            <td class="hide-sm muted">{{ run.summary }}</td>
+            <td class="num">{% if run.rejected_count %}{{ run.rejected_count }}{% else %}<span class="muted">0</span>{% endif %}</td>
+            <td class="hide-sm muted">{% if run.started_by %}{{ run.started_by.get_full_name|default:run.started_by.username }}{% else %}—{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="empty" style="padding:1.25rem;">No imports yet.</p>
+  {% endif %}
+</div>
 {% endblock %}

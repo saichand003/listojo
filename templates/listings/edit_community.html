@@ -3,13 +3,22 @@
 {% block content %}
 <div style="max-width:800px;margin:0 auto;">
 
+  {% if community.managed_by_id %}
+  <nav class="ec-crumbs" aria-label="Breadcrumb">
+    <a href="{% url 'partner_dashboard' %}">Partner portal</a> <span aria-hidden="true">/</span>
+    <a href="{% url 'partner_dashboard' %}">Properties</a> <span aria-hidden="true">/</span>
+    <span>{{ community.name }}</span>
+  </nav>
+  {% endif %}
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap;">
     <div>
       <h1 style="font-size:1.6rem;margin-bottom:.2rem;">{{ community.name }}</h1>
       <p class="muted">{{ community.city }}{% if community.state %}, {{ community.state }}{% endif %}</p>
     </div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+      {% if not community.managed_by_id %}
       <a href="{{ csv_upload_url }}" class="ec-side-link" title="For property managers with large portfolios">Bulk upload (CSV)</a>
+      {% endif %}
       <a href="{% url 'community_detail' community.pk %}" class="button secondary">View Public Page</a>
     </div>
   </div>
@@ -417,6 +426,9 @@
 <style>
   .ec-side-link { font-size:.82rem; font-weight:600; color:var(--text-3); text-decoration:underline; text-underline-offset:2px; }
   .ec-side-link:hover { color:var(--primary); }
+  .ec-crumbs { font-size:.8rem; color:var(--text-3); margin-bottom:.6rem; display:flex; gap:.4rem; flex-wrap:wrap; }
+  .ec-crumbs a { color:var(--text-3); text-decoration:none; }
+  .ec-crumbs a:hover { color:var(--primary); }
   .ec-msg { background:rgba(5,150,105,.1); border:1px solid rgba(5,150,105,.3); border-radius:8px; padding:.65rem 1rem; margin-bottom:1rem; font-size:.88rem; color:#155e40; }
   .ec-msg-error { background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.35); color:#b91c1c; }
   .ec-confirm { display:flex; align-items:center; justify-content:space-between; gap:.75rem 1rem; flex-wrap:wrap; border:1px solid var(--border); border-radius:10px; padding:.7rem 1rem; margin-bottom:1rem; background:var(--surface-2); }

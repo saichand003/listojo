@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from partners.models import Organization
@@ -332,7 +333,13 @@ def confirm_community_availability(request, pk):
     """The edit page's "Still accurate" button."""
     community = get_object_or_404(_editable_communities(request.user), pk=pk)
     community.confirm_availability()
-    messages.success(request, 'Thanks — availability confirmed. We will check again in 14 days.')
+    messages.success(request, f'Availability confirmed for {community.name}. '
+                              f'We will check again in 14 days.')
+    # The partner portal's attention queue posts here too; send it back there.
+    next_url = request.POST.get('next', '')
+    if next_url and url_has_allowed_host_and_scheme(
+            next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(next_url)
     return redirect('edit_community', pk=community.pk)
 
 

@@ -1,0 +1,29 @@
+{# CSV file picker styled as a drop target. Expects `form` with a csv_file field. #}
+<label class="dropzone" data-dropzone>
+  {{ form.csv_file }}
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M12 18v-6M9 15l3-3 3 3"/></svg>
+  <div class="dz-title">Drop your CSV here or <span style="color:var(--primary);">browse</span></div>
+  <div class="dz-sub">.csv only · up to 5 MB</div>
+  <div class="dz-file" data-dz-file hidden></div>
+</label>
+{{ form.csv_file.errors }}
+<script>
+(function () {
+  document.querySelectorAll('[data-dropzone]').forEach(function (zone) {
+    if (zone.dataset.bound) return;
+    zone.dataset.bound = '1';
+    var input = zone.querySelector('input[type=file]');
+    var label = zone.querySelector('[data-dz-file]');
+    input.setAttribute('accept', '.csv,text/csv');
+    function show() {
+      var f = input.files && input.files[0];
+      label.hidden = !f;
+      if (f) label.textContent = f.name + ' · ' + Math.max(1, Math.round(f.size / 1024)) + ' KB';
+    }
+    input.addEventListener('change', show);
+    ['dragenter', 'dragover'].forEach(function (t) { zone.addEventListener(t, function () { zone.classList.add('drag'); }); });
+    ['dragleave', 'drop'].forEach(function (t) { zone.addEventListener(t, function () { zone.classList.remove('drag'); }); });
+    zone.addEventListener('drop', function () { setTimeout(show, 0); });
+  });
+})();
+</script>

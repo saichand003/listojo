@@ -12,12 +12,13 @@ import io
 
 from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Max, Min, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from listings.models import Community, Listing
+from listings.services.availability_checks import GRACE_PERIOD
 from listings.services.partner_import import CsvAdapter, import_partner_inventory
 from partners.forms import (
     AssistedOnboardingForm,
@@ -66,17 +67,48 @@ def _selected_org(request, organizations):
 
 @partner_required
 def dashboard(request):
+    """
+    The property list — the page a PM opens every morning. Each row carries
+    what a leasing manager scans for (live or not, vacancy, rent, photos,
+    availability freshness), and anything blocking a listing is pulled up
+    into one "Needs attention" queue so nobody has to read the whole table.
+    """
     organization = request.organization
 
-    communities = (Community.objects
-                   .filter(managed_by=organization)
-                   .annotate(unit_total=Count('floor_plans__units',
-                                              filter=Q(floor_plans__units__status='available')))
-                   .order_by('name'))
+    communities = list(
+        Community.objects
+        .filter(managed_by=organization)
+        .annotate(
+            unit_total=Count('floor_plans__units',
+                             filter=Q(floor_plans__units__status='available'), distinct=True),
+            units_all=Count('floor_plans__units', distinct=True),
+            photo_total=Count('images', distinct=True),
+            rent_min=Min('floor_plans__units__price',
+                         filter=Q(floor_plans__units__status='available')),
+            rent_max=Max('floor_plans__units__price',
+                         filter=Q(floor_plans__units__status='available')),
+        )
+        .select_related('media_rights_confirmed_by')
+        .prefetch_related('images')
+        .order_by('name')
+    )
     standalone = (Listing.objects
                   .filter(organization=organization)
                   .exclude(status='closed')
                   .order_by('-created_at'))
+
+    attention = []
+    for c in communities:
+        c.thumb = next(iter(c.images.all()), None)
+        c.issues = _community_issues(c)
+        if c.status != 'active' or c.availability_hidden_at:
+            c.health = 'hidden'
+        elif c.issues:
+            c.health = 'attention'
+        else:
+            c.health = 'live'
+        if c.issues:
+            attention.append(c)
 
     last_run = organization.import_runs.first()
     pending = (Listing.objects.filter(organization=organization,
@@ -89,9 +121,34 @@ def dashboard(request):
         'communities': communities,
         'standalone': standalone,
         'unit_total': sum(c.unit_total for c in communities),
+        'live_count': sum(1 for c in communities if c.health != 'hidden'),
+        'attention': attention,
+        'attention_items': sum(len(c.issues) for c in attention),
         'last_run': last_run,
         'pending_deactivation': pending,
+        'upload_form': InventoryUploadForm(),
     })
+
+
+def _community_issues(c):
+    """
+    What is stopping this property from listing well, most urgent first.
+    Each issue is (kind, text, action) — the template turns `kind` into the
+    right button, so the copy and the fix stay side by side.
+    """
+    issues = []
+    if c.availability_hidden_at:
+        issues.append(('hidden', 'Units hidden from renters — availability not confirmed', 'confirm'))
+    elif c.confirmation_requested_at:
+        due = c.confirmation_requested_at + GRACE_PERIOD
+        issues.append(('due', f'Confirm availability by {due:%b} {due.day}', 'confirm'))
+    if not c.media_rights_confirmed:
+        issues.append(('rights', 'Media rights not confirmed — photos stay unpublished', 'rights'))
+    if not c.photo_total:
+        issues.append(('photos', 'No photos — listings with photos get far more tours', 'photos'))
+    if not c.unit_total:
+        issues.append(('vacancy', 'No available units — property is not shown in search', 'manage'))
+    return issues
 
 
 @partner_required
@@ -133,6 +190,7 @@ def upload_inventory(request):
         'form': form,
         'result': result,
         'was_preview': 'preview' in request.POST,
+        'runs': organization.import_runs.select_related('started_by')[:50],
     })
 
 
@@ -188,11 +246,8 @@ def confirm_media_rights(request, pk):
 
 @partner_required
 def import_history(request):
-    return render(request, 'partners/history.html', {
-        'organization': request.organization,
-        'organizations': request.partner_orgs,
-        'runs': request.organization.import_runs.all()[:50],
-    })
+    """Upload and history are one "Imports" page; the old URL still works."""
+    return upload_inventory.__wrapped__(request)
 
 
 def apply_to_partner(request):

@@ -1,0 +1,38 @@
+{# Import inventory, opened from any [data-open-import] button. Posts to the Imports page, which shows the preview or the result. #}
+<dialog class="modal" id="import-dialog" aria-labelledby="import-dialog-title">
+  <form method="post" action="{% url 'partner_upload' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="modal-head">
+      <div>
+        <h2 id="import-dialog-title">Import inventory</h2>
+        <p class="sub">Upload a CSV of current availability. It replaces what we hold for {{ organization.name }}.</p>
+      </div>
+      <button type="button" class="icon-btn" data-close-import aria-label="Close">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      {% include 'partners/_dropzone.html' %}
+      <ul class="help-list">
+        <li><span>One row per unit, in the <a href="/static/partner-csv-template.csv" download>Listojo template</a> format.</span></li>
+        <li><span>Preview first to see what will change. Nothing goes live until you publish.</span></li>
+        <li><span>Photos aren't part of the CSV. Add them when you manage each property.</span></li>
+      </ul>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" type="submit" name="preview" value="1">Preview changes</button>
+      <button class="btn btn-primary" type="submit" name="apply" value="1">Publish inventory</button>
+    </div>
+  </form>
+</dialog>
+<script>
+(function () {
+  var dlg = document.getElementById('import-dialog');
+  if (!dlg || !dlg.showModal) return;
+  document.querySelectorAll('[data-open-import]').forEach(function (b) {
+    b.addEventListener('click', function () { dlg.showModal(); });
+  });
+  dlg.querySelector('[data-close-import]').addEventListener('click', function () { dlg.close(); });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+})();
+</script>
