@@ -14,6 +14,8 @@ catalogue of amenities makes that catalogue mean less. They stay searchable via
 """
 
 #: Shared with other residents, or reached outside the tenant's own front door.
+#: The first seven are the original vocabulary and keep their spelling, because
+#: `tags` is searched with icontains and saved searches already hold them.
 SHARED_AMENITY_TAGS = (
     'parking',
     'gym',
@@ -22,6 +24,27 @@ SHARED_AMENITY_TAGS = (
     'EV charging',
     'storage',
     'rooftop access',
+    # Building / complex
+    'elevator',
+    'on-site laundry',
+    'package lockers',
+    'gated entry',
+    'security',
+    'concierge',
+    'coworking space',
+    'clubhouse',
+    'bike storage',
+    'dog park',
+    'BBQ area',
+    'playground',
+    # A house's own grounds — outside the door, so not "in-unit"
+    'garage',
+    'driveway',
+    'yard',
+    'fenced yard',
+    # A room in a shared home
+    'shared kitchen',
+    'shared living room',
 )
 
 #: Behind the tenant's own door, theirs alone.
@@ -34,6 +57,20 @@ PRIVATE_AMENITY_TAGS = (
     'wifi',
     'dishwasher',
     'hardwood floors',
+    'walk-in closet',
+    'stainless appliances',
+    'granite counters',
+    'ceiling fans',
+    'fireplace',
+    'smart thermostat',
+    'high ceilings',
+    'natural light',
+    'patio',
+    # A room in a shared home
+    'private bathroom',
+    'private entrance',
+    'lock on door',
+    'furnished room',
 )
 
 #: Terms of the lease. Searchable, deliberately not catalogued.
@@ -41,6 +78,12 @@ POLICY_TAGS = (
     'pet-friendly',
     'utilities included',
     'no deposit',
+    'month-to-month',
+    'short-term OK',
+    'sublease',
+    'lease takeover',
+    'flexible move-in',
+    'smoke-free',
 )
 
 #: The picker's full vocabulary, in display order.
@@ -49,6 +92,55 @@ PICKER_GROUPS = (
     ('In-unit & private', PRIVATE_AMENITY_TAGS),
     ('Lease terms',       POLICY_TAGS),
 )
+
+#: Which kinds of listing a chip makes sense for. A single-family house has no
+#: elevator and a private room's renter does not get the garage, so the picker
+#: hides chips that do not fit what the seller chose. A tag not listed here is
+#: shown for every kind. Contexts:
+#:   building — apartment, condo, loft, studio, townhouse (whole unit)
+#:   house    — house, single-family, basement, trailer, ranch (whole property)
+#:   room     — a private room in a shared home (accommodation_type = room)
+#: Hiding is presentational only: a chip already selected stays visible, so
+#: switching the property type never silently drops a pick.
+TAG_CONTEXTS = {
+    'rooftop access':     ('building',),
+    'elevator':           ('building', 'room'),
+    'on-site laundry':    ('building', 'room'),
+    'package lockers':    ('building', 'room'),
+    'gated entry':        ('building', 'house'),
+    'concierge':          ('building',),
+    'coworking space':    ('building',),
+    'clubhouse':          ('building',),
+    'dog park':           ('building',),
+    'BBQ area':           ('building',),
+    'playground':         ('building',),
+    'garage':             ('house', 'room'),
+    'driveway':           ('house', 'room'),
+    'yard':               ('house', 'room'),
+    'fenced yard':        ('house',),
+    'patio':              ('house', 'building'),
+    'shared kitchen':     ('room',),
+    'shared living room': ('room',),
+    'private bathroom':   ('room',),
+    'private entrance':   ('room', 'house'),
+    'lock on door':       ('room',),
+    'furnished room':     ('room',),
+    'lease takeover':     ('building', 'house'),
+}
+
+
+def picker_groups():
+    """
+    PICKER_GROUPS with each tag paired to its contexts, for the template.
+
+    Yields (label, [(tag, 'ctx ctx'), ...]); an empty context string means the
+    chip shows for every kind of listing.
+    """
+    return [
+        (label, [(t, ' '.join(TAG_CONTEXTS.get(t, ()))) for t in tags])
+        for label, tags in PICKER_GROUPS
+    ]
+
 
 _SHARED_LOOKUP  = {t.lower(): t for t in SHARED_AMENITY_TAGS}
 _PRIVATE_LOOKUP = {t.lower(): t for t in PRIVATE_AMENITY_TAGS}

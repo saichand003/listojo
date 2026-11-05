@@ -1,0 +1,146 @@
+{% comment %}
+Amenity picker shared by the create and edit listing pages.
+
+Context:
+  amenity_groups  — listings.services.amenities.picker_groups()
+  picker_initial  — {'tags', 'community', 'in_unit'} comma-separated strings
+  accom_input_id  — id of the accommodation_type input/select
+  proptype_input_id — id of the property_type input/select
+
+`tags` stays the search filter and receives every selection. The two
+catalogue fields take the same picks split by group, so the detail page can
+show them as two cards without asking the seller twice.
+
+The script fires `listojo:amenities-change` and `listojo:form-sync` on window
+after each change, so a host page can refresh its own meters and previews.
+{% endcomment %}
+<input type="hidden" name="tags" id="f-tags" value="{{ picker_initial.tags }}">
+<input type="hidden" name="community_amenities" id="f-community-amenities" value="{{ picker_initial.community }}">
+<input type="hidden" name="in_unit_amenities" id="f-in-unit-amenities" value="{{ picker_initial.in_unit }}">
+{% for err in picker_errors %}<p class="cl-field-error">{{ err }}</p>{% endfor %}
+<div id="amenity-picker" data-accom="{{ accom_input_id }}" data-proptype="{{ proptype_input_id }}">
+{% for group_label, group_tags in amenity_groups %}
+<div class="cl-amenity-group">
+  <p class="cl-amenity-group-label">{{ group_label }}</p>
+  <div class="cl-amenity-grid">
+    {% for tag, ctx in group_tags %}
+    <button type="button" class="cl-amenity-btn" data-tag="{{ tag }}" data-group="{{ forloop.parentloop.counter0 }}"{% if ctx %} data-ctx="{{ ctx }}"{% endif %}>{{ tag }}</button>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+</div>
+{# Anything the chips miss. Each box feeds its own catalogue card and `tags`, #}
+{# so a typed amenity is searchable exactly like a tapped one.                #}
+<div class="cl-amenity-custom">
+  <input type="text" id="f-custom-shared" placeholder="Other shared or outdoor amenities, comma-separated" autocomplete="off">
+  <input type="text" id="f-custom-private" placeholder="Other in-unit or private features, comma-separated" autocomplete="off">
+</div>
+<p class="cl-hint" id="tags-count-hint" style="margin-top:.6rem;">0 selected</p>
+<script>
+(function () {
+  var picker   = document.getElementById('amenity-picker');
+  var fTags    = document.getElementById('f-tags');
+  var fShared  = document.getElementById('f-community-amenities');
+  var fPrivate = document.getElementById('f-in-unit-amenities');
+  var boxes    = [document.getElementById('f-custom-shared'),
+                  document.getElementById('f-custom-private')];
+  var buttons  = Array.prototype.slice.call(picker.querySelectorAll('.cl-amenity-btn'));
+
+  function splitList(v) {
+    return (v || '').split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+  }
+
+  /* Chips are matched case-insensitively: older listings were typed by hand
+     ("Pool", "Washer/Dryer") and the catalogue columns are title-cased. */
+  var chipByLower = {};
+  buttons.forEach(function (b) { chipByLower[b.dataset.tag.toLowerCase()] = b.dataset.tag; });
+
+  var selected = [];
+  function select(tag) { if (selected.indexOf(tag) === -1) selected.push(tag); }
+
+  /* Catalogue values that are not chips were typed, so they go back into the
+     matching box. Tags that are neither a chip nor in a box are kept as-is
+     so saving never drops something the seller can't see. */
+  var typedLower = {};
+  [[fShared, 0], [fPrivate, 1]].forEach(function (pair) {
+    var typed = [];
+    splitList(pair[0].value).forEach(function (t) {
+      var chip = chipByLower[t.toLowerCase()];
+      if (chip) { select(chip); return; }
+      if (!typedLower[t.toLowerCase()]) { typed.push(t); typedLower[t.toLowerCase()] = true; }
+    });
+    if (typed.length) boxes[pair[1]].value = typed.join(', ');
+  });
+  var extras = [];
+  splitList(fTags.value).forEach(function (t) {
+    var low = t.toLowerCase();
+    if (chipByLower[low]) select(chipByLower[low]);
+    else if (!typedLower[low] && extras.indexOf(t) === -1) extras.push(t);
+  });
+
+  /* Which chips fit this listing: a room, a unit in a building, or a house. */
+  var BUILDING_TYPES = ['apartment', 'condo', 'loft', 'studio', 'townhouse'];
+  function valueOf(id) { var el = id && document.getElementById(id); return el ? el.value || '' : ''; }
+  function listingContext() {
+    if (valueOf(picker.dataset.accom) === 'room') return 'room';
+    var pt = valueOf(picker.dataset.proptype);
+    if (!pt) return '';
+    return BUILDING_TYPES.indexOf(pt) !== -1 ? 'building' : 'house';
+  }
+
+  function sync() {
+    var ctx = listingContext();
+    var buckets = [[], []];
+    buttons.forEach(function (btn) {
+      var on = selected.indexOf(btn.dataset.tag) !== -1;
+      btn.classList.toggle('selected', on);
+      var fits = !ctx || !btn.dataset.ctx || btn.dataset.ctx.split(' ').indexOf(ctx) !== -1;
+      btn.hidden = !fits && !on;  /* a pick stays visible after a type switch */
+      var g = parseInt(btn.dataset.group, 10);
+      if (on && buckets[g]) buckets[g].push(btn.dataset.tag);
+    });
+    var custom = [];
+    boxes.forEach(function (box, g) {
+      splitList(box.value).forEach(function (t) {
+        if (buckets[g].indexOf(t) === -1) { buckets[g].push(t); custom.push(t); }
+      });
+    });
+    var all = selected.concat(custom, extras);
+    fTags.value    = all.join(',');
+    fShared.value  = buckets[0].join(', ');
+    fPrivate.value = buckets[1].join(', ');
+    var shown = selected.length + custom.length;
+    var hint = document.getElementById('tags-count-hint');
+    hint.textContent = shown + ' selected';
+    hint.style.color = shown > 0 ? 'var(--primary)' : '';
+    window.dispatchEvent(new Event('listojo:amenities-change'));
+    window.dispatchEvent(new Event('listojo:form-sync'));
+  }
+
+  picker.addEventListener('click', function (e) {
+    var btn = e.target.closest('.cl-amenity-btn');
+    if (!btn) return;
+    var i = selected.indexOf(btn.dataset.tag);
+    if (i !== -1) selected.splice(i, 1); else selected.push(btn.dataset.tag);
+    sync();
+  });
+  boxes.forEach(function (box) { box.addEventListener('input', sync); });
+
+  /* Re-filter when the listing type changes — radio cards on the create page,
+     selects on the edit page. Deferred so the host's own handler has written
+     the new value first. */
+  function onTypeChange(e) {
+    var t = e.target;
+    if (t.closest && (t.closest('.cl-radio-card[data-group]') ||
+        t.id === picker.dataset.accom || t.id === picker.dataset.proptype ||
+        t.id === 'id_category')) {
+      setTimeout(sync, 0);
+    }
+  }
+  document.addEventListener('click', onTypeChange);
+  document.addEventListener('change', onTypeChange);
+
+  sync();
+})();
+</script>

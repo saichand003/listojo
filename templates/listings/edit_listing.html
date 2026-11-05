@@ -35,7 +35,19 @@
         </div>
         {% endif %}
 
-        {{ form.as_p }}
+        {# Every field as as_p would draw it, except the three the amenity #}
+        {# picker below owns — rendering both would post each name twice.  #}
+        {{ form.non_field_errors }}
+        {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+        {% for field in form.visible_fields %}{% if field.name not in picker_fields %}
+        <p>{{ field.errors }}{{ field.label_tag }} {{ field }}{% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}</p>
+        {% endif %}{% endfor %}
+
+        <div class="cl-edit-amenities">
+          <p style="font-weight:600;margin-bottom:.2rem;">Amenities &amp; Features</p>
+          <p class="muted" style="font-size:.82rem;margin:0 0 .75rem;">Tap to select — or type your own below</p>
+          {% include "listings/_amenity_picker.html" with accom_input_id="id_accommodation_type" proptype_input_id="id_property_type" %}
+        </div>
 
         {# ── Inject autocomplete wrapper around address_line after form renders ── #}
         <script>

@@ -20,7 +20,7 @@ from listojo.services.notifications import send_listing_inquiry_email
 from .forms import ListingForm, ListingInquiryForm, validate_uploaded_images
 from .models import CityWaitlist, Community, Favourite, GuidedSearchEvent, Listing, ListingImage, ListingInquiry, SavedSearch
 from listings.services import match_prefs, saved_searches
-from listings.services.amenities import PICKER_GROUPS
+from listings.services.amenities import picker_groups
 from listings.services.match_prefs import resolve_match_prefs
 from listings.services.fit import build_report, lead_snapshot
 from listings.services.search import build_listing_search_context, live_inventory_count, live_match_preview
@@ -453,6 +453,40 @@ def listing_detail(request, pk):
     )
 
 
+#: ListingForm fields the amenity picker renders itself, as hidden inputs.
+AMENITY_PICKER_FIELDS = ('tags', 'community_amenities', 'in_unit_amenities')
+
+
+def _amenity_picker_context(form, listing=None):
+    """
+    What `_amenity_picker.html` needs to draw and pre-select itself.
+
+    A bound form (a failed POST) is shown back as submitted. An unbound edit
+    form starts from the listing's two display lists instead of the raw
+    columns, because those lists already fold legacy free-text `tags` into the
+    card they belong to — so an older listing opens with its amenities sorted
+    into the shared and private boxes rather than lost from view.
+    """
+    if form.is_bound or listing is None:
+        initial = {f: form[f].value() or '' for f in AMENITY_PICKER_FIELDS}
+    else:
+        initial = {
+            'tags': listing.tags or '',
+            'community_amenities': ', '.join(listing.community_amenities_list),
+            'in_unit_amenities': ', '.join(listing.in_unit_amenities_list),
+        }
+    return {
+        'amenity_groups': picker_groups(),
+        'picker_initial': {
+            'tags': initial['tags'],
+            'community': initial['community_amenities'],
+            'in_unit': initial['in_unit_amenities'],
+        },
+        'picker_errors': [e for f in AMENITY_PICKER_FIELDS for e in form[f].errors],
+        'picker_fields': AMENITY_PICKER_FIELDS,
+    }
+
+
 @login_required
 def edit_listing(request, pk):
     if not _listings_table_ready():
@@ -491,6 +525,7 @@ def edit_listing(request, pk):
         'existing_images': listing.images.all(),
         'image_errors': image_errors,
         'max_images': 8,
+        **_amenity_picker_context(form, listing),
     })
 
 
@@ -627,7 +662,7 @@ def create_listing(request):
         # The picker's groups come from the vocabulary rather than a literal in
         # the template, so the backfill command and the form cannot disagree
         # about which bucket a tag belongs to.
-        'amenity_groups': PICKER_GROUPS,
+        **_amenity_picker_context(form),
     })
 
 

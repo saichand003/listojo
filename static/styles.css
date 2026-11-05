@@ -2659,6 +2659,10 @@ footer {
 /* The picker is grouped so the seller sorts shared from private as they tick,
    rather than being asked the same question twice in two text boxes. */
 .cl-amenity-group + .cl-amenity-group { margin-top: .9rem; }
+.cl-amenity-btn[hidden] { display: none; }
+.cl-amenity-custom { display: grid; gap: .5rem; margin-top: .9rem; }
+.cl-amenity-custom input { width: 100%; font-size: .83rem; }
+.cl-edit-amenities { margin: 1.25rem 0 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--border); }
 .cl-amenity-group-label {
   font-size: .72rem;
   font-weight: 700;
