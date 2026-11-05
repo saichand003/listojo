@@ -2664,20 +2664,23 @@ footer {
    seller types where the chip will appear. The id outranks the global input
    rule's long :not() chain. */
 #amenity-picker .cl-amenity-add {
-  width: 9.5rem;
+  /* Width is set by the picker script to fit the placeholder or the typed
+     text; field-sizing does the same natively where supported. */
+  width: auto;
+  min-width: 0;
+  field-sizing: content;
   padding: .32rem .8rem;
   border: 1.5px dashed var(--border);
   border-radius: 20px;
   background: transparent;
   font-size: .8rem;
-  line-height: inherit;
+  line-height: normal;
   box-shadow: none;
 }
 #amenity-picker .cl-amenity-add:focus {
   border-style: solid;
   border-color: var(--primary);
   background: var(--surface);
-  width: 13rem;
 }
 @media (pointer: coarse) { #amenity-picker .cl-amenity-add { font-size: 16px; } }
 .cl-amenity-x { margin-left: .35rem; font-weight: 700; opacity: .7; }

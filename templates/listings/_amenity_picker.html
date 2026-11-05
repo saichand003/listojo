@@ -157,13 +157,32 @@ after each change, so a host page can refresh its own meters and previews.
   /* Enter or a comma locks the text in as a chip; a pasted list is split.
      Leaving the field also commits it, so a typed amenity is never lost to a
      submit click. Backspace in an empty field takes back the last typed chip. */
+  /* Fit each add field to its text — the placeholder when empty, the typed
+     text (plus room for the caret) once the seller starts typing. */
+  var measurer = document.createElement('span');
+  measurer.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;left:-9999px;top:0;';
+  document.body.appendChild(measurer);
+  function fit(input) {
+    var cs = getComputedStyle(input);
+    measurer.style.font = cs.font;
+    measurer.style.letterSpacing = cs.letterSpacing;
+    measurer.textContent = input.value || input.placeholder;
+    var w = measurer.getBoundingClientRect().width
+          + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)
+          + parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth) + 4;
+    input.style.width = Math.ceil(w) + 'px';
+  }
+
   function commit(input) {
     var g = +input.dataset.group;
     splitList(input.value).forEach(function (t) { addCustom(g, t); });
     input.value = '';
     sync();
+    fit(input);
   }
   picker.querySelectorAll('.cl-amenity-add').forEach(function (input) {
+    fit(input);
+    input.addEventListener('input', function () { fit(input); });
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ',') {
         e.preventDefault();  /* Enter must not submit the listing form */

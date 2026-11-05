@@ -6,7 +6,7 @@ from django.utils.translation import get_language
 
 def ui_asset_version(request):
     return {
-        'UI_ASSET_VERSION': os.getenv('UI_ASSET_VERSION', '2026-11-05-amenity-add-chip'),
+        'UI_ASSET_VERSION': os.getenv('UI_ASSET_VERSION', '2026-11-05-amenity-add-chip-fit'),
     }
 
 
