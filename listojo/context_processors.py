@@ -84,3 +84,29 @@ def language_switch(request):
             return {}
         links.append({'code': code, 'label': code.upper(), 'name': label, 'url': url, 'active': code == current})
     return {'language_links': links, 'LANGUAGE_CODE': current}
+
+
+def partner_access(request):
+    """
+    `is_partner` for templates: whether to show community tools.
+    `is_partner_member`: whether to show the partner menu instead of the
+    lister one (Manage Properties rather than Post a Listing / My Listings).
+
+    Evaluated lazily and once per request — most pages never ask, and base.html
+    asks more than once.
+    """
+    cache = {}
+
+    def is_partner():
+        if 'v' not in cache:
+            from listings.services.ownership import is_partner as check
+            cache['v'] = check(getattr(request, 'user', None))
+        return cache['v']
+
+    def is_partner_member():
+        if 'm' not in cache:
+            from listings.services.ownership import is_partner_member as check
+            cache['m'] = check(getattr(request, 'user', None))
+        return cache['m']
+
+    return {'is_partner': is_partner, 'is_partner_member': is_partner_member}

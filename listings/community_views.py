@@ -6,8 +6,6 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from partners.models import Organization
-
 from .forms import (
     MAX_COMMUNITY_PHOTOS,
     CommunityForm,
@@ -22,7 +20,7 @@ from .services.community_photos import COMMUNITY, belongs_to_options, resolve_he
 from .services.community_service import handle_tour_request
 from .services.event_tracker import log_community_event
 from .services.match_prefs import resolve_match_prefs
-from .services.ownership import editable_communities
+from .services.ownership import editable_communities, is_partner
 from .views import _detail_match
 
 
@@ -152,12 +150,25 @@ def _csv_upload_url(user):
     The side door for big portfolios: partner members get the CSV upload,
     everyone else the application that leads to it.
     """
-    is_partner = Organization.objects.filter(memberships__user=user).exists()
-    return reverse('partner_upload' if is_partner else 'partner_apply')
+    return reverse('partner_upload' if is_partner(user) else 'partner_apply')
+
+
+def _send_to_partner_application(request):
+    """
+    Where a non-partner lands on a community-only page.
+
+    Communities are partner inventory, approved by staff — not something an
+    individual landlord self-serves — so the way in is the application.
+    """
+    messages.info(request, 'Multi-family communities are listed through Listojo Partners. '
+                           'Apply below, or post a single property or room instead.')
+    return redirect('partner_apply')
 
 
 @login_required
 def create_community(request):
+    if not is_partner(request.user):
+        return _send_to_partner_application(request)
     photo_errors = []
     if request.method == 'POST':
         form = CommunityForm(request.POST)
@@ -367,9 +378,13 @@ def confirm_availability_link(request, token):
 
 @login_required
 def my_communities(request):
+    owned = Community.objects.filter(owner=request.user)
+    # Someone who already owns a community keeps the way back to it even
+    # without a membership, so tightening the rule never strands a property.
+    if not is_partner(request.user) and not owned.exists():
+        return _send_to_partner_application(request)
     communities = (
-        Community.objects
-        .filter(owner=request.user)
+        owned
         .annotate(
             lead_count=Count('leads', distinct=True),
             impression_count=Count('events', filter=Q(events__event_type='impression'), distinct=True),

@@ -1557,3 +1557,41 @@ msgstr "Chat directo con posibles inquilinos y compradores"
 #: templates/listings/home.html:656
 msgid "List a Property"
 msgstr "Publicar casa"
+
+#: templates/base.html
+msgid "Properties"
+msgstr "Propiedades"
+
+#: templates/base.html
+msgid "Manage Properties"
+msgstr "Gestionar propiedades"
+
+#: templates/base.html
+msgid "Imports"
+msgstr "Importaciones"
+
+#: templates/base.html
+msgid "Data connection"
+msgstr "Conexión de datos"
+
+#: templates/base.html
+msgid "Partner"
+msgstr "Socio"
+
+#: templates/listings/partner_cannot_post.html
+msgid "Partners can't post individual listings"
+msgstr "Los socios no publican anuncios sueltos"
+
+#: templates/listings/partner_cannot_post.html
+msgid ""
+"Your account is linked to a partner organization, so your properties are "
+"managed in the partner portal. Add or update them with an import or your "
+"data connection, and they stay with your organization."
+msgstr ""
+"Tu cuenta está vinculada a una organización asociada, así que tus "
+"propiedades se gestionan en el portal de socios. Agrégalas o actualízalas "
+"con una importación o tu conexión de datos, y se quedan con tu organización."
+
+#: templates/listings/partner_cannot_post.html
+msgid "Go back"
+msgstr "Volver"

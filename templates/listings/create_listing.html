@@ -28,10 +28,13 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M3 10.2 12 3.5l9 6.7V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9.2 21v-6.2h5.6V21"/></svg>
       Single property &amp; room
     </span>
+    {# Communities are partner inventory; an individual lister never sees this. #}
+    {% if is_partner %}
     <a class="post-kind" href="{% url 'create_community' %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M4 21V5.5A1.5 1.5 0 0 1 5.5 4h6A1.5 1.5 0 0 1 13 5.5V21"/><path d="M13 10h5.5A1.5 1.5 0 0 1 20 11.5V21"/><path d="M2.5 21h19"/></svg>
       Multi-family community
     </a>
+    {% endif %}
     <a class="post-kind" href="{% url 'my_listings' %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M8.5 6H21M8.5 12H21M8.5 18H21"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
       My portfolio

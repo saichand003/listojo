@@ -23,6 +23,35 @@ def user_organization_ids(user) -> list[int]:
     return list(Membership.objects.filter(user=user).values_list('organization_id', flat=True))
 
 
+def is_partner(user) -> bool:
+    """
+    May this person list and run multi-family communities?
+
+    Communities are partner inventory: publishing one asserts authority over a
+    whole property and its media, which is why partner accounts are approved
+    by staff (partners.PartnerApplication) rather than self-serve. An
+    individual landlord posts listings, not communities. Superusers pass so
+    support can see what a partner sees.
+    """
+    if not user or not user.is_authenticated:
+        return False
+    return user.is_superuser or Membership.objects.filter(user=user).exists()
+
+
+def is_partner_member(user) -> bool:
+    """
+    Does this person belong to a partner organization?
+
+    Unlike is_partner, a superuser does not count. This decides which side of
+    the product someone is on — a partner manages a portfolio through the
+    partner portal and does not post one-off listings — and an admin needs to
+    reach both sides.
+    """
+    if not user or not user.is_authenticated:
+        return False
+    return Membership.objects.filter(user=user).exists()
+
+
 def can_edit_listing(user, listing) -> bool:
     if not user or not user.is_authenticated:
         return False

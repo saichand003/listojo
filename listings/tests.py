@@ -2815,6 +2815,9 @@ class CommunityPhotoHeadingTests(_CommunityFixture, TestCase):
         self.assertIn('class="cd-fp-photos"', html)
 
     def test_create_page_tags_photos_and_offers_csv_on_the_side(self):
+        from partners.models import Membership, Organization
+        org = Organization.objects.create(name='Oak Co', slug='oak-co')
+        Membership.objects.create(user=self.owner, organization=org)
         page = self.client.get(reverse('create_community')).content.decode()
         self.assertIn('Bulk upload (CSV)', page)
 
@@ -2917,3 +2920,129 @@ class AvailabilityCheckTests(_CommunityFixture, TestCase):
         self.community.refresh_from_db()
         self.assertIsNone(self.community.availability_hidden_at)
         self.assertEqual(Unit.objects.visible().count(), 1)
+
+
+class CommunityPartnerOnlyTests(TestCase):
+    """
+    Communities are partner inventory. An individual lister posts listings and
+    never sees, or reaches, the community tools.
+    """
+
+    def setUp(self):
+        from partners.models import Membership, Organization
+        self.lister = User.objects.create_user('lister', 'lister@example.com', 'pw')
+        self.partner = User.objects.create_user('pm', 'pm@example.com', 'pw')
+        org = Organization.objects.create(name='Acme PM', slug='acme-pm')
+        Membership.objects.create(user=self.partner, organization=org)
+
+    def test_lister_cannot_create_a_community(self):
+        self.client.force_login(self.lister)
+        get = self.client.get(reverse('create_community'))
+        self.assertRedirects(get, reverse('partner_apply'), fetch_redirect_response=False)
+
+        self.client.post(reverse('create_community'), {
+            'name': 'Sneaky Flats', 'description': '', 'city': 'Plano', 'country': 'USA'})
+        self.assertFalse(Community.objects.filter(name='Sneaky Flats').exists())
+
+    def test_lister_without_communities_is_sent_to_apply(self):
+        self.client.force_login(self.lister)
+        response = self.client.get(reverse('my_communities'))
+        self.assertRedirects(response, reverse('partner_apply'), fetch_redirect_response=False)
+
+    def test_existing_owner_keeps_my_communities(self):
+        Community.objects.create(owner=self.lister, name='Old Court', city='Frisco')
+        self.client.force_login(self.lister)
+        self.assertEqual(self.client.get(reverse('my_communities')).status_code, 200)
+
+    def test_lister_sees_no_community_tools(self):
+        self.client.force_login(self.lister)
+        page = self.client.get(reverse('create_listing')).content.decode()
+        self.assertNotIn(reverse('create_community'), page)
+        self.assertNotIn(reverse('my_communities'), page)
+        self.assertNotIn('Multi-family community', page)
+        # The public call to action leads to the partner application instead.
+        self.assertIn(reverse('partner_apply'), page)
+
+    def test_partner_can_open_community_tools(self):
+        # A partner never sees the posting page (PartnerCannotPostListingTests),
+        # so the community form is reached directly or from the portal.
+        self.client.force_login(self.partner)
+        self.assertEqual(self.client.get(reverse('create_community')).status_code, 200)
+
+    def test_admin_sees_the_community_tab_on_the_posting_page(self):
+        self.client.force_login(User.objects.create_superuser('root3', 'r3@example.com', 'pw'))
+        page = self.client.get(reverse('create_listing')).content.decode()
+        self.assertIn('Multi-family community', page)
+
+    @staticmethod
+    def _account_menu(html):
+        """The signed-in account menu, without the footer's marketing links."""
+        start = html.index('class="nav-menu-id"')
+        return html[start:html.index('nav-menu-signout', start)]
+
+    def test_partner_menu_is_about_managing_properties(self):
+        self.client.force_login(self.partner)
+        html = self.client.get(reverse('home')).content.decode()
+        menu = self._account_menu(html)
+        self.assertIn('Manage Properties', menu)
+        self.assertIn(reverse('partner_dashboard'), menu)
+        self.assertIn(reverse('partner_upload'), menu)
+        self.assertIn('Partner', menu)
+        for lister_item in ('My Listings', 'Post a Listing', 'List a Community', 'My Communities'):
+            self.assertNotIn(lister_item, menu)
+        # The header button and the mobile tab go to the portfolio too.
+        self.assertNotIn('class="nav-cta"', html.replace(
+            f'href="{reverse("partner_dashboard")}" class="nav-cta"', ''))
+
+    def test_lister_menu_keeps_posting_tools(self):
+        self.client.force_login(self.lister)
+        menu = self._account_menu(self.client.get(reverse('home')).content.decode())
+        self.assertIn('My Listings', menu)
+        self.assertIn('Post a Listing', menu)
+        self.assertNotIn('Manage Properties', menu)
+        self.assertNotIn('List a Community', menu)
+
+    def test_admin_keeps_the_normal_menu(self):
+        admin = User.objects.create_superuser('root', 'root@example.com', 'pw')
+        self.client.force_login(admin)
+        menu = self._account_menu(self.client.get(reverse('home')).content.decode())
+        self.assertIn('Post a Listing', menu)
+        self.assertIn('List a Community', menu)
+        self.assertNotIn('Manage Properties', menu)
+
+
+class PartnerCannotPostListingTests(TestCase):
+    """A partner's inventory goes through the portal, not the posting form."""
+
+    def setUp(self):
+        from partners.models import Membership, Organization
+        self.partner = User.objects.create_user('pm2', 'pm2@example.com', 'pw')
+        org = Organization.objects.create(name='Beta PM', slug='beta-pm')
+        Membership.objects.create(user=self.partner, organization=org)
+        self.client.force_login(self.partner)
+
+    def test_partner_sees_explanation_with_way_out(self):
+        response = self.client.get(reverse('create_listing'), HTTP_REFERER='http://testserver/listings/')
+        self.assertEqual(response.status_code, 403)
+        html = response.content.decode()
+        self.assertIn("Partners can't post individual listings", html)
+        self.assertIn(f'href="{reverse("partner_dashboard")}" class="button accent"', html)
+        self.assertIn('href="http://testserver/listings/" class="button secondary"', html)
+        self.assertNotIn('id="amenity-picker"', html)
+
+    def test_back_link_ignores_other_sites(self):
+        html = self.client.get(reverse('create_listing'),
+                               HTTP_REFERER='https://evil.example/').content.decode()
+        self.assertIn(f'href="{reverse("home")}" class="button secondary"', html)
+
+    def test_partner_post_creates_nothing(self):
+        response = self.client.post(reverse('create_listing'), {
+            'title': 'Hand posted', 'category': 'rentals', 'price': '1200', 'city': 'Dallas'})
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Listing.objects.filter(title='Hand posted').exists())
+
+    def test_admin_and_lister_still_reach_the_form(self):
+        for user in (User.objects.create_superuser('root2', 'r2@example.com', 'pw'),
+                     User.objects.create_user('plain', 'plain@example.com', 'pw')):
+            self.client.force_login(user)
+            self.assertEqual(self.client.get(reverse('create_listing')).status_code, 200)

@@ -22,6 +22,7 @@ from .models import CityWaitlist, Community, Favourite, GuidedSearchEvent, Listi
 from listings.services import match_prefs, saved_searches
 from listings.services.amenities import picker_groups
 from listings.services.match_prefs import resolve_match_prefs
+from listings.services.ownership import is_partner_member
 from listings.services.fit import build_report, lead_snapshot
 from listings.services.search import build_listing_search_context, live_inventory_count, live_match_preview
 from listings.services.valuation import predict_price
@@ -614,10 +615,30 @@ def posting_market_stats(request):
     return JsonResponse({'ok': True, **stats})
 
 
+def _partner_cannot_post(request):
+    """
+    The page a partner sees instead of the posting form.
+
+    Partner inventory belongs to the company and arrives through the partner
+    portal (CSV import or a data connection), where it is attributed to the
+    organization. A one-off listing posted by hand would be owned by the
+    person instead, and leave the portfolio when they leave the company.
+    """
+    back = request.META.get('HTTP_REFERER', '')
+    if not url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()},
+                                           require_https=request.is_secure()) \
+            or back.endswith(request.path):
+        back = reverse('home')
+    return render(request, 'listings/partner_cannot_post.html',
+                  {'back_url': back}, status=403)
+
+
 @login_required
 def create_listing(request):
     if not _listings_table_ready():
         return _render_db_setup_page(request)
+    if is_partner_member(request.user):
+        return _partner_cannot_post(request)
 
     if request.method == 'POST':
         is_draft = request.POST.get('save_draft') == '1'

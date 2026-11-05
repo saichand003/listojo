@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% translate "Partners can't post individual listings" %} · Listojo{% endblock %}
+{% block content %}
+{% comment %}
+  Shown to a partner who reaches the posting form. Their inventory comes in
+  through the partner portal, where it belongs to the organization.
+{% endcomment %}
+<div style="max-width:560px;margin:2rem auto;">
+  <div class="card" style="padding:1.5rem;">
+    <h1 style="font-size:1.35rem;margin:0 0 .5rem;">{% translate "Partners can't post individual listings" %}</h1>
+    <p class="muted" style="margin:0 0 1.1rem;line-height:1.55;">
+      {% blocktranslate trimmed %}
+      Your account is linked to a partner organization, so your properties are
+      managed in the partner portal. Add or update them with an import or your
+      data connection, and they stay with your organization.
+      {% endblocktranslate %}
+    </p>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
+      <a href="{% url 'partner_dashboard' %}" class="button accent">{% translate "Manage Properties" %}</a>
+      <a href="{{ back_url }}" class="button secondary">{% translate "Go back" %}</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

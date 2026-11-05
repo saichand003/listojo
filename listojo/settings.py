@@ -66,6 +66,7 @@ TEMPLATES = [
                 'listojo.context_processors.feature_flags',
                 'listojo.context_processors.sidebar_counts',
                 'listojo.context_processors.language_switch',
+                'listojo.context_processors.partner_access',
             ],
         },
     },

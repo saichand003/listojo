@@ -646,7 +646,7 @@
 
   <div class="landlord-cta-actions">
     <a href="{% url 'create_listing' %}" class="landlord-cta-btn">{% translate "List a Property" %} &rarr;</a>
-    <a href="{% url 'create_community' %}" class="landlord-cta-btn landlord-cta-btn-ghost">{% translate "List a Community" %} &rarr;</a>
+    <a href="{% if is_partner %}{% url 'create_community' %}{% else %}{% url 'partner_apply' %}{% endif %}" class="landlord-cta-btn landlord-cta-btn-ghost">{% translate "List a Community" %} &rarr;</a>
   </div>
 </section>
 
