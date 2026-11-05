@@ -21,6 +21,7 @@ from .services.community_photos import COMMUNITY, belongs_to_options, resolve_he
 from .services.community_service import handle_tour_request
 from .services.event_tracker import log_community_event
 from .services.match_prefs import resolve_match_prefs
+from .services.ownership import editable_communities
 from .views import _detail_match
 
 
@@ -140,6 +141,11 @@ def _edit_url(community_pk, anchor):
     return f"{reverse('edit_community', args=[community_pk])}#{anchor}"
 
 
+def _editable_communities(user):
+    """Owned outright, or run by a partner org the user belongs to."""
+    return editable_communities(user, Community.objects.all())
+
+
 def _csv_upload_url(user):
     """
     The side door for big portfolios: partner members get the CSV upload,
@@ -178,7 +184,7 @@ def create_community(request):
 
 @login_required
 def edit_community(request, pk):
-    community = get_object_or_404(Community, pk=pk, owner=request.user)
+    community = get_object_or_404(_editable_communities(request.user), pk=pk)
 
     if request.method == 'POST' and 'save_community' in request.POST:
         form = CommunityForm(request.POST, instance=community)
@@ -216,7 +222,7 @@ def save_community_photos(request, pk):
     The photo manager on the edit page: re-heading and deleting existing
     photos, and uploading new ones, in one submit.
     """
-    community = get_object_or_404(Community, pk=pk, owner=request.user)
+    community = get_object_or_404(_editable_communities(request.user), pk=pk)
 
     delete_ids = {int(x) for x in request.POST.getlist('delete_images') if x.isdigit()}
     for photo in community.images.all():
@@ -244,7 +250,7 @@ def save_community_photos(request, pk):
 
 @login_required
 def add_floor_plan(request, community_pk):
-    community = get_object_or_404(Community, pk=community_pk, owner=request.user)
+    community = get_object_or_404(_editable_communities(request.user), pk=community_pk)
     if request.method == 'POST':
         form = FloorPlanForm(request.POST, request.FILES)
         if form.is_valid():
@@ -264,7 +270,7 @@ def duplicate_floor_plan(request, pk):
     Units and photos stay with the original: unit numbers are unique, and the
     owner tags the new plan's own photos.
     """
-    fp = get_object_or_404(FloorPlan, pk=pk, community__owner=request.user)
+    fp = get_object_or_404(FloorPlan, pk=pk, community__in=_editable_communities(request.user))
     copy = FloorPlan.objects.create(
         community=fp.community, name=f'{fp.name} (copy)'[:80], bedrooms=fp.bedrooms,
         bathrooms=fp.bathrooms, square_footage=fp.square_footage,
@@ -275,7 +281,7 @@ def duplicate_floor_plan(request, pk):
 
 @login_required
 def delete_floor_plan(request, pk):
-    fp = get_object_or_404(FloorPlan, pk=pk, community__owner=request.user)
+    fp = get_object_or_404(FloorPlan, pk=pk, community__in=_editable_communities(request.user))
     community_pk = fp.community.pk
     if request.method == 'POST':
         fp.delete()
@@ -284,7 +290,7 @@ def delete_floor_plan(request, pk):
 
 @login_required
 def add_unit(request, floor_plan_pk):
-    fp = get_object_or_404(FloorPlan, pk=floor_plan_pk, community__owner=request.user)
+    fp = get_object_or_404(FloorPlan, pk=floor_plan_pk, community__in=_editable_communities(request.user))
     if request.method == 'POST':
         form = UnitForm(request.POST)
         if form.is_valid():
@@ -299,7 +305,7 @@ def add_unit(request, floor_plan_pk):
 
 @login_required
 def edit_unit(request, pk):
-    unit = get_object_or_404(Unit, pk=pk, floor_plan__community__owner=request.user)
+    unit = get_object_or_404(Unit, pk=pk, floor_plan__community__in=_editable_communities(request.user))
     if request.method == 'POST':
         form = UnitForm(request.POST, instance=unit)
         if form.is_valid():
@@ -312,7 +318,7 @@ def edit_unit(request, pk):
 
 @login_required
 def delete_unit(request, pk):
-    unit = get_object_or_404(Unit, pk=pk, floor_plan__community__owner=request.user)
+    unit = get_object_or_404(Unit, pk=pk, floor_plan__community__in=_editable_communities(request.user))
     community_pk = unit.floor_plan.community.pk
     if request.method == 'POST':
         unit.delete()
@@ -324,7 +330,7 @@ def delete_unit(request, pk):
 @require_POST
 def confirm_community_availability(request, pk):
     """The edit page's "Still accurate" button."""
-    community = get_object_or_404(Community, pk=pk, owner=request.user)
+    community = get_object_or_404(_editable_communities(request.user), pk=pk)
     community.confirm_availability()
     messages.success(request, 'Thanks — availability confirmed. We will check again in 14 days.')
     return redirect('edit_community', pk=community.pk)

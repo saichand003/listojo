@@ -67,7 +67,7 @@
   {% if communities %}
     <table>
       <thead>
-        <tr><th>Property</th><th>City</th><th>Floor plans</th><th>Available units</th><th>Media rights</th></tr>
+        <tr><th>Property</th><th>City</th><th>Floor plans</th><th>Available units</th><th>Media rights</th><th></th></tr>
       </thead>
       <tbody>
         {% for c in communities %}
@@ -93,14 +93,15 @@
                 </form>
               {% endif %}
             </td>
+            <td><a class="btn btn-ghost btn-sm" href="{% url 'edit_community' c.pk %}">Edit &amp; photos</a></td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
     <p class="sub rights-note">
       Confirming media rights means your company is authorized to publish that
-      property's photos on Listojo. We only download the photo URLs in your
-      uploads once you have confirmed. The person and date are recorded.
+      property's photos on Listojo. The person and date are recorded. Add or
+      re-head photos with <strong>Edit &amp; photos</strong> on each community.
     </p>
   {% else %}
     <p class="empty">No communities yet.</p>

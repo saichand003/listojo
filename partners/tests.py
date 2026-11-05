@@ -205,6 +205,26 @@ class PartnerPortalViewTests(TestCase):
         self.assertContains(response, 'Maple Court')
         self.assertNotContains(response, 'Elm Tower')
 
+    def test_member_can_reach_edit_page_for_org_community(self):
+        """
+        Partner-imported communities have no `owner`; the org's members must
+        still reach the photo manager, and the portfolio must link to it.
+        """
+        from django.urls import reverse
+        mine = Community.objects.create(name='Maple Court', description='', city='Dallas',
+                                        managed_by=self.acme, status='active')
+        theirs = Community.objects.create(name='Elm Tower', description='', city='Plano',
+                                          managed_by=self.globex, status='active')
+        self.client.force_login(self.alice)
+
+        portfolio = self.client.get('/partners/')
+        self.assertContains(portfolio, reverse('edit_community', args=[mine.pk]))
+
+        self.assertEqual(
+            self.client.get(reverse('edit_community', args=[mine.pk])).status_code, 200)
+        self.assertEqual(
+            self.client.get(reverse('edit_community', args=[theirs.pk])).status_code, 404)
+
     def test_preview_upload_reports_without_writing(self):
         self.client.force_login(self.alice)
         body = (HEADER + 'MAPLE,Maple Court,Dallas,A1,101,1,1,720,1450\n')
