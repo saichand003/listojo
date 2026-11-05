@@ -2660,8 +2660,28 @@ footer {
    rather than being asked the same question twice in two text boxes. */
 .cl-amenity-group + .cl-amenity-group { margin-top: .9rem; }
 .cl-amenity-btn[hidden] { display: none; }
-.cl-amenity-custom { display: grid; gap: .5rem; margin-top: .9rem; }
-.cl-amenity-custom input { width: 100%; font-size: .83rem; }
+/* The add field sits in the chip row and looks like an empty chip, so the
+   seller types where the chip will appear. The id outranks the global input
+   rule's long :not() chain. */
+#amenity-picker .cl-amenity-add {
+  width: 9.5rem;
+  padding: .32rem .8rem;
+  border: 1.5px dashed var(--border);
+  border-radius: 20px;
+  background: transparent;
+  font-size: .8rem;
+  line-height: inherit;
+  box-shadow: none;
+}
+#amenity-picker .cl-amenity-add:focus {
+  border-style: solid;
+  border-color: var(--primary);
+  background: var(--surface);
+  width: 13rem;
+}
+@media (pointer: coarse) { #amenity-picker .cl-amenity-add { font-size: 16px; } }
+.cl-amenity-x { margin-left: .35rem; font-weight: 700; opacity: .7; }
+.cl-amenity-btn:hover .cl-amenity-x { opacity: 1; }
 .cl-edit-amenities { margin: 1.25rem 0 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--border); }
 .cl-amenity-group-label {
   font-size: .72rem;

@@ -11,6 +11,11 @@ Context:
 catalogue fields take the same picks split by group, so the detail page can
 show them as two cards without asking the seller twice.
 
+Each group ends in a small add field: type, press Enter (or comma), and the
+text becomes a selected chip of that group; clicking a typed chip removes it.
+Typed shared/in-unit chips land in their catalogue field and `tags`; typed
+lease terms land in `tags` only, like the built-in terms.
+
 The script fires `listojo:amenities-change` and `listojo:form-sync` on window
 after each change, so a host page can refresh its own meters and previews.
 {% endcomment %}
@@ -22,19 +27,17 @@ after each change, so a host page can refresh its own meters and previews.
 {% for group_label, group_tags in amenity_groups %}
 <div class="cl-amenity-group">
   <p class="cl-amenity-group-label">{{ group_label }}</p>
-  <div class="cl-amenity-grid">
+  <div class="cl-amenity-grid" data-grid="{{ forloop.counter0 }}">
     {% for tag, ctx in group_tags %}
     <button type="button" class="cl-amenity-btn" data-tag="{{ tag }}" data-group="{{ forloop.parentloop.counter0 }}"{% if ctx %} data-ctx="{{ ctx }}"{% endif %}>{{ tag }}</button>
     {% endfor %}
+    {# Type + Enter turns into a chip of this group; the chip's × removes it. #}
+    <input type="text" class="cl-amenity-add" data-group="{{ forloop.counter0 }}" maxlength="40" autocomplete="off" enterkeyhint="done"
+           placeholder="{% if forloop.counter0 == 0 %}+ Add shared{% elif forloop.counter0 == 1 %}+ Add in-unit{% else %}+ Add term{% endif %}"
+           aria-label="Add your own: {{ group_label }}">
   </div>
 </div>
 {% endfor %}
-</div>
-{# Anything the chips miss. Each box feeds its own catalogue card and `tags`, #}
-{# so a typed amenity is searchable exactly like a tapped one.                #}
-<div class="cl-amenity-custom">
-  <input type="text" id="f-custom-shared" placeholder="Other shared or outdoor amenities, comma-separated" autocomplete="off">
-  <input type="text" id="f-custom-private" placeholder="Other in-unit or private features, comma-separated" autocomplete="off">
 </div>
 <p class="cl-hint" id="tags-count-hint" style="margin-top:.6rem;">0 selected</p>
 <script>
@@ -43,9 +46,7 @@ after each change, so a host page can refresh its own meters and previews.
   var fTags    = document.getElementById('f-tags');
   var fShared  = document.getElementById('f-community-amenities');
   var fPrivate = document.getElementById('f-in-unit-amenities');
-  var boxes    = [document.getElementById('f-custom-shared'),
-                  document.getElementById('f-custom-private')];
-  var buttons  = Array.prototype.slice.call(picker.querySelectorAll('.cl-amenity-btn'));
+  var buttons  = Array.prototype.slice.call(picker.querySelectorAll('.cl-amenity-btn[data-tag]'));
 
   function splitList(v) {
     return (v || '').split(',').map(function (t) { return t.trim(); }).filter(Boolean);
@@ -57,27 +58,28 @@ after each change, so a host page can refresh its own meters and previews.
   buttons.forEach(function (b) { chipByLower[b.dataset.tag.toLowerCase()] = b.dataset.tag; });
 
   var selected = [];
-  function select(tag) { if (selected.indexOf(tag) === -1) selected.push(tag); }
+  /* Typed chips per group: 0 shared, 1 in-unit (both catalogued), 2 lease
+     terms (searchable through `tags` only, like the built-in term chips). */
+  var custom = [[], [], []];
+  var customLower = {};
 
-  /* Catalogue values that are not chips were typed, so they go back into the
-     matching box. Tags that are neither a chip nor in a box are kept as-is
-     so saving never drops something the seller can't see. */
-  var typedLower = {};
-  [[fShared, 0], [fPrivate, 1]].forEach(function (pair) {
-    var typed = [];
-    splitList(pair[0].value).forEach(function (t) {
-      var chip = chipByLower[t.toLowerCase()];
-      if (chip) { select(chip); return; }
-      if (!typedLower[t.toLowerCase()]) { typed.push(t); typedLower[t.toLowerCase()] = true; }
-    });
-    if (typed.length) boxes[pair[1]].value = typed.join(', ');
-  });
-  var extras = [];
-  splitList(fTags.value).forEach(function (t) {
+  function select(tag) { if (selected.indexOf(tag) === -1) selected.push(tag); }
+  function addCustom(g, text) {
+    var t = text.replace(/\s+/g, ' ').trim();
+    if (!t) return;
     var low = t.toLowerCase();
-    if (chipByLower[low]) select(chipByLower[low]);
-    else if (!typedLower[low] && extras.indexOf(t) === -1) extras.push(t);
-  });
+    if (chipByLower[low]) { select(chipByLower[low]); return; }  /* it's a chip already */
+    if (customLower[low]) return;
+    customLower[low] = true;
+    custom[g].push(t);
+  }
+
+  /* Restore: catalogue values that are not chips were typed, so they come
+     back as typed chips of their group. Tags that are neither become typed
+     lease terms — still saved, and now visible and removable. */
+  splitList(fShared.value).forEach(function (t) { addCustom(0, t); });
+  splitList(fPrivate.value).forEach(function (t) { addCustom(1, t); });
+  splitList(fTags.value).forEach(function (t) { addCustom(2, t); });
 
   /* Which chips fit this listing: a room, a unit in a building, or a house. */
   var BUILDING_TYPES = ['apartment', 'condo', 'loft', 'studio', 'townhouse'];
@@ -87,6 +89,27 @@ after each change, so a host page can refresh its own meters and previews.
     var pt = valueOf(picker.dataset.proptype);
     if (!pt) return '';
     return BUILDING_TYPES.indexOf(pt) !== -1 ? 'building' : 'house';
+  }
+
+  function renderCustom() {
+    picker.querySelectorAll('.cl-amenity-btn[data-custom]').forEach(function (b) { b.remove(); });
+    custom.forEach(function (list, g) {
+      var input = picker.querySelector('.cl-amenity-add[data-group="' + g + '"]');
+      list.forEach(function (t, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'cl-amenity-btn selected';
+        b.dataset.custom = g + ':' + i;
+        b.setAttribute('aria-label', 'Remove ' + t);
+        b.textContent = t;
+        var x = document.createElement('span');
+        x.className = 'cl-amenity-x';
+        x.setAttribute('aria-hidden', 'true');
+        x.textContent = '×';
+        b.appendChild(x);
+        input.parentNode.insertBefore(b, input);
+      });
+    });
   }
 
   function sync() {
@@ -100,20 +123,16 @@ after each change, so a host page can refresh its own meters and previews.
       var g = parseInt(btn.dataset.group, 10);
       if (on && buckets[g]) buckets[g].push(btn.dataset.tag);
     });
-    var custom = [];
-    boxes.forEach(function (box, g) {
-      splitList(box.value).forEach(function (t) {
-        if (buckets[g].indexOf(t) === -1) { buckets[g].push(t); custom.push(t); }
-      });
-    });
-    var all = selected.concat(custom, extras);
+    renderCustom();
+    buckets[0] = buckets[0].concat(custom[0]);
+    buckets[1] = buckets[1].concat(custom[1]);
+    var all = selected.concat(custom[0], custom[1], custom[2]);
     fTags.value    = all.join(',');
     fShared.value  = buckets[0].join(', ');
     fPrivate.value = buckets[1].join(', ');
-    var shown = selected.length + custom.length;
     var hint = document.getElementById('tags-count-hint');
-    hint.textContent = shown + ' selected';
-    hint.style.color = shown > 0 ? 'var(--primary)' : '';
+    hint.textContent = all.length + ' selected';
+    hint.style.color = all.length > 0 ? 'var(--primary)' : '';
     window.dispatchEvent(new Event('listojo:amenities-change'));
     window.dispatchEvent(new Event('listojo:form-sync'));
   }
@@ -121,11 +140,44 @@ after each change, so a host page can refresh its own meters and previews.
   picker.addEventListener('click', function (e) {
     var btn = e.target.closest('.cl-amenity-btn');
     if (!btn) return;
+    if (btn.dataset.custom) {
+      var parts = btn.dataset.custom.split(':');
+      var removed = custom[+parts[0]].splice(+parts[1], 1)[0];
+      delete customLower[removed.toLowerCase()];
+      var input = picker.querySelector('.cl-amenity-add[data-group="' + parts[0] + '"]');
+      sync();
+      input.focus();  /* the chip that had focus is gone */
+      return;
+    }
     var i = selected.indexOf(btn.dataset.tag);
     if (i !== -1) selected.splice(i, 1); else selected.push(btn.dataset.tag);
     sync();
   });
-  boxes.forEach(function (box) { box.addEventListener('input', sync); });
+
+  /* Enter or a comma locks the text in as a chip; a pasted list is split.
+     Leaving the field also commits it, so a typed amenity is never lost to a
+     submit click. Backspace in an empty field takes back the last typed chip. */
+  function commit(input) {
+    var g = +input.dataset.group;
+    splitList(input.value).forEach(function (t) { addCustom(g, t); });
+    input.value = '';
+    sync();
+  }
+  picker.querySelectorAll('.cl-amenity-add').forEach(function (input) {
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();  /* Enter must not submit the listing form */
+        commit(input);
+      } else if (e.key === 'Backspace' && !input.value) {
+        var list = custom[+input.dataset.group];
+        if (list.length) { delete customLower[list.pop().toLowerCase()]; sync(); }
+      }
+    });
+    input.addEventListener('blur', function () { if (input.value.trim()) commit(input); });
+    input.addEventListener('paste', function () {
+      setTimeout(function () { if (input.value.indexOf(',') !== -1) commit(input); }, 0);
+    });
+  });
 
   /* Re-filter when the listing type changes — radio cards on the create page,
      selects on the edit page. Deferred so the host's own handler has written
@@ -133,8 +185,7 @@ after each change, so a host page can refresh its own meters and previews.
   function onTypeChange(e) {
     var t = e.target;
     if (t.closest && (t.closest('.cl-radio-card[data-group]') ||
-        t.id === picker.dataset.accom || t.id === picker.dataset.proptype ||
-        t.id === 'id_category')) {
+        t.id === picker.dataset.accom || t.id === picker.dataset.proptype)) {
       setTimeout(sync, 0);
     }
   }
