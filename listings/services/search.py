@@ -5,7 +5,7 @@ from datetime import date
 
 from django.db.models import Case, Count, IntegerField, Q, Value, When
 
-from listings.models import Community, Favourite, Listing
+from listings.models import Community, Favourite, Listing, Unit
 from listings.services.fit import build_reports
 from listings.services.match_prefs import MatchPrefs, remember, resolve_match_prefs
 from listings.services.matching import match_badge_class
@@ -200,10 +200,10 @@ def _matching_communities(user, params: SearchParams) -> list[Community]:
     if params.bedrooms_int is not None:
         cqs = cqs.filter(floor_plans__bedrooms=params.bedrooms_int)
     if params.max_price_val is not None:
-        cqs = cqs.filter(
-            floor_plans__units__price__lte=params.max_price_val,
-            floor_plans__units__status='available',
-        )
+        # Only a unit a renter could see counts — a leased unit under budget
+        # is not a reason to show the community.
+        cqs = cqs.filter(floor_plans__units__in=Unit.objects.visible().filter(
+            price__lte=params.max_price_val))
     # Communities are rental inventory, so the Buy tab excludes them — but an
     # unset category means "no filter", not "not rentals". Treating blank as a
     # mismatch hid every community from the default /listings/ view, which is

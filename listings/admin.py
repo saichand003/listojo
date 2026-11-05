@@ -30,7 +30,8 @@ class CityWaitlistAdmin(admin.ModelAdmin):
 
 @admin.register(Community)
 class CommunityAdmin(admin.ModelAdmin):
-    list_display = ('name', 'community_type', 'city', 'status', 'featured', 'owner', 'created_at')
+    list_display = ('name', 'community_type', 'city', 'status', 'featured', 'owner',
+                    'last_confirmed_at', 'availability_hidden_at', 'created_at')
     list_filter = ('community_type', 'status', 'featured', 'city')
     search_fields = ('name', 'city', 'state', 'owner__username')
 
@@ -51,7 +52,8 @@ class UnitAdmin(admin.ModelAdmin):
 
 @admin.register(CommunityImage)
 class CommunityImageAdmin(admin.ModelAdmin):
-    list_display = ('community', 'order')
+    list_display = ('community', 'floor_plan', 'shows', 'order')
+    list_filter = ('shows',)
 
 
 @admin.register(UserListingEvent)

@@ -1,8 +1,10 @@
 import re
+from datetime import timedelta
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
@@ -325,6 +327,17 @@ class GalleryDisplayMixin:
             if legacy:
                 urls = [legacy.url]
         return urls
+
+    @cached_property
+    def gallery_captions(self):
+        """A caption per entry of `gallery_urls`; blank unless a subclass has headings."""
+        return [''] * len(self.gallery_urls)
+
+    @property
+    def gallery_items(self):
+        """`gallery_urls` paired with captions, for the photo viewer's data."""
+        return [{'url': url, 'caption': caption}
+                for url, caption in zip(self.gallery_urls, self.gallery_captions)]
 
     @cached_property
     def collage_pages(self):
@@ -815,6 +828,19 @@ class Community(GalleryDisplayMixin, AmenityDisplayMixin, ProximityDisplayMixin,
     featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # ── Availability confirmation ─────────────────────────────────────────
+    # Stale-listing control. Every ~14 days the owner is asked "still
+    # available?"; no answer within the grace period hides the units (not the
+    # community — its page and lead form stay up, every plan just reads
+    # "contact for availability"). Any owner edit to a unit, a partner upload,
+    # or the confirm link resets the clock. See send_availability_checks.
+    last_confirmed_at = models.DateTimeField(default=timezone.now,
+                            help_text='When the owner last confirmed unit availability')
+    confirmation_requested_at = models.DateTimeField(null=True, blank=True,
+                                    help_text='When the outstanding "still available?" email was sent')
+    availability_hidden_at = models.DateTimeField(null=True, blank=True,
+                                 help_text='Set when units were hidden for want of a confirmation')
+
     # ── Geocoding (real map coordinates) ──────────────────────────────────
     latitude  = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, db_index=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, db_index=True)
@@ -877,14 +903,43 @@ class Community(GalleryDisplayMixin, AmenityDisplayMixin, ProximityDisplayMixin,
     @property
     def price_range(self):
         from django.db.models import Min, Max
-        result = Unit.objects.filter(
-            floor_plan__community=self, status='available', price__isnull=False
+        result = Unit.objects.visible().filter(
+            floor_plan__community=self, price__isnull=False
         ).aggregate(mn=Min('price'), mx=Max('price'))
         return result['mn'], result['mx']
 
     @property
     def available_unit_count(self):
-        return Unit.objects.filter(floor_plan__community=self, status='available').count()
+        """Units a renter can see — available now or coming soon. See UnitQuerySet.visible."""
+        return Unit.objects.visible().filter(floor_plan__community=self).count()
+
+    def confirm_availability(self, *, save=True):
+        """The owner vouched for their units: restart the clock and unhide them."""
+        self.last_confirmed_at = timezone.now()
+        self.confirmation_requested_at = None
+        self.availability_hidden_at = None
+        if save:
+            self.save(update_fields=['last_confirmed_at', 'confirmation_requested_at',
+                                     'availability_hidden_at'])
+
+    @cached_property
+    def photo_groups(self):
+        """
+        The gallery grouped by heading, in display order — community photos
+        first, then each floor plan's. See services/community_photos.py.
+        """
+        from .services.community_photos import group_photos
+        return group_photos(self.images.all(), self.floor_plans.all())
+
+    @cached_property
+    def gallery_urls(self):
+        """Every photo URL in heading order, so the hero is a community photo."""
+        return [photo.image.url for group in self.photo_groups for photo in group.photos]
+
+    @cached_property
+    def gallery_captions(self):
+        """Heading per entry of `gallery_urls`, for the photo viewer."""
+        return [group.heading for group in self.photo_groups for _photo in group.photos]
 
     @property
     def bedroom_types(self):
@@ -900,7 +955,43 @@ class Community(GalleryDisplayMixin, AmenityDisplayMixin, ProximityDisplayMixin,
 
 
 class CommunityImage(models.Model):
+    """
+    One community photo with a two-part heading, Apartments.com style:
+    what it belongs to (the community, or one floor plan) and what it shows.
+    "Community – Swimming Pool", "2 Bedroom – Kitchen".
+
+    Photos are uploaded once, at the community level; a floor plan's photos
+    are the ones pointing at it, and every unit on that plan inherits them.
+    """
+
+    #: What a community-wide photo can show.
+    COMMUNITY_SHOWS = [
+        ('pool',      'Swimming Pool'),
+        ('clubhouse', 'Clubhouse'),
+        ('gym',       'Gym'),
+        ('exterior',  'Exterior'),
+        ('parking',   'Parking'),
+        ('other',     'Other'),
+    ]
+    #: What a floor plan photo can show.
+    ROOM_SHOWS = [
+        ('living_room',    'Living Room'),
+        ('kitchen',        'Kitchen'),
+        ('master_bedroom', 'Master Bedroom'),
+        ('bedroom_2',      'Second Bedroom'),
+        ('bathroom',       'Bathroom'),
+        ('other',          'Other'),
+    ]
+
     community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name='images')
+    #: Empty means a community photo — "Belongs to: Community".
+    floor_plan = models.ForeignKey('FloorPlan', null=True, blank=True,
+                                   on_delete=models.CASCADE, related_name='photos')
+    #: A key from COMMUNITY_SHOWS or ROOM_SHOWS. Blank on photos uploaded
+    #: before headings existed; they group under plain "Community".
+    shows     = models.CharField(max_length=30, blank=True, default='')
+    #: Replaces the "Other" label when the owner names it, e.g. "Rooftop".
+    custom_label = models.CharField(max_length=100, blank=True, default='')
     image     = models.ImageField(upload_to='community_images/')
     order     = models.PositiveSmallIntegerField(default=0)
     #: See ListingImage.source_url.
@@ -911,6 +1002,16 @@ class CommunityImage(models.Model):
 
     def __str__(self):
         return f'Image {self.order} for {self.community.name}'
+
+    @classmethod
+    def shows_choices_for(cls, floor_plan):
+        return cls.ROOM_SHOWS if floor_plan is not None else cls.COMMUNITY_SHOWS
+
+    @property
+    def shows_label(self):
+        if self.shows == 'other' and self.custom_label:
+            return self.custom_label
+        return dict(self.shows_choices_for(self.floor_plan_id)).get(self.shows, '')
 
 
 class FloorPlan(models.Model):
@@ -929,16 +1030,24 @@ class FloorPlan(models.Model):
         return f'{self.name} ({self.bedrooms}BR)'
 
     @property
+    def bedroom_label(self):
+        """"Studio", "1 Bedroom", "2 Bedroom" — the "Belongs to" wording."""
+        return 'Studio' if self.bedrooms == 0 else f'{self.bedrooms} Bedroom'
+
+    @property
     def available_units(self):
-        return self.units.filter(status='available')
+        """
+        Units a renter may see (UnitQuerySet.visible), as a list. Filtered in
+        Python so a `units` prefetch is reused instead of re-queried per plan.
+        """
+        if self.community.availability_hidden_at:
+            return []
+        return [unit for unit in self.units.all() if unit.is_visible]
 
     @property
     def price_range(self):
-        from django.db.models import Min, Max
-        result = self.units.filter(status='available', price__isnull=False).aggregate(
-            mn=Min('price'), mx=Max('price')
-        )
-        return result['mn'], result['mx']
+        prices = [unit.price for unit in self.available_units if unit.price is not None]
+        return (min(prices), max(prices)) if prices else (None, None)
 
 
 class SavedSearch(models.Model):
@@ -1005,15 +1114,36 @@ class SavedSearch(models.Model):
         return ' · '.join(parts) if parts else self.get_search_type_display()
 
 
+class UnitQuerySet(models.QuerySet):
+    def visible(self, days_ahead=None):
+        """
+        Units a renter may see: available now, or coming soon within
+        `days_ahead` days. Leased and off-market units never show — out of 100
+        units only the vacant ones appear, as on Apartments.com. Units of a
+        community hidden for a missed availability check drop out too.
+        """
+        if days_ahead is None:
+            days_ahead = Unit.VISIBLE_DAYS_AHEAD
+        cutoff = timezone.localdate() + timedelta(days=days_ahead)
+        return self.filter(
+            models.Q(status=Unit.AVAILABLE)
+            | models.Q(status=Unit.COMING_SOON, available_from__lte=cutoff),
+            floor_plan__community__availability_hidden_at__isnull=True,
+        )
+
+
 class Unit(models.Model):
+    AVAILABLE, COMING_SOON, LEASED, OFF_MARKET = 'available', 'coming_soon', 'leased', 'off_market'
     STATUS_CHOICES = [
-        ('available',   'Available'),
-        ('occupied',    'Occupied'),
-        ('coming_soon', 'Coming Soon'),
-        # A unit the partner stopped sending. Distinct from 'occupied' on
-        # purpose — we know they withdrew it, not that someone moved in.
-        ('withdrawn',   'Withdrawn'),
+        (AVAILABLE,   'Available'),
+        (COMING_SOON, 'Coming soon'),
+        (LEASED,      'Leased'),
+        # Includes a unit a partner feed stopped sending — we know it was
+        # withdrawn, not that someone moved in, so it is not 'leased'.
+        (OFF_MARKET,  'Off market'),
     ]
+    #: How far ahead a coming-soon unit is shown on the public page.
+    VISIBLE_DAYS_AHEAD = 60
 
     floor_plan   = models.ForeignKey(FloorPlan, on_delete=models.CASCADE, related_name='units')
     unit_number  = models.CharField(max_length=20)
@@ -1029,11 +1159,23 @@ class Unit(models.Model):
     deactivation_pending_since = models.DateTimeField(null=True, blank=True,
                                      help_text='Set when a partner feed first omitted this unit.')
 
+    objects = UnitQuerySet.as_manager()
+
     class Meta:
         ordering = ['unit_number']
 
     def __str__(self):
         return f'Unit {self.unit_number}'
+
+    @property
+    def is_visible(self):
+        """The per-unit form of UnitQuerySet.visible, minus the community check."""
+        if self.status == self.AVAILABLE:
+            return True
+        if self.status == self.COMING_SOON and self.available_from:
+            cutoff = timezone.localdate() + timedelta(days=self.VISIBLE_DAYS_AHEAD)
+            return self.available_from <= cutoff
+        return False
 
 
 # ── School models (GreatSchools) ──────────────────────────────────────────────

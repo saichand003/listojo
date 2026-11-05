@@ -121,9 +121,14 @@ at most one per search per day (`listojo-cron`, see ARCHITECTURE §4.1).
 - Property managers supply inventory as a CSV; every supply format normalizes
   into a canonical record before anything touches the database.
 - **Files:** `listings/services/partner_import.py` (adapter interface +
-  `CsvAdapter` + upsert), `listings/services/media.py` (photo fetch),
+  `CsvAdapter` + upsert),
   `listings/management/commands/import_partner_csv.py`.
 - **Template:** `docs/partner-csv-template.csv`.
+- **No photos.** A CSV cannot carry image files and most small landlords have
+  no website to link from, so photos are uploaded in the community form with a
+  Belongs to / Shows heading (see §14a). A `photo_urls` column is ignored.
+- **Secondary path.** The interactive community form is the default onboarding;
+  CSV is a side link for property managers with large portfolios.
 
 **Two row shapes, selected per row by the `community_ref` column:**
 
@@ -144,13 +149,36 @@ apartment communities *and* scattered single-family rentals sends one CSV.
   not import twice.
 - **Safe deactivation:** absent from one file marks *pending*; only a second file
   that also omits it retires the row (`Listing.status='closed'`,
-  `Unit.status='withdrawn'`). A file omitting more than 30% of a partner's live
+  `Unit.status='off_market'`). A file omitting more than 30% of a partner's live
   rows aborts the whole run untouched.
-- **`withdrawn` vs `occupied`:** a withdrawn unit drops out of
-  `available_unit_count`, `price_range` and `bedroom_types`, so it leaves the
-  community card cleanly without asserting someone moved in.
+- **`off_market` vs `leased`:** a retired unit goes `off_market`, not `leased` —
+  it leaves the community card without asserting someone moved in. The CSV's
+  `unit_status` takes `available`, `coming_soon`, `leased`, `off_market`
+  (legacy `occupied` reads as `leased`).
+- **Confirms availability:** an upload resets each community's
+  `last_confirmed_at`, the same as the owner's "still available?" link.
 - **Adding a format** (XML/JSON/MITS) means one new `PartnerAdapter` subclass —
   the import, validation and deactivation logic is format-agnostic.
+
+## 14a. Community onboarding, photos & unit availability
+- **Form first.** Owners create a community in `create_community`, then add
+  floor plans, units and photos in `edit_community` — mobile-friendly, with a
+  **Duplicate** button on units (prefills the add-unit form) and floor plans
+  (copies the plan's specs). CSV stays a side link (§14).
+- **Photo headings.** `CommunityImage.floor_plan` (empty = community photo) and
+  `shows` give every photo a two-part heading — "Community – Swimming Pool",
+  "2 Bedroom – Kitchen". Photos are uploaded once, together, at the community
+  level; the gallery is grouped by heading
+  (`listings/services/community_photos.py`), and each floor plan card shows the
+  photos its units inherit. Deleting a floor plan deletes its photos.
+- **Unit status:** `available`, `coming_soon`, `leased`, `off_market`.
+  `Unit.objects.visible()` — available, plus coming soon within 60 days — drives
+  every public number (`available_unit_count`, `price_range`, search). A plan
+  with no visible units reads "Contact for availability".
+- **Stale-listing control:** `send_availability_checks` (daily cron) emails the
+  owner when `last_confirmed_at` is 14+ days old and hides the units (not the
+  community) if 7 more days pass without a confirm. The emailed link, the
+  confirm button on the edit page, any unit edit, or a partner upload confirms.
 
 ---
 

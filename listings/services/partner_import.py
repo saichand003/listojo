@@ -9,6 +9,11 @@ deactivation — runs identically regardless of where the data came from.
 Adding a format means writing one `PartnerAdapter` subclass. It does not mean
 touching `import_partner_inventory()`.
 
+Photos are not part of a feed. A CSV cannot hold image files and most small
+landlords have no website to link from, so photos are uploaded through the
+community form, where each one gets its Belongs to / Shows heading. A
+`photo_urls` column in an older export is simply ignored.
+
     adapter = CsvAdapter(open('inventory.csv'))
     result  = import_partner_inventory(adapter, organization=acme_org)
 """
@@ -25,7 +30,7 @@ from typing import IO, Iterator
 from django.db import transaction
 from django.utils import timezone
 
-from listings.models import Community, CommunityImage, FloorPlan, Listing, Unit
+from listings.models import Community, FloorPlan, Listing, Unit
 from partners.models import ManagementAssignment, Organization, SourceRecordMap
 
 logger = logging.getLogger(__name__)
@@ -66,12 +71,11 @@ class CanonicalListing:
     contact_phone: str = ''
     virtual_tour_url: str = ''
     tags: str = ''
-    photo_urls: list[str] = field(default_factory=list)
 
     def as_listing_fields(self) -> dict:
-        """Model kwargs for this record. Excludes identity and media."""
-        skip = {'source_listing_id', 'photo_urls'}
-        return {f.name: getattr(self, f.name) for f in fields(self) if f.name not in skip}
+        """Model kwargs for this record. Excludes identity."""
+        return {f.name: getattr(self, f.name) for f in fields(self)
+                if f.name != 'source_listing_id'}
 
 
 @dataclass
@@ -98,7 +102,7 @@ class CanonicalUnit:
     square_footage: int | None = None
     floor: int | None = None
     available_from: date | None = None
-    unit_status: str = 'available'
+    unit_status: str = Unit.AVAILABLE
 
     community_address_line: str = ''
     community_city: str = ''
@@ -109,7 +113,6 @@ class CanonicalUnit:
     community_amenities: str = ''
     in_unit_amenities: str = ''
     contact_phone: str = ''
-    photo_urls: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         # The unit number is the partner's identifier unless they supply another.
@@ -161,8 +164,6 @@ class ImportResult:
     updated: int = 0
     pending_deactivation: int = 0
     deactivated: int = 0
-    photos_saved: int = 0
-    photos_removed: int = 0
     communities: int = 0
     floor_plans: int = 0
     units: int = 0
@@ -183,8 +184,6 @@ class ImportResult:
                          f'plans / {self.units} new units / {self.units_updated} units updated')
         parts += [f'{self.pending_deactivation} pending deactivation',
                   f'{self.deactivated} deactivated',
-                  (f'{self.photos_saved} photos'
-                   + (f' (+{self.photos_removed} removed)' if self.photos_removed else '')),
                   f'{len(self.rejections)} rejected']
         return ', '.join(parts)
 
@@ -229,6 +228,9 @@ class CsvAdapter(PartnerAdapter):
     #: selects this shape, so one file can carry both.
     UNIT_REQUIRED_COLUMNS = ('community_ref', 'community_name', 'floor_plan_name',
                              'unit_number', 'bedrooms', 'price')
+    UNIT_STATUSES = (Unit.AVAILABLE, Unit.COMING_SOON, Unit.LEASED, Unit.OFF_MARKET)
+    #: Older templates said 'occupied'; existing partner exports still do.
+    LEGACY_UNIT_STATUSES = {'occupied': Unit.LEASED}
 
     def __init__(self, stream: IO[str]):
         self.stream = stream
@@ -269,9 +271,10 @@ class CsvAdapter(PartnerAdapter):
         if price <= 0:
             raise ValueError('price must be greater than zero')
 
-        status = (row.get('unit_status') or 'available').lower()
-        if status not in ('available', 'occupied', 'coming_soon'):
-            raise ValueError(f'unit_status "{status}" must be available, occupied or coming_soon')
+        status = (row.get('unit_status') or Unit.AVAILABLE).lower().replace(' ', '_')
+        status = self.LEGACY_UNIT_STATUSES.get(status, status)
+        if status not in self.UNIT_STATUSES:
+            raise ValueError(f'unit_status "{status}" must be one of {", ".join(self.UNIT_STATUSES)}')
 
         return CanonicalUnit(
             community_ref=row['community_ref'],
@@ -295,7 +298,6 @@ class CsvAdapter(PartnerAdapter):
             community_amenities=_commas(row.get('community_amenities', '')),
             in_unit_amenities=_commas(row.get('in_unit_amenities', '')),
             contact_phone=row.get('contact_phone', ''),
-            photo_urls=[u.strip() for u in row.get('photo_urls', '').split('|') if u.strip()],
         )
 
     def _to_canonical(self, row: dict) -> CanonicalListing:
@@ -330,7 +332,6 @@ class CsvAdapter(PartnerAdapter):
             # The template uses '|' so tags survive a spreadsheet round-trip
             # unquoted; Listing.get_tags_list() splits on commas.
             tags=', '.join(t.strip() for t in row.get('tags', '').split('|') if t.strip()),
-            photo_urls=[u.strip() for u in row.get('photo_urls', '').split('|') if u.strip()],
         )
         listing.title = row.get('title') or _default_title(listing)
         return listing
@@ -348,7 +349,6 @@ def import_partner_inventory(
     status: str = 'active',
     limit: int = 0,
     dry_run: bool = False,
-    fetch_photos: bool = True,
     deactivation_ceiling: float = DEFAULT_DEACTIVATION_CEILING,
 ) -> ImportResult:
     """
@@ -418,7 +418,7 @@ def import_partner_inventory(
     partner_units = Unit.objects.filter(floor_plan__community__managed_by=organization)
 
     live_before = (partner_rows.exclude(status='closed').count()
-                   + partner_units.exclude(status='withdrawn').count())
+                   + partner_units.exclude(status=Unit.OFF_MARKET).count())
     missing_count = (
         partner_rows.exclude(status='closed').exclude(source_listing_id__in=seen_ids).count()
         + _absent_units(organization, seen_units).count())
@@ -447,17 +447,14 @@ def import_partner_inventory(
 
     with transaction.atomic():
         for record in records:
-            _created, photos, removed = _upsert(
-                record, organization=organization, owner=owner,
-                status=status, fetch_photos=fetch_photos)
+            _created = _upsert(record, organization=organization, owner=owner,
+                               status=status)
             result.created += int(_created)
             result.updated += int(not _created)
-            result.photos_saved += photos
-            result.photos_removed += removed
 
         if unit_records:
             _import_units(unit_records, organization=organization, owner=owner,
-                          fetch_photos=fetch_photos, result=result)
+                          result=result)
 
         pending, deactivated = _reconcile_absent(organization, seen_ids)
         unit_pending, unit_deactivated = _reconcile_absent_units(organization, seen_units)
@@ -515,7 +512,7 @@ def _resolve_community(source_id: str, record: CanonicalUnit, *,
 
 
 def _import_units(unit_records: list[CanonicalUnit], *, organization: Organization, owner,
-                  fetch_photos: bool, result: ImportResult) -> None:
+                  result: ImportResult) -> None:
     """
     Build Community → FloorPlan → Unit from flat rows.
 
@@ -534,19 +531,14 @@ def _import_units(unit_records: list[CanonicalUnit], *, organization: Organizati
         if not created:
             for attr, value in rows[-1].community_fields().items():
                 setattr(community, attr, value)
-            community.save()
+        # A fresh upload is the partner vouching for their availability, the
+        # same as the landlord's "still available?" confirm link.
+        community.confirm_availability(save=False)
+        community.save()
 
         # Counted in `communities`, not `created` — `created`/`updated` stay
         # about standalone listings so the two shapes never blur in the report.
         result.communities += int(created)
-
-        # An empty column is treated as "this export carried no photos", not
-        # as "delete them" — a partial export must not strip a property bare.
-        photo_urls = _merged_photo_urls(rows)
-        if fetch_photos and photo_urls:
-            saved, removed = _sync_community_photos(community, photo_urls)
-            result.photos_saved += saved
-            result.photos_removed += removed
 
         for record in rows:
             floor_plan, fp_created = FloorPlan.objects.update_or_create(
@@ -565,35 +557,6 @@ def _import_units(unit_records: list[CanonicalUnit], *, organization: Organizati
             result.units_updated += int(not unit_created)
 
 
-def _merged_photo_urls(rows) -> list[str]:
-    """
-    Every row's photos, de-duplicated, in first-seen order.
-
-    Other community fields take the last row of a group so a correction applied
-    across the file wins. Photos are the exception: they are fetched only when
-    a community has none, so 'last row wins' could never deliver a correction —
-    it just discarded the other rows' URLs silently. A PMS export repeats
-    community data on every unit row, so partners spread photos across rows as
-    a matter of course.
-
-    `sync_remote_photos` still caps the download at MAX_PHOTOS.
-    """
-    merged: list[str] = []
-    seen: set[str] = set()
-    for record in rows:
-        for url in record.photo_urls:
-            if url not in seen:
-                seen.add(url)
-                merged.append(url)
-    return merged
-
-
-def _sync_community_photos(community, photo_urls) -> tuple[int, int]:
-    from listings.services.media import sync_remote_photos
-    return sync_remote_photos(community, photo_urls, image_model=CommunityImage,
-                              related_field='community', prefix='community')
-
-
 def _absent_units(organization: Organization, seen_units: set[tuple[str, str]]):
     """
     Live units in this organization's portfolio that the file did not mention.
@@ -603,7 +566,7 @@ def _absent_units(organization: Organization, seen_units: set[tuple[str, str]]):
     """
     absent = Unit.objects.filter(
         floor_plan__community__managed_by=organization,
-    ).exclude(status='withdrawn')
+    ).exclude(status=Unit.OFF_MARKET)
 
     community_by_source = dict(
         SourceRecordMap.objects.filter(organization=organization)
@@ -622,41 +585,35 @@ def _absent_units(organization: Organization, seen_units: set[tuple[str, str]]):
 
 def _reconcile_absent_units(organization: Organization,
                             seen_units: set[tuple[str, str]]) -> tuple[int, int]:
-    """Two-strike deactivation for units. Absent twice → withdrawn."""
+    """Two-strike deactivation for units. Absent twice → off market."""
     absent = _absent_units(organization, seen_units)
 
-    withdrawn = Unit.objects.filter(
+    retired = Unit.objects.filter(
         pk__in=list(absent.filter(deactivation_pending_since__isnull=False)
                     .values_list('pk', flat=True))
-    ).update(status='withdrawn', deactivation_pending_since=None)
+    ).update(status=Unit.OFF_MARKET, deactivation_pending_since=None)
 
     pending = Unit.objects.filter(
         pk__in=list(absent.filter(deactivation_pending_since__isnull=True)
                     .values_list('pk', flat=True))
     ).update(deactivation_pending_since=timezone.now())
 
-    return pending, withdrawn
+    return pending, retired
 
 
-def _upsert(record: CanonicalListing, *, organization: Organization, owner, status: str,
-            fetch_photos: bool) -> tuple[bool, int, int]:
+def _upsert(record: CanonicalListing, *, organization: Organization, owner,
+            status: str) -> bool:
     defaults = record.as_listing_fields()
     defaults.update(owner=owner, status=status, category='rentals',
                     source_type='partner_csv', deactivation_pending_since=None)
 
-    listing, created = Listing.objects.update_or_create(
+    _listing, created = Listing.objects.update_or_create(
         organization=organization,
         source_listing_id=record.source_listing_id,
         source_type='partner_csv',
         defaults=defaults,
     )
-
-    photos = removed = 0
-    if fetch_photos and record.photo_urls:
-        from listings.services.media import sync_remote_photos
-        photos, removed = sync_remote_photos(listing, record.photo_urls)
-
-    return created, photos, removed
+    return created
 
 
 def _reconcile_absent(organization: Organization, seen_ids: set[str]) -> tuple[int, int]:

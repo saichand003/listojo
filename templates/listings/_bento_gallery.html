@@ -81,7 +81,7 @@
 
   {% if total %}
   <div id="gallery-data" hidden>
-    {% for url in urls %}<span data-src="{{ url }}"></span>{% endfor %}
+    {% for item in place.gallery_items %}<span data-src="{{ item.url }}" data-caption="{{ item.caption }}"></span>{% endfor %}
   </div>
   {% endif %}
 </section>

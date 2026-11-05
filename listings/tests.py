@@ -253,7 +253,6 @@ class PartnerCsvImportTests(TestCase):
         from listings.services.partner_import import CsvAdapter, import_partner_inventory
         slug = kwargs.pop('partner_ref', 'acme')
         kwargs.setdefault('organization', self._org(slug))
-        kwargs.setdefault('fetch_photos', False)
         return import_partner_inventory(CsvAdapter(io.StringIO(body)), **kwargs)
 
     def test_import_creates_listings_from_csv(self):
@@ -395,7 +394,6 @@ class PartnerCommunityImportTests(TestCase):
         from listings.services.partner_import import CsvAdapter, import_partner_inventory
         slug = kwargs.pop('partner_ref', 'acme')
         kwargs.setdefault('organization', self._org(slug))
-        kwargs.setdefault('fetch_photos', False)
         return import_partner_inventory(CsvAdapter(io.StringIO(body)), **kwargs)
 
     def test_unit_rows_build_the_community_hierarchy(self):
@@ -422,7 +420,7 @@ class PartnerCommunityImportTests(TestCase):
         self.assertEqual(Unit.objects.count(), 3)
         self.assertEqual(result.communities, 0)   # updated, not created
 
-    def test_absent_unit_needs_two_runs_to_withdraw(self):
+    def test_absent_unit_needs_two_runs_to_go_off_market(self):
         self._import(self.HEADER + self.ROWS)
         shorter = self.HEADER + ''.join(self.ROWS.splitlines(keepends=True)[:2])
 
@@ -434,9 +432,9 @@ class PartnerCommunityImportTests(TestCase):
         result = self._import(shorter, deactivation_ceiling=0.9)
         self.assertEqual(result.deactivated, 1)
         unit.refresh_from_db()
-        self.assertEqual(unit.status, 'withdrawn')
+        self.assertEqual(unit.status, Unit.OFF_MARKET)
 
-    def test_withdrawn_unit_drops_out_of_the_community_card(self):
+    def test_off_market_unit_drops_out_of_the_community_card(self):
         self._import(self.HEADER + self.ROWS)
         shorter = self.HEADER + ''.join(self.ROWS.splitlines(keepends=True)[:2])
         self._import(shorter, deactivation_ceiling=0.9)
@@ -2229,7 +2227,9 @@ class DailyDigestTests(TestCase):
         from django.conf import settings
         with open(settings.BASE_DIR / 'railway.cron.json') as fh:
             deploy = json.load(fh)['deploy']
-        self.assertEqual(deploy['startCommand'], 'python manage.py send_saved_search_alerts')
+        self.assertIn('python manage.py send_saved_search_alerts', deploy['startCommand'])
+        # The same daily run asks owners "still available?" — see availability_checks.
+        self.assertIn('python manage.py send_availability_checks', deploy['startCommand'])
         self.assertEqual(deploy['cronSchedule'], '0 14 * * *')
 
 
@@ -2640,3 +2640,280 @@ class SpanishHomePageTests(TestCase):
     def test_english_only_pages_hide_the_switch(self):
         response = self.client.get(reverse('login'))
         self.assertNotContains(response, 'nav-lang-opt')
+
+
+# ── Community onboarding, photos & unit availability ─────────────────────────
+
+import base64
+import tempfile
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+from listings.models import CommunityImage
+from listings.services import availability_checks, community_photos
+
+# Smallest valid PNG — ImageField reads real bytes when it saves.
+_PNG = base64.b64decode(
+    b'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')
+
+
+def _png(name='p.png'):
+    return SimpleUploadedFile(name, _PNG, content_type='image/png')
+
+
+class _CommunityFixture:
+    def setUp(self):
+        self.owner = User.objects.create_user('landlord', 'landlord@example.com', 'pw')
+        self.community = Community.objects.create(
+            owner=self.owner, name='Maple Court', description='', city='Frisco',
+            status='active')
+        self.one_bed = FloorPlan.objects.create(
+            community=self.community, name='A1', bedrooms=1, bathrooms=1)
+        self.two_bed = FloorPlan.objects.create(
+            community=self.community, name='B1', bedrooms=2, bathrooms=2)
+
+
+class UnitVisibilityTests(_CommunityFixture, TestCase):
+    """Only vacant or soon-vacant units reach the public page."""
+
+    def _unit(self, number, status, days=None, plan=None, price=1500):
+        return Unit.objects.create(
+            floor_plan=plan or self.one_bed, unit_number=number, price=price, status=status,
+            available_from=(timezone.localdate() + timedelta(days=days)) if days is not None else None)
+
+    def test_visible_is_available_plus_coming_soon_within_60_days(self):
+        self._unit('101', Unit.AVAILABLE)
+        self._unit('102', Unit.COMING_SOON, days=30)
+        self._unit('103', Unit.COMING_SOON, days=90)
+        self._unit('104', Unit.LEASED)
+        self._unit('105', Unit.OFF_MARKET)
+
+        visible = set(Unit.objects.visible().values_list('unit_number', flat=True))
+        self.assertEqual(visible, {'101', '102'})
+        self.assertEqual(
+            {u.unit_number for u in Unit.objects.all() if u.is_visible}, visible)
+        self.assertEqual(self.community.available_unit_count, 2)
+
+    def test_leased_units_do_not_set_the_price(self):
+        self._unit('101', Unit.AVAILABLE, price=1400)
+        self._unit('102', Unit.LEASED, price=900)
+        self.assertEqual(self.community.price_range, (Decimal('1400'), Decimal('1400')))
+
+    def test_a_plan_with_nothing_visible_says_contact_for_availability(self):
+        self._unit('101', Unit.AVAILABLE)
+        self._unit('201', Unit.LEASED, plan=self.two_bed)
+
+        html = self.client.get(reverse('community_detail', args=[self.community.pk])).content.decode()
+
+        self.assertIn('Contact for availability', html)
+        self.assertNotIn('>201<', html)
+
+    def test_hidden_communities_show_no_units(self):
+        self._unit('101', Unit.AVAILABLE)
+        self.community.availability_hidden_at = timezone.now()
+        self.community.save()
+
+        self.assertEqual(Unit.objects.visible().count(), 0)
+        self.assertEqual(self.community.available_unit_count, 0)
+        self.assertEqual(self.one_bed.available_units, [])
+
+    def test_search_budget_ignores_leased_units(self):
+        self._unit('101', Unit.LEASED, price=900)
+        self._unit('102', Unit.AVAILABLE, price=2500)
+        from django.test import RequestFactory
+        from listings.services.search import _matching_communities, _parse_search_params
+
+        def matches(budget):
+            request = RequestFactory().get('/listings/', {'max_price': budget})
+            return _matching_communities(None, _parse_search_params(request))
+
+        self.assertEqual(matches('1000'), [])
+        self.assertEqual(matches('3000'), [self.community])
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class CommunityPhotoHeadingTests(_CommunityFixture, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.owner)
+
+    def test_upload_saves_each_photo_with_its_heading(self):
+        response = self.client.post(
+            reverse('save_community_photos', args=[self.community.pk]),
+            {'images': [_png('a.png'), _png('b.png'), _png('c.png')],
+             'new_belongs': ['community', str(self.two_bed.pk), 'community'],
+             'new_shows': ['pool', 'kitchen', 'other'],
+             'new_label': ['', '', 'Rooftop']})
+
+        self.assertEqual(response.status_code, 302)
+        photos = list(self.community.images.order_by('order'))
+        self.assertEqual([(p.floor_plan, p.shows) for p in photos],
+                         [(None, 'pool'), (self.two_bed, 'kitchen'), (None, 'other')])
+        self.assertEqual(photos[2].shows_label, 'Rooftop')
+
+    def test_a_room_tag_cannot_land_on_a_community_photo(self):
+        other = Community.objects.create(name='Elsewhere', description='', city='Plano')
+        foreign_plan = FloorPlan.objects.create(community=other, name='X', bedrooms=1)
+
+        self.client.post(reverse('save_community_photos', args=[self.community.pk]),
+                         {'images': [_png()], 'new_belongs': [str(foreign_plan.pk)],
+                          'new_shows': ['kitchen']})
+
+        photo = self.community.images.get()
+        self.assertIsNone(photo.floor_plan)      # not someone else's plan
+        self.assertEqual(photo.shows, '')        # kitchen is not a community tag
+
+    def test_existing_photos_can_be_reheaded_and_deleted(self):
+        keep = CommunityImage.objects.create(community=self.community, image=_png('k.png'))
+        drop = CommunityImage.objects.create(community=self.community, image=_png('d.png'))
+
+        self.client.post(reverse('save_community_photos', args=[self.community.pk]), {
+            f'belongs_{keep.pk}': str(self.one_bed.pk), f'shows_{keep.pk}': 'bathroom',
+            'delete_images': [str(drop.pk)]})
+
+        keep.refresh_from_db()
+        self.assertEqual((keep.floor_plan, keep.shows), (self.one_bed, 'bathroom'))
+        self.assertFalse(CommunityImage.objects.filter(pk=drop.pk).exists())
+
+    def test_another_owner_cannot_touch_the_photos(self):
+        self.client.force_login(User.objects.create_user('mallory', 'm@x.com', 'pw'))
+        response = self.client.post(reverse('save_community_photos', args=[self.community.pk]),
+                                    {'images': [_png()]})
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(self.community.images.exists())
+
+    def test_gallery_groups_by_heading_community_first(self):
+        CommunityImage.objects.create(community=self.community, image=_png(),
+                                      floor_plan=self.two_bed, shows='kitchen')
+        CommunityImage.objects.create(community=self.community, image=_png(), shows='gym')
+        CommunityImage.objects.create(community=self.community, image=_png(), shows='pool')
+        CommunityImage.objects.create(community=self.community, image=_png(), shows='pool')
+
+        community = Community.objects.get(pk=self.community.pk)
+        groups = community.photo_groups
+        self.assertEqual([(g.heading, len(g.photos), g.start) for g in groups], [
+            ('Community – Swimming Pool', 2, 0),
+            ('Community – Gym', 1, 2),
+            ('2 Bedroom – Kitchen', 1, 3),
+        ])
+        self.assertEqual(community.gallery_captions[3], '2 Bedroom – Kitchen')
+
+    def test_twin_bedroom_plans_keep_separate_headings(self):
+        twin = FloorPlan.objects.create(community=self.community, name='B2', bedrooms=2)
+        self.assertEqual(community_photos.belongs_to_label(twin, [self.one_bed, self.two_bed, twin]),
+                         '2 Bedroom · B2')
+
+    def test_public_page_shows_headings_and_plan_photos(self):
+        CommunityImage.objects.create(community=self.community, image=_png(), shows='pool')
+        CommunityImage.objects.create(community=self.community, image=_png(),
+                                      floor_plan=self.one_bed, shows='kitchen')
+
+        html = self.client.get(reverse('community_detail', args=[self.community.pk])).content.decode()
+
+        self.assertIn('Community – Swimming Pool', html)
+        self.assertIn('1 Bedroom – Kitchen', html)
+        self.assertIn('class="cd-fp-photos"', html)
+
+    def test_create_page_tags_photos_and_offers_csv_on_the_side(self):
+        page = self.client.get(reverse('create_community')).content.decode()
+        self.assertIn('Bulk upload (CSV)', page)
+
+        self.client.post(reverse('create_community'), {
+            'name': 'Oak Flats', 'description': 'New build', 'city': 'Plano',
+            'country': 'USA', 'images': [_png()], 'new_shows': ['exterior']})
+
+        photo = Community.objects.get(name='Oak Flats').images.get()
+        self.assertEqual((photo.floor_plan, photo.shows), (None, 'exterior'))
+
+
+class DuplicateFloorPlanTests(_CommunityFixture, TestCase):
+    def test_duplicate_copies_specs_not_units(self):
+        Unit.objects.create(floor_plan=self.two_bed, unit_number='201', price=1800)
+        self.client.force_login(self.owner)
+
+        self.client.post(reverse('duplicate_floor_plan', args=[self.two_bed.pk]))
+
+        copy = FloorPlan.objects.get(name='B1 (copy)')
+        self.assertEqual((copy.bedrooms, copy.bathrooms), (2, Decimal('2.0')))
+        self.assertFalse(copy.units.exists())
+
+    def test_edit_page_offers_duplicate_and_new_statuses(self):
+        Unit.objects.create(floor_plan=self.one_bed, unit_number='101', price=1500)
+        self.client.force_login(self.owner)
+        html = self.client.get(reverse('edit_community', args=[self.community.pk])).content.decode()
+
+        self.assertIn('data-dup-unit', html)
+        self.assertIn('Duplicate Plan', html)
+        self.assertIn('value="leased"', html)
+        self.assertIn('value="off_market"', html)
+        self.assertNotIn('value="occupied"', html)
+
+
+class AvailabilityCheckTests(_CommunityFixture, TestCase):
+    SITE = 'https://listojo.test'
+
+    def setUp(self):
+        super().setUp()
+        Unit.objects.create(floor_plan=self.one_bed, unit_number='101', price=1500)
+
+    def _age(self, days):
+        Community.objects.filter(pk=self.community.pk).update(
+            last_confirmed_at=timezone.now() - timedelta(days=days))
+
+    def test_fresh_communities_are_left_alone(self):
+        self._age(5)
+        result = availability_checks.run_availability_checks(self.SITE)
+        self.assertEqual((result.asked, result.hidden), ([], []))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_owner_is_asked_after_14_days_then_hidden_after_7_more(self):
+        self._age(15)
+        result = availability_checks.run_availability_checks(self.SITE)
+        self.assertEqual([c.pk for c in result.asked], [self.community.pk])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Still available?', mail.outbox[0].subject)
+        self.assertIn('/communities/confirm/', mail.outbox[0].body)
+
+        # A second run the same week neither re-asks nor hides.
+        availability_checks.run_availability_checks(self.SITE)
+        self.assertEqual(len(mail.outbox), 1)
+
+        later = timezone.now() + timedelta(days=8)
+        result = availability_checks.run_availability_checks(self.SITE, now=later)
+        self.assertEqual([c.pk for c in result.hidden], [self.community.pk])
+        self.assertEqual(Unit.objects.visible().count(), 0)
+        # The community page itself stays up.
+        self.assertEqual(self.client.get(
+            reverse('community_detail', args=[self.community.pk])).status_code, 200)
+
+    def test_confirm_link_get_does_not_confirm_but_post_does(self):
+        self._age(15)
+        availability_checks.run_availability_checks(self.SITE)
+        url = reverse('confirm_availability_link',
+                      args=[availability_checks.confirm_token(self.community)])
+
+        self.client.get(url)
+        self.community.refresh_from_db()
+        self.assertIsNotNone(self.community.confirmation_requested_at)
+
+        self.client.post(url)
+        self.community.refresh_from_db()
+        self.assertIsNone(self.community.confirmation_requested_at)
+        self.assertLess(timezone.now() - self.community.last_confirmed_at, timedelta(minutes=1))
+
+    def test_forged_link_is_rejected(self):
+        response = self.client.post(reverse('confirm_availability_link', args=['1:bogus:sig']))
+        self.assertEqual(response.status_code, 404)
+
+    def test_editing_a_unit_counts_as_confirming_and_unhides(self):
+        self.community.availability_hidden_at = timezone.now()
+        self.community.save()
+        unit = Unit.objects.get()
+        self.client.force_login(self.owner)
+
+        self.client.post(reverse('edit_unit', args=[unit.pk]),
+                         {'unit_number': '101', 'price': '1450', 'status': Unit.AVAILABLE})
+
+        self.community.refresh_from_db()
+        self.assertIsNone(self.community.availability_hidden_at)
+        self.assertEqual(Unit.objects.visible().count(), 1)

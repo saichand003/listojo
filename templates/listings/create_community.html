@@ -3,9 +3,16 @@
 {% block content %}
 <div style="max-width:700px;margin:0 auto;">
 
-  <div style="margin-bottom:1.25rem;">
-    <h1 style="font-size:1.7rem;margin-bottom:.25rem;">List Your Community</h1>
-    <p class="muted">Add your apartment complex, building, or multi-unit property. You'll add floor plans and individual units after this step.</p>
+  <div class="cc-head">
+    <div>
+      <h1 style="font-size:1.7rem;margin-bottom:.25rem;">List Your Community</h1>
+      <p class="muted">Add your apartment complex, building, or multi-unit property. You'll add floor plans, units and their photos after this step.</p>
+    </div>
+    {# CSV stays available, off to the side, for managers with large portfolios. #}
+    <a href="{{ csv_upload_url }}" class="cc-csv" title="For property managers with large portfolios">
+      <span class="cc-csv-k">Large portfolio?</span>
+      <span class="cc-csv-v">Bulk upload (CSV) &rarr;</span>
+    </a>
   </div>
 
   <div class="cl-completion-bar">
@@ -315,14 +322,17 @@
         <div class="cl-section-num">9</div>
         <div>
           <div class="cl-section-title">Community Photos</div>
-          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Up to {{ max_images }} photos · max 5 MB each · exterior, lobby, pool, gym, common areas</div>
+          <div class="muted" style="font-size:.78rem;margin-top:.1rem;">Pick what each photo shows — pool, gym, exterior… Floor plan photos (kitchen, bedrooms) come next, once you've added your plans.</div>
         </div>
       </div>
-      <div id="img-preview-grid" class="img-preview-grid"></div>
+      {% if photo_errors %}
+      <div class="img-upload-errors">{% for e in photo_errors %}<p>⚠ {{ e }}</p>{% endfor %}</div>
+      {% endif %}
+      <div id="img-preview-grid" class="cc-photo-grid"></div>
       <div class="img-upload-zone" id="img-upload-zone">
         <input type="file" name="images" id="img-file-input" multiple accept="image/*">
         <div class="img-upload-icon">📷</div>
-        <div class="img-upload-label">Click to add photos or drag &amp; drop</div>
+        <div class="img-upload-label">Tap to take or choose photos</div>
         <div class="img-upload-hint">JPEG, PNG, WEBP · Max 5 MB each</div>
         <div class="img-upload-count" id="img-count-label">0 / {{ max_images }} photos added</div>
       </div>
@@ -334,6 +344,21 @@
   </form>
 </div>
 
+{{ community_shows|json_script:"community-shows" }}
+<style>
+  .cc-head { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; }
+  .cc-csv { flex-shrink:0; display:flex; flex-direction:column; gap:.1rem; border:1px solid var(--border); border-radius:10px; padding:.5rem .8rem; text-decoration:none; background:var(--surface); }
+  .cc-csv:hover { border-color:var(--primary); }
+  .cc-csv-k { font-size:.7rem; color:var(--text-3); }
+  .cc-csv-v { font-size:.8rem; font-weight:600; color:var(--primary); white-space:nowrap; }
+  .cc-photo-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:.6rem; margin-bottom:.75rem; }
+  .cc-photo { display:flex; flex-direction:column; gap:.3rem; }
+  .cc-photo select, .cc-photo input { width:100%; font-size:16px; padding:.3rem .4rem; } /* 16px stops iOS zooming on focus */
+  @media (max-width: 560px) {
+    .cc-head { flex-direction:column; }
+    .cc-photo-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  }
+</style>
 <script>
 (function () {
   var MAX       = {{ max_images }};
@@ -463,9 +488,14 @@
     updateCompletion();
   }
 
+  // Every photo here is a community photo; it only needs "Shows". Posted as a
+  // new_shows / new_label pair per kept file, in file order.
+  var SHOWS = JSON.parse(document.getElementById('community-shows').textContent);
   function render() {
     grid.innerHTML = '';
     files.forEach(function(item, idx) {
+      var cell = document.createElement('div');
+      cell.className = 'cc-photo';
       var wrap = document.createElement('div');
       wrap.className = 'img-preview-item' + (item.error ? ' img-preview-error' : '');
       var img = document.createElement('img');
@@ -483,7 +513,25 @@
         URL.revokeObjectURL(item.url); files.splice(idx, 1); render(); updateCount(); syncInput();
       });
       wrap.appendChild(btn);
-      grid.appendChild(wrap);
+      cell.appendChild(wrap);
+      if (!item.error) {
+        var sel = document.createElement('select');
+        sel.name = 'new_shows';
+        sel.setAttribute('aria-label', 'What this photo shows');
+        sel.innerHTML = '<option value="">Community – shows…</option>' + SHOWS.map(function(o){
+          return '<option value="' + o[0] + '">Community – ' + o[1] + '</option>';
+        }).join('');
+        sel.value = item.shows;
+        var name = document.createElement('input');
+        name.type = 'text'; name.name = 'new_label'; name.maxLength = 100;
+        name.placeholder = 'Name it (optional)'; name.value = item.label;
+        name.hidden = item.shows !== 'other';
+        sel.addEventListener('change', function(){ item.shows = sel.value; name.hidden = sel.value !== 'other'; });
+        name.addEventListener('input', function(){ item.label = name.value; });
+        cell.appendChild(sel);
+        cell.appendChild(name);
+      }
+      grid.appendChild(cell);
     });
   }
 
@@ -500,6 +548,7 @@
         file: file,
         url: URL.createObjectURL(file),
         error: file.size > MAX_BYTES ? (file.size / 1024 / 1024).toFixed(1) + ' MB — too large' : null,
+        shows: '', label: '',
       });
     });
     render(); updateCount(); syncInput();

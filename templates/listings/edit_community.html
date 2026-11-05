@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load l10n %}
 {% block content %}
 <div style="max-width:800px;margin:0 auto;">
 
@@ -7,16 +8,33 @@
       <h1 style="font-size:1.6rem;margin-bottom:.2rem;">{{ community.name }}</h1>
       <p class="muted">{{ community.city }}{% if community.state %}, {{ community.state }}{% endif %}</p>
     </div>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+      <a href="{{ csv_upload_url }}" class="ec-side-link" title="For property managers with large portfolios">Bulk upload (CSV)</a>
       <a href="{% url 'community_detail' community.pk %}" class="button secondary">View Public Page</a>
     </div>
   </div>
 
   {% if messages %}
   {% for msg in messages %}
-  <div style="background:rgba(5,150,105,.1);border:1px solid rgba(5,150,105,.3);border-radius:8px;padding:.65rem 1rem;margin-bottom:1rem;font-size:.88rem;color:#155e40;">{{ msg }}</div>
+  <div class="ec-msg {% if msg.level_tag == 'error' %}ec-msg-error{% endif %}">{{ msg }}</div>
   {% endfor %}
   {% endif %}
+
+  {# Stale-listing control — see listings/services/availability_checks.py #}
+  <form method="post" action="{% url 'confirm_community_availability' community.pk %}"
+        class="ec-confirm {% if community.availability_hidden_at %}ec-confirm-hidden{% elif community.confirmation_requested_at %}ec-confirm-due{% endif %}">
+    {% csrf_token %}
+    <p class="ec-confirm-text">
+      {% if community.availability_hidden_at %}
+        <strong>Your units are hidden from renters</strong> because availability wasn't confirmed. Check the units below, then confirm to show them again.
+      {% elif community.confirmation_requested_at %}
+        <strong>Are these units still available?</strong> Confirm by {{ confirm_deadline|date:"M j" }}, or we'll hide them from renters.
+      {% else %}
+        Availability last confirmed <strong>{{ community.last_confirmed_at|timesince }} ago</strong>. We'll email you to check every 14 days.
+      {% endif %}
+    </p>
+    <button type="submit" class="button {% if community.availability_hidden_at or community.confirmation_requested_at %}accent{% else %}secondary{% endif %} ec-confirm-btn">Still accurate</button>
+  </form>
 
   {# ══ SECTION 1: Community Info ══ #}
   <details class="card" style="padding:0;margin-bottom:1rem;" open>
@@ -24,12 +42,12 @@
       Community Info &amp; Policies <span style="font-size:.8rem;font-weight:400;color:var(--text-3);">▾ expand</span>
     </summary>
     <div style="padding:0 1.25rem 1.25rem;">
-    <form method="post" enctype="multipart/form-data">
+    <form method="post">
       {% csrf_token %}
       <input type="hidden" name="save_community" value="1">
       <div style="display:flex;flex-direction:column;gap:1rem;">
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="ec-info-grid">
           <div style="grid-column:1/-1;">
             <label class="cl-label">Community Name</label>
             <input type="text" name="name" value="{{ form.name.value|default:'' }}" required style="width:100%;">
@@ -100,37 +118,76 @@
           </div>
         </div>
 
-        {# ── Photos ── #}
-        <div>
-          <p style="font-weight:600;margin-bottom:.5rem;">Photos</p>
-          {% if existing_images %}
-          <div class="existing-images-grid" style="margin-bottom:.75rem;">
-            {% for img in existing_images %}
-            <div class="existing-img-item" id="cimg-{{ img.pk }}">
-              <img src="{{ img.image.url }}" alt="Photo {{ forloop.counter }}">
-              <input type="checkbox" name="delete_images" value="{{ img.pk }}" id="cdel-{{ img.pk }}">
-              <label class="existing-img-delete" for="cdel-{{ img.pk }}"></label>
-            </div>
-            {% endfor %}
-          </div>
-          {% endif %}
-          <div class="img-upload-zone" id="img-upload-zone">
-            <input type="file" name="images" id="img-file-input" multiple accept="image/*">
-            <div class="img-upload-icon">📷</div>
-            <div class="img-upload-label">Add more photos</div>
-            <div class="img-upload-hint">JPEG, PNG, WEBP · Max 5 MB each</div>
-            <div class="img-upload-count" id="img-count-label">0 new photos</div>
-          </div>
-          <div id="img-preview-grid" class="img-preview-grid" style="margin-top:.5rem;"></div>
-        </div>
-
         <button type="submit" class="button accent" style="align-self:flex-start;padding:.6rem 1.5rem;">Save Changes</button>
       </div>
     </form>
     </div>
   </details>
 
-  {# ══ SECTION 2: Floor Plans & Units ══ #}
+  {# ══ SECTION 2: Photos — uploaded once, each with a two-part heading ══ #}
+  <div class="card ec-photos" id="photos">
+    <div class="ec-card-head">
+      <h2>Photos</h2>
+      <span class="muted">{{ existing_images|length }} / {{ max_images }}</span>
+    </div>
+    <p class="ec-help">
+      Add all your photos here, then give each one a heading: what it <strong>belongs to</strong> and what it <strong>shows</strong> —
+      e.g. <em>Community – Swimming Pool</em> or <em>2 Bedroom – Kitchen</em>. Renters see them grouped by heading, and every unit inherits its floor plan's photos.
+      {% if belongs_options|length == 1 %}<br><span class="muted">Add a floor plan below to tag room photos to it.</span>{% endif %}
+    </p>
+
+    <form method="post" action="{% url 'save_community_photos' community.pk %}" enctype="multipart/form-data" id="photo-form">
+      {% csrf_token %}
+
+      {% if existing_images %}
+      <div class="ph-grid">
+        {% for img in existing_images %}
+        <div class="ph-card" id="cimg-{{ img.pk }}">
+          <div class="ph-thumb">
+            <img src="{{ img.image.url }}" alt="Photo {{ forloop.counter }}" loading="lazy">
+            <input type="checkbox" name="delete_images" value="{{ img.pk }}" id="cdel-{{ img.pk }}" class="ph-del-box">
+            <label class="ph-del" for="cdel-{{ img.pk }}" aria-label="Delete this photo">✕</label>
+          </div>
+          <div class="ph-fields" data-heading>
+            <label class="ph-k" for="belongs-{{ img.pk }}">Belongs to</label>
+            <select name="belongs_{{ img.pk }}" id="belongs-{{ img.pk }}" data-belongs>
+              {% for value, label in belongs_options %}
+              <option value="{{ value }}" {% if img.floor_plan_id|stringformat:"s" == value or not img.floor_plan_id and value == 'community' %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <label class="ph-k" for="shows-{{ img.pk }}">Shows</label>
+            <select name="shows_{{ img.pk }}" id="shows-{{ img.pk }}" data-shows data-current="{{ img.shows }}"></select>
+            <input type="text" name="label_{{ img.pk }}" value="{{ img.custom_label }}" maxlength="100" placeholder="Name it (optional)" data-label aria-label="Custom label">
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {# Batch heading: new photos start with this, so a phone upload of ten kitchen shots is one choice. #}
+      <div class="ph-batch" data-heading>
+        <span class="ph-batch-k">New photos are:</span>
+        <select id="batch-belongs" data-belongs aria-label="New photos belong to">
+          {% for value, label in belongs_options %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+        <select id="batch-shows" data-shows aria-label="New photos show"></select>
+        <input type="text" id="batch-label" data-label maxlength="100" placeholder="Name it (optional)" aria-label="Custom label">
+      </div>
+
+      <div class="img-upload-zone" id="img-upload-zone">
+        <input type="file" name="images" id="img-file-input" multiple accept="image/*">
+        <div class="img-upload-icon">📷</div>
+        <div class="img-upload-label">Tap to take or choose photos</div>
+        <div class="img-upload-hint">JPEG, PNG, WEBP · Max 5 MB each · up to {{ max_images }} photos</div>
+        <div class="img-upload-count" id="img-count-label">0 new photos</div>
+      </div>
+      <div id="img-preview-grid" class="ph-grid" style="margin-top:.75rem;"></div>
+
+      <button type="submit" class="button accent" style="margin-top:1rem;padding:.6rem 1.5rem;">Save Photos</button>
+    </form>
+  </div>
+
+  {# ══ SECTION 3: Floor Plans & Units ══ #}
   <div class="card" style="padding:1.25rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
       <h2 style="font-size:1.05rem;margin:0;">Floor Plans &amp; Units</h2>
@@ -138,7 +195,7 @@
     </div>
 
     {% for fp in floor_plans %}
-    <div style="border:1px solid var(--border);border-radius:10px;margin-bottom:1rem;overflow:hidden;">
+    <div id="fp-{{ fp.pk }}" style="border:1px solid var(--border);border-radius:10px;margin-bottom:1rem;overflow:hidden;scroll-margin-top:80px;">
 
       {# Floor plan header #}
       <div style="background:var(--card-bg);padding:.85rem 1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
@@ -154,19 +211,27 @@
             {% with fp.price_range as pr %}
             {% if pr.0 %} &middot; ${{ pr.0|floatformat:0 }}{% if pr.1 and pr.1 != pr.0 %}–${{ pr.1|floatformat:0 }}{% endif %}/mo{% endif %}
             {% endwith %}
-            &middot; <strong style="color:var(--accent);">{{ fp.available_units.count }} available</strong>
+            &middot; <strong style="color:var(--accent);">{{ fp.available_units|length }} shown to renters</strong>
+            {% with fp.photos.count as pc %} &middot; <a href="#photos">{{ pc }} photo{{ pc|pluralize }}</a>{% endwith %}
           </p>
         </div>
-        <form method="post" action="{% url 'delete_floor_plan' fp.pk %}" style="flex-shrink:0;" onsubmit="return confirm('Delete this floor plan and all its units?');">
-          {% csrf_token %}
-          <button type="submit" class="nav-text-btn" style="color:#ef4444;font-size:.78rem;">Delete Plan</button>
-        </form>
+        <div style="display:flex;gap:.75rem;flex-shrink:0;align-items:center;">
+          <form method="post" action="{% url 'duplicate_floor_plan' fp.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="nav-text-btn" style="font-size:.78rem;color:var(--primary);">Duplicate Plan</button>
+          </form>
+          <form method="post" action="{% url 'delete_floor_plan' fp.pk %}" onsubmit="return confirm('Delete this floor plan, all its units and its photos?');">
+            {% csrf_token %}
+            <button type="submit" class="nav-text-btn" style="color:#ef4444;font-size:.78rem;">Delete Plan</button>
+          </form>
+        </div>
       </div>
 
       {# Units table #}
       <div style="padding:.75rem 1rem;">
         {% if fp.units.all %}
-        <table style="width:100%;border-collapse:collapse;font-size:.83rem;margin-bottom:.75rem;">
+        <div class="ec-table-wrap">
+        <table style="width:100%;border-collapse:collapse;font-size:.83rem;margin-bottom:.75rem;min-width:520px;">
           <thead>
             <tr style="border-bottom:1px solid var(--border);">
               <th style="padding:.35rem .5rem;text-align:left;color:var(--text-3);font-weight:600;">Unit</th>
@@ -189,6 +254,9 @@
                 <span style="font-size:.73rem;padding:.15rem .5rem;border-radius:999px;{% if unit.status == 'available' %}background:rgba(5,150,105,.12);color:#155e40;{% elif unit.status == 'coming_soon' %}background:rgba(245,158,11,.12);color:#b45309;{% else %}background:var(--bg);color:var(--text-3);{% endif %}">
                   {{ unit.get_status_display }}
                 </span>
+                {% if not unit.is_visible %}
+                <span class="ec-hidden-note" title="{% if unit.status == 'coming_soon' %}Coming-soon units show once their date is within {{ visible_days_ahead }} days{% else %}Leased and off-market units are not shown to renters{% endif %}">hidden</span>
+                {% endif %}
               </td>
               <td style="padding:.5rem .5rem;white-space:nowrap;">
                 <button type="button"
@@ -196,6 +264,15 @@
                         id="unit-edit-btn-{{ unit.pk }}"
                         style="font-size:.75rem;color:var(--primary);background:none;border:none;cursor:pointer;padding:0;font-weight:600;">
                   Edit
+                </button>
+                <button type="button" class="ec-dup-btn"
+                        data-dup-unit="{{ fp.pk }}"
+                        data-floor="{{ unit.floor|default:'' }}"
+                        data-price="{{ unit.price|default:''|unlocalize }}"
+                        data-available="{{ unit.available_from|date:'Y-m-d' }}"
+                        data-status="{{ unit.status }}"
+                        data-notes="{{ unit.notes }}">
+                  Duplicate
                 </button>
               </td>
             </tr>
@@ -224,9 +301,9 @@
                     <div>
                       <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Status</label>
                       <select name="status" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
-                        <option value="available"   {% if unit.status == 'available'   %}selected{% endif %}>Available</option>
-                        <option value="coming_soon" {% if unit.status == 'coming_soon' %}selected{% endif %}>Coming Soon</option>
-                        <option value="occupied"    {% if unit.status == 'occupied'    %}selected{% endif %}>Occupied</option>
+                        {% for value, label in unit_statuses %}
+                        <option value="{{ value }}" {% if unit.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
                       </select>
                     </div>
                     <div>
@@ -248,12 +325,13 @@
           {% endfor %}
           </tbody>
         </table>
+        </div>
         {% else %}
         <p class="muted" style="font-size:.82rem;margin:.25rem 0 .75rem;">No units added yet.</p>
         {% endif %}
 
-        {# Add unit form #}
-        <details>
+        {# Add unit form — "Duplicate" on a unit row prefills it #}
+        <details id="add-unit-{{ fp.pk }}">
           <summary style="font-size:.82rem;font-weight:600;color:var(--primary);cursor:pointer;list-style:none;">+ Add Unit</summary>
           <div style="margin-top:.75rem;background:rgba(26,93,212,.03);border:1px solid rgba(26,93,212,.15);border-radius:8px;padding:.85rem 1rem;">
             <form method="post" action="{% url 'add_unit' fp.pk %}">
@@ -272,15 +350,13 @@
                   <input name="price" type="number" step="0.01" min="0" placeholder="e.g. 1400" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
                 </div>
                 <div>
-                  <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Available from</label>
+                  <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Available from <span style="font-weight:400;">(needed for Coming soon)</span></label>
                   <input name="available_from" type="date" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
                 </div>
                 <div>
                   <label style="font-size:.72rem;font-weight:600;color:var(--text-3);display:block;margin-bottom:.2rem;">Status</label>
                   <select name="status" style="width:100%;font-size:.85rem;padding:.35rem .5rem;">
-                    <option value="available">Available</option>
-                    <option value="coming_soon">Coming Soon</option>
-                    <option value="occupied">Occupied</option>
+                    {% for value, label in unit_statuses %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
                   </select>
                 </div>
                 <div>
@@ -336,6 +412,52 @@
 
 </div>
 
+{{ community_shows|json_script:"community-shows" }}
+{{ room_shows|json_script:"room-shows" }}
+<style>
+  .ec-side-link { font-size:.82rem; font-weight:600; color:var(--text-3); text-decoration:underline; text-underline-offset:2px; }
+  .ec-side-link:hover { color:var(--primary); }
+  .ec-msg { background:rgba(5,150,105,.1); border:1px solid rgba(5,150,105,.3); border-radius:8px; padding:.65rem 1rem; margin-bottom:1rem; font-size:.88rem; color:#155e40; }
+  .ec-msg-error { background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.35); color:#b91c1c; }
+  .ec-confirm { display:flex; align-items:center; justify-content:space-between; gap:.75rem 1rem; flex-wrap:wrap; border:1px solid var(--border); border-radius:10px; padding:.7rem 1rem; margin-bottom:1rem; background:var(--surface-2); }
+  .ec-confirm-due { border-color:rgba(245,158,11,.45); background:rgba(245,158,11,.08); }
+  .ec-confirm-hidden { border-color:rgba(239,68,68,.4); background:rgba(239,68,68,.07); }
+  .ec-confirm-text { margin:0; font-size:.85rem; flex:1 1 260px; }
+  .ec-confirm-btn { font-size:.83rem; padding:.4rem 1rem; }
+  .ec-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+  .ec-photos { padding:1.25rem; margin-bottom:1rem; scroll-margin-top:80px; }
+  .ec-card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
+  .ec-card-head h2 { font-size:1.05rem; margin:0; }
+  .ec-card-head .muted { font-size:.8rem; }
+  .ec-help { font-size:.83rem; color:var(--text-2); margin:0 0 1rem; line-height:1.5; }
+  .ph-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(165px, 1fr)); gap:.75rem; }
+  .ph-card { border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--surface, #fff); }
+  .ph-card.marked-delete { opacity:.45; }
+  .ph-card-error { border-color:#ef4444; }
+  .ph-thumb { position:relative; aspect-ratio:4/3; background:var(--surface-2); }
+  .ph-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .ph-del-box { display:none; }
+  .ph-del { position:absolute; top:.35rem; right:.35rem; width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,.7); color:#fff; border:2px solid rgba(255,255,255,.6); display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:700; cursor:pointer; padding:0; }
+  .ph-card.marked-delete .ph-del { background:#ef4444; }
+  .ph-fields { display:flex; flex-direction:column; gap:.2rem; padding:.55rem .6rem .65rem; }
+  .ph-k { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-3); margin-top:.15rem; }
+  .ph-fields select, .ph-fields input, .ph-batch select, .ph-batch input { width:100%; font-size:16px; padding:.35rem .45rem; } /* 16px stops iOS zooming on focus */
+  .ph-err { margin:0; padding:.5rem .6rem; font-size:.78rem; font-weight:600; color:#ef4444; }
+  .ph-batch { display:grid; grid-template-columns:auto 1fr 1fr; gap:.5rem; align-items:center; margin:1rem 0 .6rem; }
+  .ph-batch-k { font-size:.8rem; font-weight:600; color:var(--text-2); }
+  .ph-batch [data-label] { grid-column:2 / -1; }
+  .ec-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .ec-hidden-note { font-size:.68rem; color:var(--text-3); margin-left:.25rem; border-bottom:1px dotted currentColor; cursor:help; }
+  .ec-dup-btn { font-size:.75rem; color:var(--text-3); background:none; border:none; cursor:pointer; padding:0 0 0 .6rem; font-weight:600; }
+  .ec-dup-btn:hover { color:var(--primary); }
+  @media (max-width: 560px) {
+    .ec-info-grid { grid-template-columns:1fr; }
+    .ph-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.5rem; }
+    .ph-batch { grid-template-columns:1fr 1fr; }
+    .ph-batch-k { grid-column:1 / -1; }
+    .ph-batch [data-label] { grid-column:1 / -1; }
+  }
+</style>
 <script>
 function toggleUnitEdit(pk) {
   var row = document.getElementById('unit-edit-' + pk);
@@ -346,43 +468,133 @@ function toggleUnitEdit(pk) {
   btn.style.color   = open ? 'var(--primary)' : 'var(--muted)';
 }
 
+// Unit "Duplicate": open the plan's add-unit form prefilled with this unit,
+// unit number blank — similar units differ by little more than that.
+document.querySelectorAll('[data-dup-unit]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var box = document.getElementById('add-unit-' + btn.dataset.dupUnit);
+    if (!box) return;
+    var form = box.querySelector('form');
+    form.elements.unit_number.value = '';
+    form.elements.floor.value = btn.dataset.floor;
+    form.elements.price.value = btn.dataset.price;
+    form.elements.available_from.value = btn.dataset.available;
+    form.elements.status.value = btn.dataset.status;
+    form.elements.notes.value = btn.dataset.notes;
+    box.open = true;
+    box.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    form.elements.unit_number.focus({ preventScroll: true });
+  });
+});
+
 (function () {
+  var COMMUNITY_SHOWS = JSON.parse(document.getElementById('community-shows').textContent);
+  var ROOM_SHOWS = JSON.parse(document.getElementById('room-shows').textContent);
   var MAX_BYTES = 5 * 1024 * 1024;
-  var files = [];
+
+  // "Shows" offers community tags or room tags depending on "Belongs to";
+  // the custom label only appears for "Other".
+  function wire(box) {
+    var belongs = box.querySelector('[data-belongs]');
+    var shows = box.querySelector('[data-shows]');
+    var label = box.querySelector('[data-label]');
+    function fill(keep) {
+      var opts = belongs.value === 'community' ? COMMUNITY_SHOWS : ROOM_SHOWS;
+      shows.innerHTML = '<option value="">— Choose —</option>' + opts.map(function (o) {
+        return '<option value="' + o[0] + '">' + o[1] + '</option>';
+      }).join('');
+      var hit = opts.some(function (o) { return o[0] === keep; });
+      shows.value = hit ? keep : '';
+      toggleLabel();
+    }
+    function toggleLabel() { if (label) label.hidden = shows.value !== 'other'; }
+    belongs.addEventListener('change', function () { fill(shows.value); });
+    shows.addEventListener('change', toggleLabel);
+    fill(shows.dataset.current || '');
+    return { belongs: belongs, shows: shows, label: label, fill: fill };
+  }
+  document.querySelectorAll('.ph-card [data-heading]').forEach(wire);
+  var batch = document.querySelector('.ph-batch');
+  var batchCtl = batch ? wire(batch) : null;
+
+  document.querySelectorAll('.ph-del-box').forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      document.getElementById('cimg-' + cb.value).classList.toggle('marked-delete', cb.checked);
+    });
+  });
+
   var zone = document.getElementById('img-upload-zone');
   var input = document.getElementById('img-file-input');
   var grid = document.getElementById('img-preview-grid');
   var countLbl = document.getElementById('img-count-label');
-  if (!zone) return;
+  var form = document.getElementById('photo-form');
+  var files = [];
 
-  document.querySelectorAll('.existing-img-item input[type="checkbox"]').forEach(function(cb) {
-    cb.addEventListener('change', function() {
-      var item = document.getElementById('cimg-' + cb.value);
-      if (item) item.classList.toggle('marked-delete', cb.checked);
-    });
-  });
+  function optionsHtml(select) { return select.innerHTML; }
 
+  // Each new photo gets its own heading fields, posted as parallel
+  // new_belongs / new_shows / new_label lists in file order. A rejected
+  // file's fields are not rendered, so the lists stay aligned with the files.
   function render() {
     grid.innerHTML = '';
-    files.forEach(function(item, idx) {
-      var wrap = document.createElement('div'); wrap.className = 'img-preview-item' + (item.error ? ' img-preview-error' : '');
-      var img = document.createElement('img'); img.src = item.url; wrap.appendChild(img);
-      if (item.error) { var lbl = document.createElement('div'); lbl.className = 'img-preview-error-label'; lbl.textContent = item.error; wrap.appendChild(lbl); }
-      var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'img-preview-remove'; btn.innerHTML = '✕';
-      btn.addEventListener('click', function() { URL.revokeObjectURL(item.url); files.splice(idx, 1); render(); sync(); });
-      wrap.appendChild(btn); grid.appendChild(wrap);
+    files.forEach(function (item, idx) {
+      var card = document.createElement('div');
+      card.className = 'ph-card' + (item.error ? ' ph-card-error' : '');
+      var thumb = document.createElement('div'); thumb.className = 'ph-thumb';
+      var img = document.createElement('img'); img.src = item.url; img.alt = ''; thumb.appendChild(img);
+      var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'ph-del'; rm.textContent = '✕';
+      rm.setAttribute('aria-label', 'Remove this photo');
+      rm.addEventListener('click', function () { URL.revokeObjectURL(item.url); files.splice(idx, 1); render(); sync(); });
+      thumb.appendChild(rm);
+      card.appendChild(thumb);
+      if (item.error) {
+        var err = document.createElement('p'); err.className = 'ph-err'; err.textContent = item.error; card.appendChild(err);
+      } else {
+        var fields = document.createElement('div'); fields.className = 'ph-fields';
+        fields.innerHTML =
+          '<label class="ph-k">Belongs to</label>' +
+          '<select name="new_belongs" data-belongs>' + optionsHtml(document.getElementById('batch-belongs')) + '</select>' +
+          '<label class="ph-k">Shows</label>' +
+          '<select name="new_shows" data-shows></select>' +
+          '<input type="text" name="new_label" maxlength="100" placeholder="Name it (optional)" data-label aria-label="Custom label">';
+        card.appendChild(fields);
+        var b = fields.querySelector('[data-belongs]'), sh = fields.querySelector('[data-shows]'), lb = fields.querySelector('[data-label]');
+        b.value = item.belongs; sh.dataset.current = item.shows; lb.value = item.label;
+        wire(fields);
+        b.addEventListener('change', function () { item.belongs = b.value; item.shows = sh.value; });
+        sh.addEventListener('change', function () { item.shows = sh.value; });
+        lb.addEventListener('input', function () { item.label = lb.value; });
+      }
+      grid.appendChild(card);
     });
-    var ok = files.filter(function(f){ return !f.error; }).length;
-    if (countLbl) countLbl.textContent = ok + ' new photo' + (ok !== 1 ? 's' : '');
+    var ok = files.filter(function (f) { return !f.error; }).length;
+    countLbl.textContent = ok + ' new photo' + (ok !== 1 ? 's' : '');
   }
 
-  function sync() { var dt = new DataTransfer(); files.forEach(function(f){ if (!f.error) dt.items.add(f.file); }); input.files = dt.files; }
-  function add(newFiles) { Array.from(newFiles).forEach(function(file) { files.push({ file: file, url: URL.createObjectURL(file), error: file.size > MAX_BYTES ? (file.size/1024/1024).toFixed(1)+' MB — too large' : null }); }); render(); sync(); }
+  function sync() {
+    var dt = new DataTransfer();
+    files.forEach(function (f) { if (!f.error) dt.items.add(f.file); });
+    input.files = dt.files;
+  }
+  function add(newFiles) {
+    Array.from(newFiles).forEach(function (file) {
+      files.push({
+        file: file, url: URL.createObjectURL(file),
+        error: file.size > MAX_BYTES ? (file.size / 1024 / 1024).toFixed(1) + ' MB — too large' : null,
+        belongs: batchCtl.belongs.value, shows: batchCtl.shows.value,
+        label: batchCtl.label.value,
+      });
+    });
+    render(); sync();
+  }
 
-  input.addEventListener('change', function() { var sel = Array.from(input.files); input.value = ''; add(sel); });
-  zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('drag-over'); });
-  zone.addEventListener('dragleave', function(){ zone.classList.remove('drag-over'); });
-  zone.addEventListener('drop', function(e){ e.preventDefault(); zone.classList.remove('drag-over'); add(e.dataTransfer.files); });
+  input.addEventListener('change', function () { var sel = Array.from(input.files); input.value = ''; add(sel); });
+  zone.addEventListener('dragover', function (e) { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', function () { zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', function (e) { e.preventDefault(); zone.classList.remove('drag-over'); add(e.dataTransfer.files); });
+  // input.value = '' above clears the selection the browser would post;
+  // put the kept files back right before submit.
+  form.addEventListener('submit', sync);
 })();
 </script>
 {% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+{% comment %}
+  Landing page for the "still available?" email link. GET only shows the
+  button; the POST confirms — mail scanners prefetch links.
+{% endcomment %}
+<div style="max-width:560px;margin:2rem auto;">
+  <div class="card" style="padding:1.5rem;">
+  {% if invalid %}
+    <h1 style="font-size:1.35rem;margin:0 0 .5rem;">This link has expired</h1>
+    <p class="muted" style="margin:0 0 1rem;">Confirm links work for 30 days. Sign in and use “Still accurate” on your community's edit page instead.</p>
+    <a href="{% url 'my_communities' %}" class="button accent">My Communities</a>
+  {% elif confirmed %}
+    <h1 style="font-size:1.35rem;margin:0 0 .5rem;">Thanks — {{ community.name }} is confirmed</h1>
+    <p class="muted" style="margin:0 0 1rem;">Your available units are showing to renters. We'll check again in 14 days.</p>
+    <a href="{% url 'community_detail' community.pk %}" class="button secondary">View public page</a>
+  {% else %}
+    <h1 style="font-size:1.35rem;margin:0 0 .5rem;">Are these units at {{ community.name }} still available?</h1>
+    {% if units %}
+    <ul style="margin:.75rem 0 1rem;padding-left:1.1rem;font-size:.9rem;line-height:1.6;">
+      {% for unit in units %}
+      <li><strong>{{ unit.floor_plan.name }}</strong> — Unit {{ unit.unit_number }}: {{ unit.get_status_display }}{% if unit.price %}, ${{ unit.price|floatformat:0|intcomma }}/mo{% endif %}{% if unit.available_from %}, from {{ unit.available_from|date:"M j" }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">No available or coming-soon units are listed.</p>
+    {% endif %}
+    <form method="post" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
+      {% csrf_token %}
+      <button type="submit" class="button accent">Yes, still accurate</button>
+      <a href="{% url 'edit_community' community.pk %}" style="font-size:.88rem;">Something changed — update units</a>
+    </form>
+  {% endif %}
+  </div>
+</div>
+{% endblock %}

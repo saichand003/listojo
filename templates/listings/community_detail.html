@@ -40,6 +40,19 @@
 
 {% include 'listings/_bento_gallery.html' with place=community label=community.name kind="community" %}
 
+{# Photo headings — "Community – Swimming Pool", "2 Bedroom – Kitchen". Each opens the viewer at its group. #}
+{% if photo_groups|length > 1 %}
+<nav class="cd-photo-groups" aria-label="Photos by area">
+  {% for group in photo_groups %}
+  <button type="button" class="cd-photo-group" data-lightbox-index="{{ group.start }}">
+    <img src="{{ group.photos.0.image.url }}" alt="" loading="lazy">
+    <span class="cd-photo-group-h">{{ group.heading }}</span>
+    <span class="cd-photo-group-n">{{ group.photos|length }}</span>
+  </button>
+  {% endfor %}
+</nav>
+{% endif %}
+
 <div class="grid ld-layout" style="grid-template-columns:2fr 1fr;align-items:start;gap:1.25rem;">
 
   {# ── Left column ── #}
@@ -227,11 +240,11 @@
             <p class="cd-fp-specs">
               {% if fp.bedrooms == 0 %}Studio{% else %}{{ fp.bedrooms }} Bed{{ fp.bedrooms|pluralize }}{% endif %} &middot; {{ fp.bathrooms|floatformat:"-1" }} Bath &middot; {% if fp.square_footage %}{{ fp.square_footage|intcomma }} sq ft{% endif %}
             </p>
-            {% with fp.available_units.count as avc %}
+            {% with fp.available_units|length as avc %}
             {% if avc %}
             <span class="cd-fp-chip cd-fp-chip-ok">{{ avc }} available</span>
             {% else %}
-            <span class="cd-fp-chip">No units available</span>
+            <a class="cd-fp-chip cd-fp-chip-ask" href="#inquiry-form">Contact for availability</a>
             {% endif %}
             {% endwith %}
           </div>
@@ -242,6 +255,18 @@
           {% endwith %}
         </div>
         {% if fp.description %}<p class="cd-fp-desc">{{ fp.description }}</p>{% endif %}
+
+        {# The plan's own photos — every unit below inherits them. #}
+        {% if fp.photo_tiles %}
+        <div class="cd-fp-photos">
+          {% for tile in fp.photo_tiles|slice:":4" %}
+          <button type="button" class="cd-fp-photo" data-lightbox-index="{{ tile.index }}" aria-label="Open {{ tile.heading }}">
+            <img src="{{ tile.url }}" alt="{{ tile.heading }}" loading="lazy">
+            {% if forloop.last and fp.photo_tiles|length > 4 %}<span class="cd-fp-photo-more">+{{ fp.photo_tiles|length|add:"-4" }}</span>{% endif %}
+          </button>
+          {% endfor %}
+        </div>
+        {% endif %}
 
         {% with fp.available_units as avail %}
         {% if avail %}

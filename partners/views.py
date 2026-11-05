@@ -109,9 +109,6 @@ def upload_inventory(request):
             CsvAdapter(text),
             organization=organization,
             dry_run=dry_run,
-            # Partner-supplied URLs are fetched only once rights are on record.
-            fetch_photos=not dry_run and organization.communities.filter(
-                media_rights_confirmed=True).exists(),
         )
 
         if not dry_run:

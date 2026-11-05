@@ -4,7 +4,6 @@ Import a property manager's inventory from a Listojo CSV export.
     python manage.py import_partner_csv acme inventory.csv
     python manage.py import_partner_csv acme inventory.csv --dry-run
     python manage.py import_partner_csv acme inventory.csv --limit 20
-    python manage.py import_partner_csv acme inventory.csv --no-images
 
 The first argument is an Organization slug. Inventory belongs to the company,
 not to a person, so rows are attributed to the org's owner-role member unless
@@ -47,8 +46,6 @@ class Command(BaseCommand):
                                  'Skips deactivation, since the file is knowingly partial.')
         parser.add_argument('--dry-run', action='store_true',
                             help='Report what would change without writing.')
-        parser.add_argument('--no-images', action='store_true',
-                            help='Skip photo download.')
         # No literal '%' in help text — argparse %-formats these strings.
         parser.add_argument('--deactivation-ceiling', type=float,
                             default=DEFAULT_DEACTIVATION_CEILING,
@@ -72,7 +69,6 @@ class Command(BaseCommand):
                 status=opts['status'],
                 limit=opts['limit'],
                 dry_run=opts['dry_run'],
-                fetch_photos=not opts['no_images'],
                 deactivation_ceiling=opts['deactivation_ceiling'],
             )
 

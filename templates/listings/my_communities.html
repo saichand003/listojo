@@ -9,7 +9,10 @@
       <h1 style="font-size:1.7rem;margin-bottom:.25rem;">My Communities</h1>
       <p class="muted">Manage your apartment complexes, buildings, and multi-unit properties.</p>
     </div>
-    <a href="{% url 'create_community' %}" class="button accent">+ New Community</a>
+    <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;">
+      <a href="{{ csv_upload_url }}" style="font-size:.82rem;font-weight:600;color:var(--text-3);" title="For property managers with large portfolios">Bulk upload (CSV)</a>
+      <a href="{% url 'create_community' %}" class="button accent">+ New Community</a>
+    </div>
   </div>
 
   {% if communities %}

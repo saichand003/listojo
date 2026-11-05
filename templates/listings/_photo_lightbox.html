@@ -24,6 +24,8 @@ it needs no context of its own and no-ops on a page without photos.
   var data = document.getElementById('gallery-data');
   if (!data) return;
   var srcs = Array.from(data.querySelectorAll('[data-src]')).map(function(el){ return el.dataset.src; });
+  // Community photos carry their heading ("2 Bedroom – Kitchen"); listing photos have none.
+  var captions = Array.from(data.querySelectorAll('[data-src]')).map(function(el){ return el.dataset.caption || ''; });
   if (!srcs.length) return;
 
   // ── Collage paging ──
@@ -72,7 +74,8 @@ it needs no context of its own and no-ops on a page without photos.
   function show(i) {
     idx = (i + srcs.length) % srcs.length;
     lbImg.src = srcs[idx];
-    counter.textContent = (idx + 1) + '/' + srcs.length;
+    counter.textContent = (idx + 1) + '/' + srcs.length + (captions[idx] ? ' · ' + captions[idx] : '');
+    lbImg.alt = captions[idx];
     var thumbs = strip.children;
     for (var t = 0; t < thumbs.length; t++) { thumbs[t].classList.toggle('active', t === idx); }
     if (thumbs[idx]) thumbs[idx].scrollIntoView({ block: 'nearest', inline: 'center' });

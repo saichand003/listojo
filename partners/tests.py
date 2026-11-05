@@ -5,16 +5,14 @@ The two failure modes that motivated this app:
   2. A community changes management company. It must keep its identity, not
      import a second time under the new manager's ID.
 """
-import base64
 import io
-import tempfile
 
 from decimal import Decimal
 from unittest import mock
 
 from django.contrib.auth.models import User
 from django.db.models import ProtectedError
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from listings.models import Community, CommunityImage, Unit
 from listings.services.ownership import can_edit_community, editable_communities
@@ -46,7 +44,6 @@ class PartnerOwnershipTests(TestCase):
         Membership.objects.create(user=self.bob, organization=self.globex, role='owner')
 
     def _import(self, body, organization, **kwargs):
-        kwargs.setdefault('fetch_photos', False)
         return import_partner_inventory(
             CsvAdapter(io.StringIO(body)), organization=organization, **kwargs)
 
@@ -735,16 +732,6 @@ class MediaRightsConfirmationTests(TestCase):
         self.assertEqual(self.community.media_rights_confirmed_by, self.user)
         self.assertEqual(self.community.media_rights_confirmed_at, first_at)
 
-    def test_confirming_unblocks_photo_fetching_on_the_next_upload(self):
-        """The whole point: `fetch_photos` keys off this flag."""
-        self.assertFalse(self.organization.communities.filter(
-            media_rights_confirmed=True).exists())
-
-        self.client.post(self._url())
-
-        self.assertTrue(self.organization.communities.filter(
-            media_rights_confirmed=True).exists())
-
     def test_a_change_of_manager_clears_the_attestation(self):
         self.client.post(self._url())
         globex = Organization.objects.create(name='Globex', slug='globex')
@@ -757,33 +744,15 @@ class MediaRightsConfirmationTests(TestCase):
         self.assertIsNone(self.community.media_rights_confirmed_at)
 
 
-PHOTO_HEADER = ('community_ref,community_name,community_city,floor_plan_name,'
-                'unit_number,bedrooms,bathrooms,square_footage,price,photo_urls\n')
-
-# Smallest valid PNG — ImageField reads real bytes when it saves.
-_PNG = base64.b64decode(
-    b'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')
-
-
-def _fake_photo_response(*args, **kwargs):
-    response = mock.Mock()
-    response.headers = {'Content-Type': 'image/png'}
-    response.content = _PNG
-    response.raise_for_status = mock.Mock()
-    return response
-
-
-@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
-@mock.patch('listings.services.media.time.sleep', lambda *_: None)
-@mock.patch('listings.services.media.requests.get', _fake_photo_response)
-class CommunityPhotoImportTests(TestCase):
+class CsvIgnoresPhotoUrlsTests(TestCase):
     """
-    A community's photos come from every row, not just the last one.
-
-    Community fields take the last row of a group so corrections propagate, but
-    photos are fetched only when a community has none — so that rule could
-    never deliver a correction, it only dropped rows 1..n-1 in silence.
+    Photos come from the community form, with headings — never from a feed.
+    Older exports still carry a photo_urls column; it must neither fail the
+    upload nor download anything.
     """
+
+    HEADER = ('community_ref,community_name,community_city,floor_plan_name,'
+              'unit_number,bedrooms,bathrooms,square_footage,price,photo_urls\n')
 
     def setUp(self):
         self.organization = Organization.objects.create(name='Acme', slug='acme')
@@ -791,155 +760,27 @@ class CommunityPhotoImportTests(TestCase):
         Membership.objects.create(user=self.owner, organization=self.organization,
                                   role='owner')
 
-    def _import(self, body):
-        return import_partner_inventory(CsvAdapter(io.StringIO(body)),
-                                        organization=self.organization,
-                                        fetch_photos=True)
+    def _import(self, urls):
+        return import_partner_inventory(
+            CsvAdapter(io.StringIO(self.HEADER + f'C1,Acme Place,Dallas,A1,101,1,1,700,1200,{urls}\n')),
+            organization=self.organization)
 
-    def test_photos_spread_across_rows_all_arrive(self):
-        result = self._import(
-            PHOTO_HEADER
-            + 'MAPLE,Maple Court,Dallas,A1,101,1,1,700,1450,https://x/1.png|https://x/2.png\n'
-            + 'MAPLE,Maple Court,Dallas,A1,104,1,1,700,1495,https://x/3.png|https://x/4.png\n')
+    def test_a_photo_urls_column_is_ignored(self):
+        with mock.patch('requests.get') as get:
+            result = self._import('https://x/a.png|https://x/b.png')
 
-        self.assertEqual(result.photos_saved, 4)
-        self.assertEqual(Community.objects.get().images.count(), 4)
+        self.assertTrue(result.ok)
+        self.assertEqual(result.units, 1)
+        get.assert_not_called()
+        self.assertFalse(CommunityImage.objects.exists())
+        self.assertNotIn('photos', result.summary())
 
-    def test_the_same_url_repeated_on_every_row_is_saved_once(self):
-        """A PMS export repeats community data per unit — that is not 3 photos."""
-        row = 'MAPLE,Maple Court,Dallas,A1,{},1,1,700,1450,https://x/hero.png\n'
-        result = self._import(PHOTO_HEADER + row.format(101) + row.format(104)
-                              + row.format(108))
-
-        self.assertEqual(result.photos_saved, 1)
-
-    def test_order_follows_first_appearance(self):
-        self._import(
-            PHOTO_HEADER
-            + 'MAPLE,Maple Court,Dallas,A1,101,1,1,700,1450,https://x/a.png\n'
-            + 'MAPLE,Maple Court,Dallas,A1,104,1,1,700,1495,https://x/b.png\n')
-
-        images = list(Community.objects.get().images.order_by('order'))
-        self.assertEqual([i.order for i in images], [0, 1])
-
-    def test_the_download_cap_still_holds(self):
-        urls = '|'.join(f'https://x/{n}.png' for n in range(10))
-        result = self._import(
-            PHOTO_HEADER
-            + f'MAPLE,Maple Court,Dallas,A1,101,1,1,700,1450,{urls}\n')
-
-        self.assertEqual(result.photos_saved, 6)      # MAX_PHOTOS
-
-    def test_stored_path_is_not_nested_twice(self):
-        """`upload_to` supplies the directory; the filename must not repeat it."""
-        self._import(
-            PHOTO_HEADER
-            + 'MAPLE,Maple Court,Dallas,A1,101,1,1,700,1450,https://x/1.png\n')
-
-        name = Community.objects.get().images.first().image.name
-        self.assertEqual(name.count('community_images/'), 1)
-        self.assertTrue(name.startswith('community_images/community_'))
-
-    def test_photos_are_still_skipped_without_media_rights(self):
-        result = import_partner_inventory(
-            CsvAdapter(io.StringIO(
-                PHOTO_HEADER
-                + 'MAPLE,Maple Court,Dallas,A1,101,1,1,700,1450,https://x/1.png\n')),
-            organization=self.organization, fetch_photos=False)
-
-        self.assertEqual(result.photos_saved, 0)
-
-
-@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
-@mock.patch('listings.services.media.time.sleep', lambda *_: None)
-@mock.patch('listings.services.media.requests.get', _fake_photo_response)
-class CommunityPhotoReconcileTests(TestCase):
-    """
-    Partner photos are reconcilable inventory, not write-once.
-
-    Before this, any community with an image was skipped forever: a partner who
-    added one photo to next week's export, or swapped a wrong hero shot, got
-    nothing — silently, with no way to fix it themselves.
-    """
-
-    def setUp(self):
-        self.organization = Organization.objects.create(name='Acme', slug='acme')
-        self.owner = User.objects.create_user('pm', 'pm@acme.com', 'pw')
-        Membership.objects.create(user=self.owner, organization=self.organization,
-                                  role='owner')
-
-    def _import(self, *urls):
-        row = ('MAPLE,Maple Court,Dallas,A1,101,1,1,700,1450,{}\n'
-               .format('|'.join(urls)))
-        return import_partner_inventory(CsvAdapter(io.StringIO(PHOTO_HEADER + row)),
-                                        organization=self.organization,
-                                        fetch_photos=True)
-
-    def _stored(self):
-        return list(Community.objects.get().images.order_by('order')
-                    .values_list('source_url', flat=True))
-
-    def test_a_single_new_photo_costs_one_download(self):
-        self._import('https://x/1.png', 'https://x/2.png')
-
-        result = self._import('https://x/1.png', 'https://x/2.png', 'https://x/3.png')
-
-        self.assertEqual(result.photos_saved, 1)      # not 3
-        self.assertEqual(result.photos_removed, 0)
-        self.assertEqual(self._stored(),
-                         ['https://x/1.png', 'https://x/2.png', 'https://x/3.png'])
-
-    def test_a_swapped_photo_replaces_the_old_one(self):
-        self._import('https://x/old.png')
-
-        result = self._import('https://x/new.png')
-
-        self.assertEqual((result.photos_saved, result.photos_removed), (1, 1))
-        self.assertEqual(self._stored(), ['https://x/new.png'])
-
-    def test_reimporting_an_unchanged_file_downloads_nothing(self):
-        self._import('https://x/1.png', 'https://x/2.png')
-
-        result = self._import('https://x/1.png', 'https://x/2.png')
-
-        self.assertEqual((result.photos_saved, result.photos_removed), (0, 0))
-        self.assertEqual(Community.objects.get().images.count(), 2)
-
-    def test_reordering_in_the_file_reorders_without_redownloading(self):
-        self._import('https://x/1.png', 'https://x/2.png')
-
-        result = self._import('https://x/2.png', 'https://x/1.png')
-
-        self.assertEqual(result.photos_saved, 0)
-        self.assertEqual(self._stored(), ['https://x/2.png', 'https://x/1.png'])
-
-    def test_hand_uploaded_photos_are_never_deleted(self):
-        """Staff added it in admin; no feed owns it, so no feed may remove it."""
-        self._import('https://x/1.png')
+    def test_reimporting_leaves_uploaded_photos_alone(self):
+        self._import('')
         community = Community.objects.get()
-        CommunityImage.objects.create(community=community, image='by_hand.png',
-                                      order=9)
+        CommunityImage.objects.create(community=community, image='community_images/x.png',
+                                      shows='pool')
 
-        self._import('https://x/2.png')
+        self._import('https://x/other.png')
 
-        self.assertTrue(community.images.filter(source_url='').exists())
-        self.assertEqual(
-            set(community.images.exclude(source_url='')
-                .values_list('source_url', flat=True)),
-            {'https://x/2.png'})
-
-    def test_an_empty_photo_column_leaves_photos_alone(self):
-        """A partial export must not strip a property bare."""
-        self._import('https://x/1.png')
-
-        result = self._import()
-
-        self.assertEqual(result.photos_removed, 0)
-        self.assertEqual(Community.objects.get().images.count(), 1)
-
-    def test_removals_appear_in_the_summary(self):
-        self._import('https://x/old.png')
-
-        result = self._import('https://x/new.png')
-
-        self.assertIn('1 photos (+1 removed)', result.summary())
+        self.assertEqual(list(community.images.values_list('shows', flat=True)), ['pool'])
