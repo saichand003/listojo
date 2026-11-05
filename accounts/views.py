@@ -7,6 +7,7 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 
+from listings.services.ownership import received_inquiries
 from accounts.services.dashboard import owner_inquiries, owner_listing_overview, owner_performance, staff_agent_dashboard
 from .forms import RegistrationForm
 
@@ -158,7 +159,6 @@ def login_confirm_switch(request):
 def user_logout(request):
     logout(request)
     return redirect('listing_list')
-from listings.models import ListingInquiry
 
 
 def register(request):
@@ -371,8 +371,5 @@ def agent_dashboard(request):
 @login_required
 def unread_inquiry_count(request):
     return JsonResponse({
-        'unread_count': ListingInquiry.objects.filter(
-            listing__owner=request.user,
-            is_read=False,
-        ).count(),
+        'unread_count': received_inquiries(request.user).filter(is_read=False).count(),
     })

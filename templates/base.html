@@ -208,6 +208,9 @@
               </div>
             </div>
 
+            {# Searching and saving homes are renter tools; a partner's menu starts #}
+            {# with their portfolio and keeps renter conversations together below. #}
+            {% if not is_partner_member %}
             <div class="nav-menu-group">
               <span class="nav-menu-label">{% translate "Discover" %}</span>
               <a role="menuitem" href="{% url 'home' %}">{% translate "Home" %}</a>
@@ -215,6 +218,7 @@
               <a role="menuitem" href="{% url 'saved_listings' %}">{% translate "Saved" %}</a>
               <a role="menuitem" href="{% url 'inbox' %}">{% translate "Messages" %}{% if sb_unread_message_count %}<span class="nav-menu-badge">{{ sb_unread_message_count }}</span>{% endif %}</a>
             </div>
+            {% endif %}
 
             {% if is_partner_member %}
             {# Partners run a portfolio through the partner portal, so their menu #}
@@ -224,7 +228,14 @@
               <a role="menuitem" href="{% url 'partner_dashboard' %}">{% translate "Manage Properties" %}</a>
               <a role="menuitem" href="{% url 'partner_upload' %}">{% translate "Imports" %}</a>
               <a role="menuitem" href="{% url 'partner_onboarding' %}">{% translate "Data connection" %}</a>
+            </div>
+            {# What renters sent about the organization's units. Inquiries are #}
+            {# shared across the team; chat threads are with the account a     #}
+            {# renter wrote to.                                                #}
+            <div class="nav-menu-group">
+              <span class="nav-menu-label">{% translate "Leads" %}</span>
               <a role="menuitem" href="{% url 'inquiries_overview' %}">{% translate "Inquiries" %}{% if sb_inquiry_count %}<span class="nav-menu-badge">{{ sb_inquiry_count }}</span>{% endif %}</a>
+              <a role="menuitem" href="{% url 'inbox' %}">{% translate "Messages" %}{% if sb_unread_message_count %}<span class="nav-menu-badge">{{ sb_unread_message_count }}</span>{% endif %}</a>
             </div>
             {% else %}
             <div class="nav-menu-group">

@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from listings.models import Community, Listing, ListingInquiry
 from listings.services.landlord_insights import community_strength, listing_strength, renter_demand
+from listings.services.ownership import received_inquiries
 from listings.services.visibility import active_listings
 
 
@@ -107,7 +108,7 @@ def owner_performance(user) -> dict:
 
 def owner_inquiries(user):
     return (
-        ListingInquiry.objects.filter(listing__owner=user)
+        received_inquiries(user)
         .select_related('listing')
         .order_by('-created_at')
     )

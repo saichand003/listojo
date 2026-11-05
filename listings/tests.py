@@ -3046,3 +3046,50 @@ class PartnerCannotPostListingTests(TestCase):
                      User.objects.create_user('plain', 'plain@example.com', 'pw')):
             self.client.force_login(user)
             self.assertEqual(self.client.get(reverse('create_listing')).status_code, 200)
+
+
+class PartnerTeamInquiryTests(TestCase):
+    """Inquiries on an organization's units reach the whole team."""
+
+    def setUp(self):
+        from partners.models import Membership, Organization
+        self.org = Organization.objects.create(name='Gamma PM', slug='gamma-pm')
+        self.org_owner = User.objects.create_user('gowner', 'go@example.com', 'pw')
+        self.teammate = User.objects.create_user('gmate', 'gm@example.com', 'pw')
+        Membership.objects.create(user=self.org_owner, organization=self.org, role='owner')
+        Membership.objects.create(user=self.teammate, organization=self.org)
+        unit = Listing.objects.create(owner=self.org_owner, organization=self.org, title='Gamma 101',
+                                      category='rentals', price=1400, city='Dallas', status='active')
+        self.inquiry = ListingInquiry.objects.create(listing=unit, name='Rita', email='r@example.com',
+                                                     message='Is it available?')
+        outsider = User.objects.create_user('solo', 'solo@example.com', 'pw')
+        other = Listing.objects.create(owner=outsider, title='Solo home', category='rentals',
+                                       price=900, city='Plano', status='active')
+        self.other_inquiry = ListingInquiry.objects.create(listing=other, name='Sam',
+                                                           email='s@example.com', message='Hi')
+
+    def test_teammate_sees_the_organizations_inquiries(self):
+        from listings.services.ownership import received_inquiries
+        self.assertEqual(list(received_inquiries(self.teammate)), [self.inquiry])
+        self.client.force_login(self.teammate)
+        self.assertContains(self.client.get(reverse('inquiries_overview')), 'Gamma 101')
+        self.assertEqual(self.client.get(reverse('inquiry_detail', args=[self.inquiry.pk])).status_code, 200)
+
+    def test_teammate_cannot_open_someone_elses_inquiry(self):
+        self.client.force_login(self.teammate)
+        self.assertEqual(self.client.get(reverse('inquiry_detail', args=[self.other_inquiry.pk])).status_code, 404)
+
+    def test_unread_badge_counts_team_inquiries(self):
+        self.client.force_login(self.teammate)
+        self.assertEqual(self.client.get(reverse('inquiry_unread_count')).json()['unread_count'], 1)
+
+    def test_partner_menu_groups_leads_and_drops_renter_tools(self):
+        self.client.force_login(self.teammate)
+        html = self.client.get(reverse('home')).content.decode()
+        start = html.index('class="nav-menu-id"')
+        menu = html[start:html.index('nav-menu-signout', start)]
+        self.assertIn('Leads', menu)
+        self.assertLess(menu.index('Leads'), menu.index(reverse('inbox')))
+        self.assertIn(reverse('inquiries_overview'), menu)
+        self.assertNotIn(reverse('guided_search'), menu)
+        self.assertNotIn(reverse('saved_listings'), menu)

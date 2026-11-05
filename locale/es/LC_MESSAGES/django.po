@@ -1595,3 +1595,7 @@ msgstr ""
 #: templates/listings/partner_cannot_post.html
 msgid "Go back"
 msgstr "Volver"
+
+#: templates/base.html
+msgid "Leads"
+msgstr "Prospectos"

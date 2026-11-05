@@ -475,7 +475,10 @@ p { line-height: 1.65; }
   top: calc(100% + .6rem);
   right: 0;
   width: 264px;
-  max-height: min(70vh, 560px);
+  /* Room below the header (it opens ~4.5rem down), so the full menu fits
+     on an ordinary laptop screen and only scrolls on genuinely short ones.
+     70vh cut the lister menu off just above Sign out at 800px tall. */
+  max-height: min(calc(100vh - 6rem), 680px);
   overflow-y: auto;
   overscroll-behavior: contain;
   background: var(--surface);
@@ -533,20 +536,26 @@ p { line-height: 1.65; }
   text-transform: uppercase;
   color: var(--muted);
 }
+/* Links and the Sign out button share one rule so they line up. Sign out is
+   a <button> inside a logout form, which is why it used to sit .35rem left
+   of the links: the top-nav link rule was reaching into this menu and
+   restyling only the <a>s. That rule now skips [role="menuitem"]. */
 .nav-menu a,
 .nav-menu-signout {
   display: flex;
   align-items: center;
   gap: .5rem;
   width: 100%;
-  padding: .5rem .55rem;
+  padding: .45rem .9rem;
   border: none;
   border-radius: var(--r-sm);
   background: none;
   font-family: var(--font-body);
   font-size: .875rem;
-  font-weight: 500;
-  color: var(--text);
+  font-weight: 600;
+  letter-spacing: .01em;
+  line-height: inherit;
+  color: var(--text-2);
   text-decoration: none;
   text-align: left;
   cursor: pointer;
@@ -555,7 +564,8 @@ p { line-height: 1.65; }
 @media (hover:hover) and (pointer:fine) {
   .nav-menu a:hover, .nav-menu-signout:hover { background: var(--primary-soft); color: var(--primary); }
 }
-.nav-menu-signout { color: var(--text-2); }
+.nav-menu a.nav-active { background: rgba(26,93,212,.1); color: var(--primary); font-weight: 700; }
+.nav-menu form { margin: 0; }
 .nav-menu-badge {
   margin-left: auto;
   min-width: 20px;
@@ -578,7 +588,7 @@ p { line-height: 1.65; }
 
 .primary-links, .nav-links { display: flex; align-items: center; gap: .2rem; flex-wrap: wrap; }
 
-.primary-links a:not(.button), .nav-links a:not(.button):not(.nav-cta):not(.nav-signin) {
+.primary-links a:not(.button), .nav-links a:not(.button):not(.nav-cta):not(.nav-signin):not([role="menuitem"]) {
   text-decoration: none;
   color: var(--text-2);
   font-weight: 600;
@@ -589,8 +599,8 @@ p { line-height: 1.65; }
   letter-spacing: .01em;
   position: relative;
 }
-.primary-links a:not(.button):hover, .nav-links a:not(.button):not(.nav-cta):not(.nav-signin):hover { background: rgba(26,93,212,.08); color: var(--primary); }
-.primary-links a:not(.button).nav-active, .nav-links a:not(.button):not(.nav-cta):not(.nav-signin).nav-active {
+.primary-links a:not(.button):hover, .nav-links a:not(.button):not(.nav-cta):not(.nav-signin):not([role="menuitem"]):hover { background: rgba(26,93,212,.08); color: var(--primary); }
+.primary-links a:not(.button).nav-active, .nav-links a:not(.button):not(.nav-cta):not(.nav-signin):not([role="menuitem"]).nav-active {
   background: rgba(26,93,212,.1);
   color: var(--primary);
   font-weight: 700;

@@ -52,6 +52,29 @@ def is_partner_member(user) -> bool:
     return Membership.objects.filter(user=user).exists()
 
 
+def received_inquiries(user, queryset=None):
+    """
+    Inquiries this person should see: on listings they own, and — for a
+    partner — on every listing their organization holds.
+
+    A partner's imported units are attributed to the organization's owner
+    account, but the listing page tells renters their message goes to "the
+    team". Keying inquiries to listing.owner alone meant every other team
+    member opened an empty Inquiries page.
+    """
+    from django.db.models import Q
+
+    from listings.models import ListingInquiry
+    if queryset is None:
+        queryset = ListingInquiry.objects.all()
+    if not user or not user.is_authenticated:
+        return queryset.none()
+    org_ids = user_organization_ids(user)
+    if not org_ids:
+        return queryset.filter(listing__owner=user)
+    return queryset.filter(Q(listing__owner=user) | Q(listing__organization_id__in=org_ids))
+
+
 def can_edit_listing(user, listing) -> bool:
     if not user or not user.is_authenticated:
         return False

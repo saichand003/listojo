@@ -22,7 +22,7 @@ from .models import CityWaitlist, Community, Favourite, GuidedSearchEvent, Listi
 from listings.services import match_prefs, saved_searches
 from listings.services.amenities import picker_groups
 from listings.services.match_prefs import resolve_match_prefs
-from listings.services.ownership import is_partner_member
+from listings.services.ownership import is_partner_member, received_inquiries
 from listings.services.fit import build_report, lead_snapshot
 from listings.services.search import build_listing_search_context, live_inventory_count, live_match_preview
 from listings.services.valuation import predict_price
@@ -796,9 +796,8 @@ def listing_inquiries(request, pk):
 @login_required
 def inquiry_detail(request, inquiry_id):
     inquiry = get_object_or_404(
-        ListingInquiry.objects.select_related('listing'),
+        received_inquiries(request.user, ListingInquiry.objects.select_related('listing')),
         pk=inquiry_id,
-        listing__owner=request.user,
     )
     if not inquiry.is_read:
         ListingInquiry.objects.filter(pk=inquiry.pk, is_read=False).update(is_read=True)

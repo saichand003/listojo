@@ -6,7 +6,7 @@ from django.utils.translation import get_language
 
 def ui_asset_version(request):
     return {
-        'UI_ASSET_VERSION': os.getenv('UI_ASSET_VERSION', '2026-11-05-amenity-add-chip-fit'),
+        'UI_ASSET_VERSION': os.getenv('UI_ASSET_VERSION', '2026-11-05-account-menu-align-2'),
     }
 
 
@@ -14,11 +14,8 @@ def sidebar_counts(request):
     if not request.user.is_authenticated:
         return {}
     try:
-        from listings.models import ListingInquiry
-        inquiry_count = ListingInquiry.objects.filter(
-            listing__owner=request.user,
-            is_read=False,
-        ).count()
+        from listings.services.ownership import received_inquiries
+        inquiry_count = received_inquiries(request.user).filter(is_read=False).count()
     except Exception:
         inquiry_count = 0
     try:
