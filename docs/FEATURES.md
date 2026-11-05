@@ -79,7 +79,8 @@ Users verify a phone only at high-value moments (not at signup).
 - **Config:** `TURNSTILE_SITE_KEY/SECRET_KEY`.
 
 ## 9. Saved-search alerts (retention loop)
-New listings matching a saved search are emailed (+ SMS) on a schedule.
+New listings matching a saved search are emailed (+ SMS) as a daily digest,
+at most one per search per day (`listojo-cron`, see ARCHITECTURE §4.1).
 - **Flow:** guided search saves a `SavedSearch` → scheduled command finds new
   matches since `last_alerted_at` → sends a digest via each user's channels →
   advances the watermark (each listing alerted once).

@@ -2176,6 +2176,63 @@ class NoFeePromiseTests(TestCase):
             self.assertNotIn('$0', html, url)
 
 
+class DailyDigestTests(TestCase):
+    """
+    Saved-search alerts are a daily digest: one email per search per day at
+    most, however often the cron fires, and no listing is ever sent twice.
+    """
+
+    def setUp(self):
+        from listings.models import SavedSearch
+        self.renter = User.objects.create_user(username='digest-renter', email='r@example.com', password='pw')
+        self.owner = User.objects.create_user(username='digest-owner', password='pw')
+        self.search = SavedSearch.objects.create(user=self.renter, search_type='rent', city='Irving')
+
+    def listing(self, title):
+        return Listing.objects.create(owner=self.owner, title=title, description='x', category='rentals',
+                                      city='Irving', price=Decimal('1500'), price_unit='mo', status='active')
+
+    def run_digest(self):
+        from listings.services import saved_search_alerts
+        with mock.patch.object(saved_search_alerts, 'notify_user') as notify:
+            saved_search_alerts.send_alerts_for_all('https://listojo.com')
+        self.search.refresh_from_db()
+        return notify
+
+    def test_second_run_the_same_day_sends_nothing(self):
+        self.listing('First')
+        self.assertEqual(self.run_digest().call_count, 1)
+        sent_at = self.search.last_alerted_at
+
+        self.listing('Posted an hour later')
+        self.assertEqual(self.run_digest().call_count, 0)
+        # Watermark untouched, so tomorrow's digest still includes it.
+        self.assertEqual(self.search.last_alerted_at, sent_at)
+
+    def test_next_days_digest_has_only_the_new_listings(self):
+        old = self.listing('Old')
+        self.run_digest()
+        # Rewind a day: yesterday's listing, yesterday's digest.
+        Listing.objects.filter(pk=old.pk).update(created_at=timezone.now() - timedelta(hours=22))
+        type(self.search).objects.filter(pk=self.search.pk).update(
+            last_alerted_at=timezone.now() - timedelta(hours=21))
+        self.listing('New today')
+
+        notify = self.run_digest()
+        self.assertEqual(notify.call_count, 1)
+        body = notify.call_args.kwargs['email_body']
+        self.assertIn('New today', body)
+        self.assertNotIn('Old', body)
+
+    def test_cron_config_runs_the_digest_daily(self):
+        import json
+        from django.conf import settings
+        with open(settings.BASE_DIR / 'railway.cron.json') as fh:
+            deploy = json.load(fh)['deploy']
+        self.assertEqual(deploy['startCommand'], 'python manage.py send_saved_search_alerts')
+        self.assertEqual(deploy['cronSchedule'], '0 14 * * *')
+
+
 class HeroCarouselWeightTests(TestCase):
     """
     Regression: the home carousel painted 12 camera originals (4000-7000px,

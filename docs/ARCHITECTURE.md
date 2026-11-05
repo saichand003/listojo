@@ -104,9 +104,13 @@ Key service modules:
   - **The Dockerfile `CMD` is the start command — the Procfile is NOT used**
     (railway.json selects the DOCKERFILE builder). Editing the Procfile alone
     has no effect on deploys.
-- **Optional 2nd service `listojo-cron`:** same repo, **Cron Schedule**
-  `0 14 * * *`, **Start Command** `python manage.py send_saved_search_alerts`.
-  Needs the same env vars (DB + Resend).
+- **2nd service `listojo-cron` (required for saved-search emails):** same
+  repo, **Config file path** `/railway.cron.json`, which sets the schedule
+  (`0 14 * * *` UTC, 9 AM CDT / 8 AM CST) and the start command
+  `python manage.py send_saved_search_alerts`. Needs the same env vars as the
+  web service (DB + Resend + Twilio + `SITE_URL`). Without this service no
+  digest is ever sent. The command itself caps each search at one digest per
+  20h, so a misfire or a manual re-run cannot double-send.
 
 ### 4.2 Namecheap — domain & DNS
 - **What:** registrar + DNS for `listojo.com` (Namecheap BasicDNS).

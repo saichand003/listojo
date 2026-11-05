@@ -1,11 +1,13 @@
 """
-Send new-match alerts (email + SMS) for every saved guided search.
+Send the daily new-match digest (email + SMS) for every saved guided search.
 
     python manage.py send_saved_search_alerts
     python manage.py send_saved_search_alerts --site-url https://listojo.com
 
-Run on a schedule (e.g. Railway cron, hourly or daily). Each search keeps a
-`last_alerted_at` watermark, so listings are alerted exactly once.
+Scheduled daily by the `listojo-cron` Railway service (railway.cron.json).
+Each search keeps a `last_alerted_at` watermark, so listings are alerted
+exactly once, and a search gets at most one digest per day however often this
+runs.
 """
 from django.conf import settings
 from django.core.management.base import BaseCommand

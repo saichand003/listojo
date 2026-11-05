@@ -3,12 +3,15 @@ Saved-search alerts — find new listings matching a user's saved guided search
 and notify them by email + SMS.
 
 Entry point: send_alerts_for_all() — called by the `send_saved_search_alerts`
-management command (run on a schedule). It is idempotent: each search has a
-`last_alerted_at` watermark so a listing is only ever alerted once.
+management command, scheduled once a day (railway.cron.json). It is idempotent:
+each search has a `last_alerted_at` watermark so a listing is only ever alerted
+once, and a search that was sent a digest in the last DIGEST_INTERVAL is
+skipped, so an extra or misconfigured run can never email anyone twice a day.
 """
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -19,6 +22,11 @@ from listings.services.visibility import active_listings
 from listojo.services.notifications import notify_user
 
 logger = logging.getLogger(__name__)
+
+# Minimum gap between two digests for one search. Under 24h on purpose, so a
+# daily cron that fires a few minutes early does not push a user to every
+# other day.
+DIGEST_INTERVAL = timedelta(hours=20)
 
 # How many listings to itemise in a single alert before summarising.
 _MAX_ITEMS = 5
@@ -174,6 +182,10 @@ def send_alerts_for_search(search: SavedSearch, site_url: str) -> int:
         return 0
 
     since = search.last_alerted_at
+    # Daily digest: too soon since the last one. The watermark is left alone,
+    # so anything new is picked up by the next day's run.
+    if since is not None and timezone.now() - since < DIGEST_INTERVAL:
+        return 0
     matches = list(matching_listings_for_search(search, since=since)[:50])
 
     # Always advance the watermark so we don't re-scan old rows next run.

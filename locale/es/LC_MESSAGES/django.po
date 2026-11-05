@@ -1512,11 +1512,11 @@ msgstr ""
 
 #: templates/listings/home.html:616
 msgid ""
-"Create a free search profile and we'll alert you the minute a verified "
-"listing meets your parameters."
+"Create a free search profile and we'll email you each morning when new "
+"verified listings match."
 msgstr ""
-"Crea un perfil de búsqueda gratis y te avisaremos en cuanto un anuncio "
-"verificado cumpla con tus criterios."
+"Crea un perfil de búsqueda gratis y te escribiremos cada mañana si hay "
+"anuncios verificados nuevos."
 
 #: templates/listings/home.html:620
 msgid "Email address"
