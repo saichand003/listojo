@@ -7,7 +7,8 @@
   <title>Listojo Agent{% block title %}{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'fonts/numerals.css' %}?v={{ UI_ASSET_VERSION }}">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -31,7 +32,7 @@
     }
 
     body {
-      font-family: 'Sora', system-ui, sans-serif;
+      font-family: 'Listojo Numerals','Inter',system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -74,7 +75,7 @@
     }
     .brand-icon-wrap { width: 34px; height: 34px; flex-shrink: 0; }
     .brand-icon-wrap svg { width: 34px; height: 34px; display: block; }
-    .brand-name { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.15rem; color: #fff; line-height: 1.1; letter-spacing: -.02em; }
+    .brand-name { font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-weight: 800; font-size: 1.15rem; color: #fff; line-height: 1.1; letter-spacing: -.02em; }
     /* "ojo" in the logo's leaf-green gradient, as in the header mark (base.html). */
     .brand-name em { font-style: normal; color: #3DB549; background: linear-gradient(180deg, #3DB549, #5DC228); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .brand-badge { display: block; font-size: .58rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: rgba(255,255,255,.38); margin-top: .12rem; }
@@ -165,7 +166,7 @@
       top: 0;
       z-index: 50;
     }
-    .topbar-page-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1rem; color: var(--text); }
+    .topbar-page-title { font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-weight: 700; font-size: 1rem; color: var(--text); }
     .topbar-right { display: flex; align-items: center; gap: .5rem; }
     .topbar-site-link {
       display: inline-flex;
@@ -245,7 +246,7 @@
     .kpi-icon-wrap svg { width: 20px; height: 20px; display: block; }
     .kpi-body { flex: 1; min-width: 0; }
     .kpi-label { font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .2rem; }
-    .kpi-value { font-family: 'Montserrat', sans-serif; font-size: 1.85rem; font-weight: 800; color: var(--text); line-height: 1.1; }
+    .kpi-value { font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-variant-numeric: tabular-nums; font-size: 1.85rem; font-weight: 800; color: var(--text); line-height: 1.1; }
     .kpi-delta { font-size: .72rem; font-weight: 600; margin-top: .25rem; }
     .kpi-delta.up   { color: var(--green); }
     .kpi-delta.warn { color: var(--amber); }

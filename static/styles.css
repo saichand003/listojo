@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
 /* ── DESIGN TOKENS ─────────────────────────────────────────── */
 :root {
@@ -6,8 +5,8 @@
      tighter apertures and the -0.02em tracking the display sizes want. Inter
      carries body copy, where its larger x-height reads better at 15-16px.
      Montserrat stays loaded because the logo SVG sets it internally. */
-  --font-head: 'Plus Jakarta Sans', 'Montserrat', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-head: 'Listojo Numerals','Plus Jakarta Sans', 'Montserrat', system-ui, sans-serif;
+  --font-body: 'Listojo Numerals','Inter', system-ui, -apple-system, sans-serif;
 
   --bg:         #F8F9FF;
   --surface:    #FFFFFF;

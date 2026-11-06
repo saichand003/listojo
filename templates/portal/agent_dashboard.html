@@ -6,7 +6,7 @@
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;">
   <div>
     <p style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin:0 0 .3rem;">Agent Portal</p>
-    <h1 style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.55rem;color:var(--text);margin:0 0 .25rem;line-height:1.2;">
+    <h1 style="font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif;font-weight:800;font-size:1.55rem;color:var(--text);margin:0 0 .25rem;line-height:1.2;">
       Good {% now "H" as hour %}{% if hour < "12" %}morning{% elif hour < "17" %}afternoon{% else %}evening{% endif %}, {{ request.user.first_name|default:request.user.username }}.
     </h1>
     <p style="color:var(--muted);font-size:.82rem;margin:0;">
@@ -66,7 +66,7 @@
 {# ── Incoming leads section ── #}
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem;">
   <div>
-    <h2 style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.1rem;color:var(--text);margin:0 0 .1rem;">Incoming Leads</h2>
+    <h2 style="font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif;font-weight:700;font-size:1.1rem;color:var(--text);margin:0 0 .1rem;">Incoming Leads</h2>
     <p style="font-size:.75rem;color:var(--muted);margin:0;">Most recent first · Click to open</p>
   </div>
   <a href="{% url 'agent_leads' %}" class="btn btn-ghost btn-sm">View all &rarr;</a>

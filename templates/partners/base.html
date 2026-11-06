@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +7,8 @@
   <title>Listojo Partners{% block title %}{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'fonts/numerals.css' %}?v={{ UI_ASSET_VERSION }}">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -31,7 +33,7 @@
     }
 
     body {
-      font-family: 'Sora', system-ui, sans-serif;
+      font-family: 'Listojo Numerals','Inter',system-ui, sans-serif;
       background: var(--bg); color: var(--text);
       min-height: 100vh; display: flex; font-size: 14px; line-height: 1.6;
       -webkit-font-smoothing: antialiased;
@@ -44,13 +46,13 @@
       display: flex; flex-direction: column;
     }
     .brand {
-      font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.15rem;
+      font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-weight: 800; font-size: 1.15rem;
       color: #fff; padding: 0 1.25rem 1rem; letter-spacing: -.02em;
     }
     /* "ojo" in the logo's leaf-green gradient, as in the header mark (base.html). */
     .brand span { color: #3DB549; background: linear-gradient(180deg, #3DB549, #5DC228); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .brand small {
-      display: block; font-family: 'Sora', sans-serif; font-size: .68rem;
+      display: block; font-family: 'Listojo Numerals','Inter',sans-serif; font-size: .68rem;
       font-weight: 500; color: #64748b; letter-spacing: .08em; text-transform: uppercase;
     }
     .nav-section {
@@ -82,7 +84,7 @@
 
     /* ── MAIN ───────────────────────────────────────────────────── */
     main { margin-left: var(--sidebar-w); padding: 1.75rem 2rem 3rem; width: 100%; }
-    h1 { font-family: 'Montserrat', sans-serif; font-size: 1.5rem; letter-spacing: -.02em; }
+    h1 { font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-size: 1.5rem; letter-spacing: -.02em; }
     .sub { color: var(--muted); font-size: .88rem; margin-top: .15rem; }
     .page-head { margin-bottom: 1.5rem; }
 
@@ -92,7 +94,7 @@
       padding: 1.25rem; margin-bottom: 1.25rem;
     }
     .card h2 {
-      font-family: 'Montserrat', sans-serif; font-size: 1rem;
+      font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-size: 1rem;
       margin-bottom: .9rem; letter-spacing: -.01em;
     }
 
@@ -102,7 +104,7 @@
       padding: .9rem 1.15rem; min-width: 150px; box-shadow: var(--shadow);
     }
     .stat .n {
-      font-family: 'Montserrat', sans-serif; font-size: 1.5rem;
+      font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-size: 1.5rem;
       font-weight: 700; letter-spacing: -.02em;
     }
     .stat .l {
@@ -166,7 +168,7 @@
     .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
     .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 1rem 1.15rem; box-shadow: var(--shadow); min-width: 0; }
     .kpi .l { font-size: .74rem; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
-    .kpi .n { font-family: 'Montserrat', sans-serif; font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; margin-top: .2rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kpi .n { font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-variant-numeric: tabular-nums; font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; margin-top: .2rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .kpi .n small { font-size: .9rem; font-weight: 600; color: var(--muted); letter-spacing: 0; }
     .kpi .d { font-size: .76rem; color: var(--muted); margin-top: .15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .kpi .d.warn { color: var(--amber); font-weight: 600; }
@@ -176,7 +178,7 @@
     .card.flush { padding: 0; overflow: hidden; }
     .card-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
     .card-head h2 { margin: 0; }
-    .card-head .count { color: var(--muted); font-weight: 500; font-family: 'Sora', sans-serif; font-size: .85rem; margin-left: .35rem; }
+    .card-head .count { color: var(--muted); font-weight: 500; font-family: 'Listojo Numerals','Inter',sans-serif; font-size: .85rem; margin-left: .35rem; }
     .card-foot { padding: .85rem 1.25rem; border-top: 1px solid var(--border); background: var(--surface-2); font-size: .78rem; color: var(--muted); }
     .table-wrap { overflow-x: auto; }
     .data th { background: var(--surface-2); padding: .6rem 1rem; white-space: nowrap; }
@@ -246,7 +248,7 @@
     dialog.modal { margin: auto; border: 0; border-radius: 14px; padding: 0; width: min(560px, calc(100vw - 2rem)); box-shadow: 0 24px 64px rgba(8,21,37,.28); color: var(--text); }
     dialog.modal::backdrop { background: rgba(8,21,37,.45); }
     .modal-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 1.25rem 1.4rem .4rem; }
-    .modal-head h2 { font-family: 'Montserrat', sans-serif; font-size: 1.1rem; }
+    .modal-head h2 { font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-size: 1.1rem; }
     .modal-body { padding: .6rem 1.4rem 1rem; }
     .modal-foot { display: flex; justify-content: flex-end; gap: .5rem; padding: .9rem 1.4rem; border-top: 1px solid var(--border); background: var(--surface-2); }
     .dropzone { position: relative; display: block; border: 1.5px dashed #c7d2e3; border-radius: var(--r); padding: 1.6rem 1rem; text-align: center; background: var(--surface-2); cursor: pointer; transition: border-color .15s, background .15s; }

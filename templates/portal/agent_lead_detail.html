@@ -9,7 +9,7 @@
   /* ── Lead header card ── */
   .ld-header { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.5rem 1.75rem; margin-bottom:1.25rem; display:flex; align-items:flex-start; gap:1.25rem; box-shadow:0 2px 8px rgba(11,28,48,.07); }
   .ld-avatar { width:54px; height:54px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:800; color:#fff; flex-shrink:0; }
-  .ld-name { font-family:'Montserrat',sans-serif; font-weight:800; font-size:1.4rem; color:#0f1c35; margin:0 0 .2rem; }
+  .ld-name { font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-weight:800; font-size:1.4rem; color:#0f1c35; margin:0 0 .2rem; }
   .ld-meta { font-size:.82rem; color:#64748b; }
   .ld-badge { display:inline-block; padding:.2rem .65rem; border-radius:999px; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
   .ld-badge-new    { background:#fff3e0; color:#b45309; border:1px solid #fcd38a; }
@@ -33,7 +33,7 @@
   /* ── Curated shortlist ── */
   .curated-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.4rem 1.75rem; margin-bottom:1.25rem; box-shadow:0 2px 8px rgba(11,28,48,.07); }
   .curated-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.35rem; flex-wrap:wrap; gap:.75rem; }
-  .curated-title { font-family:'Montserrat',sans-serif; font-weight:800; font-size:1rem; color:#0f1c35; }
+  .curated-title { font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-weight:800; font-size:1rem; color:#0f1c35; }
   .curated-sub { font-size:.8rem; color:#64748b; margin-bottom:1.1rem; }
   .send-btn { background:#0f1c35; color:#fff; padding:.5rem 1.2rem; border-radius:10px; font-size:.82rem; font-weight:700; border:none; cursor:pointer; white-space:nowrap; transition:opacity .15s; }
   .send-btn:hover { opacity:.85; }
@@ -59,7 +59,7 @@
 
   /* ── Right panel ── */
   .rp-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.25rem 1.4rem; margin-bottom:1rem; box-shadow:0 2px 8px rgba(11,28,48,.07); }
-  .rp-title { font-family:'Montserrat',sans-serif; font-weight:700; font-size:.88rem; color:#0f1c35; margin:0 0 .9rem; }
+  .rp-title { font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-weight:700; font-size:.88rem; color:#0f1c35; margin:0 0 .9rem; }
   .qa-btn { display:flex; align-items:center; gap:.55rem; width:100%; padding:.6rem .9rem; border-radius:10px; font-size:.82rem; font-weight:600; cursor:pointer; border:1.5px solid #e2e8f0; background:#fff; color:#0f1c35; text-decoration:none; margin-bottom:.5rem; transition:all .15s; }
   .qa-btn:hover { border-color:var(--primary); color:var(--primary); background:#f0f7ff; }
   .qa-btn.qa-primary { background:#0f1c35; color:#fff; border-color:#0f1c35; }
@@ -83,7 +83,7 @@
   /* Conversion tip */
   .tip-card { background:#e4f5ee; border:1px solid #bbf7d0; border-radius:14px; padding:1rem 1.1rem; }
   .tip-icon { font-size:1.1rem; margin-right:.4rem; }
-  .tip-label { font-family:'Montserrat',sans-serif; font-weight:700; font-size:.82rem; color:#1a6645; margin-bottom:.4rem; }
+  .tip-label { font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif; font-weight:700; font-size:.82rem; color:#1a6645; margin-bottom:.4rem; }
   .tip-text { font-size:.82rem; color:#0c3d27; line-height:1.5; }
 
   @media(max-width:900px) {
@@ -129,7 +129,7 @@
     {# ── Preferences card ── #}
     {% if preference %}
     <div class="pref-card">
-      <div style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:.92rem;color:#0f1c35;margin-bottom:1rem;">Client Requirements</div>
+      <div style="font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif;font-weight:700;font-size:.92rem;color:#0f1c35;margin-bottom:1rem;">Client Requirements</div>
       <div class="pref-grid">
         {% if preference.max_budget %}
         <div class="pref-cell">
@@ -311,7 +311,7 @@
 
     {# ── Agent Notes ── #}
     <div class="pref-card">
-      <div style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:.92rem;color:#0f1c35;margin-bottom:.85rem;">Agent Notes</div>
+      <div style="font-family:'Listojo Numerals','Plus Jakarta Sans',system-ui,sans-serif;font-weight:700;font-size:.92rem;color:#0f1c35;margin-bottom:.85rem;">Agent Notes</div>
       <form method="post">
         {% csrf_token %}
         <input type="hidden" name="action" value="save_note">

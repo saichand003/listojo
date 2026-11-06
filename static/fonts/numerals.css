@@ -1,0 +1,14 @@
+/* Listojo Numerals — every digit on the site renders in Inter, whatever the
+   surrounding font. Plus Jakarta Sans / Montserrat numerals are geometric and
+   read as "display"; Inter's are the neutral, enterprise-standard set.
+   unicode-range limits this face to digits and number punctuation, so letters
+   fall through to the next font in the stack. Prepend 'Listojo Numerals' to a
+   font stack to opt in. */
+@font-face {
+  font-family: 'Listojo Numerals';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('inter-latin-var.woff2') format('woff2');
+  unicode-range: U+0030-0039, U+0024, U+0025, U+002B, U+002C, U+002E, U+003A, U+2212, U+20AC;
+}
