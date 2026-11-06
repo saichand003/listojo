@@ -2614,6 +2614,13 @@ footer {
   font-family: var(--font-head);
 }
 .cl-section-title { font-size: .97rem; font-weight: 700; color: var(--text); }
+/* Post-a-listing numbers its sections with a CSS counter instead of literal
+   digits. The rental/property details panel is hidden until a type is
+   chosen, and a display:none section takes no counter step, so the sequence
+   is always 1, 2, 3... with no gap and no odd one out. */
+#create-listing-form { counter-reset: cl-sec; }
+#create-listing-form .cl-section { counter-increment: cl-sec; }
+#create-listing-form .cl-section-num::before { content: counter(cl-sec); }
 
 /* Category picker */
 .cl-cat-grid {
