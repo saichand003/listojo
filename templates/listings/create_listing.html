@@ -1036,7 +1036,7 @@
               document.getElementById('f-zip').value     = zip;
               document.getElementById('f-country').value = country;
               dropdown.hidden = true;
-              document.getElementById('f-city').dispatchEvent(new Event('input'));
+              document.getElementById('f-city').dispatchEvent(new Event('input', { bubbles: true }));
             })
             .catch(function () { spinner.hidden = true; dropdown.hidden = true; });
         });
@@ -1075,7 +1075,7 @@
           document.getElementById('f-zip').value     = a.postcode || '';
           document.getElementById('f-country').value = a.country  || '';
           dropdown.hidden = true;
-          document.getElementById('f-city').dispatchEvent(new Event('input'));
+          document.getElementById('f-city').dispatchEvent(new Event('input', { bubbles: true }));
         });
         dropdown.appendChild(li);
       });
@@ -1267,7 +1267,8 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
         if (!d || !d.ok) return;
-        $('pm-scope').textContent  = d.city || 'All DFW';
+        var scopeKind = { rentals: 'For rent', properties: 'For sale' }[cat];
+        $('pm-scope').textContent  = (d.city || 'All DFW') + (scopeKind ? ' · ' + scopeKind : '');
         $('pm-count').textContent  = d.active_count;
         // Blank until a listing type is chosen: see the view for why a median
         // across mixed categories is not a number worth showing.
@@ -1308,11 +1309,14 @@
     renderSteps();
   });
 
-  function onChange(e) {
+  function onChange() {
     renderPreview();
     renderSteps();
-    if (e && e.target === fields.city) scheduleMarket();
-    if (e && e.target === fields.category) scheduleMarket();
+    // Always schedule: refreshMarket() skips the fetch when city|category is
+    // unchanged. Filtering on e.target missed both real paths: the category
+    // picker announces itself on window (target is window, not the hidden
+    // input), and the address autocomplete fills the city from code.
+    scheduleMarket();
   }
 
   // ── Spec steppers ──
@@ -1345,6 +1349,8 @@
 
   renderPreview();
   renderSteps();
+  // A re-rendered form (failed submit, draft) may already carry a city or type.
+  if (val(fields.city) || val(fields.category)) refreshMarket();
 })();
 </script>
 

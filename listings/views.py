@@ -679,6 +679,7 @@ def create_listing(request):
         'max_images': 8,
         'market': _posting_market_stats(
             city=(request.POST.get('city', '') if request.method == 'POST' else ''),
+            category=(request.POST.get('category', '') if request.method == 'POST' else ''),
         ),
         # The picker's groups come from the vocabulary rather than a literal in
         # the template, so the backfill command and the form cannot disagree

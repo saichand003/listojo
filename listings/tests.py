@@ -3119,3 +3119,28 @@ class SalePriceUnitTests(TestCase):
                             'price': '1,250,000.50'}, draft=True)
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data['price'], Decimal('1250000.50'))
+
+
+class PostingMarketStatsCategoryTests(TestCase):
+    """The posting sidebar's market card counts only the chosen listing type."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        self.user = get_user_model().objects.create_user('poster', 'p@example.com', 'pw-12345!')
+        for cat in ('rentals', 'rentals', 'properties'):
+            Listing.objects.create(owner=self.user, title=cat, category=cat, city='Irving',
+                                   price=Decimal('1000'), price_unit='mo' if cat == 'rentals' else '',
+                                   status='active')
+        self.client.force_login(self.user)
+
+    def _stats(self, **params):
+        from django.urls import reverse
+        return self.client.get(reverse('posting_market_stats'), params).json()
+
+    def test_counts_follow_category(self):
+        self.assertEqual(self._stats(category='rentals')['active_count'], 2)
+        self.assertEqual(self._stats(category='properties')['active_count'], 1)
+        self.assertEqual(self._stats()['active_count'], 3)
+
+    def test_sale_count_is_zero_when_no_sale_listings_in_city(self):
+        self.assertEqual(self._stats(city='Dallas', category='properties')['active_count'], 0)
