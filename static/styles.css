@@ -1553,8 +1553,8 @@ footer {
   display: flex;
   align-items: center;
   gap: .75rem;
-  background: linear-gradient(135deg, rgba(26,93,212,.06), rgba(61,181,73,.05));
-  border: 1.5px solid rgba(26,93,212,.2);
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-soft-2);
   border-radius: 14px;
   padding: .75rem 1.1rem;
   margin-bottom: 1.1rem;
@@ -4276,11 +4276,11 @@ footer {
 }
 .pg-panel.accent {
   border-left: 3px solid var(--primary);
-  background: linear-gradient(135deg, rgba(26,93,212,.045), rgba(98,194,255,.02));
+  background: var(--primary-soft);
 }
 .pg-panel.tinted {
-  background: linear-gradient(135deg, rgba(26,93,212,.05), rgba(5,150,105,.03));
-  border-color: rgba(26,93,212,.16);
+  background: var(--primary-soft);
+  border-color: var(--primary-soft-2);
 }
 
 /* Lists with custom markers */
@@ -4470,27 +4470,6 @@ footer {
   border-radius: var(--r-lg);
   margin-bottom: var(--sp-6);
   padding: clamp(1.5rem, 3.5vw, 3rem);
-}
-
-/* Two soft washes so the panel is not a flat rectangle. Decorative only. */
-.hero-wash {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(72px);
-  pointer-events: none;
-  z-index: -1;
-}
-.hero-wash-a {
-  top: -22%; left: -8%;
-  width: 34rem; height: 34rem;
-  background: var(--primary-2);
-  opacity: .26;
-}
-.hero-wash-b {
-  bottom: -30%; right: -10%;
-  width: 30rem; height: 30rem;
-  background: var(--accent-2);
-  opacity: .16;
 }
 
 .hero-split-inner {
@@ -5760,19 +5739,27 @@ footer {
   padding: clamp(1.5rem, 3vw, 2.5rem);
   margin-bottom: var(--sp-5);
   border-radius: var(--r-lg);
-  background: var(--surface-2);
   border: 1px solid var(--border);
+  /* One hue only. The old blurred teal blob mixed with the blue surface into
+     a grey-green that belonged to neither brand colour. Now: a white card lit
+     from the top-right by a soft brand-blue glow, plus a faint dot grid that
+     fades out, so it isn't a flat rectangle but reads as the same blue/white
+     system as the rest of the site. Green stays reserved for the "verified"
+     eyebrow, where it means something. */
+  background:
+    radial-gradient(60% 120% at 100% 0%, rgba(26,93,212,.10) 0%, rgba(26,93,212,.04) 40%, transparent 70%),
+    var(--surface);
 }
-.post-hero-wash {
+.post-hero::before {
+  content: '';
   position: absolute;
-  top: -55%; right: -12%;
-  width: 34rem; height: 34rem;
-  border-radius: 50%;
-  background: var(--accent-2);
-  opacity: .16;
-  filter: blur(80px);
-  pointer-events: none;
+  inset: 0;
   z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(26,93,212,.16) 1px, transparent 1.2px);
+  background-size: 18px 18px;
+  -webkit-mask-image: linear-gradient(250deg, #000 0%, transparent 45%);
+          mask-image: linear-gradient(250deg, #000 0%, transparent 45%);
 }
 
 .post-hero-inner { max-width: 46rem; min-width: 0; }
