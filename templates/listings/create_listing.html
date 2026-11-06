@@ -408,14 +408,19 @@
         </div>
       </div>
       {% if form.price.errors %}<p class="cl-field-error">{{ form.price.errors.0 }}</p>{% endif %}
-      <label class="cl-label" for="f-price">Price</label>
+      <label class="cl-label" for="f-price" id="f-price-label">Price</label>
       <div class="cl-price-field">
         <span class="cl-price-affix" aria-hidden="true">$</span>
         <input type="text" inputmode="decimal" id="f-price" name="price" value="{{ form.price.value|default:'' }}"
                placeholder="0" autocomplete="off" aria-describedby="price-market-hint">
-        <span class="cl-price-affix cl-price-suffix" aria-hidden="true">/ month</span>
+        <span class="cl-price-affix cl-price-suffix" id="f-price-suffix" aria-hidden="true">/ month</span>
       </div>
-      <input type="hidden" name="price_unit" id="f-price-unit" value="mo">
+      {% comment %}
+        Rentals are priced per month; a sale has a one-off asking price, so the
+        unit is cleared for 'properties'. syncPricing() below keeps this in step
+        with the category picker, and ListingForm.clean() enforces it.
+      {% endcomment %}
+      <input type="hidden" name="price_unit" id="f-price-unit" value="{% if form.category.value == 'properties' %}{% else %}mo{% endif %}">
       <p id="price-market-hint" class="cl-price-hint" style="display:none;"></p>
 
     </div>
@@ -532,7 +537,7 @@
       <header class="post-rail-head">
         <span class="post-rail-title">
           <span class="post-rail-live" aria-hidden="true"></span>
-          Live renter view
+          <span id="pv-audience">Live renter view</span>
         </span>
         <span class="post-rail-note">Updates as you type</span>
       </header>
@@ -554,7 +559,7 @@
           <p class="post-preview-addr" id="pv-addr">Address, city</p>
           <ul class="post-preview-specs" id="pv-specs" hidden></ul>
           <div class="post-preview-cta" aria-hidden="true">
-            <span class="post-preview-btn">Request tour / apply</span>
+            <span class="post-preview-btn" id="pv-cta">Request tour / apply</span>
             <span class="post-preview-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M21 14.5a2 2 0 0 1-2 2H7.5L3 21V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </span>
@@ -735,6 +740,7 @@
       card.classList.add('selected');
       document.getElementById('f-category').value = card.dataset.val;
       updateDetailPanel();
+      syncPricing();
       updateCompletion();
       window.dispatchEvent(new Event('listojo:form-sync'));
     });
@@ -770,8 +776,23 @@
     else if (isProp)title.textContent = 'Property details';
   }
 
+  /* ── Pricing follows the category: a rental is "$X / month", a sale is a
+     one-off asking price with no unit. The live preview's audience and CTA
+     switch with it so a seller never sees renter wording. ── */
+  function syncPricing() {
+    var isSale = document.getElementById('f-category').value === 'properties';
+    document.getElementById('f-price-unit').value = isSale ? '' : 'mo';
+    document.getElementById('f-price-suffix').hidden = isSale;
+    document.getElementById('f-price-label').textContent = isSale ? 'Asking price' : 'Monthly rent';
+    var aud = document.getElementById('pv-audience');
+    if (aud) aud.textContent = isSale ? 'Live buyer view' : 'Live renter view';
+    var cta = document.getElementById('pv-cta');
+    if (cta) cta.textContent = isSale ? 'Request a showing' : 'Request tour / apply';
+  }
+
   /* Run on page load in case of failed POST pre-fill */
   updateDetailPanel();
+  syncPricing();
 
   /* ── Radio cards (accommodation type & property type) ── */
   document.addEventListener('click', function(e) {
@@ -786,8 +807,10 @@
     document.getElementById(inputId).value = card.dataset.val;
   });
 
-  /* ── Price: digits and one decimal point only (field is type=text so the
-     browser spinner never shows, inputmode=decimal gives the numeric keypad). */
+  /* ── Price: digits and one decimal point only, shown with thousands
+     separators ("450,000"). The field is type=text so no browser spinner
+     shows; inputmode=decimal gives the numeric keypad. ListingForm strips the
+     commas server-side, so every submit path is covered. */
   (function () {
     var el = document.getElementById('f-price');
     if (!el) return;
@@ -795,12 +818,30 @@
     el.closest('.cl-price-field').addEventListener('mousedown', function (e) {
       if (e.target !== el) { e.preventDefault(); el.focus(); }
     });
-    el.addEventListener('input', function () {
-      var v = el.value.replace(/[^0-9.]/g, '');
+    function format(raw) {
+      var v = raw.replace(/[^0-9.]/g, '');
       var i = v.indexOf('.');
-      if (i !== -1) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/\./g, '').slice(0, 2);
-      if (v !== el.value) el.value = v;
+      var whole = i === -1 ? v : v.slice(0, i);
+      var frac  = i === -1 ? '' : '.' + v.slice(i + 1).replace(/\./g, '').slice(0, 2);
+      whole = whole.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return whole + frac;
+    }
+    el.addEventListener('input', function () {
+      // Keep the caret after the same number of digits it was after, so
+      // inserted commas don't make it jump.
+      var caret = el.selectionStart || 0;
+      var digitsBefore = el.value.slice(0, caret).replace(/[^0-9.]/g, '').length;
+      var next = format(el.value);
+      if (next === el.value) return;
+      el.value = next;
+      var pos = 0, seen = 0;
+      while (pos < next.length && seen < digitsBefore) {
+        if (/[0-9.]/.test(next[pos])) seen++;
+        pos++;
+      }
+      el.setSelectionRange(pos, pos);
     });
+    if (el.value) el.value = format(el.value);
   })();
 
   /* ── Market price hint (lister-facing comparable range) ── */
@@ -1100,7 +1141,7 @@
   function val(el) { return el && el.value ? el.value.trim() : ''; }
 
   function money(n) {
-    var num = parseFloat(n);
+    var num = parseFloat(String(n).replace(/,/g, ''));
     if (!isFinite(num)) return '';
     return '$' + Math.round(num).toLocaleString('en-US');
   }

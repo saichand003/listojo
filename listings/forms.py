@@ -71,6 +71,10 @@ class ListingForm(forms.ModelForm):
 
     def __init__(self, *args, draft=False, **kwargs):
         super().__init__(*args, **kwargs)
+        # The post form shows prices with thousands separators ("450,000").
+        if self.is_bound and ',' in (self.data.get('price') or ''):
+            self.data = self.data.copy()
+            self.data['price'] = self.data['price'].replace(',', '')
         self.fields['category'].choices = [('', '— Select a category —')] + [
             c for c in self.fields['category'].choices if c[0] in self.ALLOWED_CATEGORIES
         ]
@@ -82,6 +86,15 @@ class ListingForm(forms.ModelForm):
         if draft:
             for name, field in self.fields.items():
                 field.required = name in self.DRAFT_REQUIRED
+
+    def clean(self):
+        cleaned = super().clean()
+        # A sale has a one-off asking price; "/month" on it would misprice the
+        # listing everywhere it renders. The post form clears the unit in JS,
+        # this makes it hold for any client.
+        if cleaned.get('category') == 'properties':
+            cleaned['price_unit'] = ''
+        return cleaned
 
 
 ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}

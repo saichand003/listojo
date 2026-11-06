@@ -3093,3 +3093,29 @@ class PartnerTeamInquiryTests(TestCase):
         self.assertIn(reverse('inquiries_overview'), menu)
         self.assertNotIn(reverse('guided_search'), menu)
         self.assertNotIn(reverse('saved_listings'), menu)
+
+
+class SalePriceUnitTests(TestCase):
+    """A sale listing has a one-off asking price, never a per-month one."""
+
+    def test_sale_listing_drops_price_unit(self):
+        from listings.forms import ListingForm
+        form = ListingForm({'title': 'House', 'category': 'properties',
+                            'price': '450000', 'price_unit': 'mo'}, draft=True)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['price_unit'], '')
+
+    def test_rental_listing_keeps_monthly_unit(self):
+        from listings.forms import ListingForm
+        form = ListingForm({'title': 'Apt', 'category': 'rentals',
+                            'price': '1850', 'price_unit': 'mo'}, draft=True)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['price_unit'], 'mo')
+
+    def test_price_with_thousands_separators_is_accepted(self):
+        from decimal import Decimal
+        from listings.forms import ListingForm
+        form = ListingForm({'title': 'House', 'category': 'properties',
+                            'price': '1,250,000.50'}, draft=True)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['price'], Decimal('1250000.50'))
