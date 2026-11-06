@@ -5741,14 +5741,14 @@ footer {
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
   /* One hue only. The old blurred teal blob mixed with the blue surface into
-     a grey-green that belonged to neither brand colour. Now: a white card lit
-     from the top-right by a soft brand-blue glow, plus a faint dot grid that
+     a grey-green that belonged to neither brand colour. Now: the same pale-blue
+     surface, lit from the top-right by a soft brand-blue glow, plus a faint dot grid that
      fades out, so it isn't a flat rectangle but reads as the same blue/white
      system as the rest of the site. Green stays reserved for the "verified"
      eyebrow, where it means something. */
   background:
-    radial-gradient(60% 120% at 100% 0%, rgba(26,93,212,.10) 0%, rgba(26,93,212,.04) 40%, transparent 70%),
-    var(--surface);
+    radial-gradient(60% 120% at 100% 0%, rgba(26,93,212,.12) 0%, rgba(26,93,212,.05) 40%, transparent 70%),
+    var(--surface-2);
 }
 .post-hero::before {
   content: '';
