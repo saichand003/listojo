@@ -513,14 +513,25 @@
       </div>
     </div>
 
+    {% comment %}
+      Action bar: one clear primary (Publish) sized to its label, the draft as a
+      quiet secondary beside it, both at the same height and right-aligned the
+      way a form's commit actions read. The note on the left answers the only
+      question a seller has at this point: what happens to a draft.
+    {% endcomment %}
     <div class="cl-actions">
       <input type="hidden" name="save_draft" id="f-save-draft" value="">
-      <button type="submit" formnovalidate class="cl-draft-btn" id="draft-btn">
-        Save draft for later
-      </button>
-      <button type="submit" class="cl-publish-btn" id="publish-btn">
-        Publish listing live now &rarr;
-      </button>
+      <p class="cl-actions-note">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <span>Drafts stay private until you publish.</span>
+      </p>
+      <div class="cl-actions-btns">
+        <button type="submit" formnovalidate class="cl-draft-btn" id="draft-btn">Save draft</button>
+        <button type="submit" class="cl-publish-btn" id="publish-btn">
+          Publish listing
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
     </div>
   </form>
   </div>{# /post-form-col #}
