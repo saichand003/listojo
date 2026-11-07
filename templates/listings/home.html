@@ -483,18 +483,20 @@
 </section>
 
 {% comment %}
-  TRENDING. The reference puts rentals and homes for sale in one three-column
-  grid under a single heading. Top three of each, rentals first.
+  TRENDING. Two rows in one band: rentals (listings and communities) first,
+  then homes for sale, each under its own heading so renters and buyers
+  don't have to sort the cards themselves.
 {% endcomment %}
 {% if trend_rent_items or trending_properties %}
 <section class="home-band home-band-tint">
+  {% if trend_rent_items %}
   <div class="section-header home-sec-hdr">
     <div class="section-header-left">
       <div class="section-eyebrow eyebrow-green">{% translate "Hot in DFW" %}</div>
-      <h2 class="section-title-xl">{% translate "Trending Rentals & Properties" %}</h2>
-      <p class="section-sub">{% translate "Most-viewed homes, verified rooms, and homes for sale right now." %}</p>
+      <h2 class="section-title-xl">{% translate "Trending Rentals" %}</h2>
+      <p class="section-sub">{% translate "Most-viewed apartments, communities, and verified rooms right now." %}</p>
     </div>
-    <a href="{% url 'listing_list' %}" class="section-link">{% translate "Explore all DFW listings" %} &rarr;</a>
+    <a href="{% url 'listing_list' %}?category=rentals" class="section-link">{% translate "Explore all DFW rentals" %} &rarr;</a>
   </div>
   <div class="trend-grid">
     {% for item in trend_rent_items %}
@@ -504,10 +506,24 @@
         {% include 'listings/_trend_card.html' with listing=item.obj %}
       {% endif %}
     {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if trending_properties %}
+  <div class="section-header home-sec-hdr{% if trend_rent_items %} trend-row-next{% endif %}">
+    <div class="section-header-left">
+      <div class="section-eyebrow eyebrow-green">{% translate "For sale in DFW" %}</div>
+      <h2 class="section-title-xl">{% translate "Trending Homes for Sale" %}</h2>
+      <p class="section-sub">{% translate "The most-viewed homes on the market right now." %}</p>
+    </div>
+    <a href="{% url 'listing_list' %}?category=properties" class="section-link">{% translate "Explore all homes for sale" %} &rarr;</a>
+  </div>
+  <div class="trend-grid">
     {% for listing in trending_properties|slice:":3" %}
       {% include 'listings/_trend_card.html' with sale=True %}
     {% endfor %}
   </div>
+  {% endif %}
 </section>
 {% endif %}
 

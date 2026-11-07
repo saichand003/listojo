@@ -1599,3 +1599,31 @@ msgstr "Volver"
 #: templates/base.html
 msgid "Leads"
 msgstr "Prospectos"
+
+#: templates/listings/home.html
+msgid "Trending Rentals"
+msgstr "Rentas en tendencia"
+
+#: templates/listings/home.html
+msgid "Most-viewed apartments, communities, and verified rooms right now."
+msgstr "Departamentos, comunidades y cuartos verificados más vistos hoy."
+
+#: templates/listings/home.html
+msgid "Explore all DFW rentals"
+msgstr "Ver todas las rentas en DFW"
+
+#: templates/listings/home.html
+msgid "For sale in DFW"
+msgstr "En venta en DFW"
+
+#: templates/listings/home.html
+msgid "Trending Homes for Sale"
+msgstr "Casas en venta populares"
+
+#: templates/listings/home.html
+msgid "The most-viewed homes on the market right now."
+msgstr "Las casas más vistas del mercado ahora mismo."
+
+#: templates/listings/home.html
+msgid "Explore all homes for sale"
+msgstr "Ver todas las casas en venta"

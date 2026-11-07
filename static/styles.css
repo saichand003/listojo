@@ -7697,6 +7697,9 @@ footer {
 }
 @media (max-width: 1080px) { .trend-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px)  { .trend-grid { grid-template-columns: 1fr; } }
+/* Second trending row (homes for sale) sits under the rentals grid. */
+.trend-row-next { margin-top: 4rem; }
+@media (max-width: 640px) { .trend-row-next { margin-top: 2.5rem; } }
 .trend-grid .trend-card { width: auto; border: none; box-shadow: var(--shadow-sm); }
 @media (hover:hover) and (pointer:fine) {
   .trend-grid .trend-card:hover { box-shadow: var(--shadow-lg); transform: none; }
